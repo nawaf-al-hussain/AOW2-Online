@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  server:
+    build:
+      context: ..
+      dockerfile: docker/server.Dockerfile
+    ports:
+      - "8080:8080"
+      - "8443:8443"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/aow2
+      SPRING_DATASOURCE_USERNAME: aow2
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-aow2_dev}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+      SPRING_FLYWAY_ENABLED: "true"
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: aow2
+      POSTGRES_USER: aow2
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-aow2_dev}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aow2"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  pgdata:
