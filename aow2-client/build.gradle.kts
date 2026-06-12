@@ -26,6 +26,6 @@ application {
     mainClass = "com.aow2.client.AOW2App"
 }
 
-tasks.run {
-    jvmArgs("--enable-preview")
+tasks.named<JavaExec>("run") {
+    jvmArgs = listOf("--enable-preview")
 }
