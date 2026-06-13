@@ -1,12 +1,12 @@
 package com.aow2.core.economy;
 
 import com.aow2.common.config.GameConstants;
+import com.aow2.common.config.StatsRegistry;
 import com.aow2.common.event.UnitProducedEvent;
 import com.aow2.common.model.BuildingType;
 import com.aow2.common.model.Faction;
 import com.aow2.common.model.UnitCategory;
 import com.aow2.common.model.UnitType;
-import com.aow2.common.model.WeaponType;
 import com.aow2.core.engine.GameState;
 import com.aow2.core.entity.Building;
 import com.aow2.core.entity.Unit;
@@ -275,111 +275,45 @@ public final class ProductionSystem {
 
     /**
      * Get the build time for a unit type.
-     * <p>
-     * REF: complete_unit_stats.json — buildTime per unit
+     * REF: StatsRegistry
      *
      * @param unitType the unit type
      * @return the base build time in ticks
      */
     private int getUnitBuildTime(UnitType unitType) {
-        return switch (unitType) {
-            case CONFED_INFANTRY -> 40;
-            case CONFED_GRENADIER -> 50;
-
-            case CONFED_FLAME_ASSAULT -> 60;
-            case CONFED_FORTRESS -> 100;
-            case CONFED_HAMMER -> 70;
-            case CONFED_ZEUS -> 70;
-            case CONFED_TORRENT -> 80;
-            case CONFED_MINE_SCORPIO -> 30;
-            case CONFED_MINE_FROG -> 30;
-            case CONFED_MINE_LIZARD -> 30;
-            case REBEL_INFANTRY -> 40;
-            case REBEL_GRENADIER -> 50;
-            case REBEL_SNIPER -> 55;
-            case REBEL_COYOTE -> 60;
-            case REBEL_ARMADILLO -> 80;
-            case REBEL_RHINO -> 75;
-            case REBEL_PORCUPINE -> 85;
-        };
+        return StatsRegistry.getInstance().getUnitBuildTime(unitType); // REF: StatsRegistry
     }
 
     /**
      * Get the credit cost of a unit type.
+     * REF: StatsRegistry
      *
      * @param unitType the unit type
      * @return the credit cost
      */
     private int getUnitCost(UnitType unitType) {
-        return switch (unitType) {
-            case CONFED_INFANTRY -> 10;
-            case CONFED_GRENADIER -> 15;
-
-            case CONFED_FLAME_ASSAULT -> 25;
-            case CONFED_FORTRESS -> 50;
-            case CONFED_HAMMER -> 30;
-            case CONFED_ZEUS -> 30;
-            case CONFED_TORRENT -> 50;
-            case CONFED_MINE_SCORPIO -> 10;
-            case CONFED_MINE_FROG -> 10;
-            case CONFED_MINE_LIZARD -> 10;
-            case REBEL_INFANTRY -> 10;
-            case REBEL_GRENADIER -> 15;
-            case REBEL_SNIPER -> 20;
-            case REBEL_COYOTE -> 25;
-            case REBEL_ARMADILLO -> 40;
-            case REBEL_RHINO -> 35;
-            case REBEL_PORCUPINE -> 45;
-        };
+        return StatsRegistry.getInstance().getUnitCost(unitType); // REF: StatsRegistry
     }
 
     /**
      * Get the tech requirement for a unit type.
-     * <p>
-     * ASSUMPTION: Most basic units require no tech (0).
-     * Advanced units may require specific research IDs.
+     * REF: StatsRegistry
      *
      * @param unitType the unit type
      * @return the required research ID, or 0 if no requirement
      */
     private int getUnitTechRequirement(UnitType unitType) {
-        return switch (unitType) {
-            case CONFED_FLAME_ASSAULT -> 6;  // REF: combat_formulas.md research ID 6
-            case CONFED_TORRENT -> 14;       // REF: combat_formulas.md research ID 14
-            case REBEL_RHINO -> 12;          // REF: combat_formulas.md research ID 12
-            case REBEL_PORCUPINE -> 38;      // REF: combat_formulas.md research ID 38
-            default -> 0;
-        };
+        return StatsRegistry.getInstance().getUnitTechRequirement(unitType); // REF: StatsRegistry
     }
 
     /**
      * Create UnitStats for a unit type.
-     * <p>
-     * ASSUMPTION: Using representative stat values from RE data.
+     * REF: StatsRegistry
      *
      * @param unitType the unit type
      * @return the unit stats
      */
     private com.aow2.common.model.UnitStats createUnitStats(UnitType unitType) {
-        return switch (unitType) {
-            case CONFED_INFANTRY -> new com.aow2.common.model.UnitStats(unitType, "Infantry", 40, 2, 5, 5, 0, 4, 4, WeaponType.BULLET, 5, 4, 10, 650, 6, 255, 0, -1);
-            case CONFED_GRENADIER -> new com.aow2.common.model.UnitStats(unitType, "Grenadier", 45, 4, 5, 4, 0, 5, 5, WeaponType.ROCKET, 8, 5, 15, 700, 6, 255, 0, -1);
-
-            case CONFED_FLAME_ASSAULT -> new com.aow2.common.model.UnitStats(unitType, "Flame Assault", 50, 6, 5, 3, 0, 3, 3, WeaponType.FLAME, 3, 6, 25, 800, 6, 255, 0, -1);
-            case CONFED_FORTRESS -> new com.aow2.common.model.UnitStats(unitType, "AV-40 Fortress", 120, 8, 4, 7, 0, 6, 6, WeaponType.ARTILLERY, 10, 10, 50, 1200, 8, 255, 0, -1);
-            case CONFED_HAMMER -> new com.aow2.common.model.UnitStats(unitType, "T-21 Hammer", 70, 6, 7, 5, 0, 2, 6, WeaponType.ARTILLERY, 8, 7, 30, 300, 8, 255, 0, -1);
-            case CONFED_ZEUS -> new com.aow2.common.model.UnitStats(unitType, "T-22 Zeus", 70, 6, 7, 5, 0, 2, 6, WeaponType.MACHINE_GUN, 2, 7, 30, 300, 8, 255, 0, -1);
-            case CONFED_TORRENT -> new com.aow2.common.model.UnitStats(unitType, "MLRS Torrent", 80, 15, 4, 7, 2, 6, 6, WeaponType.ROCKET, 12, 8, 50, 250, 8, 255, 2, -1);
-            case CONFED_MINE_SCORPIO -> new com.aow2.common.model.UnitStats(unitType, "Mine Scorpio", 10, 20, 3, 0, 0, 0, 0, WeaponType.NONE, 1, 3, 10, 100, 4, 255, 0, -1);
-            case CONFED_MINE_FROG -> new com.aow2.common.model.UnitStats(unitType, "Mine Frog", 10, 15, 3, 0, 0, 0, 0, WeaponType.NONE, 1, 3, 10, 100, 4, 255, 0, -1);
-            case CONFED_MINE_LIZARD -> new com.aow2.common.model.UnitStats(unitType, "Mine Lizard", 10, 18, 3, 0, 0, 0, 0, WeaponType.NONE, 1, 3, 10, 100, 4, 255, 0, -1);
-            case REBEL_INFANTRY -> new com.aow2.common.model.UnitStats(unitType, "Infantry", 40, 2, 5, 5, 0, 4, 4, WeaponType.BULLET, 5, 4, 10, 650, 6, 255, 0, -1);
-            case REBEL_GRENADIER -> new com.aow2.common.model.UnitStats(unitType, "Grenadier", 45, 4, 5, 4, 0, 5, 5, WeaponType.ROCKET, 8, 5, 15, 700, 6, 255, 0, -1);
-            case REBEL_SNIPER -> new com.aow2.common.model.UnitStats(unitType, "Sniper", 35, 8, 3, 4, 0, 7, 7, WeaponType.SNIPER_RIFLE, 15, 6, 20, 750, 6, 255, 0, -1);
-            case REBEL_COYOTE -> new com.aow2.common.model.UnitStats(unitType, "Coyote", 60, 5, 8, 4, 0, 2, 5, WeaponType.MACHINE_GUN, 4, 6, 25, 400, 7, 255, 0, -1);
-            case REBEL_ARMADILLO -> new com.aow2.common.model.UnitStats(unitType, "Armadillo", 100, 7, 5, 8, 0, 5, 5, WeaponType.ARTILLERY, 6, 9, 40, 1000, 8, 255, 0, -1);
-            case REBEL_RHINO -> new com.aow2.common.model.UnitStats(unitType, "Rhino", 75, 6, 6, 6, 0, 3, 6, WeaponType.ARTILLERY, 8, 8, 35, 350, 8, 255, 0, -1);
-            case REBEL_PORCUPINE -> new com.aow2.common.model.UnitStats(unitType, "MMC Porcupine", 85, 12, 4, 6, 1, 5, 5, WeaponType.ROCKET, 10, 9, 45, 280, 8, 255, 1, -1);
-        };
+        return StatsRegistry.getInstance().getUnitStats(unitType); // REF: StatsRegistry
     }
 }

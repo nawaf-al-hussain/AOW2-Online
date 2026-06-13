@@ -1,5 +1,6 @@
 package com.aow2.core.ai;
 
+import com.aow2.common.config.StatsRegistry;
 import com.aow2.common.model.BuildingType;
 import com.aow2.common.model.Faction;
 import com.aow2.common.model.GridPosition;
@@ -73,7 +74,9 @@ public final class EconomyAI {
             }
             BuildingType type = building.getBuildingType();
             if (type.isHQ()) hasHQ = true;
-            if (type.producesPower()) hasGenerator = true;
+            // REF: BuildingType.producesPower() includes CC/HQ (powerProduce=6 in RE data)
+            // but the AI build order still needs a dedicated Generator/Powerplant
+            if (type == BuildingType.CONFED_GENERATOR || type == BuildingType.REBEL_POWERPLANT) hasGenerator = true;
             if (type == BuildingType.CONFED_INFANTRY_CENTRE || type == BuildingType.REBEL_BARRACKS) {
                 hasInfantryCentre = true;
             }
@@ -300,31 +303,13 @@ public final class EconomyAI {
 
     /**
      * Get the credit cost for a building type.
-     * <p>
-     * REF: complete_building_stats.json — costCredits per building type
+     * REF: StatsRegistry
      *
      * @param type the building type
      * @return the credit cost
      */
     private int getBuildingCost(BuildingType type) {
-        return switch (type) {
-            case CONFED_COMMAND_CENTRE -> 100;
-            case CONFED_GENERATOR -> 20;
-            case CONFED_INFANTRY_CENTRE -> 30;
-            case CONFED_MACHINE_FACTORY -> 50;
-            case CONFED_TECH_CENTRE -> 60;
-            case CONFED_BUNKER -> 15;
-            case CONFED_LOCATOR -> 40;
-            case CONFED_ROCKET_LAUNCHER -> 45;
-            case REBEL_HEADQUARTERS -> 100;
-            case REBEL_POWERPLANT -> 20;
-            case REBEL_BARRACKS -> 30;
-            case REBEL_FACTORY -> 50;
-            case REBEL_LABORATORY -> 60;
-            case REBEL_BUNKER -> 15;
-            case REBEL_TOWER -> 45;
-            case REBEL_WALL -> 10;
-        };
+        return StatsRegistry.getInstance().getBuildingCost(type); // REF: StatsRegistry
     }
 
     /**
@@ -432,42 +417,17 @@ public final class EconomyAI {
 
     /**
      * Get the credit cost of a unit type.
-     * REF: complete_unit_stats.json — costCredits per unit
+     * REF: StatsRegistry
      */
     private int getUnitCost(UnitType type) {
-        return switch (type) {
-            case CONFED_INFANTRY -> 10;
-            case CONFED_GRENADIER -> 15;
-
-            case CONFED_FLAME_ASSAULT -> 25;
-            case CONFED_FORTRESS -> 50;
-            case CONFED_HAMMER -> 30;
-            case CONFED_ZEUS -> 30;
-            case CONFED_TORRENT -> 50;
-            case CONFED_MINE_SCORPIO -> 10;
-            case CONFED_MINE_FROG -> 10;
-            case CONFED_MINE_LIZARD -> 10;
-            case REBEL_INFANTRY -> 10;
-            case REBEL_GRENADIER -> 15;
-            case REBEL_SNIPER -> 20;
-            case REBEL_COYOTE -> 25;
-            case REBEL_ARMADILLO -> 40;
-            case REBEL_RHINO -> 35;
-            case REBEL_PORCUPINE -> 45;
-        };
+        return StatsRegistry.getInstance().getUnitCost(type); // REF: StatsRegistry
     }
 
     /**
      * Get the tech requirement for a unit type.
-     * REF: combat_formulas.md — research IDs for unit unlocks
+     * REF: StatsRegistry
      */
     private int getUnitTechRequirement(UnitType type) {
-        return switch (type) {
-            case CONFED_FLAME_ASSAULT -> 6;
-            case CONFED_TORRENT -> 14;
-            case REBEL_RHINO -> 12;
-            case REBEL_PORCUPINE -> 38;
-            default -> 0;
-        };
+        return StatsRegistry.getInstance().getUnitTechRequirement(type); // REF: StatsRegistry
     }
 }

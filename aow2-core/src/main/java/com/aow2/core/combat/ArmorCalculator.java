@@ -24,10 +24,12 @@ public final class ArmorCalculator {
      * Research IDs that add infantry armor bonuses.
      * REF: combat_formulas.md - Z[player][4] infantry armor slot
      * - ID 0: Confederation Energy Suit, +2 infantry armor
+     * - ID 8: Resistance Titanium Jacket, +1 infantry armor
      * - ID 24: Additional infantry armor, +1 for infantry types
      */
     private static final Map<Integer, Integer> INFANTRY_ARMOR_RESEARCH = Map.of(
         0, 2,
+        8, 1,
         24, 1
     );
 
@@ -131,6 +133,7 @@ public final class ArmorCalculator {
      * Calculate armor bonus from research for a unit.
      * <p>
      * Confederation: Energy Suit research (ID 0) adds +2 infantry armor.
+     * Resistance: Titanium Jacket research (ID 8) adds +1 infantry armor.
      * Resistance: Composite Armour research (ID 9) adds +2 vehicle armor.
      * Additional researches (IDs 24, 33) add further bonuses.
      * Bonuses stack additively within each category.
@@ -171,14 +174,19 @@ public final class ArmorCalculator {
      * Used by CombatSystem to calculate building armor during attacks.
      * <p>
      * REF: combat_formulas.md lines 64-68 - building armor from N[] per-player array
+     * <p>
+     * Building armor comes from upgrade levels, not research.
+     * Confederation research ID 0 (Energy suit) gives +2 infantry armor but does NOT affect buildings.
+     * The full building armor calculation (with research overrides) is in
+     * {@link #calculateEffectiveBuildingArmor(Building, Set)}.
      *
      * @param faction the faction to get building armor for
-     * @return building armor bonus (0 if no research completed)
+     * @return building armor bonus
      */
     public int getBuildingArmorBonus(com.aow2.common.model.Faction faction) {
-        // Default: no research bonuses applied yet
-        // When the research system is fully integrated, this will check
-        // completed research for the faction and return the appropriate bonus
+        // ASSUMPTION: Building armor bonus from upgrades not yet implemented, returns 0 until upgrade system is in place
+        // Building armor comes from the building's own upgrade levels (StatsRegistry stores base stats).
+        // Research IDs 4, 16, 40 affect building armor but are handled by calculateEffectiveBuildingArmor().
         return 0;
     }
 }

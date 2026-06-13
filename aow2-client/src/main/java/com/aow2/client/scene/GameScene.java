@@ -7,17 +7,34 @@ import com.aow2.client.render.EntityRenderer;
 import com.aow2.client.render.IsometricRenderer;
 import com.aow2.client.render.MinimapRenderer;
 import com.aow2.client.ui.HUD;
+import com.aow2.common.config.GameConstants;
+import com.aow2.common.config.StatsRegistry;
+import com.aow2.common.model.CommandType;
 import com.aow2.common.model.Faction;
 import com.aow2.common.model.GridPosition;
+import com.aow2.core.combat.CombatSystem;
+import com.aow2.core.combat.ProjectileSystem;
+import com.aow2.core.command.CommandProcessor;
+import com.aow2.core.entity.Building;
+import com.aow2.core.entity.Unit;
+import com.aow2.core.economy.BuildingPlacementSystem;
+import com.aow2.core.economy.EconomySystem;
+import com.aow2.core.economy.PowerSystem;
+import com.aow2.core.economy.ProductionSystem;
+import com.aow2.core.economy.ResourceGenerator;
 import com.aow2.core.engine.GameLoop;
 import com.aow2.core.engine.GameState;
+import com.aow2.core.engine.TickManager;
+import com.aow2.core.movement.CollisionSystem;
+import com.aow2.core.movement.MovementSystem;
+import com.aow2.core.movement.PathfindingSystem;
+import com.aow2.core.research.ResearchSystem;
 import com.aow2.core.world.EntityManager;
 import com.aow2.core.world.GameMap;
 
 import javafx.animation.AnimationTimer;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
@@ -35,7 +52,7 @@ import org.slf4j.LoggerFactory;
  * - MinimapRenderer
  * - InputHandler
  * - SelectionManager
- * - Integrates with GameLoop from aow2-core
+ * - Integrates with TickManager from aow2-core for full game simulation
  * <p>
  * REF: MASTER_DOCUMENTATION.md Section 3 - Architecture Overview
  */
@@ -48,6 +65,9 @@ public class GameScene {
 
     /** Default canvas height. */
     private static final int CANVAS_HEIGHT = 720;
+
+    /** Player ID for the local player (always 0 = CONFEDERATION in local play). */
+    private static final int LOCAL_PLAYER_ID = 0;
 
     /** The root pane for this scene. */
     private final StackPane root;
@@ -91,10 +111,40 @@ public class GameScene {
     /** The game loop. */
     private GameLoop gameLoop;
 
+    /** The tick manager orchestrating all game systems. */
+    private TickManager tickManager;
+
+    /** The economy system. */
+    private EconomySystem economy;
+
+    /** The movement system. */
+    private MovementSystem movement;
+
+    /** The combat system. */
+    private CombatSystem combat;
+
+    /** The production system. */
+    private ProductionSystem production;
+
+    /** The research system. */
+    private ResearchSystem research;
+
+    /** The building placement system. */
+    private BuildingPlacementSystem placement;
+
+    /** The pathfinding system. */
+    private PathfindingSystem pathfinding;
+
+    /** The projectile system. */
+    private ProjectileSystem projectiles;
+
+    /** The power system. */
+    private PowerSystem powerSystem;
+
     /** The JavaFX animation timer for rendering. */
     private AnimationTimer renderTimer;
 
-    /** Current player credits. */
+    /** Current player credits (synced from EconomySystem each tick). */
     private int credits;
 
     /**
@@ -114,7 +164,8 @@ public class GameScene {
         this.selectionManager = new SelectionManager();
         this.inputHandler = new InputHandler(selectionManager, cameraController, isoRenderer);
 
-        this.credits = 1000;
+        // REF: GameConstants.STARTING_CREDITS = 100
+        this.credits = GameConstants.STARTING_CREDITS;
 
         buildScene();
         setupInputHandlers();
@@ -162,6 +213,8 @@ public class GameScene {
 
     /**
      * Sets up callbacks between subsystems.
+     * Wires the InputHandler command callback to create CommandType objects
+     * and enqueue them via the TickManager for deterministic processing.
      */
     private void setupCallbacks() {
         // HUD action callback
@@ -187,11 +240,61 @@ public class GameScene {
             }
         });
 
-        // Input handler command callback
+        // Input handler command callback — creates CommandType objects and enqueues via TickManager
         inputHandler.setCommandCallback((command, targetGx, targetGy) -> {
-            LOG.info("Command: {} at ({}, {}), selected: {}",
-                command, targetGx, targetGy, selectionManager.getSelectedIds());
-            // Commands will be processed by the game loop in a future phase
+            if (tickManager == null || gameState == null || entityManager == null) {
+                LOG.warn("Cannot issue command: game systems not initialized");
+                return;
+            }
+            if (!selectionManager.hasSelection()) {
+                return;
+            }
+
+            int[] selectedIds = selectionManager.getSelectedIds().stream()
+                .mapToInt(Integer::intValue).toArray();
+            if (selectedIds.length == 0) {
+                return;
+            }
+
+            long tick = gameState.currentTick();
+            GridPosition targetPos = new GridPosition(targetGx, targetGy);
+
+            CommandType cmd = switch (command) {
+                case "move" -> {
+                    // Check if there's an enemy entity at the target position
+                    Unit enemyUnit = entityManager.findUnitAt(targetPos);
+                    if (enemyUnit != null && enemyUnit.getFaction() != Faction.CONFEDERATION) {
+                        yield new CommandType.Attack(tick, LOCAL_PLAYER_ID, selectedIds, enemyUnit.getId());
+                    }
+                    Building enemyBuilding = entityManager.findBuildingAt(targetPos);
+                    if (enemyBuilding != null && enemyBuilding.getFaction() != Faction.CONFEDERATION) {
+                        yield new CommandType.Attack(tick, LOCAL_PLAYER_ID, selectedIds, enemyBuilding.getId());
+                    }
+                    yield new CommandType.Move(tick, LOCAL_PLAYER_ID, selectedIds, targetPos);
+                }
+                case "attack_move" -> {
+                    // Attack-move: attack if enemy at target, otherwise move
+                    Unit enemyUnit = entityManager.findUnitAt(targetPos);
+                    if (enemyUnit != null && enemyUnit.getFaction() != Faction.CONFEDERATION) {
+                        yield new CommandType.Attack(tick, LOCAL_PLAYER_ID, selectedIds, enemyUnit.getId());
+                    }
+                    Building enemyBuilding = entityManager.findBuildingAt(targetPos);
+                    if (enemyBuilding != null && enemyBuilding.getFaction() != Faction.CONFEDERATION) {
+                        yield new CommandType.Attack(tick, LOCAL_PLAYER_ID, selectedIds, enemyBuilding.getId());
+                    }
+                    yield new CommandType.Move(tick, LOCAL_PLAYER_ID, selectedIds, targetPos);
+                }
+                case "stop" -> new CommandType.Stop(tick, LOCAL_PLAYER_ID, selectedIds);
+                case "hold" -> new CommandType.Stop(tick, LOCAL_PLAYER_ID, selectedIds);
+                case "patrol" -> new CommandType.Patrol(tick, LOCAL_PLAYER_ID, selectedIds, targetPos);
+                default -> null;
+            };
+
+            if (cmd != null) {
+                tickManager.enqueueCommand(cmd);
+                LOG.info("Enqueued command: {} at ({}, {}), selected: {}",
+                    command, targetGx, targetGy, selectionManager.getSelectedIds());
+            }
         });
 
         // Minimap click callback
@@ -204,7 +307,7 @@ public class GameScene {
     }
 
     /**
-     * Initializes the game scene with a map and entity manager.
+     * Initializes the game scene with a map, entity manager, and all core game systems.
      * Creates a test map with test entities for demonstration.
      */
     public void initializeGame() {
@@ -212,7 +315,35 @@ public class GameScene {
         this.map = GameMap.createTestMap();
         this.entityManager = new EntityManager();
         this.gameState = new GameState();
-        this.credits = 1000;
+
+        // REF: GameConstants.STARTING_CREDITS = 100
+        this.credits = GameConstants.STARTING_CREDITS;
+
+        // --- Instantiate core game systems ---
+
+        // Economy: ResourceGenerator → EconomySystem
+        ResourceGenerator resourceGenerator = new ResourceGenerator();
+        this.economy = new EconomySystem(resourceGenerator);
+
+        // Movement: PathfindingSystem + CollisionSystem → MovementSystem
+        this.pathfinding = new PathfindingSystem();
+        CollisionSystem collision = new CollisionSystem();
+        this.movement = new MovementSystem(pathfinding, collision);
+
+        // Combat: CombatSystem (internally creates ProjectileSystem and ArmorCalculator)
+        this.combat = new CombatSystem(gameState, entityManager);
+        this.projectiles = combat.getProjectileSystem();
+
+        // Production, Research, Placement
+        this.production = new ProductionSystem();
+        this.research = new ResearchSystem();
+        this.placement = new BuildingPlacementSystem();
+
+        // Power system
+        this.powerSystem = new PowerSystem();
+
+        // Tick manager: orchestrates all systems per tick
+        this.tickManager = new TickManager();
 
         // Connect subsystems to data
         isoRenderer.setMap(map);
@@ -228,85 +359,126 @@ public class GameScene {
         hud.setEntityManager(entityManager);
         hud.setPlayerFaction(Faction.CONFEDERATION);
 
-        // Create test entities
+        // Create test entities using StatsRegistry
         createTestEntities();
+
+        // Update power grid for initial buildings
+        powerSystem.updatePowerGrid(entityManager);
 
         // Create game loop
         this.gameLoop = new GameLoop(gameState, this::onGameTick);
 
-        LOG.info("Game initialized with test map {}x{}", map.getWidth(), map.getHeight());
+        LOG.info("Game initialized with test map {}x{}, all core systems wired", map.getWidth(), map.getHeight());
     }
 
     /**
      * Creates test entities for development and demonstration.
+     * Uses StatsRegistry for all unit and building stats instead of hardcoded values.
      */
     private void createTestEntities() {
-        // Confederation units
-        var confedInfantryStats = new com.aow2.common.model.UnitStats(
-            com.aow2.common.model.UnitType.CONFED_INFANTRY, "Standard infantry", 80, 10,
-            4, 2, 0, 5, 4, com.aow2.common.model.WeaponType.BULLET, 5, 60, 100, 5, 4, 0, 0, 0);
+        StatsRegistry registry = StatsRegistry.getInstance();
 
-        var confedGrenadierStats = new com.aow2.common.model.UnitStats(
-            com.aow2.common.model.UnitType.CONFED_GRENADIER, "Grenadier", 60, 25,
-            3, 1, 0, 5, 5, com.aow2.common.model.WeaponType.ROCKET, 8, 90, 150, 8, 2, 0, 0, 0);
-
-        // Resistance units
-        var rebelInfantryStats = new com.aow2.common.model.UnitStats(
-            com.aow2.common.model.UnitType.REBEL_INFANTRY, "Rebel infantry", 70, 9,
-            5, 1, 0, 5, 4, com.aow2.common.model.WeaponType.BULLET, 5, 50, 80, 4, 3, 0, 0, 0);
-
-        var rebelSniperStats = new com.aow2.common.model.UnitStats(
-            com.aow2.common.model.UnitType.REBEL_SNIPER, "Sniper", 50, 35,
-            3, 0, 0, 7, 7, com.aow2.common.model.WeaponType.SNIPER_RIFLE, 15, 120, 200, 10, 1, 0, 0, 0);
-
-        // Place Confederation units on the left side
+        // --- Confederation units ---
+        // REF: StatsRegistry holds RE-verified stats for all 17 unit types
         entityManager.addUnit(new com.aow2.core.entity.Unit(
             entityManager.allocateEntityId(), Faction.CONFEDERATION,
-            new GridPosition(1, 1), com.aow2.common.model.UnitType.CONFED_INFANTRY, confedInfantryStats));
+            new GridPosition(1, 1), com.aow2.common.model.UnitType.CONFED_INFANTRY,
+            registry.getUnitStats(com.aow2.common.model.UnitType.CONFED_INFANTRY)));
         entityManager.addUnit(new com.aow2.core.entity.Unit(
             entityManager.allocateEntityId(), Faction.CONFEDERATION,
-            new GridPosition(2, 1), com.aow2.common.model.UnitType.CONFED_INFANTRY, confedInfantryStats));
+            new GridPosition(2, 1), com.aow2.common.model.UnitType.CONFED_INFANTRY,
+            registry.getUnitStats(com.aow2.common.model.UnitType.CONFED_INFANTRY)));
         entityManager.addUnit(new com.aow2.core.entity.Unit(
             entityManager.allocateEntityId(), Faction.CONFEDERATION,
-            new GridPosition(1, 2), com.aow2.common.model.UnitType.CONFED_GRENADIER, confedGrenadierStats));
+            new GridPosition(1, 2), com.aow2.common.model.UnitType.CONFED_GRENADIER,
+            registry.getUnitStats(com.aow2.common.model.UnitType.CONFED_GRENADIER)));
 
-        // Place Resistance units on the right side
+        // --- Resistance units ---
         entityManager.addUnit(new com.aow2.core.entity.Unit(
             entityManager.allocateEntityId(), Faction.RESISTANCE,
-            new GridPosition(6, 6), com.aow2.common.model.UnitType.REBEL_INFANTRY, rebelInfantryStats));
+            new GridPosition(6, 6), com.aow2.common.model.UnitType.REBEL_INFANTRY,
+            registry.getUnitStats(com.aow2.common.model.UnitType.REBEL_INFANTRY)));
         entityManager.addUnit(new com.aow2.core.entity.Unit(
             entityManager.allocateEntityId(), Faction.RESISTANCE,
-            new GridPosition(5, 5), com.aow2.common.model.UnitType.REBEL_SNIPER, rebelSniperStats));
+            new GridPosition(5, 5), com.aow2.common.model.UnitType.REBEL_SNIPER,
+            registry.getUnitStats(com.aow2.common.model.UnitType.REBEL_SNIPER)));
 
-        // Confederation building
-        var commandCentreStats = new com.aow2.common.model.BuildingStats(
-            com.aow2.common.model.BuildingType.CONFED_COMMAND_CENTRE, 500, 0, 0, 5,
-            0, 10, 600, 6, 5, 0, 10, 1, 0, 0, 0, 0, com.aow2.common.model.WeaponType.NONE, java.util.List.of());
+        // --- Confederation building ---
+        // REF: StatsRegistry holds RE-verified stats for all 16 building types
         entityManager.addBuilding(new com.aow2.core.entity.Building(
             entityManager.allocateEntityId(), Faction.CONFEDERATION,
             new GridPosition(0, 0), com.aow2.common.model.BuildingType.CONFED_COMMAND_CENTRE,
-            commandCentreStats));
+            registry.getBuildingStats(com.aow2.common.model.BuildingType.CONFED_COMMAND_CENTRE)));
 
-        // Resistance headquarters
-        var headquartersStats = new com.aow2.common.model.BuildingStats(
-            com.aow2.common.model.BuildingType.REBEL_HEADQUARTERS, 450, 0, 0, 4,
-            0, 10, 500, 6, 4, 0, 10, 1, 0, 0, 0, 0, com.aow2.common.model.WeaponType.NONE, java.util.List.of());
+        // --- Resistance headquarters ---
         entityManager.addBuilding(new com.aow2.core.entity.Building(
             entityManager.allocateEntityId(), Faction.RESISTANCE,
             new GridPosition(7, 7), com.aow2.common.model.BuildingType.REBEL_HEADQUARTERS,
-            headquartersStats));
+            registry.getBuildingStats(com.aow2.common.model.BuildingType.REBEL_HEADQUARTERS)));
 
-        LOG.info("Test entities created: {} units, {} buildings",
+        LOG.info("Test entities created via StatsRegistry: {} units, {} buildings",
             entityManager.unitCount(), entityManager.buildingCount());
     }
 
     /**
      * Game tick callback from the GameLoop.
+     * Delegates to TickManager for deterministic processing of all game systems,
+     * then handles client-specific updates (construction progress, power grid, HUD sync).
+     * <p>
+     * TickManager processing order:
+     * 1. Process commands
+     * 2. Process movement
+     * 3. Process combat
+     * 4. Process production
+     * 5. Process research
+     * 6. Process economy
+     * 7. Remove dead entities
+     * 8. Advance tick
      */
     private void onGameTick() {
-        // Process game logic each tick
-        // For Phase 2, we just update the game state
-        // Combat and movement will be added in later phases
+        if (gameState == null || !gameState.isRunning()) {
+            return;
+        }
+
+        // Tick construction progress for all buildings under construction
+        tickConstructionProgress();
+
+        // Process all game systems in the correct order via TickManager
+        tickManager.processTick(gameState, entityManager, map,
+            movement, combat, economy, production, research, placement,
+            pathfinding, projectiles);
+
+        // Update power grid after entity changes
+        powerSystem.updatePowerGrid(entityManager);
+
+        // Sync credits from EconomySystem for HUD display
+        this.credits = economy.getCredits(LOCAL_PLAYER_ID);
+    }
+
+    /**
+     * Advances construction progress for all buildings under construction.
+     * Each tick, buildings with constructionProgress &lt; buildTime get +1 progress.
+     * When construction completes, the building becomes functional.
+     * <p>
+     * REF: complete_building_stats.json — buildTime per building type
+     */
+    private void tickConstructionProgress() {
+        if (entityManager == null) {
+            return;
+        }
+        for (com.aow2.core.entity.Building building : entityManager.getAllBuildings()) {
+            if (building.isAlive() && building.isUnderConstruction()) {
+                building.setConstructionProgress(building.getConstructionProgress() + 1);
+                if (!building.isUnderConstruction()) {
+                    LOG.info("Building {} ({}) construction complete at {}",
+                        building.getId(), building.getBuildingType().displayName(), building.getPosition());
+                    // Update power grid when a building completes construction
+                    if (building.getBuildingType().producesPower()) {
+                        powerSystem.updatePowerGrid(entityManager);
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -377,7 +549,7 @@ public class GameScene {
         // Render minimap
         minimapRenderer.render(cameraController);
 
-        // Update HUD
+        // Update HUD with credits from EconomySystem
         hud.update(credits, gameState != null ? gameState.currentTick() : 0,
             selectionManager.getSelectedIds());
     }
@@ -442,5 +614,23 @@ public class GameScene {
      */
     public CameraController getCameraController() {
         return cameraController;
+    }
+
+    /**
+     * Gets the tick manager (for testing or external access).
+     *
+     * @return the tick manager, or null if not yet initialized
+     */
+    public TickManager getTickManager() {
+        return tickManager;
+    }
+
+    /**
+     * Gets the economy system (for testing or external access).
+     *
+     * @return the economy system, or null if not yet initialized
+     */
+    public EconomySystem getEconomy() {
+        return economy;
     }
 }

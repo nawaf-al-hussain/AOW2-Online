@@ -269,9 +269,10 @@ class ProductionSystemTest {
 
             // Then: time should be positive
             // REF: formula = (baseBuildTime * productionModifier) / 10 * 20 / (upgradeBonus + 20)
-            // With modifier=10, bonus=0: (40 * 10) / 10 * 20 / 20 = 40
+            // With modifier=10, bonus=0: (4 * 10) / 10 * 20 / 20 = 4
+            // REF: StatsRegistry — Infantry buildTime=4 from complete_unit_stats.json
             assertTrue(time > 0, "Production time should be positive");
-            assertEquals(40, time); // Infantry baseBuildTime=40 with default modifiers
+            assertEquals(4, time); // Infantry baseBuildTime=4 with default modifiers
         }
 
         @Test
@@ -310,7 +311,7 @@ class ProductionSystemTest {
 
             // Then: should get 50% refund
             assertTrue(result);
-            int refund = (int)(15 * 0.50); // Grenadier costs 15, 50% refund
+            int refund = (int)(10 * 0.50); // Grenadier costs 10 (REF: StatsRegistry), 50% refund
             assertEquals(creditsBefore + refund, economy.getCredits(0));
         }
 

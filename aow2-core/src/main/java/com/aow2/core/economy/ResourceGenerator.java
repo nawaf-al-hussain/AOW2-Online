@@ -1,6 +1,7 @@
 package com.aow2.core.economy;
 
 import com.aow2.common.config.GameConstants;
+import com.aow2.common.config.StatsRegistry;
 import com.aow2.common.model.BuildingType;
 import com.aow2.common.model.Faction;
 import com.aow2.common.model.GridPosition;
@@ -131,37 +132,12 @@ public final class ResourceGenerator {
 
     /**
      * Get the credit cost of a unit type.
-     * <p>
-     * REF: complete_unit_stats.json — costCredits field per unit type
-     * ASSUMPTION: using approximate values from RE data until full stats registry is implemented
+     * REF: StatsRegistry
      *
      * @param unitType the unit type
      * @return the credit cost of the unit
      */
     private int getUnitCost(UnitType unitType) {
-        return switch (unitType) {
-            // Confederation infantry
-            case CONFED_INFANTRY -> 10;
-            case CONFED_GRENADIER -> 15;
-            case CONFED_FLAME_ASSAULT -> 25;
-            // Confederation vehicles
-            case CONFED_FORTRESS -> 50;
-            case CONFED_HAMMER -> 30;
-            case CONFED_ZEUS -> 30;
-            case CONFED_TORRENT -> 50;
-            // Confederation mines
-            case CONFED_MINE_SCORPIO -> 10;
-            case CONFED_MINE_FROG -> 10;
-            case CONFED_MINE_LIZARD -> 10;
-            // Resistance infantry
-            case REBEL_INFANTRY -> 10;
-            case REBEL_GRENADIER -> 15;
-            case REBEL_SNIPER -> 20;
-            // Resistance vehicles
-            case REBEL_COYOTE -> 25;
-            case REBEL_ARMADILLO -> 40;
-            case REBEL_RHINO -> 35;
-            case REBEL_PORCUPINE -> 45;
-        };
+        return StatsRegistry.getInstance().getUnitCost(unitType); // REF: StatsRegistry
     }
 }

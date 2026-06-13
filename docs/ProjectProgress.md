@@ -1,0 +1,139 @@
+# Project Progress — Art of War 2: Online
+
+> This file tracks everything that has been implemented and what remains.
+> Updated after each development session.
+
+## Status: Phase 1 COMPLETE — Phase 2 IN PROGRESS
+
+## Phase 0: Project Scaffolding ✅
+- [x] Gradle multi-module project initialized (5 modules: common, core, client, server, modding)
+- [x] Java 21 + FXGL 21 + Spring Boot 3.3 dependencies configured
+- [x] .gitignore, README.md, LICENSE (MIT) created
+- [x] Basic FXGL application class created (AOW2App, 1280x720 window)
+- [x] JUnit 5 + Mockito + JaCoCo configured
+- [x] GitHub Actions CI set up (.github/workflows/ci.yml)
+- [x] Initial commit pushed to GitHub (main + dev branches)
+- [x] Docker Compose setup (Spring Boot + PostgreSQL)
+- [x] Flyway migration V1 (players, match_results, uploaded_maps)
+
+## Phase 1: Core Engine & Data Model ✅
+- [x] Fixed-timestep game loop (10 TPS) — GameLoop.java
+- [x] Entity model (Unit, Building, Projectile, Mine) with runtime state
+- [x] Faction enum (CONFEDERATION, RESISTANCE, NEUTRAL)
+- [x] Terrain/Tile system (TerrainType enum with passability, 15 types with correct RE IDs)
+- [x] Map loading from JSON (MapLoader.java with Jackson)
+- [x] GameState class with event queue
+- [x] EventBus (event-based system using sealed GameEvent interface)
+- [x] Data model tests (FactionTest, GridPositionTest, DirectionTest, GameConstantsTest)
+- [x] StatsRegistry — centralized unit/building stats from RE data (17 units, 16 buildings)
+- [x] GameConstants corrected: TICK_RATE=10, MAX_BUILDINGS_PER_PLAYER=22
+- [x] BuildingType producesPower() includes CC/HQ (powerProduce=6 per RE spec)
+- [x] BuildingType isIncomeBuilding() for CC/HQ credit generation
+
+## Phase 2: Rendering & UI Framework (PARTIALLY COMPLETE)
+- [x] Isometric tile renderer (IsometricRenderer.java with diamond grid)
+- [ ] Sprite loading and rendering (placeholder colors currently)
+- [x] Camera system (CameraController with pan/zoom/bounds)
+- [x] Unit rendering (EntityRenderer with facing directions)
+- [x] Building rendering (with construction states)
+- [x] Minimap (MinimapRenderer.java)
+- [x] HUD (resources, selection info, action buttons)
+- [x] Mouse selection (SelectionManager with box/click select)
+- [x] Right-click commands (InputHandler wired to CommandType records)
+- [ ] Production UI
+- [x] Fog of war rendering (FogRenderer.java)
+- [ ] Health bars
+- [x] Main menu (MainMenuScene.java)
+- [x] GameScene wired to TickManager for game logic processing
+- [x] Building construction progress ticking
+- [x] Credits synced from EconomySystem
+
+## Phase 3: Movement & Pathfinding (IMPLEMENTED)
+- [x] A* pathfinding (PathfindingSystem with octile heuristic, 8-directional)
+- [x] Terrain passability (per-unit-category system in TerrainType)
+- [x] Collision avoidance (CollisionSystem with push resolution)
+- [x] Formation movement (group move with spacing in MovementSystem)
+- [x] Stuck detection (stuckCounter threshold triggers re-pathfinding)
+- [x] Speed formula corrected: ticksPerCell = 10 - speed + 1 (higher speed = faster)
+- [ ] Garrison movement (garrison enter/exit not fully integrated)
+- [x] Large unit collision (2-cell Fortress support)
+
+## Phase 4: Combat System (IMPLEMENTED)
+- [x] Damage formula (exact RE formula with two-step clamp)
+- [x] Armor calculation (ArmorCalculator with research bonuses)
+- [x] Projectile system (ProjectileSystem, max 400 active)
+- [x] Splash damage (no falloff for regular artillery)
+- [x] Nuclear damage (distance factor lookup + two-step clamp)
+- [x] Attack cooldowns (per-unit attack speed)
+- [x] Death animations (matching RE bi[]/bd[] arrays)
+- [x] Bunker garrison attacks
+- [x] Defensive building attacks
+- [x] Target type multipliers
+- [x] Siege mode (with damage bonus)
+
+## Phase 5: Economy & Buildings (IMPLEMENTED)
+- [x] Auto-resource generation (127-tick cycle, diminishing returns)
+- [x] Building placement system (CC radius, terrain, cost, tech, limits)
+- [x] Generator power system (PowerSystem with radius grid)
+- [x] Building construction (progress ticking, completion)
+- [x] Production queues (enqueue, cancel, progress, spawn)
+- [x] Research system (lifecycle: start, progress, complete)
+- [x] Research effects (16 base techs, lazy evaluation)
+- [x] StatsRegistry integration (all costs/stats from RE data)
+
+## Phase 6: AI System (IMPLEMENTED)
+- [x] AI decision system (AISystem coordinating economy/military/research)
+- [x] Difficulty levels (Easy, Normal, Hard)
+- [x] Base building logic (priority build order)
+- [x] Unit composition (game-phase-based decisions)
+- [x] Retreat behavior (threat assessment)
+- [ ] Fog-of-war awareness
+
+## Phase 7: Campaign System (PARTIALLY COMPLETE)
+- [x] Campaign data structures
+- [x] CampaignManager with episode progression
+- [x] SaveManager with serialization
+- [ ] Lua mission scripting
+- [ ] Episode missions
+- [ ] Custom missions
+- [ ] Mission briefing screen
+- [ ] Victory/defeat conditions
+
+## Phase 8: Multiplayer (PARTIALLY COMPLETE)
+- [x] Spring Boot server
+- [x] Player authentication (JWT)
+- [x] Matchmaking system
+- [x] Lockstep P2P networking (Move commands pathfind via MovementSystem)
+- [x] Desync detection
+- [x] Command serialization (11 types)
+- [ ] Chat system
+- [ ] ELO ranking
+
+## Phase 9-14: Remaining phases
+- See individual phase sections above for detailed status
+
+---
+
+## Assumptions Log
+
+| Date | Phase | Assumption | Reason | Status |
+|------|-------|-----------|--------|--------|
+| 2026-06-14 | 1 | MAX_SPEED_RATING=10, ticksPerCell=10-speed+1 | RE shows speed as rating | Active |
+| 2026-06-14 | 5 | CANCEL_REFUND_PERCENT=50% | Not in RE data | Active |
+| 2026-06-14 | 4 | Infantry vs machinery=0.7x | Reduction confirmed, exact value unknown | Active |
+| 2026-06-14 | 4 | Siege vs building=1.5x | Bonus confirmed, exact value unknown | Active |
+| 2026-06-14 | 5 | Building upgrades not implemented | Needs upgrade command | Active |
+| 2026-06-14 | 1 | Mine attackRange=sightRange | RE data lacks separate mine range | Active |
+| 2026-06-14 | 1 | Rebel stats partially derived | RE only has partial rebel data | Active |
+
+## Known Issues
+
+| Date | Phase | Issue | Severity | Status |
+|------|-------|-------|----------|--------|
+| 2026-06-14 | 6 | AI has no fog-of-war | Medium | Open |
+| 2026-06-14 | 7 | Trigger.check() doesn't mutate activated state | Medium | Open |
+| 2026-06-14 | 7 | SaveManager can't fully restore | Medium | Open |
+| 2026-06-14 | 8 | SyncChecker missing economy/research state | Medium | Open |
+| 2026-06-14 | 11 | Two different wire formats for replay | Medium | Open |
+| 2026-06-14 | 1 | Tile.java orphaned (GameMap uses TerrainType[][]) | Low | Open |
+| 2026-06-14 | 3 | CollisionSystem O(n²), no spatial index | Low | Open |

@@ -258,9 +258,15 @@ public final class LockstepEngine {
                 for (int unitId : m.unitIds()) {
                     var unit = entities.getUnit(unitId);
                     if (unit != null && unit.getFaction().ordinal() == m.playerId()) {
-                        unit.setTargetPosition(m.target());
-                        unit.setMovementState(
-                                com.aow2.common.model.MovementState.MOVING);
+                        // REF: pathfinding.md — compute path via MovementSystem instead of just setting target
+                        if (movementSystem != null && gameMap != null) {
+                            movementSystem.issueMoveCommand(unit, m.target(), gameMap);
+                        } else {
+                            // Fallback: set target directly if MovementSystem not available
+                            unit.setTargetPosition(m.target());
+                            unit.setMovementState(
+                                    com.aow2.common.model.MovementState.MOVING);
+                        }
                     }
                 }
             }
@@ -339,14 +345,17 @@ public final class LockstepEngine {
             case CommandType.Patrol pt -> {
                 log.debug("Patrol command at tick {}: units -> waypoint {}",
                         pt.tick(), pt.waypoint());
-                // Patrol is routed through movement system when available;
-                // for now, just move units to the patrol waypoint
+                // Patrol: move units to the patrol waypoint via MovementSystem
                 for (int unitId : pt.unitIds()) {
                     var unit = entities.getUnit(unitId);
                     if (unit != null && unit.isAlive()) {
-                        unit.setTargetPosition(pt.waypoint());
-                        unit.setMovementState(
-                                com.aow2.common.model.MovementState.MOVING);
+                        if (movementSystem != null && gameMap != null) {
+                            movementSystem.issueMoveCommand(unit, pt.waypoint(), gameMap);
+                        } else {
+                            unit.setTargetPosition(pt.waypoint());
+                            unit.setMovementState(
+                                    com.aow2.common.model.MovementState.MOVING);
+                        }
                     }
                 }
             }

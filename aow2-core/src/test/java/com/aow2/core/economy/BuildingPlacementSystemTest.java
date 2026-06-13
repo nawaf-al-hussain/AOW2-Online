@@ -235,7 +235,7 @@ class BuildingPlacementSystemTest {
             // Given
             placeCompletedCC(new GridPosition(50, 50));
             economy.setCredits(0, 1000);
-            int cost = 20; // Generator cost
+            int cost = 80; // Generator cost (REF: StatsRegistry from complete_building_stats.json)
 
             // When
             Building placed = placementSystem.placeBuilding(

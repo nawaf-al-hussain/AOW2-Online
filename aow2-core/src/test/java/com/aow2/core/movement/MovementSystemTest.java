@@ -26,18 +26,20 @@ class MovementSystemTest {
     private EntityManager entities;
 
     /**
-     * Creates a simple Infantry stat block for testing.
-     * Speed=1 means unit moves every tick (fastest movement).
+     * Creates a fast Infantry stat block for testing.
+     * Speed=9 → ticksPerCell = 10 - 9 + 1 = 2 (moves every 2 ticks).
+     * REF: complete_unit_stats.json — speed is a rating where higher = faster movement
      */
     private UnitStats createFastInfantryStats() {
         return new UnitStats(
             UnitType.REBEL_INFANTRY, "Infantry", 40, 5,
-            1, 5, 0, 8, 5, WeaponType.BULLET, 5, 30, 10, 5, 10, 0, 0, 1
+            9, 5, 0, 8, 5, WeaponType.BULLET, 5, 30, 10, 5, 10, 0, 0, 1
         );
     }
 
     /**
-     * Creates a slow unit stat block (speed=4, moves every 4 ticks).
+     * Creates a slow unit stat block (speed=4, ticksPerCell = 10 - 4 + 1 = 7).
+     * REF: complete_unit_stats.json — speed is a rating where higher = faster movement
      */
     private UnitStats createSlowUnitStats() {
         return new UnitStats(
@@ -121,7 +123,7 @@ class MovementSystemTest {
         @Test
         @DisplayName("Should move unit along path tick by tick")
         void shouldMoveUnitAlongPath() {
-            // Given: a fast unit (speed=1) with a move command
+            // Given: a fast unit (speed=9, ticksPerCell=2) with a move command
             GameMap map = new GameMap(20, 20);
             UnitStats stats = createFastInfantryStats();
             Unit unit = new Unit(1, Faction.RESISTANCE, new GridPosition(0, 0),
@@ -129,8 +131,9 @@ class MovementSystemTest {
             entities.addUnit(unit);
             movement.issueMoveCommand(unit, new GridPosition(3, 0), map, entities);
 
-            // When: processing ticks
+            // When: processing 2 ticks (speed=9 → ticksPerCell=2)
             assertEquals(MovementState.MOVING, unit.getMovementState());
+            movement.processTick(entities, map);
             movement.processTick(entities, map);
 
             // Then: unit should have advanced one step
@@ -141,7 +144,7 @@ class MovementSystemTest {
         @Test
         @DisplayName("Should stop unit when reaching destination")
         void shouldStopUnitWhenReachingDestination() {
-            // Given: a fast unit (speed=1) moving one cell
+            // Given: a fast unit (speed=9, ticksPerCell=2) moving one cell
             GameMap map = new GameMap(20, 20);
             UnitStats stats = createFastInfantryStats();
             Unit unit = new Unit(1, Faction.RESISTANCE, new GridPosition(0, 0),
@@ -149,7 +152,8 @@ class MovementSystemTest {
             entities.addUnit(unit);
             movement.issueMoveCommand(unit, new GridPosition(1, 0), map, entities);
 
-            // When: processing enough ticks to reach destination
+            // When: processing enough ticks to reach destination (ticksPerCell=2)
+            movement.processTick(entities, map);
             movement.processTick(entities, map);
 
             // Then: unit should have arrived
@@ -178,7 +182,7 @@ class MovementSystemTest {
         @Test
         @DisplayName("Should respect speed stat for slow units")
         void shouldRespectSpeedStatForSlowUnits() {
-            // Given: a slow unit (speed=4, moves every 4 ticks)
+            // Given: a slow unit (speed=4, ticksPerCell = 10-4+1 = 7)
             GameMap map = new GameMap(20, 20);
             UnitStats stats = createSlowUnitStats();
             Unit unit = new Unit(1, Faction.CONFEDERATION, new GridPosition(0, 0),
@@ -186,15 +190,15 @@ class MovementSystemTest {
             entities.addUnit(unit);
             movement.issueMoveCommand(unit, new GridPosition(5, 0), map, entities);
 
-            // When: processing 3 ticks (not enough to move)
-            for (int i = 0; i < 3; i++) {
+            // When: processing 6 ticks (not enough to move, need 7)
+            for (int i = 0; i < 6; i++) {
                 movement.processTick(entities, map);
             }
 
             // Then: unit should not have moved yet
             assertEquals(new GridPosition(0, 0), unit.getPosition());
 
-            // When: processing one more tick (4th tick)
+            // When: processing one more tick (7th tick)
             movement.processTick(entities, map);
 
             // Then: unit should now move
@@ -224,7 +228,8 @@ class MovementSystemTest {
             movement.issueMoveCommand(movingUnit, new GridPosition(3, 0), map, entities);
 
             // When: processing enough ticks to trigger stuck detection
-            for (int i = 0; i < 10; i++) {
+            // Fast unit has ticksPerCell=2, so it tries to move every 2 ticks
+            for (int i = 0; i < 20; i++) {
                 movement.processTick(entities, map);
             }
 

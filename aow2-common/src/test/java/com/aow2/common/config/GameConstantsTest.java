@@ -8,9 +8,10 @@ import static org.junit.jupiter.api.Assertions.*;
 class GameConstantsTest {
 
     @Test
-    @DisplayName("Tick rate should be 60 TPS")
+    @DisplayName("Tick rate should be 10 TPS matching original game")
     void shouldHaveCorrectTickRate() {
-        assertEquals(60, GameConstants.TICK_RATE);
+        // REF: combat_formulas.md — original game runs at ~10 ticks/second (100ms per tick)
+        assertEquals(10, GameConstants.TICK_RATE);
     }
 
     @Test

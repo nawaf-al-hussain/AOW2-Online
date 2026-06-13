@@ -282,7 +282,35 @@ public final class ResearchSystem {
      * Apply research effect to the game state.
      * Called when research completes.
      * <p>
+     * Research effects are implemented as "mark as completed" — other systems
+     * (ArmorCalculator, CombatSystem, ProductionSystem, etc.) query
+     * {@link #hasResearch(int, int)} to apply the actual stat modifications lazily.
+     * <p>
      * REF: combat_formulas.md "Research/Upgrade Effects" — detailed effects per research ID
+     * <p>
+     * Confederation research IDs 0-7:
+     * <ul>
+     *   <li>ID 0: Energy suit → infantry armor +2 (ArmorCalculator checks hasResearch)</li>
+     *   <li>ID 1: Bio suit → infantry HP recovery x3</li>
+     *   <li>ID 2: Enhanced firing rate → Fortress attack speed reduced by 50%</li>
+     *   <li>ID 3: Armour-piercing bullet → Fortress damage +40%</li>
+     *   <li>ID 4: Heavy shells → Hammer damage +40%</li>
+     *   <li>ID 5: Forced light missiles → unlocks Flame Assault (ProductionSystem checks hasResearch)</li>
+     *   <li>ID 6: Lava flame fuel → Fortress can use flame weapon</li>
+     *   <li>ID 7: Volcano flame gun → Zeus and Hammer damage +25%</li>
+     * </ul>
+     * <p>
+     * Rebels research IDs 8-15:
+     * <ul>
+     *   <li>ID 8: Titanium jacket → infantry armor +1 (ArmorCalculator checks hasResearch)</li>
+     *   <li>ID 9: First-aid kit → infantry HP recovery x3</li>
+     *   <li>ID 10: Enhanced fire rate → infantry firing rate +50%</li>
+     *   <li>ID 11: Doping → infantry speed +1</li>
+     *   <li>ID 12: Snipers → unlocks Sniper unit (ProductionSystem checks hasResearch)</li>
+     *   <li>ID 13: Rifle 'Hornet-10' → Sniper sight+2, range+2, damage+20%</li>
+     *   <li>ID 14: Heavy machine gun → Coyote/Armadillo damage +15%</li>
+     *   <li>ID 15: Reinforced engine → vehicle speed +1, unlocks Rhino (ProductionSystem checks hasResearch)</li>
+     * </ul>
      *
      * @param researchId the completed research ID
      * @param playerId   the player who completed it
@@ -291,42 +319,125 @@ public final class ResearchSystem {
     public void applyResearchEffect(int researchId, int playerId, EntityManager entities) {
         Faction faction = EconomySystem.playerFaction(playerId);
 
-        // REF: combat_formulas.md — research effects are applied as stat modifications
-        // The specific effect depends on the research ID.
-        // ASSUMPTION: Effects are applied by modifying unit/building stats at runtime.
-        // For now, we log the effect. Full implementation will modify entity stats
-        // via a stat modifier system.
         TechTree.ResearchNode node = techTree.getTechNode(faction, researchId);
-        if (node != null) {
-            LOG.debug("Applied research effect: {} for player {} ({})",
-                node.name(), playerId, node.description());
-        }
+        String techName = node != null ? node.name() : "Research-" + researchId;
+
+        // Research is already stored in completedResearch[playerId] by processTick().
+        // Other systems query hasResearch(playerId, researchId) to apply effects lazily.
 
         // REF: combat_formulas.md — specific effects per research ID
         switch (researchId) {
-            case 5, 8, 13, 18, 29, 32, 37, 41, 42 -> {
-                // Building radius +1 effects
-                // ASSUMPTION: These are handled by the PowerSystem querying completed research
-                LOG.debug("Building radius upgrade applied for player {}", playerId);
+            // === Confederation research (IDs 0-7) ===
+            case 0 -> {
+                // Energy suit → infantry armor +2
+                // ArmorCalculator.getResearchArmorBonus() checks hasResearch(playerId, 0)
+                LOG.info("Player {} ({}) completed Energy Suit: infantry armor +2", playerId, faction);
             }
-            case 0, 9, 24, 33 -> {
-                // Infantry armour upgrades
-                LOG.debug("Infantry armour upgrade applied for player {}", playerId);
+            case 1 -> {
+                // Bio suit → infantry HP recovery x3
+                // HP recovery system checks hasResearch(playerId, 1)
+                LOG.info("Player {} ({}) completed Bio Suit: infantry HP recovery x3", playerId, faction);
+            }
+            case 2 -> {
+                // Enhanced firing rate → Fortress attack speed reduced by 50%
+                // CombatSystem checks hasResearch(playerId, 2) for Fortress attack speed
+                LOG.info("Player {} ({}) completed Enhanced Firing Rate: Fortress attack speed -50%", playerId, faction);
+            }
+            case 3 -> {
+                // Armour-piercing bullet → Fortress damage +40%
+                // CombatSystem checks hasResearch(playerId, 3) for Fortress damage bonus
+                LOG.info("Player {} ({}) completed Armour-Piercing Bullet: Fortress damage +40%", playerId, faction);
             }
             case 4 -> {
-                // Building armour +4
-                LOG.debug("Building armour upgrade applied for player {}", playerId);
+                // Heavy shells → Hammer damage +40%
+                // CombatSystem checks hasResearch(playerId, 4) for Hammer damage bonus
+                LOG.info("Player {} ({}) completed Heavy Shells: Hammer damage +40%", playerId, faction);
+            }
+            case 5 -> {
+                // Forced light missiles → unlocks Flame Assault
+                // ProductionSystem checks hasResearch(playerId, 5) for unit availability
+                LOG.info("Player {} ({}) completed Forced Light Missiles: Flame Assault unlocked", playerId, faction);
             }
             case 6 -> {
-                // Upgrades unit type 18 -> type 7 (Rhino upgrade)
-                LOG.debug("Unit type upgrade applied for player {}", playerId);
+                // Lava flame fuel → Fortress can use flame weapon
+                // CombatSystem checks hasResearch(playerId, 6) for Fortress flame weapon
+                LOG.info("Player {} ({}) completed Lava Flame Fuel: Fortress flame weapon enabled", playerId, faction);
+            }
+            case 7 -> {
+                // Volcano flame gun → Zeus and Hammer damage +25%
+                // CombatSystem checks hasResearch(playerId, 7) for Zeus/Hammer damage bonus
+                LOG.info("Player {} ({}) completed Volcano Flame Gun: Zeus & Hammer damage +25%", playerId, faction);
+            }
+
+            // === Rebels research (IDs 8-15) ===
+            case 8 -> {
+                // Titanium jacket → infantry armor +1
+                // ArmorCalculator.getResearchArmorBonus() checks hasResearch(playerId, 8)
+                LOG.info("Player {} ({}) completed Titanium Jacket: infantry armor +1", playerId, faction);
+            }
+            case 9 -> {
+                // First-aid kit → infantry HP recovery x3
+                // HP recovery system checks hasResearch(playerId, 9)
+                LOG.info("Player {} ({}) completed First-Aid Kit: infantry HP recovery x3", playerId, faction);
+            }
+            case 10 -> {
+                // Enhanced fire rate → infantry firing rate +50%
+                // CombatSystem checks hasResearch(playerId, 10) for infantry attack speed
+                LOG.info("Player {} ({}) completed Enhanced Fire Rate: infantry firing rate +50%", playerId, faction);
+            }
+            case 11 -> {
+                // Doping → infantry speed +1
+                // MovementSystem checks hasResearch(playerId, 11) for infantry speed bonus
+                LOG.info("Player {} ({}) completed Doping: infantry speed +1", playerId, faction);
             }
             case 12 -> {
-                // Upgrades unit type 17 -> type 11 (Hammer upgrade)
-                LOG.debug("Unit type upgrade applied for player {}", playerId);
+                // Snipers → unlocks Sniper unit
+                // ProductionSystem checks hasResearch(playerId, 12) for unit availability
+                LOG.info("Player {} ({}) completed Snipers: Sniper unit unlocked", playerId, faction);
+            }
+            case 13 -> {
+                // Rifle 'Hornet-10' → Sniper sight+2, range+2, damage+20%
+                // CombatSystem checks hasResearch(playerId, 13) for Sniper stat bonuses
+                LOG.info("Player {} ({}) completed Rifle Hornet-10: Sniper sight+2, range+2, damage+20%", playerId, faction);
+            }
+            case 14 -> {
+                // Heavy machine gun → Coyote/Armadillo damage +15%
+                // CombatSystem checks hasResearch(playerId, 14) for vehicle damage bonus
+                LOG.info("Player {} ({}) completed Heavy Machine Gun: Coyote/Armadillo damage +15%", playerId, faction);
+            }
+            case 15 -> {
+                // Reinforced engine → vehicle speed +1, unlocks Rhino
+                // ProductionSystem checks hasResearch(playerId, 15) for unit availability
+                // MovementSystem checks hasResearch(playerId, 15) for vehicle speed bonus
+                LOG.info("Player {} ({}) completed Reinforced Engine: vehicle speed +1, Rhino unlocked", playerId, faction);
+            }
+
+            // === Extended research IDs (16-47) ===
+            // REF: combat_formulas.md — additional research effects for advanced gameplay
+            case 16 -> {
+                // Player 0 building armor override = 9
+                // ArmorCalculator.calculateEffectiveBuildingArmor() checks hasResearch(playerId, 16)
+                LOG.info("Player {} ({}) completed building armor override = 9", playerId, faction);
+            }
+            case 40 -> {
+                // Player 1 building armor override = 9
+                // ArmorCalculator.calculateEffectiveBuildingArmor() checks hasResearch(playerId, 40)
+                LOG.info("Player {} ({}) completed building armor override = 9", playerId, faction);
+            }
+            case 24 -> {
+                // Additional infantry armor +1
+                // ArmorCalculator.getResearchArmorBonus() checks hasResearch(playerId, 24)
+                LOG.info("Player {} ({}) completed additional infantry armor +1", playerId, faction);
+            }
+            case 33 -> {
+                // Additional vehicle armor +1
+                // ArmorCalculator.getResearchArmorBonus() checks hasResearch(playerId, 33)
+                LOG.info("Player {} ({}) completed additional vehicle armor +1", playerId, faction);
             }
             default -> {
-                LOG.debug("Research effect {} applied for player {}", researchId, playerId);
+                // Other research effects: building radius, power, etc.
+                // These are handled by other systems querying hasResearch()
+                LOG.info("Player {} ({}) completed research ID {}: {}", playerId, faction, researchId, techName);
             }
         }
     }

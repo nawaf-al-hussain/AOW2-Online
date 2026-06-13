@@ -102,6 +102,22 @@ class ArmorCalculatorTest {
     }
 
     @Test
+    @DisplayName("Should apply Rebel Titanium Jacket infantry armor from research ID 8")
+    void shouldApplyTitaniumJacketInfantryArmor() {
+        // Given
+        Unit infantry = new Unit(2, Faction.RESISTANCE, new GridPosition(10, 10),
+            UnitType.REBEL_INFANTRY, REBEL_INFANTRY_STATS);
+        // Research ID 8: Titanium Jacket, +1 infantry armor
+        Set<Integer> research = Set.of(8);
+
+        // When
+        int armor = armorCalculator.calculateEffectiveArmor(infantry, research);
+
+        // Then
+        assertEquals(6, armor, "Armor should be 5 (base) + 1 (research ID 8) = 6");
+    }
+
+    @Test
     @DisplayName("Should return zero for buildings")
     void shouldReturnZeroForBuildings() {
         // Given

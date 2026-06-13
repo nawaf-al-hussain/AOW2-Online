@@ -173,17 +173,18 @@ class PowerSystemTest {
         }
 
         @Test
-        @DisplayName("Should detect no power when no generators exist")
-        void shouldDetectNoPowerWhenNoGenerators() {
-            // Given: no generators, just a CC
+        @DisplayName("Should detect power when only CC exists (CC produces power)")
+        void shouldDetectPowerFromCC() {
+            // Given: a CC but no generators
             placeCompletedBuilding(
                 BuildingType.CONFED_COMMAND_CENTRE, createCommandCentreStats(), new GridPosition(50, 50));
 
-            // When: check any position for power
+            // When: check a nearby position for power
+            // REF: complete_building_stats.json — CC produces power (powerProduce=6)
             boolean powered = powerSystem.isPositionPowered(new GridPosition(50, 50), 0, entities);
 
-            // Then: CCs don't generate power, only generators do
-            assertFalse(powered);
+            // Then: CC generates power, so positions within its radius are powered
+            assertTrue(powered, "CC should power nearby positions (powerProduce=6 in RE data)");
         }
     }
 

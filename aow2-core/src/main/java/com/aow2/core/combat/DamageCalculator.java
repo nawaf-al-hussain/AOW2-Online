@@ -1,7 +1,6 @@
 package com.aow2.core.combat;
 
 import com.aow2.common.config.GameConstants;
-import com.aow2.common.model.UnitType;
 import com.aow2.core.entity.Building;
 import com.aow2.core.entity.Unit;
 
@@ -47,6 +46,55 @@ public final class DamageCalculator {
     }
 
     /**
+     * Distance factor lookup table for nuclear damage.
+     * REF: combat_formulas.md lines 236-256 — simplified version of RE's
+     * bS[bT[79]+attackType] * distanceTable approach.
+     * distanceFactor decreases with distance; used as: effectiveDamage = weaponDamage * distFactor / 12
+     */
+    private static final int[] NUCLEAR_DISTANCE_FACTOR = {
+        12, // distance 0: full damage
+        10, // distance 1
+        7,  // distance 2
+        5,  // distance 3
+        3,  // distance 4
+        2,  // distance 5
+        1   // distance 6+
+    };
+
+    /**
+     * Calculate nuclear damage at a given distance from impact.
+     * REF: combat_formulas.md lines 236-256 — nuclear damage uses distance-based factor
+     * with the same two-step clamp as normal damage.
+     *
+     * RE formula:
+     *   distanceFactor = baseDamage * distanceTable[dy][dx] / 12
+     *   damage = max(min(((10 - armour) * distanceFactor) / 10, distanceFactor - armour), 1)
+     *
+     * Simplified: compute effectiveDamage = weaponDamage * distFactor / 12,
+     * then apply the same two-step clamp used in calculateDamage().
+     *
+     * @param weaponDamage       base weapon damage
+     * @param targetArmor        target's armor value
+     * @param distanceFromImpact distance from impact point
+     * @return nuclear damage after distance falloff and armor clamp
+     */
+    public static int calculateNuclearDamage(int weaponDamage, int targetArmor, int distanceFromImpact) {
+        // REF: combat_formulas.md — distance factor lookup
+        int distFactor = distanceFromImpact < NUCLEAR_DISTANCE_FACTOR.length
+            ? NUCLEAR_DISTANCE_FACTOR[distanceFromImpact]
+            : NUCLEAR_DISTANCE_FACTOR[NUCLEAR_DISTANCE_FACTOR.length - 1]; // distance 6+
+
+        // effectiveDamage = weaponDamage * distFactor / 12
+        int effectiveDamage = weaponDamage * distFactor / 12;
+
+        // Apply the same two-step clamp as normal damage:
+        // damage = max(min(effectiveDamage * (10 - armor) / 10, effectiveDamage - armor), 1)
+        int damage = effectiveDamage * (GameConstants.ARMOR_DIVISOR - targetArmor) / GameConstants.ARMOR_DIVISOR;
+        damage = Math.min(damage, effectiveDamage - targetArmor);
+        return Math.max(damage, GameConstants.MIN_DAMAGE);
+    }
+
+    /**
      * Calculate splash damage for artillery at a given distance from impact.
      * REF: combat_formulas.md lines 214-228 - "Splash Damage (Artillery)"
      *
@@ -62,13 +110,7 @@ public final class DamageCalculator {
     public static int calculateSplashDamage(int weaponDamage, int targetArmor,
                                              int distanceFromImpact, boolean isNuclear) {
         if (isNuclear) {
-            // REF: combat_formulas.md lines 236-256 - nuclear falloff: 1/(1+distance)
-            if (distanceFromImpact == 0) {
-                return calculateDamage(weaponDamage, targetArmor);
-            }
-            double falloff = 1.0 / (1.0 + distanceFromImpact);
-            int nuclearDamage = (int) (weaponDamage * falloff);
-            return Math.max(nuclearDamage, GameConstants.MIN_DAMAGE);
+            return calculateNuclearDamage(weaponDamage, targetArmor, distanceFromImpact);
         }
         // REF: combat_formulas.md lines 214-228 - regular artillery: no distance falloff
         return calculateDamage(weaponDamage, targetArmor);

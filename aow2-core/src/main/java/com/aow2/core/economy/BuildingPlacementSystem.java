@@ -1,11 +1,11 @@
 package com.aow2.core.economy;
 
+import com.aow2.common.config.StatsRegistry;
 import com.aow2.common.model.BuildingStats;
 import com.aow2.common.model.BuildingType;
 import com.aow2.common.model.Faction;
 import com.aow2.common.model.GridPosition;
 import com.aow2.common.model.TerrainType;
-import com.aow2.common.model.WeaponType;
 import com.aow2.core.entity.Building;
 import com.aow2.core.world.EntityManager;
 import com.aow2.core.world.GameMap;
@@ -247,62 +247,23 @@ public final class BuildingPlacementSystem {
 
     /**
      * Get the credit cost for a building type.
-     * <p>
-     * REF: complete_building_stats.json — costCredits per building type
+     * REF: StatsRegistry
      *
      * @param type the building type
      * @return the credit cost
      */
     private int getBuildingCost(BuildingType type) {
-        return switch (type) {
-            // Confederation
-            case CONFED_COMMAND_CENTRE -> 100;
-            case CONFED_GENERATOR -> 20;
-            case CONFED_INFANTRY_CENTRE -> 30;
-            case CONFED_MACHINE_FACTORY -> 50;
-            case CONFED_TECH_CENTRE -> 60;
-            case CONFED_BUNKER -> 15;
-            case CONFED_LOCATOR -> 40;
-            case CONFED_ROCKET_LAUNCHER -> 45;
-            // Resistance
-            case REBEL_HEADQUARTERS -> 100;
-            case REBEL_POWERPLANT -> 20;
-            case REBEL_BARRACKS -> 30;
-            case REBEL_FACTORY -> 50;
-            case REBEL_LABORATORY -> 60;
-            case REBEL_BUNKER -> 15;
-            case REBEL_TOWER -> 45;
-            case REBEL_WALL -> 10;
-        };
+        return StatsRegistry.getInstance().getBuildingCost(type); // REF: StatsRegistry
     }
 
     /**
      * Create BuildingStats for a building type.
-     * <p>
-     * ASSUMPTION: Using representative stat values from RE data.
-     * Full integration with a stats registry will replace this.
+     * REF: StatsRegistry
      *
      * @param type the building type
      * @return the building stats
      */
     private BuildingStats createBuildingStats(BuildingType type) {
-        return switch (type) {
-            case CONFED_COMMAND_CENTRE -> new BuildingStats(type, 120, 100, 0, 10, 0, 10, 60, 0, 15, 0, 0, 5, 0, 100, 50, 0, WeaponType.NONE, List.of(100, 200, 300));
-            case CONFED_GENERATOR -> new BuildingStats(type, 60, 20, 0, 3, 0, 6, 30, 0, 5, 0, 10, 0, 0, 20, 10, 0, WeaponType.NONE, List.of());
-            case CONFED_INFANTRY_CENTRE -> new BuildingStats(type, 80, 30, 0, 5, 0, 8, 40, 0, 10, 5, 0, 5, 0, 30, 15, 0, WeaponType.NONE, List.of(50, 100, 150));
-            case CONFED_MACHINE_FACTORY -> new BuildingStats(type, 100, 50, 0, 7, 0, 8, 50, 0, 12, 8, 0, 5, 0, 50, 25, 0, WeaponType.NONE, List.of(75, 150, 225));
-            case CONFED_TECH_CENTRE -> new BuildingStats(type, 70, 60, 0, 4, 0, 8, 45, 0, 8, 5, 0, 1, 0, 60, 30, 0, WeaponType.NONE, List.of());
-            case CONFED_BUNKER -> new BuildingStats(type, 150, 15, 0, 12, 0, 7, 25, 5, 18, 3, 0, 1, 0, 15, 8, 5, WeaponType.BULLET, List.of());
-            case CONFED_LOCATOR -> new BuildingStats(type, 50, 40, 0, 2, 0, 15, 35, 8, 5, 3, 0, 0, 0, 40, 20, 0, WeaponType.NONE, List.of());
-            case CONFED_ROCKET_LAUNCHER -> new BuildingStats(type, 90, 45, 0, 8, 0, 9, 40, 7, 12, 5, 0, 0, 0, 45, 22, 0, WeaponType.ROCKET, List.of(50, 100));
-            case REBEL_HEADQUARTERS -> new BuildingStats(type, 120, 100, 0, 10, 0, 10, 60, 0, 15, 0, 0, 5, 0, 100, 50, 0, WeaponType.NONE, List.of(100, 200, 300));
-            case REBEL_POWERPLANT -> new BuildingStats(type, 60, 20, 0, 3, 0, 6, 30, 0, 5, 0, 10, 0, 0, 20, 10, 0, WeaponType.NONE, List.of());
-            case REBEL_BARRACKS -> new BuildingStats(type, 80, 30, 0, 5, 0, 8, 40, 0, 10, 5, 0, 5, 0, 30, 15, 0, WeaponType.NONE, List.of(50, 100, 150));
-            case REBEL_FACTORY -> new BuildingStats(type, 100, 50, 0, 7, 0, 8, 50, 0, 12, 8, 0, 5, 0, 50, 25, 0, WeaponType.NONE, List.of(75, 150, 225));
-            case REBEL_LABORATORY -> new BuildingStats(type, 70, 60, 0, 4, 0, 8, 45, 0, 8, 5, 0, 1, 0, 60, 30, 0, WeaponType.NONE, List.of());
-            case REBEL_BUNKER -> new BuildingStats(type, 150, 15, 0, 12, 0, 7, 25, 5, 18, 3, 0, 1, 0, 15, 8, 5, WeaponType.BULLET, List.of());
-            case REBEL_TOWER -> new BuildingStats(type, 90, 45, 0, 8, 0, 9, 40, 7, 12, 5, 0, 0, 0, 45, 22, 0, WeaponType.MACHINE_GUN, List.of(50, 100));
-            case REBEL_WALL -> new BuildingStats(type, 200, 10, 0, 15, 0, 0, 10, 0, 20, 0, 0, 0, 0, 10, 5, 0, WeaponType.NONE, List.of());
-        };
+        return StatsRegistry.getInstance().getBuildingStats(type); // REF: StatsRegistry
     }
 }

@@ -103,13 +103,45 @@ class DamageCalculatorTest {
     @Test
     @DisplayName("Nuclear splash has distance falloff")
     void shouldCalculateNuclearSplashWithFalloff() {
-        // REF: combat_formulas.md lines 236-256 - nuclear: 1/(1+distance) falloff
+        // REF: combat_formulas.md lines 236-256 - nuclear uses distance factor table + two-step clamp
+        // Distance 0: factor=12 → effectiveDamage = 15*12/12 = 15, then clamp
         int directDamage = DamageCalculator.calculateSplashDamage(15, 5, 0, true);
         assertTrue(directDamage >= 1);
+        // Distance 2: factor=7 → effectiveDamage = 15*7/12 = 8, then clamp with armor 5
         int splashDamage = DamageCalculator.calculateSplashDamage(15, 5, 2, true);
         assertTrue(splashDamage < directDamage,
             "Nuclear splash should decrease with distance");
         assertTrue(splashDamage >= 1);
+    }
+
+    @Test
+    @DisplayName("Nuclear damage applies two-step armor clamp")
+    void shouldApplyArmorClampToNuclearDamage() {
+        // REF: combat_formulas.md — nuclear uses same two-step clamp as normal damage
+        // Distance 0, weaponDamage=10, armor=2:
+        //   effectiveDamage = 10*12/12 = 10
+        //   raw = 10*(10-2)/10 = 8, min(8, 10-2=8) = 8, max(8,1) = 8
+        assertEquals(8, DamageCalculator.calculateNuclearDamage(10, 2, 0));
+
+        // Distance 1, weaponDamage=10, armor=2:
+        //   effectiveDamage = 10*10/12 = 8
+        //   raw = 8*(10-2)/10 = 6, min(6, 8-2=6) = 6, max(6,1) = 6
+        assertEquals(6, DamageCalculator.calculateNuclearDamage(10, 2, 1));
+
+        // Distance 3, weaponDamage=10, armor=2:
+        //   effectiveDamage = 10*5/12 = 4
+        //   raw = 4*(10-2)/10 = 3, min(3, 4-2=2) = 2, max(2,1) = 2
+        assertEquals(2, DamageCalculator.calculateNuclearDamage(10, 2, 3));
+    }
+
+    @Test
+    @DisplayName("Nuclear damage minimum is 1")
+    void shouldClampNuclearMinimumToOne() {
+        // Distance 6+, weaponDamage=1, armor=9:
+        //   effectiveDamage = 1*1/12 = 0
+        //   raw = 0*(10-9)/10 = 0, min(0, 0-9=-9) = -9, max(-9, 1) = 1
+        assertEquals(1, DamageCalculator.calculateNuclearDamage(1, 9, 6));
+        assertEquals(1, DamageCalculator.calculateNuclearDamage(1, 9, 10)); // beyond table
     }
 
     @Test

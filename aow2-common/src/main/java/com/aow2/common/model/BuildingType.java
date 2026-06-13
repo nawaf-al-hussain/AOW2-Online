@@ -48,8 +48,14 @@ public enum BuildingType {
         return this == CONFED_BUNKER || this == CONFED_ROCKET_LAUNCHER ||
                this == REBEL_BUNKER || this == REBEL_TOWER || this == REBEL_WALL;
     }
+    /**
+     * Whether this building produces power.
+     * REF: complete_building_stats.json — Command Centre produces powerProduce=6
+     * @return true if this building generates power
+     */
     public boolean producesPower() {
-        return this == CONFED_GENERATOR || this == REBEL_POWERPLANT;
+        return this == CONFED_GENERATOR || this == REBEL_POWERPLANT ||
+               this == CONFED_COMMAND_CENTRE || this == REBEL_HEADQUARTERS;
     }
     public boolean producesUnits() {
         return this == CONFED_INFANTRY_CENTRE || this == CONFED_MACHINE_FACTORY ||
@@ -57,5 +63,14 @@ public enum BuildingType {
     }
     public boolean researches() {
         return this == CONFED_TECH_CENTRE || this == REBEL_LABORATORY;
+    }
+
+    /**
+     * Whether this building generates credits each credit cycle.
+     * REF: combat_formulas.md — HQ/CC generates credits every cycle
+     * @return true if this building is an income building
+     */
+    public boolean isIncomeBuilding() {
+        return this == CONFED_COMMAND_CENTRE || this == REBEL_HEADQUARTERS;
     }
 }

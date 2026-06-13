@@ -106,11 +106,11 @@ public final class MovementSystem {
             return;
         }
 
-        // Speed check: unit moves one cell per (speed stat) ticks
-        // REF: combat_formulas.md — speed stat determines movement rate
-        // Higher speed = faster movement (fewer ticks per cell)
-        // ASSUMPTION: speed stat maps inversely to ticks per cell. Speed 4 = move every 4 ticks.
-        int ticksPerCell = Math.max(1, unit.getStats().speed());
+        // Speed check: unit moves one cell per N ticks, where N = MAX_SPEED_RATING - speed + 1
+        // REF: complete_unit_stats.json — speed is a rating where higher = faster movement
+        // ASSUMPTION: MAX_SPEED_RATING = 10, formula: ticksPerCell = 10 - speed + 1
+        // So speed 5 → ticksPerCell 6, speed 7 → ticksPerCell 4, speed 9 → ticksPerCell 2, speed 1 → ticksPerCell 10
+        int ticksPerCell = Math.max(1, 10 - unit.getStats().speed() + 1);
         unit.setMoveTickAccumulator(unit.getMoveTickAccumulator() + 1);
 
         if (unit.getMoveTickAccumulator() < ticksPerCell) {

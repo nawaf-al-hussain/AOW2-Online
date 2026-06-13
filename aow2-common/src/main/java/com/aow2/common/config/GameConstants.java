@@ -9,7 +9,8 @@ public final class GameConstants {
     private GameConstants() {}
 
     // Game loop
-    public static final int TICK_RATE = 60;
+    // REF: combat_formulas.md — original game runs at ~10 ticks/second (100ms per tick)
+    public static final int TICK_RATE = 10;
     public static final double TICK_DURATION_MS = 1000.0 / TICK_RATE;
 
     // Map constraints
@@ -19,15 +20,26 @@ public final class GameConstants {
 
     // Entity limits
     public static final int MAX_UNITS_PER_PLAYER = 50;
-    public static final int MAX_BUILDINGS_PER_PLAYER = 50;
+    // REF: MASTER_DOCUMENTATION.md Section 4 — 22 building slots per player
+    public static final int MAX_BUILDINGS_PER_PLAYER = 22;
     public static final int UNIT_SLOTS_PLAYER_0_START = 1;
-    public static final int UNIT_SLOTS_PLAYER_1_START = 51;
+    // Units start after building slots (MAX_BUILDINGS_PER_PLAYER + 1)
+    public static final int UNIT_SLOTS_PLAYER_1_START = 23;
 
     // Combat
     public static final int ARMOR_DIVISOR = 10;
     public static final int MIN_DAMAGE = 1;
 
     // Economy
+    // REF: combat_formulas.md — base income = (baseIncome * 7) / 10
+    public static final int CREDIT_GENERATION_BASE = 7;
+    // REF: combat_formulas.md — (aL.ah & 127) == 127
+    public static final int CREDIT_GENERATION_CYCLE = 127;
+    // REF: MASTER_DOCUMENTATION.md — credit cap
+    public static final int MAX_CREDITS = 30000;
+    // REF: MASTER_DOCUMENTATION.md — Q[i] = 100
+    public static final int STARTING_CREDITS = 100;
+
     public static final double CC_DIMINISHING_RETURNS = 0.30;
     public static final int POWER_UPGRADE_BONUS_PERCENT = 30;
 
