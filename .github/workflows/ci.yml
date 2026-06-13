@@ -22,8 +22,8 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Build core modules
-        run: ./gradlew :aow2-common:build :aow2-core:build :aow2-server:build :aow2-modding:build -x test
+      - name: Build all modules
+        run: ./gradlew :aow2-common:build :aow2-core:build :aow2-server:build :aow2-modding:build :aow2-client:build -x test
 
       - name: Run tests
         run: ./gradlew :aow2-common:test :aow2-core:test :aow2-server:test :aow2-modding:test

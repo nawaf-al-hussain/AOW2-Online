@@ -3,6 +3,7 @@ package com.aow2.client.render;
 import com.aow2.common.model.BuildingType;
 import com.aow2.common.model.Direction;
 import com.aow2.common.model.Faction;
+import com.aow2.common.model.GridPosition;
 import com.aow2.common.model.UnitType;
 import com.aow2.core.entity.Building;
 import com.aow2.core.entity.Unit;

@@ -218,14 +218,21 @@ public class IsometricRenderer {
      */
     public static Color terrainColor(TerrainType terrain) {
         return switch (terrain) {
-            case GRASS    -> Color.rgb(76, 153, 0);       // green
-            case SAND     -> Color.rgb(210, 180, 120);     // tan
-            case FOREST   -> Color.rgb(34, 100, 34);       // dark green
-            case ROAD     -> Color.rgb(140, 140, 140);     // gray
-            case BRIDGE   -> Color.rgb(139, 90, 43);       // brown
-            case RUINS    -> Color.rgb(90, 90, 90);        // dark gray
-            case WATER    -> Color.rgb(50, 100, 200);      // blue
-            case MOUNTAIN -> Color.rgb(101, 67, 33);       // dark brown
+            case DEEP_WATER    -> Color.rgb(30, 60, 180);      // deep blue
+            case SHALLOW_WATER -> Color.rgb(70, 130, 210);     // light blue
+            case SAND          -> Color.rgb(210, 180, 120);     // tan
+            case GRASS         -> Color.rgb(76, 153, 0);        // green
+            case ROAD          -> Color.rgb(140, 140, 140);     // gray
+            case DIRT          -> Color.rgb(160, 140, 100);     // brown-gray
+            case HILLS         -> Color.rgb(90, 130, 60);       // olive green
+            case FOREST        -> Color.rgb(34, 100, 34);       // dark green
+            case BRIDGE        -> Color.rgb(139, 90, 43);       // brown
+            case MOUNTAIN      -> Color.rgb(101, 67, 33);       // dark brown
+            case SWAMP         -> Color.rgb(60, 100, 60);       // murky green
+            case SNOW          -> Color.rgb(230, 240, 250);     // white-blue
+            case ICE           -> Color.rgb(180, 220, 240);     // light blue
+            case RUINS         -> Color.rgb(90, 90, 90);        // dark gray
+            case RESOURCE_DEPOSIT -> Color.rgb(200, 170, 50);   // gold
         };
     }
 

@@ -59,7 +59,8 @@ public class AOW2App extends GameApplication {
         settings.setFullScreenAllowed(true);
         settings.setManualResizeEnabled(true);
         settings.setIntroEnabled(false);
-        settings.setMenuEnabled(false);
+        settings.setMainMenuEnabled(false);
+        settings.setGameMenuEnabled(false);
         settings.setProfilingEnabled(false);
         settings.setCloseConfirmation(true);
         settings.setDeveloperMenuEnabled(false);
@@ -168,9 +169,9 @@ public class AOW2App extends GameApplication {
 
     /**
      * Called when the application is about to exit.
+     * Performs cleanup of scene resources.
      */
-    @Override
-    protected void onExit() {
+    protected void cleanupOnExit() {
         if (gameScene != null) {
             gameScene.stop();
         }
