@@ -395,12 +395,12 @@ class PathfindingSystemTest {
     class PerformanceAndScale {
 
         @Test
-        @DisplayName("Should handle large maps (127x127)")
+        @DisplayName("Should handle large maps (128x128)")
         void shouldHandleLargeMaps() {
-            // Given: a 127x127 map
-            GameMap map = new GameMap(127, 127);
+            // Given: a 128x128 map (REF: map_system.md - 128x128 grid)
+            GameMap map = new GameMap(GameMap.MAX_MAP_SIZE, GameMap.MAX_MAP_SIZE);
             GridPosition start = new GridPosition(0, 0);
-            GridPosition goal = new GridPosition(126, 126);
+            GridPosition goal = new GridPosition(127, 127);
 
             // When: finding a path across the full map
             long startTime = System.nanoTime();
@@ -411,7 +411,7 @@ class PathfindingSystemTest {
             assertFalse(path.isEmpty());
             assertEquals(goal, path.get(path.size() - 1));
             assertTrue(elapsedMs < 100,
-                "Pathfinding on 127x127 map should complete in < 100ms, took " + elapsedMs + "ms");
+                "Pathfinding on 128x128 map should complete in < 100ms, took " + elapsedMs + "ms");
         }
 
         @Test
@@ -567,9 +567,9 @@ class PathfindingSystemTest {
         @DisplayName("Path should not exceed max path length")
         void pathShouldNotExceedMaxLength() {
             // Given: a long path
-            GameMap map = new GameMap(127, 127);
+            GameMap map = new GameMap(GameMap.MAX_MAP_SIZE, GameMap.MAX_MAP_SIZE);
             GridPosition start = new GridPosition(0, 0);
-            GridPosition goal = new GridPosition(126, 126);
+            GridPosition goal = new GridPosition(127, 127);
 
             // When: finding a path
             List<GridPosition> path = pathfinding.findPath(start, goal, map);
