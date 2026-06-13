@@ -1,0 +1,133 @@
+{
+  "episode": "LIBERATION_OF_PERU",
+  "title": "Episode 2: Liberation of Peru",
+  "missions": [
+    {
+      "id": 1,
+      "name": "Resistance Rising",
+      "description": "Establish a hidden base and begin the fight for liberation.",
+      "briefing": "Comandante, the time has come. The Confederation occupies our homeland, but the people will not be silenced forever. Build a Headquarters in the jungle and train our first fighters. The liberation of Peru begins now.",
+      "playerFaction": "RESISTANCE",
+      "mapFile": "maps/ep2_mission1.map",
+      "objectives": [
+        { "type": "destroy", "name": "Destroy Confederation patrol", "targetCount": 8 }
+      ],
+      "triggers": [
+        { "type": "time", "triggerId": 20, "triggerTick": 600 }
+      ],
+      "scriptFiles": ["scripts/ep2_mission1.lua"],
+      "difficulty": 1
+    },
+    {
+      "id": 2,
+      "name": "Guerrilla Tactics",
+      "description": "Use stealth and speed to ambush a Confederation supply convoy.",
+      "briefing": "A Confederation supply convoy is moving through the mountain pass. Our Coyote scouts have pinpointed their route. Set up an ambush — strike fast and fade before reinforcements arrive.",
+      "playerFaction": "RESISTANCE",
+      "mapFile": "maps/ep2_mission2.map",
+      "objectives": [
+        { "type": "destroy", "name": "Destroy supply vehicles", "targetCount": 5 },
+        { "type": "timed", "name": "Escape before reinforcements", "durationTicks": 3600 }
+      ],
+      "triggers": [
+        { "type": "time", "triggerId": 21, "triggerTick": 1200 },
+        { "type": "unitCount", "triggerId": 22, "faction": "CONFEDERATION", "unitType": "CONFED_HAMMER", "threshold": 3 }
+      ],
+      "scriptFiles": ["scripts/ep2_mission2.lua"],
+      "difficulty": 2
+    },
+    {
+      "id": 3,
+      "name": "Mountain Fortress",
+      "description": "Capture the mountain outpost and turn its defenses against the enemy.",
+      "briefing": "The Confederation has fortified a mountain outpost with Rocket Launchers. We need those emplacements. Send Snipers to neutralize the garrison and capture the position. Our own towers will hold the line.",
+      "playerFaction": "RESISTANCE",
+      "mapFile": "maps/ep2_mission3.map",
+      "objectives": [
+        { "type": "capture", "name": "Capture the mountain outpost", "targetX": 80, "targetY": 20 },
+        { "type": "defend", "name": "Hold the outpost", "entityId": 100, "durationTicks": 4800 }
+      ],
+      "triggers": [
+        { "type": "area", "triggerId": 23, "centerX": 80, "centerY": 20, "radius": 6, "factionId": 1 },
+        { "type": "time", "triggerId": 24, "triggerTick": 2400 }
+      ],
+      "scriptFiles": ["scripts/ep2_mission3.lua"],
+      "difficulty": 2
+    },
+    {
+      "id": 4,
+      "name": "Desert Storm",
+      "description": "Break through the desert blockade with armor superiority.",
+      "briefing": "The Confederation has blockaded the desert road with Fortress tanks. Our Rhino heavy tanks can break their line, but we must act before they bring in Torrent artillery. Speed is critical.",
+      "playerFaction": "RESISTANCE",
+      "mapFile": "maps/ep2_mission4.map",
+      "objectives": [
+        { "type": "destroy", "name": "Destroy enemy blockade", "targetCount": 6 },
+        { "type": "destroy", "name": "Eliminate Fortress tanks", "targetCount": 3 }
+      ],
+      "triggers": [
+        { "type": "buildingDestroyed", "triggerId": 25, "buildingType": "CONFED_ROCKET_LAUNCHER", "faction": "CONFEDERATION" },
+        { "type": "time", "triggerId": 26, "triggerTick": 3000 }
+      ],
+      "scriptFiles": ["scripts/ep2_mission4.lua"],
+      "difficulty": 3
+    },
+    {
+      "id": 5,
+      "name": "Coastal Assault",
+      "description": "Launch an amphibious assault on the Confederation port.",
+      "briefing": "The Confederation uses the coastal port to bring in reinforcements. We must take it. Armadillo transports will carry our forces ashore while Porcupine artillery provides cover fire from the cliffs.",
+      "playerFaction": "RESISTANCE",
+      "mapFile": "maps/ep2_mission5.map",
+      "objectives": [
+        { "type": "destroy", "name": "Destroy port Command Centre", "targetCount": 1 },
+        { "type": "capture", "name": "Secure the docks", "targetX": 100, "targetY": 60 }
+      ],
+      "triggers": [
+        { "type": "area", "triggerId": 27, "centerX": 100, "centerY": 60, "radius": 8, "factionId": 1 },
+        { "type": "buildingDestroyed", "triggerId": 28, "buildingType": "CONFED_COMMAND_CENTRE", "faction": "CONFEDERATION" },
+        { "type": "time", "triggerId": 29, "triggerTick": 4800 }
+      ],
+      "scriptFiles": ["scripts/ep2_mission5.lua"],
+      "difficulty": 3
+    },
+    {
+      "id": 6,
+      "name": "Night Raid",
+      "description": "Infiltrate the Confederation research facility under cover of darkness.",
+      "briefing": "Our intelligence indicates the Confederation is developing a new superweapon at their Tech Centre. Infiltrate the facility, destroy their research, and eliminate the scientists. This must look like an accident.",
+      "playerFaction": "RESISTANCE",
+      "mapFile": "maps/ep2_mission6.map",
+      "objectives": [
+        { "type": "destroy", "name": "Destroy Tech Centre", "targetCount": 1 },
+        { "type": "escort", "name": "Escort infiltrator to extraction", "unitId": 200, "destX": 10, "destY": 10 }
+      ],
+      "triggers": [
+        { "type": "buildingDestroyed", "triggerId": 30, "buildingType": "CONFED_TECH_CENTRE", "faction": "CONFEDERATION" },
+        { "type": "time", "triggerId": 31, "triggerTick": 6000 }
+      ],
+      "scriptFiles": ["scripts/ep2_mission6.lua"],
+      "difficulty": 4
+    },
+    {
+      "id": 7,
+      "name": "Liberation Day",
+      "description": "The final battle for Peru. Drive the Confederation from our homeland.",
+      "briefing": "Comandante, the day of liberation is at hand. All Resistance cells converge on the capital. The Confederation's grip on Peru ends today. For our homeland, for our people — victory or death!",
+      "playerFaction": "RESISTANCE",
+      "mapFile": "maps/ep2_mission7.map",
+      "objectives": [
+        { "type": "destroy", "name": "Destroy all Confederation buildings", "targetCount": 8 },
+        { "type": "timed", "name": "Liberate before reinforcements arrive", "durationTicks": 9000 }
+      ],
+      "triggers": [
+        { "type": "time", "triggerId": 32, "triggerTick": 600 },
+        { "type": "time", "triggerId": 33, "triggerTick": 2400 },
+        { "type": "time", "triggerId": 34, "triggerTick": 5400 },
+        { "type": "buildingDestroyed", "triggerId": 35, "buildingType": "CONFED_COMMAND_CENTRE", "faction": "CONFEDERATION" }
+      ],
+      "scriptFiles": ["scripts/ep2_mission7.lua"],
+      "difficulty": 5
+    }
+  ]
+}

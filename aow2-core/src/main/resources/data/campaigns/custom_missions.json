@@ -1,0 +1,276 @@
+{
+  "episode": "CUSTOM_MISSIONS",
+  "title": "Custom Missions",
+  "missions": [
+    {
+      "id": 1,
+      "name": "Island Skirmish",
+      "description": "Control a small island with limited resources.",
+      "briefing": "Two forces clash on a tiny island. Resources are scarce — every credit counts. Build wisely and strike decisively.",
+      "playerFaction": "CONFEDERATION",
+      "mapFile": "maps/custom_mission1.map",
+      "objectives": [
+        { "type": "destroy", "name": "Destroy all enemy forces", "targetCount": 12 }
+      ],
+      "triggers": [
+        { "type": "time", "triggerId": 50, "triggerTick": 600 }
+      ],
+      "scriptFiles": [],
+      "difficulty": 1
+    },
+    {
+      "id": 2,
+      "name": "Valley of Death",
+      "description": "Navigate through a narrow valley filled with enemy ambushes.",
+      "briefing": "The valley is a killing ground. Enemy forces lurk on the ridges. Push through with armor support or be annihilated.",
+      "playerFaction": "CONFEDERATION",
+      "mapFile": "maps/custom_mission2.map",
+      "objectives": [
+        { "type": "escort", "name": "Escort convoy through valley", "unitId": 300, "destX": 100, "destY": 64 }
+      ],
+      "triggers": [
+        { "type": "area", "triggerId": 51, "centerX": 50, "centerY": 64, "radius": 5, "factionId": 0 },
+        { "type": "time", "triggerId": 52, "triggerTick": 1800 }
+      ],
+      "scriptFiles": [],
+      "difficulty": 2
+    },
+    {
+      "id": 3,
+      "name": "Bunker Bust",
+      "description": "Eliminate a network of fortified bunkers.",
+      "briefing": "The enemy has built an intricate bunker network. Flame Assault units can flush them out, but watch for counterattacks.",
+      "playerFaction": "CONFEDERATION",
+      "mapFile": "maps/custom_mission3.map",
+      "objectives": [
+        { "type": "destroy", "name": "Destroy enemy bunkers", "targetCount": 5 }
+      ],
+      "triggers": [
+        { "type": "buildingDestroyed", "triggerId": 53, "buildingType": "REBEL_BUNKER", "faction": "RESISTANCE" }
+      ],
+      "scriptFiles": [],
+      "difficulty": 2
+    },
+    {
+      "id": 4,
+      "name": "Blitzkrieg",
+      "description": "Win a fast-paced armored engagement.",
+      "briefing": "No time for building — both sides start with full armies. Command your armor to swift victory.",
+      "playerFaction": "CONFEDERATION",
+      "mapFile": "maps/custom_mission4.map",
+      "objectives": [
+        { "type": "destroy", "name": "Destroy enemy army", "targetCount": 20 },
+        { "type": "timed", "name": "Win quickly", "durationTicks": 3600 }
+      ],
+      "triggers": [
+        { "type": "time", "triggerId": 54, "triggerTick": 1800 }
+      ],
+      "scriptFiles": [],
+      "difficulty": 3
+    },
+    {
+      "id": 5,
+      "name": "Last Bastion",
+      "description": "Defend a critical position against overwhelming odds.",
+      "briefing": "Waves of enemies approach. Our base must hold. Repair, reinforce, and survive.",
+      "playerFaction": "CONFEDERATION",
+      "mapFile": "maps/custom_mission5.map",
+      "objectives": [
+        { "type": "defend", "name": "Defend Command Centre", "entityId": 1, "durationTicks": 9000 }
+      ],
+      "triggers": [
+        { "type": "time", "triggerId": 55, "triggerTick": 1200 },
+        { "type": "time", "triggerId": 56, "triggerTick": 3600 },
+        { "type": "time", "triggerId": 57, "triggerTick": 6000 }
+      ],
+      "scriptFiles": [],
+      "difficulty": 3
+    },
+    {
+      "id": 6,
+      "name": "Scorched Earth",
+      "description": "Retreat and deny resources to the advancing enemy.",
+      "briefing": "We cannot hold this position. Destroy our own buildings to deny them to the enemy, and evacuate our forces to the extraction point.",
+      "playerFaction": "RESISTANCE",
+      "mapFile": "maps/custom_mission6.map",
+      "objectives": [
+        { "type": "destroy", "name": "Destroy own buildings before enemy captures", "targetCount": 4 },
+        { "type": "escort", "name": "Evacuate commander", "unitId": 400, "destX": 5, "destY": 5 }
+      ],
+      "triggers": [
+        { "type": "time", "triggerId": 58, "triggerTick": 2400 }
+      ],
+      "scriptFiles": [],
+      "difficulty": 3
+    },
+    {
+      "id": 7,
+      "name": "Jungle Warfare",
+      "description": "Fight through dense jungle terrain with limited visibility.",
+      "briefing": "The jungle hides both friend and foe. Use Snipers to scout ahead and Coyotes for quick strikes. Watch for ambushes.",
+      "playerFaction": "RESISTANCE",
+      "mapFile": "maps/custom_mission7.map",
+      "objectives": [
+        { "type": "destroy", "name": "Eliminate enemy patrol", "targetCount": 15 },
+        { "type": "capture", "name": "Capture jungle outpost", "targetX": 70, "targetY": 70 }
+      ],
+      "triggers": [
+        { "type": "area", "triggerId": 59, "centerX": 70, "centerY": 70, "radius": 6, "factionId": 1 }
+      ],
+      "scriptFiles": [],
+      "difficulty": 2
+    },
+    {
+      "id": 8,
+      "name": "Two Fronts",
+      "description": "Defend against attacks from two directions simultaneously.",
+      "briefing": "Enemies approach from both east and west. Split your defenses carefully — if one front falls, all is lost.",
+      "playerFaction": "CONFEDERATION",
+      "mapFile": "maps/custom_mission8.map",
+      "objectives": [
+        { "type": "defend", "name": "Hold eastern front", "entityId": 1, "durationTicks": 7200 },
+        { "type": "defend", "name": "Hold western front", "entityId": 2, "durationTicks": 7200 }
+      ],
+      "triggers": [
+        { "type": "time", "triggerId": 60, "triggerTick": 1200 },
+        { "type": "time", "triggerId": 61, "triggerTick": 3000 },
+        { "type": "time", "triggerId": 62, "triggerTick": 5400 }
+      ],
+      "scriptFiles": [],
+      "difficulty": 4
+    },
+    {
+      "id": 9,
+      "name": "Sabotage",
+      "description": "Infiltrate and sabotage enemy power infrastructure.",
+      "briefing": "Their Generators power the defenses. Destroy them and the enemy base goes dark. Then strike while they're vulnerable.",
+      "playerFaction": "RESISTANCE",
+      "mapFile": "maps/custom_mission9.map",
+      "objectives": [
+        { "type": "destroy", "name": "Destroy enemy Generators", "targetCount": 3 },
+        { "type": "destroy", "name": "Destroy powerless defenses", "targetCount": 4 }
+      ],
+      "triggers": [
+        { "type": "buildingDestroyed", "triggerId": 63, "buildingType": "CONFED_GENERATOR", "faction": "CONFEDERATION" }
+      ],
+      "scriptFiles": [],
+      "difficulty": 3
+    },
+    {
+      "id": 10,
+      "name": "Iron Gauntlet",
+      "description": "Survive a relentless armored onslaught.",
+      "briefing": "Wave after wave of enemy armor. Our anti-vehicle capabilities are our only hope. Mine placement and Rocket Launchers will be key.",
+      "playerFaction": "CONFEDERATION",
+      "mapFile": "maps/custom_mission10.map",
+      "objectives": [
+        { "type": "defend", "name": "Survive the assault", "entityId": 1, "durationTicks": 10800 },
+        { "type": "destroy", "name": "Destroy enemy tanks", "targetCount": 20 }
+      ],
+      "triggers": [
+        { "type": "time", "triggerId": 64, "triggerTick": 600 },
+        { "type": "time", "triggerId": 65, "triggerTick": 3600 },
+        { "type": "time", "triggerId": 66, "triggerTick": 7200 }
+      ],
+      "scriptFiles": [],
+      "difficulty": 4
+    },
+    {
+      "id": 11,
+      "name": "Crossroads",
+      "description": "Control the strategic crossroads against a determined foe.",
+      "briefing": "The crossroads controls the supply lines. Both sides need this position. Build fast and hold the center.",
+      "playerFaction": "RESISTANCE",
+      "mapFile": "maps/custom_mission11.map",
+      "objectives": [
+        { "type": "capture", "name": "Hold the crossroads", "targetX": 64, "targetY": 64 },
+        { "type": "destroy", "name": "Destroy enemy base", "targetCount": 5 }
+      ],
+      "triggers": [
+        { "type": "area", "triggerId": 67, "centerX": 64, "centerY": 64, "radius": 10, "factionId": 1 },
+        { "type": "time", "triggerId": 68, "triggerTick": 2400 }
+      ],
+      "scriptFiles": [],
+      "difficulty": 3
+    },
+    {
+      "id": 12,
+      "name": "Relay Station",
+      "description": "Capture and hold the communications relay.",
+      "briefing": "The Locator relay station broadcasts enemy positions. Capture it to reveal the entire map, then use the intelligence to mount a devastating attack.",
+      "playerFaction": "CONFEDERATION",
+      "mapFile": "maps/custom_mission12.map",
+      "objectives": [
+        { "type": "capture", "name": "Capture the relay station", "targetX": 50, "targetY": 50 },
+        { "type": "destroy", "name": "Destroy enemy Command Centre", "targetCount": 1 }
+      ],
+      "triggers": [
+        { "type": "area", "triggerId": 69, "centerX": 50, "centerY": 50, "radius": 5, "factionId": 0 },
+        { "type": "buildingDestroyed", "triggerId": 70, "buildingType": "REBEL_HEADQUARTERS", "faction": "RESISTANCE" }
+      ],
+      "scriptFiles": [],
+      "difficulty": 3
+    },
+    {
+      "id": 13,
+      "name": "Pincer Movement",
+      "description": "Execute a coordinated two-pronged attack.",
+      "briefing": "Divide your forces for a simultaneous attack from north and south. Timing is everything — if one prong attacks too early, the enemy will reinforce.",
+      "playerFaction": "RESISTANCE",
+      "mapFile": "maps/custom_mission13.map",
+      "objectives": [
+        { "type": "destroy", "name": "Destroy northern defenses", "targetCount": 4 },
+        { "type": "destroy", "name": "Destroy southern defenses", "targetCount": 4 },
+        { "type": "timed", "name": "Complete pincer attack", "durationTicks": 7200 }
+      ],
+      "triggers": [
+        { "type": "time", "triggerId": 71, "triggerTick": 1200 },
+        { "type": "time", "triggerId": 72, "triggerTick": 3600 }
+      ],
+      "scriptFiles": [],
+      "difficulty": 4
+    },
+    {
+      "id": 14,
+      "name": "Total War",
+      "description": "A massive battle with all unit types available.",
+      "briefing": "Full-scale war. Every unit, every building, every strategy matters. Only the most skilled commander will prevail.",
+      "playerFaction": "CONFEDERATION",
+      "mapFile": "maps/custom_mission14.map",
+      "objectives": [
+        { "type": "destroy", "name": "Destroy all enemy buildings", "targetCount": 8 },
+        { "type": "destroy", "name": "Annihilate enemy forces", "targetCount": 40 }
+      ],
+      "triggers": [
+        { "type": "time", "triggerId": 73, "triggerTick": 600 },
+        { "type": "time", "triggerId": 74, "triggerTick": 2400 },
+        { "type": "time", "triggerId": 75, "triggerTick": 4800 },
+        { "type": "time", "triggerId": 76, "triggerTick": 7200 }
+      ],
+      "scriptFiles": [],
+      "difficulty": 5
+    },
+    {
+      "id": 15,
+      "name": "Endurance",
+      "description": "Survive the longest mission against endless waves.",
+      "briefing": "There is no victory here — only survival. How long can you hold out against an enemy with unlimited resources? Test your endurance, Commander.",
+      "playerFaction": "RESISTANCE",
+      "mapFile": "maps/custom_mission15.map",
+      "objectives": [
+        { "type": "defend", "name": "Survive as long as possible", "entityId": 1, "durationTicks": 14400 },
+        { "type": "destroy", "name": "Destroy wave attackers", "targetCount": 50 }
+      ],
+      "triggers": [
+        { "type": "time", "triggerId": 77, "triggerTick": 600 },
+        { "type": "time", "triggerId": 78, "triggerTick": 1800 },
+        { "type": "time", "triggerId": 79, "triggerTick": 3600 },
+        { "type": "time", "triggerId": 80, "triggerTick": 6000 },
+        { "type": "time", "triggerId": 81, "triggerTick": 9000 },
+        { "type": "time", "triggerId": 82, "triggerTick": 12000 }
+      ],
+      "scriptFiles": [],
+      "difficulty": 5
+    }
+  ]
+}

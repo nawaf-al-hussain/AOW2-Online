@@ -153,7 +153,7 @@ public final class CollisionSystem {
 
         // Check secondary cell (x+1, same y)
         int secondX = pos.x() + 1;
-        if (secondX > 127) {
+        if (!map.isInBounds(secondX, pos.y())) {
             return false; // secondary cell out of bounds
         }
         if (!map.isPassable(secondX, pos.y())) {

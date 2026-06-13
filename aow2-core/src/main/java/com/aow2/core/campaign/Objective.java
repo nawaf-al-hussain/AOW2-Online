@@ -79,7 +79,7 @@ public sealed interface Objective permits
 
         @Override
         public boolean isCompleted() {
-            return elapsedTicks >= durationTicks && !entityDestroyed;
+            return elapsedTicks >= durationTicks;
         }
 
         @Override
@@ -161,7 +161,7 @@ public sealed interface Objective permits
 
         @Override
         public boolean isCompleted() {
-            return otherObjectivesMet && elapsedTicks <= durationTicks;
+            return otherObjectivesMet;
         }
 
         @Override

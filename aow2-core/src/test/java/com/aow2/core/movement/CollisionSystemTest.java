@@ -122,8 +122,9 @@ class CollisionSystemTest {
             GameMap map = new GameMap(10, 10);
 
             // When/Then: out-of-bounds cells should be unavailable
-            assertFalse(collision.isCellAvailable(new GridPosition(-1, 0), map, entities, -1));
+            // GridPosition validates 0-127 range, so test with boundary positions
             assertFalse(collision.isCellAvailable(new GridPosition(10, 0), map, entities, -1));
+            assertFalse(collision.isCellAvailable(new GridPosition(0, 10), map, entities, -1));
         }
 
         @Test
@@ -328,14 +329,16 @@ class CollisionSystemTest {
         @Test
         @DisplayName("Should reject large unit placement at map edge (x+1 out of bounds)")
         void shouldRejectLargeUnitPlacementAtMapEdge() {
-            // Given: a map where x=126 is the max, fortress would need x=127
+            // Given: a 128-wide map where x=126 is valid but x=127 is the max valid index
+            // A Fortress at x=126 needs x+1=127 as secondary cell
+            // For a 127-wide map, x=127 is out of bounds (valid range is 0-126)
             GameMap map = new GameMap(127, 127);
 
-            // When: checking placement at x=126 (secondary cell x=127 is valid)
+            // When: checking placement at x=126 (secondary cell x=127 is out of bounds for 127-width map)
             boolean validAt126 = collision.isLargeUnitPlacementValid(new GridPosition(126, 5), map, entities);
 
-            // Then: should be valid (127 is the max index for a 127-width map)
-            assertTrue(validAt126);
+            // Then: should be rejected because secondary cell is out of bounds
+            assertFalse(validAt126);
         }
 
         @Test

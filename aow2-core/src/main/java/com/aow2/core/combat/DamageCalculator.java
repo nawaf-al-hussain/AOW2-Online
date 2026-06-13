@@ -24,11 +24,13 @@ public final class DamageCalculator {
     /**
      * Calculate damage from attacker to target.
      * REF: combat_formulas.md - projectile damage formula
+     *
+     * Formula: damage = weaponDamage * (10 - targetArmour) / 10
+     * Clamped: damage = max(damage, 1)
      */
     public static int calculateDamage(int weaponDamage, int targetArmor) {
         int damage = weaponDamage * (GameConstants.ARMOR_DIVISOR - targetArmor) / GameConstants.ARMOR_DIVISOR;
-        damage = Math.max(Math.min(damage, weaponDamage - targetArmor), GameConstants.MIN_DAMAGE);
-        return damage;
+        return Math.max(damage, GameConstants.MIN_DAMAGE);
     }
 
     /**

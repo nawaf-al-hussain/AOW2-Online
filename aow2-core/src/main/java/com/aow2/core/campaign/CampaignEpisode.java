@@ -7,14 +7,14 @@ import com.aow2.common.model.Faction;
  * REF: campaign_guide.md - Episode 1 (Global Confederation) and Episode 2 (Liberation of Peru)
  */
 public enum CampaignEpisode {
-    /** Episode 1: Global Confederation - 14 missions playing as the Confederation faction. */
-    GLOBAL_CONFEDERATION("Global Confederation", Faction.CONFEDERATION, 14),
+    /** Episode 1: Global Confederation - 7 missions playing as the Confederation faction. */
+    GLOBAL_CONFEDERATION("Global Confederation", Faction.CONFEDERATION, 7),
 
-    /** Episode 2: Liberation of Peru - 15 missions playing as the Resistance faction. */
-    LIBERATION_OF_PERU("Liberation of Peru", Faction.RESISTANCE, 15),
+    /** Episode 2: Liberation of Peru - 7 missions playing as the Resistance faction. */
+    LIBERATION_OF_PERU("Liberation of Peru", Faction.RESISTANCE, 7),
 
     /** Custom missions loaded from mods. */
-    CUSTOM_MISSIONS("Custom Missions", Faction.NEUTRAL, 0);
+    CUSTOM_MISSIONS("Custom Missions", Faction.NEUTRAL, 15);
 
     private final String title;
     private final Faction faction;
