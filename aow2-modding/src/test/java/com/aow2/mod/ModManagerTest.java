@@ -40,7 +40,7 @@ class ModManagerTest {
         Files.createDirectories(modDir);
 
         ModManifest manifest = new ModManifest(
-            modId, name, "1.0.0", "Test author",
+            modId, name, "1.0.0", "Test mod description", "Test author",
             "0.2.0", dependencies, List.of(), dataOverrides
         );
 
