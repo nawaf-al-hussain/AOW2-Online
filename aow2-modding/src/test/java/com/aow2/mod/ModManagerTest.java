@@ -1,5 +1,6 @@
 package com.aow2.mod;
 
+import com.aow2.common.model.WeaponType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
