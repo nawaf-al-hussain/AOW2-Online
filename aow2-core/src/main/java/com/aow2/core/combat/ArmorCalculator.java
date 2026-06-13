@@ -18,7 +18,7 @@ import java.util.Set;
  */
 public final class ArmorCalculator {
 
-    private ArmorCalculator() {}
+    ArmorCalculator() {}
 
     /**
      * Research IDs that add infantry armor bonuses.

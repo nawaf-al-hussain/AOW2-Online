@@ -222,10 +222,10 @@ public final class AISystem {
 
         // Execute the military action using pattern matching
         switch (action) {
-            case MilitaryAction.Attack a -> executeAttack(a, entities, movement);
-            case MilitaryAction.Defend d -> executeDefend(d, entities, movement);
-            case MilitaryAction.Retreat r -> executeRetreat(r, entities, movement);
-            case MilitaryAction.Harass h -> executeHarass(h, entities, movement);
+            case MilitaryAction.Attack a -> executeAttack(a, entities, map, movement);
+            case MilitaryAction.Defend d -> executeDefend(d, entities, map, movement);
+            case MilitaryAction.Retreat r -> executeRetreat(r, entities, map, movement);
+            case MilitaryAction.Harass h -> executeHarass(h, entities, map, movement);
             case MilitaryAction.HoldPosition hp -> executeHoldPosition(hp);
         }
     }
@@ -235,11 +235,11 @@ public final class AISystem {
      * REF: ai_analysis.md — AI attack decision, units move toward target
      */
     private void executeAttack(MilitaryAction.Attack attack, EntityManager entities,
-                                MovementSystem movement) {
+                                GameMap map, MovementSystem movement) {
         for (int unitId : attack.unitIds()) {
             Unit unit = entities.getUnit(unitId);
             if (unit != null && unit.isAlive()) {
-                movement.issueMoveCommand(unit, attack.target(), entities);
+                movement.issueMoveCommand(unit, attack.target(), map, entities);
                 LOG.debug("AI unit {} attacking toward {}", unitId, attack.target());
             }
         }
@@ -250,11 +250,11 @@ public final class AISystem {
      * REF: ai_analysis.md — defend base when under attack
      */
     private void executeDefend(MilitaryAction.Defend defend, EntityManager entities,
-                                MovementSystem movement) {
+                                GameMap map, MovementSystem movement) {
         for (int unitId : defend.unitIds()) {
             Unit unit = entities.getUnit(unitId);
             if (unit != null && unit.isAlive()) {
-                movement.issueMoveCommand(unit, defend.defendPoint(), entities);
+                movement.issueMoveCommand(unit, defend.defendPoint(), map, entities);
                 LOG.debug("AI unit {} defending at {}", unitId, defend.defendPoint());
             }
         }
@@ -265,11 +265,11 @@ public final class AISystem {
      * REF: ai_analysis.md — retreat when outnumbered
      */
     private void executeRetreat(MilitaryAction.Retreat retreat, EntityManager entities,
-                                 MovementSystem movement) {
+                                 GameMap map, MovementSystem movement) {
         for (int unitId : retreat.unitIds()) {
             Unit unit = entities.getUnit(unitId);
             if (unit != null && unit.isAlive()) {
-                movement.issueMoveCommand(unit, retreat.rallyPoint(), entities);
+                movement.issueMoveCommand(unit, retreat.rallyPoint(), map, entities);
                 LOG.debug("AI unit {} retreating to {}", unitId, retreat.rallyPoint());
             }
         }
@@ -280,11 +280,11 @@ public final class AISystem {
      * REF: ai_analysis.md — light machinery for scouts/raids, hit-and-run
      */
     private void executeHarass(MilitaryAction.Harass harass, EntityManager entities,
-                                MovementSystem movement) {
+                                GameMap map, MovementSystem movement) {
         for (int unitId : harass.unitIds()) {
             Unit unit = entities.getUnit(unitId);
             if (unit != null && unit.isAlive()) {
-                movement.issueMoveCommand(unit, harass.target(), entities);
+                movement.issueMoveCommand(unit, harass.target(), map, entities);
                 LOG.debug("AI unit {} harassing toward {}", unitId, harass.target());
             }
         }

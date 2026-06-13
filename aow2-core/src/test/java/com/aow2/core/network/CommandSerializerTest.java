@@ -51,7 +51,7 @@ class CommandSerializerTest {
     @Test
     @DisplayName("Build command round-trip serialization")
     void buildRoundTrip() {
-        var original = new CommandType.Build(300, 0, BuildingType.BARRACKS, new GridPosition(15, 25));
+        var original = new CommandType.Build(300, 0, BuildingType.REBEL_BARRACKS, new GridPosition(15, 25));
         byte[] data = CommandSerializer.serialize(original);
         CommandType deserialized = CommandSerializer.deserialize(data);
 
@@ -65,7 +65,7 @@ class CommandSerializerTest {
     @Test
     @DisplayName("Produce command round-trip serialization")
     void produceRoundTrip() {
-        var original = new CommandType.Produce(400, 1, 42, UnitType.CONFED_SOLDIER);
+        var original = new CommandType.Produce(400, 1, 42, UnitType.CONFED_INFANTRY);
         byte[] data = CommandSerializer.serialize(original);
         CommandType deserialized = CommandSerializer.deserialize(data);
 

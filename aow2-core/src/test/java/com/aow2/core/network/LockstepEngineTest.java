@@ -135,10 +135,10 @@ class LockstepEngineTest {
     @Test
     @DisplayName("Move command sets unit target position")
     void moveCommandApplied() {
-        var stats = new UnitStats(UnitType.CONFED_SOLDIER, "Test", 100, 10, 50,
+        var stats = new UnitStats(UnitType.CONFED_INFANTRY, "Test", 100, 10, 50,
                 5, 3, 1, 8, 1, 20, 50, 5, 0, 0, 0, 0);
         var unit = new Unit(1, Faction.CONFEDERATION, new GridPosition(0, 0),
-                UnitType.CONFED_SOLDIER, stats);
+                UnitType.CONFED_INFANTRY, stats);
         entities.addUnit(unit);
 
         var cmd = new CommandType.Move(0, 0, new int[]{1}, new GridPosition(10, 10));

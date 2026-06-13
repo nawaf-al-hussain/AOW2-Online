@@ -82,7 +82,7 @@ public final class GameAPI {
 
             // ASSUMPTION: default stats for scripting-spawned units
             UnitStats stats = new UnitStats(type, "Script spawned", 100, 10,
-                100, 4, 2, 0, 5, 4, 60, 100, 5, 2, 0, 0, 0, 0);
+                100, 4, 2, 0, 5, 4, 60, 100, 5, 2, 0, 0, 0);
 
             int id = entityManager.allocateEntityId();
             Unit unit = new Unit(id, f, pos, type, stats);

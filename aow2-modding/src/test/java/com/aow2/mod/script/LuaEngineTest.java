@@ -182,7 +182,7 @@ class LuaEngineTest {
         void shouldGetUnitCountFromLua() {
             // Given: some units in the entity manager
             UnitStats stats = new UnitStats(UnitType.CONFED_INFANTRY, "test", 80, 10,
-                100, 4, 2, 0, 5, 4, 60, 100, 5, 2, 0, 0, 0, 0);
+                100, 4, 2, 0, 5, 4, 60, 100, 5, 2, 0, 0, 0);
             entityManager.addUnit(new Unit(1, Faction.CONFEDERATION,
                 new GridPosition(5, 5), UnitType.CONFED_INFANTRY, stats));
 

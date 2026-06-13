@@ -4,7 +4,7 @@ import com.aow2.common.model.GridPosition;
 import com.aow2.common.model.WeaponType;
 import com.aow2.core.engine.GameState;
 import com.aow2.core.entity.Building;
-import com.aow2.core.entity.EntityManager;
+import com.aow2.core.world.EntityManager;
 import com.aow2.core.entity.Entity;
 import com.aow2.core.entity.Projectile;
 import com.aow2.core.entity.Unit;

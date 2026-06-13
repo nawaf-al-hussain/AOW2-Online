@@ -50,15 +50,15 @@ class DamageCalculatorTest {
     void shouldCalculateBuildingArmorAsZero() {
         var buildingStats = new BuildingStats(BuildingType.CONFED_COMMAND_CENTRE, 120, 22, 7, 7,
             4, 2, 20, 7, 8, 2, 6, 0, 0, 100, 450, List.of(300, 200, 200));
-        var building = new Building(1, BuildingType.CONFED_COMMAND_CENTRE, buildingStats,
-            0, new GridPosition(32, 32));
+        var building = new Building(1, Faction.CONFEDERATION, new GridPosition(32, 32),
+            BuildingType.CONFED_COMMAND_CENTRE, buildingStats);
         assertEquals(0, DamageCalculator.calculateEffectiveArmor(building));
     }
 
     @Test
     @DisplayName("Unit armor with research bonus")
     void shouldCalculateUnitArmorWithBonus() {
-        var unit = new Unit(1, UnitType.CONFED_INFANTRY, infantryStats, 0, new GridPosition(10, 10));
+        var unit = new Unit(1, Faction.CONFEDERATION, new GridPosition(10, 10), UnitType.CONFED_INFANTRY, infantryStats);
         assertEquals(5, DamageCalculator.calculateEffectiveArmor(unit, 0));
         assertEquals(7, DamageCalculator.calculateEffectiveArmor(unit, 2)); // Energy Suit +2
     }
@@ -76,7 +76,7 @@ class DamageCalculatorTest {
     @Test
     @DisplayName("Infantry death animation in range [10,26]")
     void shouldCalculateInfantryDeathAnimation() {
-        var unit = new Unit(1, UnitType.CONFED_INFANTRY, infantryStats, 0, new GridPosition(10, 10));
+        var unit = new Unit(1, Faction.CONFEDERATION, new GridPosition(10, 10), UnitType.CONFED_INFANTRY, infantryStats);
         int animFrame = DamageCalculator.calculateDeathAnimationFrame(unit, 0);
         assertTrue(animFrame >= 10 && animFrame <= 26,
             "Infantry death anim in [10,26], got: " + animFrame);
@@ -85,40 +85,40 @@ class DamageCalculatorTest {
     @Test
     @DisplayName("Machinery death animation is frame 2")
     void shouldUseFixedFrameForMachineryDeath() {
-        var unit = new Unit(1, UnitType.CONFED_ZEUS, zeusStats, 0, new GridPosition(10, 10));
+        var unit = new Unit(1, Faction.CONFEDERATION, new GridPosition(10, 10), UnitType.CONFED_ZEUS, zeusStats);
         assertEquals(2, DamageCalculator.calculateDeathAnimationFrame(unit, 0));
     }
 
     @Test
     @DisplayName("Infantry deals 50% damage to buildings")
     void shouldApplyReducedMultiplierInfantryVsBuilding() {
-        var infantry = new Unit(1, UnitType.CONFED_INFANTRY, infantryStats, 0, new GridPosition(10, 10));
+        var infantry = new Unit(1, Faction.CONFEDERATION, new GridPosition(10, 10), UnitType.CONFED_INFANTRY, infantryStats);
         assertEquals(0.5, DamageCalculator.getTargetMultiplier(infantry, true));
     }
 
     @Test
     @DisplayName("Artillery deals 150% damage to buildings")
     void shouldApplySiegeBonusForTorrent() {
-        var torrent = new Unit(1, UnitType.CONFED_TORRENT, torrentStats, 0, new GridPosition(10, 10));
+        var torrent = new Unit(1, Faction.CONFEDERATION, new GridPosition(10, 10), UnitType.CONFED_TORRENT, torrentStats);
         assertEquals(1.5, DamageCalculator.getTargetMultiplier(torrent, true));
     }
 
     @Test
     @DisplayName("Unit vs unit is full damage")
     void shouldDealFullDamageUnitVsUnit() {
-        var zeus = new Unit(1, UnitType.CONFED_ZEUS, zeusStats, 0, new GridPosition(10, 10));
+        var zeus = new Unit(1, Faction.CONFEDERATION, new GridPosition(10, 10), UnitType.CONFED_ZEUS, zeusStats);
         assertEquals(1.0, DamageCalculator.getTargetMultiplier(zeus, false));
     }
 
     @Test
     @DisplayName("Full combat: Zeus(dmg=6) vs Infantry(armor=5) = 3 damage per hit")
     void shouldVerifyFullCombatExchange() {
-        var zeus = new Unit(1, UnitType.CONFED_ZEUS, zeusStats, 0, new GridPosition(10, 10));
-        var infantry = new Unit(2, UnitType.CONFED_INFANTRY, infantryStats, 1, new GridPosition(11, 10));
-        int damage = DamageCalculator.calculateDamage(zeus.stats().damage(), infantry.stats().armor());
+        var zeus = new Unit(1, Faction.CONFEDERATION, new GridPosition(10, 10), UnitType.CONFED_ZEUS, zeusStats);
+        var infantry = new Unit(2, Faction.RESISTANCE, new GridPosition(11, 10), UnitType.CONFED_INFANTRY, infantryStats);
+        int damage = DamageCalculator.calculateDamage(zeus.getStats().damage(), infantry.getStats().armor());
         assertEquals(3, damage);
         infantry.takeDamage(damage);
-        assertEquals(37, infantry.hp());
+        assertEquals(37, infantry.getHp());
         assertTrue(infantry.isAlive());
     }
 }

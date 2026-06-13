@@ -284,7 +284,7 @@ class ModManagerTest {
 
         registry.registerUnitStats(unitType, new com.aow2.common.model.UnitStats(
             unitType, "Test infantry", 80, 10, 100, 4, 2, 0, 5, 4,
-            60, 100, 5, 2, 0, 0, 0, 0
+            60, 100, 5, 2, 0, 0, 0
         ));
 
         registry.registerBuildingStats(buildingType, new com.aow2.common.model.BuildingStats(

@@ -57,10 +57,10 @@ class SyncCheckerTest {
     void hashIncludesUnits() {
         long hash1 = checker.computeStateHash(state, entities);
 
-        var stats = new UnitStats(UnitType.CONFED_SOLDIER, "Test", 100, 10, 50,
+        var stats = new UnitStats(UnitType.CONFED_INFANTRY, "Test", 100, 10, 50,
                 5, 3, 1, 8, 1, 20, 50, 5, 0, 0, 0, 0);
         var unit = new Unit(1, Faction.CONFEDERATION, new GridPosition(5, 5),
-                UnitType.CONFED_SOLDIER, stats);
+                UnitType.CONFED_INFANTRY, stats);
         entities.addUnit(unit);
 
         long hash2 = checker.computeStateHash(state, entities);
@@ -131,10 +131,10 @@ class SyncCheckerTest {
     @Test
     @DisplayName("Deterministic: same state produces same hash")
     void deterministicHash() {
-        var stats = new UnitStats(UnitType.CONFED_SOLDIER, "Test", 100, 10, 50,
+        var stats = new UnitStats(UnitType.CONFED_INFANTRY, "Test", 100, 10, 50,
                 5, 3, 1, 8, 1, 20, 50, 5, 0, 0, 0, 0);
         entities.addUnit(new Unit(1, Faction.CONFEDERATION, new GridPosition(5, 5),
-                UnitType.CONFED_SOLDIER, stats));
+                UnitType.CONFED_INFANTRY, stats));
 
         long hash1 = checker.computeStateHash(state, entities);
         long hash2 = checker.computeStateHash(state, entities);

@@ -27,7 +27,7 @@ class GameDataRegistryTest {
     private UnitStats createDefaultUnitStats() {
         return new UnitStats(
             UnitType.CONFED_INFANTRY, "Standard infantry", 80, 10,
-            100, 4, 2, 0, 5, 4, 60, 100, 5, 2, 0, 0, 0, 0
+            100, 4, 2, 0, 5, 4, 60, 100, 5, 2, 0, 0, 0
         );
     }
 
