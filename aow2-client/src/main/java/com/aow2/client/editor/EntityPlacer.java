@@ -51,7 +51,7 @@ public final class EntityPlacer {
         for (UnitType type : UnitType.values()) {
             defaultUnitStats.put(type, new UnitStats(
                 type, "Editor placeholder", 100, 10,
-                100, 4, 2, 0, 5, 4, 60, 100, 5, 2, 0, 0, 0, 0
+                100, 4, 2, 0, 5, 4, 60, 100, 5, 2, 0, 0, 0
             ));
         }
 
