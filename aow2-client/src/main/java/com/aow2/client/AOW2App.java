@@ -2,6 +2,7 @@ package com.aow2.client;
 
 import com.aow2.client.scene.GameScene;
 import com.aow2.client.scene.MainMenuScene;
+import com.aow2.client.scene.MapEditorScene;
 
 import com.almasb.fxgl.app.GameApplication;
 import com.almasb.fxgl.app.GameSettings;
@@ -36,6 +37,9 @@ public class AOW2App extends GameApplication {
     /** Game scene. */
     private GameScene gameScene;
 
+    /** Map editor scene. */
+    private MapEditorScene mapEditorScene;
+
     /** Current active scene state. */
     private ActiveScene activeScene;
 
@@ -43,7 +47,7 @@ public class AOW2App extends GameApplication {
      * Enum representing which scene is currently active.
      */
     private enum ActiveScene {
-        MAIN_MENU, GAME
+        MAIN_MENU, GAME, MAP_EDITOR
     }
 
     @Override
@@ -126,8 +130,8 @@ public class AOW2App extends GameApplication {
                 // Will be implemented in a future phase
             }
             case "map_editor" -> {
-                LOG.info("Map Editor not yet implemented");
-                // Will be implemented in a future phase
+                LOG.info("Starting Map Editor");
+                showMapEditor();
             }
             case "settings" -> {
                 LOG.info("Settings not yet implemented");
@@ -142,12 +146,36 @@ public class AOW2App extends GameApplication {
     }
 
     /**
+     * Shows the map editor scene.
+     */
+    private void showMapEditor() {
+        if (mapEditorScene != null) {
+            mapEditorScene.stop();
+        }
+
+        mapEditorScene = new MapEditorScene();
+        mapEditorScene.initialize();
+        mapEditorScene.setOnExitCallback(this::showMainMenu);
+
+        FXGL.getGameScene().clearUINodes();
+        FXGL.getGameScene().addUINode(mapEditorScene.getRoot());
+
+        mapEditorScene.start();
+
+        activeScene = ActiveScene.MAP_EDITOR;
+        LOG.info("Map editor scene displayed");
+    }
+
+    /**
      * Called when the application is about to exit.
      */
     @Override
     protected void onExit() {
         if (gameScene != null) {
             gameScene.stop();
+        }
+        if (mapEditorScene != null) {
+            mapEditorScene.stop();
         }
         if (mainMenuScene != null) {
             mainMenuScene.dispose();

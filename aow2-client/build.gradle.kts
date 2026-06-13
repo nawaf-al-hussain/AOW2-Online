@@ -14,6 +14,7 @@ dependencies {
 
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.2")
     testImplementation("org.mockito:mockito-core:5.11.0")
+    testImplementation(project(":aow2-core")) // for test dependencies on core classes
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 

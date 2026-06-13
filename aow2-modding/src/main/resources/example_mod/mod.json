@@ -1,0 +1,11 @@
+{
+  "id": "example_mod",
+  "name": "Example Mod",
+  "version": "1.0.0",
+  "description": "An example mod demonstrating the modding system for Art of War 2: Online.",
+  "author": "AOW2 Team",
+  "game_version": "0.2.0",
+  "dependencies": [],
+  "scripts": ["scripts/test_script.lua"],
+  "data_overrides": ["data/unit_overrides.json"]
+}

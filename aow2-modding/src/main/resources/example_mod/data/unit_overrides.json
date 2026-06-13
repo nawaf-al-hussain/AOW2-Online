@@ -1,0 +1,26 @@
+[
+  {
+    "targetType": "unit",
+    "targetId": "CONFED_INFANTRY",
+    "field": "hp",
+    "value": 120
+  },
+  {
+    "targetType": "unit",
+    "targetId": "CONFED_INFANTRY",
+    "field": "damage",
+    "value": 15
+  },
+  {
+    "targetType": "unit",
+    "targetId": "REBEL_INFANTRY",
+    "field": "speed",
+    "value": 6
+  },
+  {
+    "targetType": "building",
+    "targetId": "CONFED_COMMAND_CENTRE",
+    "field": "hp",
+    "value": 750
+  }
+]

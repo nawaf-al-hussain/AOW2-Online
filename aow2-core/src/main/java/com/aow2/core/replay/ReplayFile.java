@@ -1,0 +1,109 @@
+package com.aow2.core.replay;
+
+import com.aow2.common.model.Faction;
+
+import java.util.List;
+
+/**
+ * Replay file data structure: compact binary with version header.
+ * <p>
+ * Binary format:
+ * <pre>
+ * [4 bytes]  Magic: "AOW2"
+ * [2 bytes]  Format version
+ * [4 bytes]  Map name length + map name bytes
+ * [4 bytes]  Number of players
+ * [N bytes]  Player faction data
+ * [8 bytes]  Total ticks
+ * [Variable] Command entries: [tick(8)] [type(1)] [playerId(1)] [payload(variable)]
+ * </pre>
+ * <p>
+ * REF: phases.md Phase 11 - replay file format
+ *
+ * @param mapName        name of the map played
+ * @param playerFactions array of player factions
+ * @param totalTicks     total game duration in ticks
+ * @param commands       list of recorded command entries
+ * @param recordedAt     epoch millisecond timestamp when recording started
+ * @param formatVersion  replay format version
+ */
+public record ReplayFile(
+    String mapName,
+    Faction[] playerFactions,
+    long totalTicks,
+    List<ReplayEntry> commands,
+    long recordedAt,
+    int formatVersion
+) {
+    /** Current replay format version. */
+    public static final int FORMAT_VERSION = 1;
+
+    /** Magic bytes identifying an AOW2 replay file. */
+    public static final String MAGIC = "AOW2";
+
+    /**
+     * Compact constructor with validation.
+     */
+    public ReplayFile {
+        if (mapName == null || mapName.isBlank()) {
+            throw new IllegalArgumentException("mapName must not be null or blank");
+        }
+        if (playerFactions == null || playerFactions.length == 0) {
+            throw new IllegalArgumentException("playerFactions must not be null or empty");
+        }
+        if (totalTicks < 0) {
+            throw new IllegalArgumentException("totalTicks must not be negative, got: " + totalTicks);
+        }
+        if (commands == null) {
+            throw new IllegalArgumentException("commands must not be null");
+        }
+        if (formatVersion <= 0) {
+            throw new IllegalArgumentException("formatVersion must be positive, got: " + formatVersion);
+        }
+    }
+
+    /**
+     * Creates a new ReplayFile with the current format version and current timestamp.
+     *
+     * @param mapName        map name
+     * @param playerFactions player factions
+     * @return new replay file with empty command list
+     */
+    public static ReplayFile createNew(String mapName, Faction[] playerFactions) {
+        return new ReplayFile(
+            mapName,
+            playerFactions,
+            0,
+            List.of(),
+            System.currentTimeMillis(),
+            FORMAT_VERSION
+        );
+    }
+
+    /**
+     * Returns the number of players in the replay.
+     *
+     * @return player count
+     */
+    public int playerCount() {
+        return playerFactions.length;
+    }
+
+    /**
+     * Returns the number of commands in the replay.
+     *
+     * @return command count
+     */
+    public int commandCount() {
+        return commands.size();
+    }
+
+    /**
+     * Returns the duration in seconds (assuming 30 ticks per second).
+     *
+     * @return duration in seconds
+     */
+    public long durationSeconds() {
+        return totalTicks / 30;
+    }
+}
