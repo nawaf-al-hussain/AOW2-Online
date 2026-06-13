@@ -300,21 +300,22 @@ class PathfindingSystemTest {
         @DisplayName("Should return correct terrain cost for each terrain type")
         void shouldReturnCorrectTerrainCost() {
             // Given: all terrain types
-            // When/Then: verify costs match GameConstants.TERRAIN_MOVEMENT_COSTS (indexed by TerrainType ordinal)
-            assertEquals(Integer.MAX_VALUE, pathfinding.getTerrainCost(TerrainType.DEEP_WATER));       // ordinal 0
-            assertEquals(Integer.MAX_VALUE, pathfinding.getTerrainCost(TerrainType.SHALLOW_WATER));    // ordinal 1
-            assertEquals(Integer.MAX_VALUE, pathfinding.getTerrainCost(TerrainType.DEEP_WATER));            // ordinal 2
-            assertEquals(2, pathfinding.getTerrainCost(TerrainType.SAND));                             // ordinal 3
-            assertEquals(1, pathfinding.getTerrainCost(TerrainType.GRASS));                            // ordinal 4
-            assertEquals(0, pathfinding.getTerrainCost(TerrainType.ROAD));                             // ordinal 5
-            assertEquals(3, pathfinding.getTerrainCost(TerrainType.HILLS));                            // ordinal 6
-            assertEquals(2, pathfinding.getTerrainCost(TerrainType.FOREST));                           // ordinal 7
-            assertEquals(1, pathfinding.getTerrainCost(TerrainType.BRIDGE));                           // ordinal 8
-            assertEquals(Integer.MAX_VALUE, pathfinding.getTerrainCost(TerrainType.MOUNTAIN));         // ordinal 9
-            assertEquals(4, pathfinding.getTerrainCost(TerrainType.SWAMP));                            // ordinal 10
-            assertEquals(3, pathfinding.getTerrainCost(TerrainType.SNOW));                             // ordinal 11
-            assertEquals(2, pathfinding.getTerrainCost(TerrainType.RUINS));                            // ordinal 12
-            assertEquals(1, pathfinding.getTerrainCost(TerrainType.RESOURCE_DEPOSIT));                // ordinal 13
+            // When/Then: verify costs match TerrainType.getMovementCost()
+            assertEquals(Integer.MAX_VALUE, pathfinding.getTerrainCost(TerrainType.DEEP_WATER));
+            assertEquals(Integer.MAX_VALUE, pathfinding.getTerrainCost(TerrainType.SHALLOW_WATER));
+            assertEquals(2, pathfinding.getTerrainCost(TerrainType.SAND));
+            assertEquals(1, pathfinding.getTerrainCost(TerrainType.GRASS));
+            assertEquals(0, pathfinding.getTerrainCost(TerrainType.ROAD));
+            assertEquals(1, pathfinding.getTerrainCost(TerrainType.DIRT));
+            assertEquals(3, pathfinding.getTerrainCost(TerrainType.HILLS));
+            assertEquals(2, pathfinding.getTerrainCost(TerrainType.FOREST));
+            assertEquals(1, pathfinding.getTerrainCost(TerrainType.BRIDGE));
+            assertEquals(Integer.MAX_VALUE, pathfinding.getTerrainCost(TerrainType.MOUNTAIN));
+            assertEquals(4, pathfinding.getTerrainCost(TerrainType.SWAMP));
+            assertEquals(3, pathfinding.getTerrainCost(TerrainType.SNOW));
+            assertEquals(2, pathfinding.getTerrainCost(TerrainType.ICE));
+            assertEquals(2, pathfinding.getTerrainCost(TerrainType.RUINS));
+            assertEquals(1, pathfinding.getTerrainCost(TerrainType.RESOURCE_DEPOSIT));
         }
 
         @Test

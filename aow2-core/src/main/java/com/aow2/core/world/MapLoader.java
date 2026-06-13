@@ -135,7 +135,7 @@ public class MapLoader {
         int tileOverrides = 0;
         for (TileData tileData : mapData.tiles) {
             try {
-                TerrainType terrain = TerrainType.valueOf(tileData.terrain);
+                TerrainType terrain = parseTerrainType(tileData.terrain);
                 if (map.isInBounds(tileData.x, tileData.y)) {
                     map.setTile(tileData.x, tileData.y, terrain);
                     tileOverrides++;
@@ -151,5 +151,21 @@ public class MapLoader {
 
         LOG.info("Loaded map {}x{} with {} tile overrides", mapData.width, mapData.height, tileOverrides);
         return map;
+    }
+
+    /**
+     * Parses a terrain type string, supporting legacy aliases.
+     * "WATER" maps to DEEP_WATER for backward compatibility with existing map data.
+     *
+     * @param name the terrain type name
+     * @return the matching TerrainType
+     * @throws IllegalArgumentException if the name doesn't match any terrain type
+     */
+    private static TerrainType parseTerrainType(String name) {
+        // Support legacy "WATER" alias for DEEP_WATER
+        if ("WATER".equals(name)) {
+            return TerrainType.DEEP_WATER;
+        }
+        return TerrainType.valueOf(name);
     }
 }

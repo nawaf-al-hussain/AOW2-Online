@@ -19,7 +19,8 @@ class GameLoopTest {
     @DisplayName("Should start and stop the game loop")
     void shouldStartAndStop() throws InterruptedException {
         var state = new GameState();
-        var loop = new GameLoop(state, () -> {});
+        // The update callback should advance the tick (as TickManager.processTick() would)
+        var loop = new GameLoop(state, state::advanceTick);
         loop.start();
         Thread.sleep(100);
         assertTrue(loop.isRunning());
