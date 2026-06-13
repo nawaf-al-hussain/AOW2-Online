@@ -192,6 +192,17 @@ public class EntityManager {
         return Collections.unmodifiableList(new ArrayList<>(projectiles.values()));
     }
 
+    /**
+     * Removes a projectile by its entity ID.
+     * Used by the projectile system to remove projectiles after impact.
+     *
+     * @param id entity ID of the projectile to remove
+     * @return true if the projectile was removed, false if not found
+     */
+    public boolean removeProjectile(int id) {
+        return projectiles.remove(id) != null;
+    }
+
     // --- Cleanup ---
 
     /**

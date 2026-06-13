@@ -1,0 +1,31 @@
+server:
+  port: 0
+
+spring:
+  application:
+    name: aow2-server-test
+  datasource:
+    url: jdbc:h2:mem:aow2_test;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.H2Dialect
+  flyway:
+    enabled: false
+
+aow2:
+  jwt:
+    secret: test-secret-key-that-is-long-enough-for-hmac-sha256-algorithm
+    expiration-ms: 3600000
+
+logging:
+  level:
+    com.aow2: DEBUG
+    org.springframework.security: WARN

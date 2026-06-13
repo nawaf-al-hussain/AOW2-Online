@@ -66,6 +66,14 @@ public class Unit extends Entity {
     /** Tick accumulator for movement speed. Units move one cell per speed ticks. */
     private int moveTickAccumulator;
 
+    /** Whether this unit is in siege mode (deployed, increased range/damage, cannot move).
+     * REF: combat_formulas.md - research ID 36: "Unit type 10 siege upgrade = 15"
+     * Torrent and Sniper can enter siege mode for increased range and damage. */
+    private boolean siegeMode;
+
+    /** Ticks remaining before siege mode is fully deployed or undeployed. */
+    private int siegeDeployTimer;
+
     /**
      * Constructs a new unit.
      *
@@ -92,6 +100,8 @@ public class Unit extends Entity {
         this.path = new ArrayList<>();
         this.pathIndex = 0;
         this.moveTickAccumulator = 0;
+        this.siegeMode = false;
+        this.siegeDeployTimer = 0;
     }
 
     // --- Category checks (delegate to UnitType) ---
@@ -324,6 +334,53 @@ public class Unit extends Entity {
 
     public void setMoveTickAccumulator(int moveTickAccumulator) {
         this.moveTickAccumulator = moveTickAccumulator;
+    }
+
+    /**
+     * Returns whether this unit is currently in siege mode.
+     * Siege mode increases attack range and damage but prevents movement.
+     *
+     * @return true if in siege mode
+     */
+    public boolean isSiegeMode() {
+        return siegeMode;
+    }
+
+    /**
+     * Sets the siege mode state of this unit.
+     *
+     * @param siegeMode true to enable siege mode, false to disable
+     */
+    public void setSiegeMode(boolean siegeMode) {
+        this.siegeMode = siegeMode;
+    }
+
+    /**
+     * Returns the remaining siege deployment timer ticks.
+     *
+     * @return ticks remaining for siege deployment/undeployment
+     */
+    public int getSiegeDeployTimer() {
+        return siegeDeployTimer;
+    }
+
+    /**
+     * Sets the siege deployment timer.
+     *
+     * @param siegeDeployTimer ticks for deployment/undeployment
+     */
+    public void setSiegeDeployTimer(int siegeDeployTimer) {
+        this.siegeDeployTimer = siegeDeployTimer;
+    }
+
+    /**
+     * Returns whether this unit type can enter siege mode.
+     * Torrent (Confederation) and Sniper (Resistance) support siege mode.
+     *
+     * @return true if this unit can siege
+     */
+    public boolean canSiege() {
+        return unitType == UnitType.CONFED_TORRENT || unitType == UnitType.REBEL_SNIPER;
     }
 
     @Override

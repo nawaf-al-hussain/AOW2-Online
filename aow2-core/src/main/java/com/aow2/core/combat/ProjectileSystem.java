@@ -1,0 +1,350 @@
+package com.aow2.core.combat;
+
+import com.aow2.common.model.GridPosition;
+import com.aow2.common.model.WeaponType;
+import com.aow2.core.engine.GameState;
+import com.aow2.core.entity.Building;
+import com.aow2.core.entity.EntityManager;
+import com.aow2.core.entity.Entity;
+import com.aow2.core.entity.Projectile;
+import com.aow2.core.entity.Unit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Manages projectile creation, movement, and impact.
+ * <p>
+ * Projectiles are tracked in arrays in the original game (400 max active):
+ * t[idx] = grid X, u[idx] = grid Y, v[idx] = pixel offset X, w[idx] = pixel offset Y,
+ * A[idx] = velocity X, B[idx] = velocity Y, C[idx] = travel time remaining,
+ * G[idx] = projectile type, y[idx] = source unit ref, x[idx] = target unit ref.
+ * <p>
+ * REF: combat_formulas.md "Projectile System" - 400 max active projectiles
+ * REF: combat_formulas.md "Projectile Movement (per tick)" - pixel-based movement
+ * REF: combat_formulas.md "Projectile Spawn" - flight time = distanceTable / speedTable
+ */
+public final class ProjectileSystem {
+
+    private static final Logger log = LoggerFactory.getLogger(ProjectileSystem.class);
+
+    /** Maximum number of active projectiles allowed simultaneously. */
+    public static final int MAX_PROJECTILES = 400;
+
+    /**
+     * Projectile speed table indexed by weapon type ordinal.
+     * Higher values mean faster projectiles (shorter flight time).
+     * REF: combat_formulas.md - speedTable[projectileType]
+     */
+    private static final int[] SPEED_TABLE = {
+        8,   // BULLET
+        4,   // ROCKET
+        3,   // ARTILLERY
+        6,   // FLAME
+        10,  // MACHINE_GUN
+        12,  // SNIPER_RIFLE
+        1    // NONE
+    };
+
+    /**
+     * Splash radius by weapon type. Only ROCKET and ARTILLERY have splash.
+     * REF: combat_formulas.md - "Splash Damage (Artillery)" section
+     */
+    private static final int[] SPLASH_RADIUS = {
+        0,  // BULLET
+        2,  // ROCKET
+        3,  // ARTILLERY
+        1,  // FLAME
+        0,  // MACHINE_GUN
+        0,  // SNIPER_RIFLE
+        0   // NONE
+    };
+
+    /** Tracks the current number of active projectiles for limit enforcement. */
+    private int activeProjectileCount;
+
+    public ProjectileSystem() {
+        this.activeProjectileCount = 0;
+    }
+
+    /**
+     * Process all projectiles for one tick.
+     * Move projectiles toward targets, check for impact.
+     * <p>
+     * REF: combat_formulas.md "Projectile Movement (per tick)"
+     *
+     * @param entities the entity manager containing all game entities
+     * @param state    the current game state for event emission
+     */
+    public void processTick(EntityManager entities, GameState state) {
+        List<Projectile> projectiles = entities.getAllProjectiles();
+        List<Integer> impactedIds = new ArrayList<>();
+
+        for (Projectile proj : projectiles) {
+            proj.advance();
+
+            if (proj.hasReachedTarget()) {
+                handleImpact(proj, entities, state);
+                impactedIds.add(proj.getId());
+            }
+        }
+
+        // Remove impacted projectiles
+        for (int id : impactedIds) {
+            entities.removeProjectile(id);
+            activeProjectileCount = Math.max(0, activeProjectileCount - 1);
+        }
+    }
+
+    /**
+     * Spawn a projectile from attacker to target.
+     * Calculates flight time based on distance and projectile speed.
+     * <p>
+     * REF: combat_formulas.md "Projectile Spawn" - flight time = distanceTable / speedTable
+     * REF: combat_formulas.md - velocity calculation: velX = startOffX / (flightTime + 1)
+     *
+     * @param attacker    the unit firing the projectile
+     * @param target      the target entity (unit or building)
+     * @param weaponType  the type of weapon firing
+     * @param damage      the damage this projectile will deal on impact
+     * @param splash      whether this projectile deals splash damage
+     * @param splashRadius splash radius in tiles (0 if no splash)
+     * @param entities    the entity manager for storing the new projectile
+     * @return the spawned projectile, or null if the limit has been reached
+     */
+    public Projectile spawnProjectile(Unit attacker, Entity target, WeaponType weaponType,
+                                      int damage, boolean splash, int splashRadius,
+                                      EntityManager entities) {
+        if (activeProjectileCount >= MAX_PROJECTILES) {
+            log.debug("Projectile limit reached ({}), cannot spawn new projectile", MAX_PROJECTILES);
+            return null;
+        }
+
+        GridPosition startPos = attacker.getPosition();
+        GridPosition targetPos = target.getPosition();
+        Integer targetUnitRef = null;
+
+        // Determine target reference and position
+        if (target instanceof Unit targetUnit) {
+            targetUnitRef = targetUnit.getId();
+            targetPos = targetUnit.getPosition();
+        } else if (target instanceof Building targetBuilding) {
+            // Buildings use negative reference IDs in the original game
+            targetUnitRef = -targetBuilding.getId();
+        }
+
+        // Calculate flight time based on distance and projectile speed
+        double distance = startPos.distanceTo(targetPos);
+        int speedIndex = weaponType.ordinal();
+        int speed = SPEED_TABLE[Math.min(speedIndex, SPEED_TABLE.length - 1)];
+        int flightTime = Math.max(1, (int) Math.ceil(distance / speed));
+
+        // REF: combat_formulas.md - artillery clamps velocity
+        if (weaponType == WeaponType.ARTILLERY) {
+            flightTime = Math.max(flightTime, 3);
+        }
+
+        int projectileId = entities.allocateEntityId();
+        Projectile projectile = new Projectile(
+            projectileId,
+            attacker.getFaction(),
+            startPos,
+            weaponType,
+            damage,
+            attacker.getId(),
+            targetUnitRef,
+            targetPos,
+            splash,
+            splashRadius,
+            flightTime
+        );
+
+        entities.addProjectile(projectile);
+        activeProjectileCount++;
+        log.debug("Spawned projectile {} from unit {} to target {} (flightTime={}, weapon={})",
+            projectileId, attacker.getId(), target.getId(), flightTime, weaponType);
+        return projectile;
+    }
+
+    /**
+     * Overloaded spawn method that uses default splash radius for the weapon type.
+     *
+     * @param attacker    the unit firing the projectile
+     * @param target      the target entity
+     * @param weaponType  the weapon type
+     * @param damage      the damage on impact
+     * @param entities    the entity manager
+     * @return the spawned projectile, or null if the limit has been reached
+     */
+    public Projectile spawnProjectile(Unit attacker, Entity target, WeaponType weaponType,
+                                      int damage, EntityManager entities) {
+        int weaponIndex = weaponType.ordinal();
+        boolean splash = weaponType == WeaponType.ROCKET || weaponType == WeaponType.ARTILLERY;
+        int splashRadius = splash ? SPLASH_RADIUS[Math.min(weaponIndex, SPLASH_RADIUS.length - 1)] : 0;
+        return spawnProjectile(attacker, target, weaponType, damage, splash, splashRadius, entities);
+    }
+
+    /**
+     * Handle projectile impact.
+     * Applies damage to target. Splash projectiles affect area.
+     * <p>
+     * REF: combat_formulas.md "Splash Damage (Artillery)" - area damage around impact
+     * REF: combat_formulas.md "Damage Calculation for Projectiles" - armor reduction
+     *
+     * @param projectile the projectile that has impacted
+     * @param entities   the entity manager for finding targets
+     * @param state      the game state for event emission
+     */
+    public void handleImpact(Projectile projectile, EntityManager entities, GameState state) {
+        if (projectile.isSplash()) {
+            applySplashDamage(projectile, entities, state);
+        } else {
+            applyDirectDamage(projectile, entities, state);
+        }
+    }
+
+    /**
+     * Apply splash damage to all enemy units within splash radius of impact.
+     * <p>
+     * REF: combat_formulas.md "Splash Damage (Artillery)" section
+     * REF: combat_formulas.md "Nuclear/Explosion Damage" - distanceFactor falloff
+     *
+     * @param projectile the splash projectile
+     * @param entities   entity manager for finding nearby units
+     * @param state      game state for events
+     */
+    private void applySplashDamage(Projectile projectile, EntityManager entities, GameState state) {
+        GridPosition impactPos = projectile.getTargetPosition();
+        int splashRadius = projectile.getSplashRadius();
+
+        // Splash damage to units
+        for (Unit unit : entities.getAllUnits()) {
+            if (!unit.isAlive()) continue;
+
+            double distanceToImpact = unit.getPosition().distanceTo(impactPos);
+            if (distanceToImpact <= splashRadius) {
+                int distance = (int) distanceToImpact;
+                int damage = DamageCalculator.calculateSplashDamage(
+                    projectile.getDamage(), unit.getStats().armor(), distance);
+                unit.takeDamage(damage);
+
+                state.enqueueEvent(new com.aow2.common.event.DamageAppliedEvent(
+                    state.currentTick(), unit.getId(), damage, unit.getHp(),
+                    projectile.getSourceUnitId()));
+
+                if (!unit.isAlive()) {
+                    DamageCalculator.calculateDeathAnimationFrame(unit, 0);
+                    state.enqueueEvent(new com.aow2.common.event.UnitKilledEvent(
+                        state.currentTick(), unit.getId(), unit.getUnitType(),
+                        projectile.getSourceUnitId()));
+                }
+            }
+        }
+
+        // Splash damage to buildings
+        for (Building building : entities.getAllBuildings()) {
+            if (!building.isAlive()) continue;
+
+            double distanceToImpact = building.getPosition().distanceTo(impactPos);
+            if (distanceToImpact <= splashRadius) {
+                int distance = (int) distanceToImpact;
+                int damage = DamageCalculator.calculateSplashDamage(
+                    projectile.getDamage(), 0, distance);
+                building.takeDamage(damage);
+
+                state.enqueueEvent(new com.aow2.common.event.DamageAppliedEvent(
+                    state.currentTick(), building.getId(), damage, building.getHp(),
+                    projectile.getSourceUnitId()));
+
+                if (!building.isAlive()) {
+                    state.enqueueEvent(new com.aow2.common.event.BuildingDestroyedEvent(
+                        state.currentTick(), building.getId(), building.getBuildingType(),
+                        projectile.getSourceUnitId()));
+                }
+            }
+        }
+
+        log.debug("Splash impact at {} with radius {} from projectile {}",
+            impactPos, splashRadius, projectile.getId());
+    }
+
+    /**
+     * Apply direct damage to a single target.
+     * <p>
+     * REF: combat_formulas.md "Damage Calculation for Projectiles"
+     *
+     * @param projectile the direct-fire projectile
+     * @param entities   entity manager for finding the target
+     * @param state      game state for events
+     */
+    private void applyDirectDamage(Projectile projectile, EntityManager entities, GameState state) {
+        Integer targetRef = projectile.getTargetUnitRef();
+        if (targetRef == null) {
+            return;
+        }
+
+        if (targetRef > 0) {
+            // Target is a unit
+            Unit target = entities.getUnit(targetRef);
+            if (target != null && target.isAlive()) {
+                int damage = DamageCalculator.calculateDamage(
+                    projectile.getDamage(), target.getStats().armor());
+                target.takeDamage(damage);
+
+                state.enqueueEvent(new com.aow2.common.event.DamageAppliedEvent(
+                    state.currentTick(), target.getId(), damage, target.getHp(),
+                    projectile.getSourceUnitId()));
+
+                if (!target.isAlive()) {
+                    DamageCalculator.calculateDeathAnimationFrame(target, 0);
+                    state.enqueueEvent(new com.aow2.common.event.UnitKilledEvent(
+                        state.currentTick(), target.getId(), target.getUnitType(),
+                        projectile.getSourceUnitId()));
+                }
+            }
+        } else {
+            // Target is a building (negative ref)
+            int buildingId = -targetRef;
+            Building target = entities.getBuilding(buildingId);
+            if (target != null && target.isAlive()) {
+                int damage = DamageCalculator.calculateDamage(projectile.getDamage(), 0);
+                target.takeDamage(damage);
+
+                state.enqueueEvent(new com.aow2.common.event.DamageAppliedEvent(
+                    state.currentTick(), target.getId(), damage, target.getHp(),
+                    projectile.getSourceUnitId()));
+
+                if (!target.isAlive()) {
+                    state.enqueueEvent(new com.aow2.common.event.BuildingDestroyedEvent(
+                        state.currentTick(), target.getId(), target.getBuildingType(),
+                        projectile.getSourceUnitId()));
+                }
+            }
+        }
+    }
+
+    /**
+     * Get the current number of active projectiles.
+     *
+     * @return active projectile count
+     */
+    public int getActiveProjectileCount() {
+        return activeProjectileCount;
+    }
+
+    /**
+     * Get the splash radius for a given weapon type.
+     *
+     * @param weaponType the weapon type
+     * @return splash radius in tiles (0 if no splash)
+     */
+    public static int getSplashRadiusForWeapon(WeaponType weaponType) {
+        int index = weaponType.ordinal();
+        if (index < SPLASH_RADIUS.length) {
+            return SPLASH_RADIUS[index];
+        }
+        return 0;
+    }
+}
