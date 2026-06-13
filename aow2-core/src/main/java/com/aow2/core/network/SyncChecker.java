@@ -1,6 +1,8 @@
 package com.aow2.core.network;
 
+import com.aow2.core.economy.EconomySystem;
 import com.aow2.core.engine.GameState;
+import com.aow2.core.research.ResearchSystem;
 import com.aow2.core.world.EntityManager;
 
 /**
@@ -46,14 +48,31 @@ public class SyncChecker {
 
     /**
      * Computes a hash of the current game state for desync detection.
-     * The hash incorporates entity positions, health values, and resource counts
-     * to ensure any divergence is caught.
+     * The hash incorporates entity positions, health values, resource counts,
+     * economy (credits), and research state to ensure any divergence is caught.
      *
      * @param state    the current game state
      * @param entities the entity manager
      * @return a 64-bit hash of the game state
      */
     public long computeStateHash(GameState state, EntityManager entities) {
+        return computeStateHash(state, entities, null, null);
+    }
+
+    /**
+     * Computes a hash of the current game state for desync detection.
+     * The hash incorporates entity positions, health values, resource counts,
+     * economy (credits per player), and research state (completed and active)
+     * to ensure any divergence is caught.
+     *
+     * @param state    the current game state
+     * @param entities the entity manager
+     * @param economy  the economy system (may be null)
+     * @param research the research system (may be null)
+     * @return a 64-bit hash of the game state
+     */
+    public long computeStateHash(GameState state, EntityManager entities,
+                                  EconomySystem economy, ResearchSystem research) {
         long hash = 17L;
 
         // Include tick count
@@ -79,6 +98,29 @@ public class SyncChecker {
 
         // Include projectile count
         hash = hash * 31 + entities.projectileCount();
+
+        // Include economy state (credits per player)
+        if (economy != null) {
+            for (int playerId = 0; playerId < 2; playerId++) {
+                hash = hash * 31 + economy.getCredits(playerId);
+            }
+        }
+
+        // Include research state
+        if (research != null) {
+            // Completed research IDs per player
+            for (int playerId = 0; playerId < 2; playerId++) {
+                for (int researchId : research.getCompletedResearch(playerId)) {
+                    hash = hash * 31 + researchId;
+                }
+            }
+            // Active research progress
+            for (var active : research.getActiveResearchEntries()) {
+                hash = hash * 31 + active.researchId();
+                hash = hash * 31 + active.playerId();
+                hash = hash * 31 + active.progress();
+            }
+        }
 
         return hash;
     }

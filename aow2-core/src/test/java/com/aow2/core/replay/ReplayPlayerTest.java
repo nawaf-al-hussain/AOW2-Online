@@ -32,7 +32,10 @@ class ReplayPlayerTest {
         List<ReplayEntry> commands = new ArrayList<>();
         for (int i = 0; i < commandCount; i++) {
             long tick = (i + 1) * 100L;
-            commands.add(new ReplayEntry(tick, 0, i % 2, new byte[]{(byte) i}));
+            // Use CommandSerializer format: [typeId:1][tick:8][playerId:4][count:4][x:4][y:4]
+            // Minimum valid Move command payload for 0 unitIds and target (0,0)
+            byte[] payload = new byte[]{0x01, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+            commands.add(new ReplayEntry(tick, 1, i % 2, payload));
         }
         return new ReplayFile(
             "test_map",
@@ -354,9 +357,9 @@ class ReplayPlayerTest {
         @Test
         @DisplayName("shouldCreateReplayEntryWithValidData")
         void shouldCreateReplayEntryWithValidData() {
-            ReplayEntry entry = new ReplayEntry(100, 0, 0, new byte[]{1, 2, 3});
+            ReplayEntry entry = new ReplayEntry(100, 1, 0, new byte[]{1, 2, 3});
             assertEquals(100, entry.tick());
-            assertEquals(0, entry.typeOrd());
+            assertEquals(1, entry.typeOrd());
             assertEquals(0, entry.playerId());
             assertArrayEquals(new byte[]{1, 2, 3}, entry.getPayload());
         }
@@ -365,14 +368,14 @@ class ReplayPlayerTest {
         @DisplayName("shouldRejectNegativeTick")
         void shouldRejectNegativeTick() {
             assertThrows(IllegalArgumentException.class,
-                () -> new ReplayEntry(-1, 0, 0, new byte[]{}));
+                () -> new ReplayEntry(-1, 1, 0, new byte[]{}));
         }
 
         @Test
         @DisplayName("shouldRejectInvalidTypeOrd")
         void shouldRejectInvalidTypeOrd() {
             assertThrows(IllegalArgumentException.class,
-                () -> new ReplayEntry(0, 11, 0, new byte[]{}));
+                () -> new ReplayEntry(0, 12, 0, new byte[]{}));
         }
 
         @Test
@@ -386,14 +389,14 @@ class ReplayPlayerTest {
         @DisplayName("shouldRejectNullPayload")
         void shouldRejectNullPayload() {
             assertThrows(IllegalArgumentException.class,
-                () -> new ReplayEntry(0, 0, 0, null));
+                () -> new ReplayEntry(0, 1, 0, null));
         }
 
         @Test
         @DisplayName("shouldReturnCopyOfPayload")
         void shouldReturnCopyOfPayload() {
             byte[] original = {1, 2, 3};
-            ReplayEntry entry = new ReplayEntry(0, 0, 0, original);
+            ReplayEntry entry = new ReplayEntry(0, 1, 0, original);
 
             // Modifying the returned array should not affect the entry
             byte[] copy = entry.getPayload();

@@ -49,6 +49,9 @@ public final class MovementSystem {
      * @param map      the current game map
      */
     public void processTick(EntityManager entities, GameMap map) {
+        // Rebuild spatial hash grid once per tick for efficient collision queries
+        collision.rebuildSpatialGrid(entities);
+
         List<Unit> allUnits = entities.getAllUnits();
 
         for (Unit unit : allUnits) {

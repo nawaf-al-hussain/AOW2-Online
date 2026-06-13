@@ -3,8 +3,13 @@ package com.aow2.core.world;
 import com.aow2.common.model.TerrainType;
 
 /**
- * 2D grid-based game map composed of {@link TerrainType} tiles.
- * The map is a 128×128 grid with valid coordinates 0-127 in each axis.
+ * 2D grid-based game map composed of {@link Tile} objects.
+ * Each tile stores terrain type, occupancy, exploration, and visibility state.
+ * <p>
+ * Internally uses {@link Tile}[][] for per-tile state tracking.
+ * The {@link #getTile(int, int)} method returns {@link TerrainType} for
+ * backward compatibility with existing callers. Use {@link #getTileAt(int, int)}
+ * to access the full {@link Tile} record with occupancy and visibility data.
  * <p>
  * REF: MASTER_DOCUMENTATION.md Section 3.2 — Map System
  * REF: map_system.md Section 1.1 — "byte[][] O = Array.newInstance(Byte.TYPE, 128, 128)"
@@ -12,6 +17,8 @@ import com.aow2.common.model.TerrainType;
  *
  * FIX LOG: Max dimension changed from 127 to 128 to match original 128×128 grid.
  * The RE uses byte[128][128] meaning indices 0-127, which IS 128 cells.
+ * FIX LOG: Internal storage changed from TerrainType[][] to Tile[][] to integrate
+ * the Tile record and enable per-tile state tracking (occupancy, visibility, exploration).
  */
 public class GameMap {
 
@@ -20,10 +27,11 @@ public class GameMap {
 
     private final int width;
     private final int height;
-    private final TerrainType[][] tiles;
+    private final Tile[][] tiles;
 
     /**
      * Constructs a new map filled with GRASS tiles.
+     * Each tile is initialized with default state: no occupant, not explored, not visible.
      *
      * @param width  map width (1-128)
      * @param height map height (1-128)
@@ -37,18 +45,20 @@ public class GameMap {
         }
         this.width = width;
         this.height = height;
-        this.tiles = new TerrainType[width][height];
+        this.tiles = new Tile[width][height];
 
-        // Fill with GRASS by default
+        // Fill with GRASS by default, each tile a Tile record
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
-                tiles[x][y] = TerrainType.GRASS;
+                tiles[x][y] = Tile.of(TerrainType.GRASS, x, y);
             }
         }
     }
 
     /**
      * Gets the terrain type at the given coordinates.
+     * Returns {@link TerrainType} for backward compatibility with existing callers.
+     * For full tile data including occupancy and visibility, use {@link #getTileAt(int, int)}.
      *
      * @param x column index
      * @param y row index
@@ -58,14 +68,30 @@ public class GameMap {
         if (!isInBounds(x, y)) {
             return null;
         }
+        return tiles[x][y].terrain();
+    }
+
+    /**
+     * Gets the full {@link Tile} record at the given coordinates.
+     * Use this method to access per-tile state: occupancy, exploration, visibility.
+     *
+     * @param x column index
+     * @param y row index
+     * @return the Tile record, or null if out of bounds
+     */
+    public Tile getTileAt(int x, int y) {
+        if (!isInBounds(x, y)) {
+            return null;
+        }
         return tiles[x][y];
     }
 
     /**
      * Sets the terrain type at the given coordinates.
+     * Preserves existing occupancy, exploration, and visibility state on the tile.
      *
-     * @param x     column index
-     * @param y     row index
+     * @param x       column index
+     * @param y       row index
      * @param terrain terrain type to set
      * @throws IndexOutOfBoundsException if coordinates are out of bounds
      */
@@ -74,21 +100,55 @@ public class GameMap {
             throw new IndexOutOfBoundsException(
                 "Tile coordinates out of bounds: (" + x + ", " + y + ") for map " + width + "x" + height);
         }
-        tiles[x][y] = terrain;
+        tiles[x][y] = tiles[x][y].withTerrain(terrain);
+    }
+
+    /**
+     * Sets the visibility state of the tile at the given coordinates.
+     *
+     * @param x        column index
+     * @param y        row index
+     * @param explored whether the tile has been explored
+     * @param visible  whether the tile is currently visible
+     * @throws IndexOutOfBoundsException if coordinates are out of bounds
+     */
+    public void setTileVisibility(int x, int y, boolean explored, boolean visible) {
+        if (!isInBounds(x, y)) {
+            throw new IndexOutOfBoundsException(
+                "Tile coordinates out of bounds: (" + x + ", " + y + ") for map " + width + "x" + height);
+        }
+        tiles[x][y] = tiles[x][y].withVisibility(explored, visible);
+    }
+
+    /**
+     * Sets the occupying entity ID on the tile at the given coordinates.
+     *
+     * @param x        column index
+     * @param y        row index
+     * @param entityId the entity ID occupying this tile (-1 to clear)
+     * @throws IndexOutOfBoundsException if coordinates are out of bounds
+     */
+    public void setTileOccupant(int x, int y, int entityId) {
+        if (!isInBounds(x, y)) {
+            throw new IndexOutOfBoundsException(
+                "Tile coordinates out of bounds: (" + x + ", " + y + ") for map " + width + "x" + height);
+        }
+        tiles[x][y] = tiles[x][y].withOccupant(entityId);
     }
 
     /**
      * Checks whether the given tile is passable for ground units.
+     * Checks terrain passability only (does not consider occupancy).
      *
      * @param x column index
      * @param y row index
-     * @return true if the tile is in bounds and passable
+     * @return true if the tile is in bounds and terrain is passable
      */
     public boolean isPassable(int x, int y) {
         if (!isInBounds(x, y)) {
             return false;
         }
-        return tiles[x][y].isPassable();
+        return tiles[x][y].terrain().isPassable();
     }
 
     /**

@@ -1,7 +1,12 @@
 package com.aow2.core.world;
 
+import com.aow2.common.config.StatsRegistry;
+import com.aow2.common.model.BuildingStats;
 import com.aow2.common.model.Faction;
 import com.aow2.common.model.GridPosition;
+import com.aow2.common.model.UnitStats;
+import com.aow2.common.model.UnitType;
+import com.aow2.core.campaign.SaveData;
 import com.aow2.core.entity.Building;
 import com.aow2.core.entity.Mine;
 import com.aow2.core.entity.Projectile;
@@ -47,6 +52,67 @@ public class EntityManager {
         this.buildings = new ConcurrentHashMap<>();
         this.projectiles = new ConcurrentHashMap<>();
         this.nextEntityId = new AtomicInteger(1);
+    }
+
+    /**
+     * Creates a new EntityManager populated from save data.
+     * Uses StatsRegistry to get stats for each unit/building type,
+     * then restores each entity from its saved state.
+     *
+     * @param unitSaves     list of unit save records
+     * @param buildingSaves list of building save records
+     * @return a new EntityManager populated with restored entities
+     */
+    public static EntityManager restoreFromSave(
+            List<SaveData.UnitSave> unitSaves,
+            List<SaveData.BuildingSave> buildingSaves) {
+        EntityManager em = new EntityManager();
+        StatsRegistry registry = StatsRegistry.getInstance();
+
+        // Restore units
+        int maxId = 0;
+        for (SaveData.UnitSave save : unitSaves) {
+            UnitStats stats = registry.getUnitStats(save.unitType());
+            Unit unit = new Unit(save.entityId(), save.faction(), save.position(),
+                save.unitType(), stats);
+            // Restore saved HP (may differ from max if damaged)
+            unit.takeDamage(stats.hp() - save.hp());
+            unit.setRank(save.rank());
+            unit.setExperience(save.experience());
+            unit.setSiegeMode(save.siegeMode());
+            unit.setAttackCooldown(save.attackCooldown());
+            unit.setWeaponCooldown(save.weaponCooldown());
+            em.addUnit(unit);
+            if (save.entityId() >= maxId) {
+                maxId = save.entityId() + 1;
+            }
+        }
+
+        // Restore buildings
+        for (SaveData.BuildingSave save : buildingSaves) {
+            BuildingStats stats = registry.getBuildingStats(save.buildingType());
+            Building building = new Building(save.entityId(), save.faction(),
+                save.position(), save.buildingType(), stats);
+            // Restore saved HP
+            building.takeDamage(stats.hp() - save.hp());
+            building.setConstructionProgress(save.constructionProgress());
+            building.setPowered(save.powered());
+            building.setResearchId(save.researchId());
+            building.setProductionProgress(save.productionProgress());
+            // Restore production queue
+            for (UnitType unitType : save.productionQueue()) {
+                building.enqueueProduction(unitType);
+            }
+            em.addBuilding(building);
+            if (save.entityId() >= maxId) {
+                maxId = save.entityId() + 1;
+            }
+        }
+
+        // Ensure next entity ID is above the highest restored ID
+        em.nextEntityId.set(Math.max(maxId, 1));
+
+        return em;
     }
 
     /**
@@ -97,15 +163,34 @@ public class EntityManager {
     }
 
     /**
-     * Returns all alive units belonging to the given faction.
+     * Returns all alive, non-garrisoned units belonging to the given faction.
+     * Garrisoned units are excluded because they are hidden inside buildings
+     * and should not appear on the map or be counted for army strength.
      *
      * @param faction the faction to filter by
-     * @return unmodifiable list of alive units for the faction
+     * @return unmodifiable list of alive, non-garrisoned units for the faction
      */
     public List<Unit> getAliveUnitsForPlayer(Faction faction) {
         List<Unit> result = new ArrayList<>();
         for (Unit unit : units.values()) {
-            if (unit.getFaction() == faction && unit.isAlive()) {
+            if (unit.getFaction() == faction && unit.isAlive() && !unit.isGarrisoned()) {
+                result.add(unit);
+            }
+        }
+        return Collections.unmodifiableList(result);
+    }
+
+    /**
+     * Returns all garrisoned (alive, inside a building) units belonging to the given faction.
+     * These units are inside buildings and not visible on the map.
+     *
+     * @param faction the faction to filter by
+     * @return unmodifiable list of garrisoned units for the faction
+     */
+    public List<Unit> getGarrisonedUnitsForPlayer(Faction faction) {
+        List<Unit> result = new ArrayList<>();
+        for (Unit unit : units.values()) {
+            if (unit.getFaction() == faction && unit.isAlive() && unit.isGarrisoned()) {
                 result.add(unit);
             }
         }
@@ -261,6 +346,82 @@ public class EntityManager {
         mines.removeIf(mine -> mine.getHp() <= 0);
     }
 
+    // --- Visibility-filtered queries ---
+
+    /**
+     * Returns only alive, non-garrisoned units whose positions are VISIBLE to the given player.
+     * Used by the AI to make decisions based only on what it can see.
+     * <p>
+     * If fogOfWar is null, falls back to the unfiltered method (full information,
+     * useful for testing or when fog of war is disabled).
+     *
+     * @param playerId the player whose visibility to check
+     * @param fogOfWar the fog of war system (may be null for full information)
+     * @return unmodifiable list of visible, alive, non-garrisoned units for the player's faction
+     */
+    public List<Unit> getVisibleUnitsForPlayer(int playerId, FogOfWarSystem fogOfWar) {
+        if (fogOfWar == null) {
+            Faction faction = com.aow2.core.economy.EconomySystem.playerFaction(playerId);
+            return getAliveUnitsForPlayer(faction);
+        }
+        Faction faction = com.aow2.core.economy.EconomySystem.playerFaction(playerId);
+        List<Unit> allUnits = getAliveUnitsForPlayer(faction);
+        List<Unit> result = new ArrayList<>();
+        for (Unit unit : allUnits) {
+            if (fogOfWar.isVisible(playerId, unit.getPosition())) {
+                result.add(unit);
+            }
+        }
+        return Collections.unmodifiableList(result);
+    }
+
+    /**
+     * Returns only alive, non-garrisoned ENEMY units whose positions are VISIBLE to the given player.
+     * Used by the AI to see only enemy units it can actually observe.
+     *
+     * @param playerId the player whose visibility to check
+     * @param fogOfWar the fog of war system (may be null for full information)
+     * @return unmodifiable list of visible enemy alive units
+     */
+    public List<Unit> getVisibleEnemyUnitsForPlayer(int playerId, FogOfWarSystem fogOfWar) {
+        Faction aiFaction = com.aow2.core.economy.EconomySystem.playerFaction(playerId);
+        Faction enemyFaction = aiFaction == Faction.CONFEDERATION ? Faction.RESISTANCE : Faction.CONFEDERATION;
+        if (fogOfWar == null) {
+            return getAliveUnitsForPlayer(enemyFaction);
+        }
+        List<Unit> enemyUnits = getAliveUnitsForPlayer(enemyFaction);
+        List<Unit> result = new ArrayList<>();
+        for (Unit unit : enemyUnits) {
+            if (fogOfWar.isVisible(playerId, unit.getPosition())) {
+                result.add(unit);
+            }
+        }
+        return Collections.unmodifiableList(result);
+    }
+
+    /**
+     * Returns only ENEMY buildings whose positions are VISIBLE to the given player.
+     *
+     * @param playerId the player whose visibility to check
+     * @param fogOfWar the fog of war system (may be null for full information)
+     * @return unmodifiable list of visible enemy buildings
+     */
+    public List<Building> getVisibleEnemyBuildingsForPlayer(int playerId, FogOfWarSystem fogOfWar) {
+        Faction aiFaction = com.aow2.core.economy.EconomySystem.playerFaction(playerId);
+        Faction enemyFaction = aiFaction == Faction.CONFEDERATION ? Faction.RESISTANCE : Faction.CONFEDERATION;
+        if (fogOfWar == null) {
+            return getBuildingsForPlayer(enemyFaction);
+        }
+        List<Building> enemyBuildings = getBuildingsForPlayer(enemyFaction);
+        List<Building> result = new ArrayList<>();
+        for (Building building : enemyBuildings) {
+            if (fogOfWar.isVisible(playerId, building.getPosition())) {
+                result.add(building);
+            }
+        }
+        return Collections.unmodifiableList(result);
+    }
+
     // --- Spatial queries ---
 
     /**
@@ -272,7 +433,7 @@ public class EntityManager {
      */
     public Unit findUnitAt(GridPosition position) {
         for (Unit unit : units.values()) {
-            if (unit.isAlive() && unit.getPosition().equals(position)) {
+            if (unit.isAlive() && !unit.isGarrisoned() && unit.getPosition().equals(position)) {
                 return unit;
             }
         }

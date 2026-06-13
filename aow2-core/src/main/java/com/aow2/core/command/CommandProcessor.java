@@ -84,7 +84,7 @@ public final class CommandProcessor {
             case CommandType.Produce cmd -> produceHandler.handle(cmd, entities, economy, production, research);
             case CommandType.Research cmd -> researchHandler.handle(cmd, entities, economy, research);
             case CommandType.Garrison cmd -> garrisonHandler.handleGarrison(cmd, entities);
-            case CommandType.Ungarrison cmd -> garrisonHandler.handleUngarrison(cmd, entities);
+            case CommandType.Ungarrison cmd -> garrisonHandler.handleUngarrison(cmd, entities, map);
             case CommandType.Cancel cmd -> handleCancel(cmd, entities, economy, production, research);
             case CommandType.SiegeMode cmd -> handleSiegeMode(cmd, entities, combat);
             case CommandType.Stop cmd -> handleStop(cmd, entities);

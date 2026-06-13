@@ -15,6 +15,7 @@ import com.aow2.core.movement.MovementSystem;
 import com.aow2.core.research.ResearchSystem;
 import com.aow2.core.research.TechTree;
 import com.aow2.core.world.EntityManager;
+import com.aow2.core.world.FogOfWarSystem;
 import com.aow2.core.world.GameMap;
 
 import org.slf4j.Logger;
@@ -63,6 +64,9 @@ public final class AISystem {
     /** Random number generator for strategy quality decisions. */
     private final Random random;
 
+    /** The fog of war system, used to limit AI vision to visible tiles only. */
+    private FogOfWarSystem fogOfWar;
+
     /** Tick counter for decision timing. */
     private long lastDecisionTick;
 
@@ -84,6 +88,17 @@ public final class AISystem {
         this.random = new Random();
         this.lastDecisionTick = -difficulty.tickInterval; // Allow immediate first decision
         this.activeTaskCount = 0;
+    }
+
+    /**
+     * Set the fog of war system for this AI.
+     * When set, the AI will only consider entities it can see.
+     * When null, the AI has full information (useful for testing).
+     *
+     * @param fogOfWar the fog of war system, or null for full information
+     */
+    public void setFogOfWar(FogOfWarSystem fogOfWar) {
+        this.fogOfWar = fogOfWar;
     }
 
     /**
@@ -138,7 +153,7 @@ public final class AISystem {
         // Reset task count at the start of each decision cycle
         resetTaskCount();
 
-        // Execute AI decision pipeline
+        // Execute AI decision pipeline, passing fogOfWar for visibility-filtered decisions
         processEconomyDecisions(entities, map, economy, research, production, placement);
         taskCompleted();
         processResearchDecisions(entities, economy, research);
@@ -224,7 +239,7 @@ public final class AISystem {
      */
     private void processMilitaryDecisions(EntityManager entities, GameMap map,
                                            MovementSystem movement) {
-        MilitaryAction action = militaryAI.decideAction(entities, map, playerId);
+        MilitaryAction action = militaryAI.decideAction(entities, map, playerId, fogOfWar);
 
         // Execute the military action using pattern matching
         switch (action) {

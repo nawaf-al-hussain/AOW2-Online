@@ -11,6 +11,7 @@ import com.aow2.core.entity.Building;
 import com.aow2.core.entity.Unit;
 import com.aow2.core.research.ResearchSystem;
 import com.aow2.core.world.EntityManager;
+import com.aow2.core.world.FogOfWarSystem;
 import com.aow2.core.world.GameMap;
 
 import org.slf4j.Logger;
@@ -220,18 +221,21 @@ public final class EconomyAI {
 
     /**
      * Check if base needs defensive buildings.
-     * Triggers when enemy units are within the defense trigger distance of base.
+     * Triggers when VISIBLE enemy units are within the defense trigger distance of base.
+     * <p>
+     * FOG OF WAR: Only reacts to VISIBLE enemy units near the base.
+     * Enemies in unexplored or explored-but-not-visible tiles are ignored.
      * <p>
      * REF: ai_analysis.md — AI builds defensive buildings in response to threats.
      * DEFENSE_TRIGGER_DISTANCE = 20 cells.
      *
      * @param entities the entity manager
      * @param playerId the AI player ID
+     * @param fogOfWar the fog of war system (may be null for full information)
      * @return true if defensive buildings should be constructed
      */
-    public boolean needsDefense(EntityManager entities, int playerId) {
+    public boolean needsDefense(EntityManager entities, int playerId, FogOfWarSystem fogOfWar) {
         Faction faction = EconomySystem.playerFaction(playerId);
-        Faction enemyFaction = faction == Faction.CONFEDERATION ? Faction.RESISTANCE : Faction.CONFEDERATION;
 
         // Find the player's Command Centre
         List<Building> buildings = entities.getBuildingsForPlayer(faction);
@@ -247,15 +251,27 @@ public final class EconomyAI {
             return false; // No base to defend
         }
 
-        // Check for enemy units near base
-        List<Unit> enemyUnits = entities.getAliveUnitsForPlayer(enemyFaction);
-        for (Unit enemy : enemyUnits) {
+        // Check for VISIBLE enemy units near base
+        List<Unit> visibleEnemyUnits = entities.getVisibleEnemyUnitsForPlayer(playerId, fogOfWar);
+        for (Unit enemy : visibleEnemyUnits) {
             if (enemy.getPosition().distanceTo(ccPos) <= DEFENSE_TRIGGER_DISTANCE) {
                 return true;
             }
         }
 
         return false;
+    }
+
+    /**
+     * Check if base needs defensive buildings without fog of war (full information).
+     * Provided for backward compatibility.
+     *
+     * @param entities the entity manager
+     * @param playerId the AI player ID
+     * @return true if defensive buildings should be constructed
+     */
+    public boolean needsDefense(EntityManager entities, int playerId) {
+        return needsDefense(entities, playerId, null);
     }
 
     /**

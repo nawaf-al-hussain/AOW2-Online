@@ -7,6 +7,7 @@ import com.aow2.core.economy.EconomySystem;
 import com.aow2.core.entity.Building;
 import com.aow2.core.entity.Unit;
 import com.aow2.core.world.EntityManager;
+import com.aow2.core.world.FogOfWarSystem;
 import com.aow2.core.world.GameMap;
 
 import org.slf4j.Logger;
@@ -37,6 +38,11 @@ import java.util.List;
  * Light Machinery (4,21) → scouts/raids, hit-and-run
  * Heavy Machinery (7,16) → buildings/heavy, siege warfare
  * Artillery (19,20) → area targets, long-range bombardment
+ * <p>
+ * FOG OF WAR: All enemy-related decisions use visibility-filtered data.
+ * The AI only "knows" about enemy entities it can currently see (VISIBLE tiles).
+ * For entities in EXPLORED or UNEXPLORED tiles, the AI acts as if they don't exist.
+ * The AI always has full knowledge of its own units and buildings (friendly fog is always visible).
  */
 public final class MilitaryAI {
 
@@ -62,22 +68,38 @@ public final class MilitaryAI {
      * <p>
      * REF: ai_analysis.md — AI counts HP in range for military decisions.
      * "totalHP += ca[unitRef + 1616]" from target search mode 2.
+     * <p>
+     * FOG OF WAR: Only counts VISIBLE enemy units and buildings. If fogOfWar is null,
+     * full information is used (for testing).
      *
      * @param entities the entity manager
      * @param playerId the AI player ID
+     * @param fogOfWar the fog of war system (may be null for full information)
      * @return ratio of AI strength to enemy strength. >1.0 means AI has advantage
      */
-    public double assessMilitaryAdvantage(EntityManager entities, int playerId) {
+    public double assessMilitaryAdvantage(EntityManager entities, int playerId, FogOfWarSystem fogOfWar) {
         Faction aiFaction = EconomySystem.playerFaction(playerId);
-        Faction enemyFaction = aiFaction == Faction.CONFEDERATION ? Faction.RESISTANCE : Faction.CONFEDERATION;
 
-        double aiStrength = calculateMilitaryStrength(entities, aiFaction);
-        double enemyStrength = calculateMilitaryStrength(entities, enemyFaction);
+        // AI always has full knowledge of its own forces (friendly fog is always visible)
+        double aiStrength = calculateMilitaryStrength(entities, aiFaction, fogOfWar, playerId);
+        double enemyStrength = calculateEnemyMilitaryStrength(entities, playerId, fogOfWar);
 
         if (enemyStrength <= 0) {
-            return Double.MAX_VALUE; // No enemy military
+            return Double.MAX_VALUE; // No visible enemy military
         }
         return aiStrength / enemyStrength;
+    }
+
+    /**
+     * Assess military strength comparison without fog of war (full information).
+     * Provided for backward compatibility.
+     *
+     * @param entities the entity manager
+     * @param playerId the AI player ID
+     * @return ratio of AI strength to enemy strength
+     */
+    public double assessMilitaryAdvantage(EntityManager entities, int playerId) {
+        return assessMilitaryAdvantage(entities, playerId, null);
     }
 
     /**
@@ -89,61 +111,67 @@ public final class MilitaryAI {
      * 3. Harass enemy economy when possible with light units
      * 4. Hold position when no clear action
      * 5. Retreat when outnumbered
+     * <p>
+     * FOG OF WAR: Only considers VISIBLE enemy entities. The AI cannot react to
+     * threats it cannot see, and cannot attack targets in unexplored territory.
      *
      * @param entities the entity manager
      * @param map      the game map
      * @param playerId the AI player ID
+     * @param fogOfWar the fog of war system (may be null for full information)
      * @return the military action to execute
      */
-    public MilitaryAction decideAction(EntityManager entities, GameMap map, int playerId) {
+    public MilitaryAction decideAction(EntityManager entities, GameMap map, int playerId, FogOfWarSystem fogOfWar) {
         Faction aiFaction = EconomySystem.playerFaction(playerId);
-        Faction enemyFaction = aiFaction == Faction.CONFEDERATION ? Faction.RESISTANCE : Faction.CONFEDERATION;
 
+        // AI always has full knowledge of its own units
         List<Unit> aiUnits = entities.getAliveUnitsForPlayer(aiFaction);
-        List<Unit> enemyUnits = entities.getAliveUnitsForPlayer(enemyFaction);
 
-        // 1. Check if base is under attack — defend
+        // Only consider VISIBLE enemy units for decision-making
+        List<Unit> visibleEnemyUnits = entities.getVisibleEnemyUnitsForPlayer(playerId, fogOfWar);
+
+        // 1. Check if base is under attack — defend (only react to visible enemies)
         GridPosition basePosition = findBasePosition(entities, playerId);
-        if (basePosition != null && isBaseUnderAttack(entities, playerId, basePosition)) {
+        if (basePosition != null && isBaseUnderAttack(visibleEnemyUnits, basePosition)) {
             List<Integer> defenderIds = selectDefenders(aiUnits, basePosition);
             if (!defenderIds.isEmpty()) {
-                LOG.debug("Player {} defending base at {}", playerId, basePosition);
+                LOG.debug("Player {} defending base at {} (visible enemies nearby)", playerId, basePosition);
                 return new MilitaryAction.Defend(basePosition, defenderIds);
             }
         }
 
-        // Calculate military advantage
-        double advantage = assessMilitaryAdvantage(entities, playerId);
+        // Calculate military advantage based on visible enemy forces only
+        double advantage = assessMilitaryAdvantage(entities, playerId, fogOfWar);
 
-        // 2. Retreat when outnumbered
+        // 2. Retreat when outnumbered (based on visible enemy strength)
         if (advantage < RETREAT_DISADVANTAGE_THRESHOLD && !aiUnits.isEmpty()) {
             GridPosition rallyPoint = basePosition != null ? basePosition : new GridPosition(50, 50);
             List<Integer> retreatingIds = aiUnits.stream()
                 .filter(Unit::isAlive)
                 .map(Unit::getId)
                 .toList();
-            LOG.debug("Player {} retreating to {} (advantage={})", playerId, rallyPoint, advantage);
+            LOG.debug("Player {} retreating to {} (visible advantage={})", playerId, rallyPoint, advantage);
             return new MilitaryAction.Retreat(rallyPoint, retreatingIds);
         }
 
-        // 3. Attack when military advantage > 1.5x
+        // 3. Attack when military advantage > 1.5x (only target visible enemies)
         if (advantage >= ATTACK_ADVANTAGE_THRESHOLD && !aiUnits.isEmpty()) {
-            GridPosition attackTarget = findAttackTarget(entities, map, playerId);
+            GridPosition attackTarget = findAttackTarget(entities, map, playerId, fogOfWar);
             if (attackTarget != null) {
                 int desiredSize = Math.max(5, aiUnits.size() / 2);
                 List<Unit> attackGroup = selectAttackGroup(entities, playerId, desiredSize);
                 List<Integer> attackIds = attackGroup.stream().map(Unit::getId).toList();
                 if (!attackIds.isEmpty()) {
-                    LOG.debug("Player {} attacking {} with {} units (advantage={})",
+                    LOG.debug("Player {} attacking {} with {} units (visible advantage={})",
                         playerId, attackTarget, attackIds.size(), advantage);
                     return new MilitaryAction.Attack(attackTarget, attackIds);
                 }
             }
         }
 
-        // 4. Harass enemy economy with small group if possible
+        // 4. Harass enemy economy with small group if possible (only visible targets)
         if (aiUnits.size() >= 8 && hasFastUnits(aiUnits)) {
-            GridPosition harassTarget = findHarassTarget(entities, playerId);
+            GridPosition harassTarget = findHarassTarget(entities, playerId, fogOfWar);
             if (harassTarget != null) {
                 List<Unit> harassGroup = selectHarassGroup(aiUnits);
                 if (!harassGroup.isEmpty()) {
@@ -165,6 +193,19 @@ public final class MilitaryAI {
         }
 
         return new MilitaryAction.HoldPosition(List.of());
+    }
+
+    /**
+     * Decide the best military action without fog of war (full information).
+     * Provided for backward compatibility.
+     *
+     * @param entities the entity manager
+     * @param map      the game map
+     * @param playerId the AI player ID
+     * @return the military action to execute
+     */
+    public MilitaryAction decideAction(EntityManager entities, GameMap map, int playerId) {
+        return decideAction(entities, map, playerId, null);
     }
 
     /**
@@ -198,6 +239,9 @@ public final class MilitaryAI {
     /**
      * Find the best attack target (weakest enemy building or unit cluster).
      * <p>
+     * FOG OF WAR: Only considers VISIBLE enemy buildings and units.
+     * The AI cannot attack targets it cannot see.
+     * <p>
      * REF: ai_analysis.md — target selection priorities:
      * - Buildings have priority based on max HP (bS[bT[53] + unitType])
      * - Closer targets preferred when priorities equal
@@ -206,20 +250,18 @@ public final class MilitaryAI {
      * @param entities the entity manager
      * @param map      the game map
      * @param playerId the AI player ID
-     * @return the best target position, or null if no targets
+     * @param fogOfWar the fog of war system (may be null for full information)
+     * @return the best target position, or null if no visible targets
      */
-    public GridPosition findAttackTarget(EntityManager entities, GameMap map, int playerId) {
-        Faction aiFaction = EconomySystem.playerFaction(playerId);
-        Faction enemyFaction = aiFaction == Faction.CONFEDERATION ? Faction.RESISTANCE : Faction.CONFEDERATION;
-
-        // Priority 1: Enemy Command Centre (highest priority)
-        List<Building> enemyBuildings = entities.getBuildingsForPlayer(enemyFaction);
+    public GridPosition findAttackTarget(EntityManager entities, GameMap map, int playerId, FogOfWarSystem fogOfWar) {
+        // Only consider VISIBLE enemy buildings
+        List<Building> visibleEnemyBuildings = entities.getVisibleEnemyBuildingsForPlayer(playerId, fogOfWar);
         Building bestTarget = null;
         int bestPriority = -1;
         double bestDistance = Double.MAX_VALUE;
         GridPosition aiBase = findBasePosition(entities, playerId);
 
-        for (Building building : enemyBuildings) {
+        for (Building building : visibleEnemyBuildings) {
             if (!building.isAlive()) continue;
 
             // REF: ai_analysis.md — building priority = max HP
@@ -238,17 +280,17 @@ public final class MilitaryAI {
             return bestTarget.getPosition();
         }
 
-        // Priority 2: Largest cluster of enemy units
-        List<Unit> enemyUnits = entities.getAliveUnitsForPlayer(enemyFaction);
-        if (!enemyUnits.isEmpty()) {
-            // Find the centroid of enemy units as the attack target
+        // Only consider VISIBLE enemy units
+        List<Unit> visibleEnemyUnits = entities.getVisibleEnemyUnitsForPlayer(playerId, fogOfWar);
+        if (!visibleEnemyUnits.isEmpty()) {
+            // Find the centroid of visible enemy units as the attack target
             double sumX = 0, sumY = 0;
-            for (Unit unit : enemyUnits) {
+            for (Unit unit : visibleEnemyUnits) {
                 sumX += unit.getPosition().x();
                 sumY += unit.getPosition().y();
             }
-            int centroidX = (int) (sumX / enemyUnits.size());
-            int centroidY = (int) (sumY / enemyUnits.size());
+            int centroidX = (int) (sumX / visibleEnemyUnits.size());
+            int centroidY = (int) (sumY / visibleEnemyUnits.size());
             centroidX = Math.clamp(centroidX, 0, 127);
             centroidY = Math.clamp(centroidY, 0, 127);
             return new GridPosition(centroidX, centroidY);
@@ -258,25 +300,72 @@ public final class MilitaryAI {
     }
 
     /**
+     * Find the best attack target without fog of war (full information).
+     * Provided for backward compatibility.
+     *
+     * @param entities the entity manager
+     * @param map      the game map
+     * @param playerId the AI player ID
+     * @return the best target position, or null if no targets
+     */
+    public GridPosition findAttackTarget(EntityManager entities, GameMap map, int playerId) {
+        return findAttackTarget(entities, map, playerId, null);
+    }
+
+    /**
      * Calculate military strength for a faction.
-     * Strength = sum of (HP * damage) for all alive units.
+     * Strength = sum of (HP * damage) for all alive units + defensive buildings.
+     * <p>
+     * For friendly faction: always uses full data (friendly fog is always visible).
+     * For enemy faction: use {@link #calculateEnemyMilitaryStrength} instead.
      *
      * @param entities the entity manager
      * @param faction  the faction
+     * @param fogOfWar the fog of war system (unused for friendly faction, always full info)
+     * @param playerId the player ID (for determining friendly vs enemy)
      * @return the total military strength value
      */
-    private double calculateMilitaryStrength(EntityManager entities, Faction faction) {
+    private double calculateMilitaryStrength(EntityManager entities, Faction faction, FogOfWarSystem fogOfWar, int playerId) {
+        // Friendly units: always full visibility
         List<Unit> units = entities.getAliveUnitsForPlayer(faction);
         double strength = 0;
         for (Unit unit : units) {
             // REF: ai_analysis.md — strength measured by HP and damage
             strength += (double) unit.getHp() * unit.getStats().damage();
         }
-        // Add defensive building strength
+        // Add defensive building strength (friendly buildings always visible)
         List<Building> buildings = entities.getBuildingsForPlayer(faction);
         for (Building building : buildings) {
             if (building.isAlive() && !building.isUnderConstruction() && building.getBuildingType().isDefensive()) {
                 strength += building.getHp() * 0.5; // Defensive buildings add half their HP
+            }
+        }
+        return strength;
+    }
+
+    /**
+     * Calculate military strength of the enemy faction based on visibility.
+     * Only counts VISIBLE enemy units and buildings. If fogOfWar is null,
+     * full information is used.
+     *
+     * @param entities the entity manager
+     * @param playerId the AI player ID
+     * @param fogOfWar the fog of war system (may be null for full information)
+     * @return the total visible enemy military strength
+     */
+    private double calculateEnemyMilitaryStrength(EntityManager entities, int playerId, FogOfWarSystem fogOfWar) {
+        // Only count visible enemy units
+        List<Unit> visibleEnemyUnits = entities.getVisibleEnemyUnitsForPlayer(playerId, fogOfWar);
+        double strength = 0;
+        for (Unit unit : visibleEnemyUnits) {
+            strength += (double) unit.getHp() * unit.getStats().damage();
+        }
+
+        // Only count visible enemy defensive buildings
+        List<Building> visibleEnemyBuildings = entities.getVisibleEnemyBuildingsForPlayer(playerId, fogOfWar);
+        for (Building building : visibleEnemyBuildings) {
+            if (building.isAlive() && !building.isUnderConstruction() && building.getBuildingType().isDefensive()) {
+                strength += building.getHp() * 0.5;
             }
         }
         return strength;
@@ -301,21 +390,19 @@ public final class MilitaryAI {
     }
 
     /**
-     * Check if the base is under attack by enemy units.
+     * Check if the base is under attack by visible enemy units.
+     * <p>
+     * FOG OF WAR: Only considers VISIBLE enemy units. The AI cannot react to
+     * enemies it cannot see (realistic behavior).
      * <p>
      * REF: ai_analysis.md — AI defends base when enemy units are nearby
      *
-     * @param entities    the entity manager
-     * @param playerId    the player ID
-     * @param basePosition the base position
-     * @return true if enemy units are within defense distance
+     * @param visibleEnemyUnits the list of visible enemy units (pre-filtered by caller)
+     * @param basePosition      the base position
+     * @return true if visible enemy units are within defense distance
      */
-    private boolean isBaseUnderAttack(EntityManager entities, int playerId, GridPosition basePosition) {
-        Faction aiFaction = EconomySystem.playerFaction(playerId);
-        Faction enemyFaction = aiFaction == Faction.CONFEDERATION ? Faction.RESISTANCE : Faction.CONFEDERATION;
-
-        List<Unit> enemyUnits = entities.getAliveUnitsForPlayer(enemyFaction);
-        for (Unit enemy : enemyUnits) {
+    private boolean isBaseUnderAttack(List<Unit> visibleEnemyUnits, GridPosition basePosition) {
+        for (Unit enemy : visibleEnemyUnits) {
             if (enemy.getPosition().distanceTo(basePosition) <= BASE_DEFENSE_DISTANCE) {
                 return true;
             }
@@ -351,16 +438,20 @@ public final class MilitaryAI {
     }
 
     /**
-     * Find a harassment target (enemy economy building).
+     * Find a harassment target (visible enemy economy building).
+     * <p>
+     * FOG OF WAR: Only targets VISIBLE enemy production buildings.
      * REF: ai_analysis.md — harass enemy economy when possible
+     *
+     * @param entities the entity manager
+     * @param playerId the AI player ID
+     * @param fogOfWar the fog of war system (may be null for full information)
+     * @return the position of a visible enemy production building, or null
      */
-    private GridPosition findHarassTarget(EntityManager entities, int playerId) {
-        Faction aiFaction = EconomySystem.playerFaction(playerId);
-        Faction enemyFaction = aiFaction == Faction.CONFEDERATION ? Faction.RESISTANCE : Faction.CONFEDERATION;
-
-        // Target enemy production buildings (Infantry Centre, Machine Factory)
-        List<Building> enemyBuildings = entities.getBuildingsForPlayer(enemyFaction);
-        for (Building building : enemyBuildings) {
+    private GridPosition findHarassTarget(EntityManager entities, int playerId, FogOfWarSystem fogOfWar) {
+        // Only target visible enemy buildings
+        List<Building> visibleEnemyBuildings = entities.getVisibleEnemyBuildingsForPlayer(playerId, fogOfWar);
+        for (Building building : visibleEnemyBuildings) {
             if (building.isAlive() && !building.isUnderConstruction() && building.getBuildingType().producesUnits()) {
                 return building.getPosition();
             }

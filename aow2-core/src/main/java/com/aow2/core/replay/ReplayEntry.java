@@ -8,9 +8,9 @@ package com.aow2.core.replay;
  * REF: phases.md Phase 11 - replay entry format
  *
  * @param tick     the game tick when the command was issued
- * @param typeOrd  ordinal of the CommandType variant (0-10)
+ * @param typeOrd  ordinal of the CommandType variant (1-11, matching CommandSerializer type IDs)
  * @param playerId the player who issued the command (0 or 1)
- * @param payload  serialized command data (variable length)
+ * @param payload  full serialized command data from CommandSerializer (variable length)
  */
 public record ReplayEntry(
     long tick,
@@ -25,8 +25,8 @@ public record ReplayEntry(
         if (tick < 0) {
             throw new IllegalArgumentException("tick must not be negative, got: " + tick);
         }
-        if (typeOrd < 0 || typeOrd > 10) {
-            throw new IllegalArgumentException("typeOrd must be 0-10, got: " + typeOrd);
+        if (typeOrd < 0 || typeOrd > 11) {
+            throw new IllegalArgumentException("typeOrd must be 0-11, got: " + typeOrd);
         }
         if (playerId < 0 || playerId > 1) {
             throw new IllegalArgumentException("playerId must be 0 or 1, got: " + playerId);

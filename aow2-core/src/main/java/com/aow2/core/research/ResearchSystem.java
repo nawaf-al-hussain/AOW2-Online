@@ -258,6 +258,15 @@ public final class ResearchSystem {
     }
 
     /**
+     * Returns all active research entries across all players.
+     *
+     * @return unmodifiable collection of active research entries
+     */
+    public List<ActiveResearch> getActiveResearchEntries() {
+        return List.copyOf(activeResearchMap.values());
+    }
+
+    /**
      * Check if a research's prerequisites are met.
      *
      * @param researchId the research ID to check

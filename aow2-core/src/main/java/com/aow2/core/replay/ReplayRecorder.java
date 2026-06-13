@@ -2,13 +2,13 @@ package com.aow2.core.replay;
 
 import com.aow2.common.model.CommandType;
 import com.aow2.common.model.Faction;
+import com.aow2.core.network.CommandSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -18,12 +18,26 @@ import java.util.List;
 /**
  * Records all player commands for replay playback.
  * Captures the full command stream during a game session.
+ * Uses CommandSerializer for wire format compatibility with ReplayPlayer.
  * <p>
  * REF: phases.md Phase 11 - full replay recording and playback
  */
 public final class ReplayRecorder {
 
     private static final Logger LOG = LoggerFactory.getLogger(ReplayRecorder.class);
+
+    /** Command type IDs matching CommandSerializer wire protocol (0x01-0x0B). */
+    private static final int TYPE_MOVE = 0x01;
+    private static final int TYPE_ATTACK = 0x02;
+    private static final int TYPE_BUILD = 0x03;
+    private static final int TYPE_PRODUCE = 0x04;
+    private static final int TYPE_RESEARCH = 0x05;
+    private static final int TYPE_GARRISON = 0x06;
+    private static final int TYPE_UNGARRISON = 0x07;
+    private static final int TYPE_CANCEL = 0x08;
+    private static final int TYPE_SIEGE_MODE = 0x09;
+    private static final int TYPE_STOP = 0x0A;
+    private static final int TYPE_PATROL = 0x0B;
 
     /** Whether recording is active. */
     private boolean recording;
@@ -69,7 +83,7 @@ public final class ReplayRecorder {
 
     /**
      * Records a command during the current game session.
-     * The command is serialized into a ReplayEntry and added to the command list.
+     * The command is serialized using CommandSerializer and stored as a ReplayEntry.
      *
      * @param command the command to record
      */
@@ -210,119 +224,30 @@ public final class ReplayRecorder {
     }
 
     /**
-     * Serializes a CommandType into a ReplayEntry.
-     * Uses the command's tick, type ordinal, player ID, and a compact
-     * binary payload representation.
+     * Serializes a CommandType into a ReplayEntry using CommandSerializer.
+     * The payload is the FULL serialized command from CommandSerializer
+     * (including the type byte, tick, playerId header), so it can be
+     * directly passed to CommandSerializer.deserialize() during playback.
      *
      * @param command the command to serialize
      * @return serialized replay entry
      */
     private ReplayEntry serializeCommand(CommandType command) {
         int typeOrd = switch (command) {
-            case CommandType.Move m -> 0;
-            case CommandType.Attack a -> 1;
-            case CommandType.Build b -> 2;
-            case CommandType.Produce p -> 3;
-            case CommandType.Research r -> 4;
-            case CommandType.Garrison g -> 5;
-            case CommandType.Ungarrison u -> 6;
-            case CommandType.Cancel c -> 7;
-            case CommandType.SiegeMode s -> 8;
-            case CommandType.Stop st -> 9;
-            case CommandType.Patrol pt -> 10;
+            case CommandType.Move m -> TYPE_MOVE;
+            case CommandType.Attack a -> TYPE_ATTACK;
+            case CommandType.Build b -> TYPE_BUILD;
+            case CommandType.Produce p -> TYPE_PRODUCE;
+            case CommandType.Research r -> TYPE_RESEARCH;
+            case CommandType.Garrison g -> TYPE_GARRISON;
+            case CommandType.Ungarrison u -> TYPE_UNGARRISON;
+            case CommandType.Cancel c -> TYPE_CANCEL;
+            case CommandType.SiegeMode s -> TYPE_SIEGE_MODE;
+            case CommandType.Stop st -> TYPE_STOP;
+            case CommandType.Patrol pt -> TYPE_PATROL;
         };
 
-        byte[] payload = encodePayload(command);
-        return new ReplayEntry(command.tick(), typeOrd, command.playerId(), payload);
-    }
-
-    /**
-     * Encodes a command into a compact binary payload.
-     * ASSUMPTION: Simple encoding; production version would use CommandSerializer.
-     */
-    private byte[] encodePayload(CommandType command) {
-        return switch (command) {
-            case CommandType.Move m -> {
-                ByteBuffer buf = ByteBuffer.allocate(8 + m.unitIds().length * 4 + 8);
-                buf.putInt(m.unitIds().length);
-                for (int id : m.unitIds()) buf.putInt(id);
-                buf.putInt(m.target().x());
-                buf.putInt(m.target().y());
-                yield compactBuffer(buf);
-            }
-            case CommandType.Attack a -> {
-                ByteBuffer buf = ByteBuffer.allocate(4 + a.unitIds().length * 4 + 4);
-                buf.putInt(a.unitIds().length);
-                for (int id : a.unitIds()) buf.putInt(id);
-                buf.putInt(a.targetId());
-                yield compactBuffer(buf);
-            }
-            case CommandType.Build b -> {
-                ByteBuffer buf = ByteBuffer.allocate(4 + 8);
-                buf.putInt(b.buildingType().ordinal());
-                buf.putInt(b.position().x());
-                buf.putInt(b.position().y());
-                yield compactBuffer(buf);
-            }
-            case CommandType.Produce p -> {
-                ByteBuffer buf = ByteBuffer.allocate(8);
-                buf.putInt(p.producerId());
-                buf.putInt(p.unitType().ordinal());
-                yield compactBuffer(buf);
-            }
-            case CommandType.Research r -> {
-                ByteBuffer buf = ByteBuffer.allocate(8);
-                buf.putInt(r.techCentreId());
-                buf.putInt(r.researchId());
-                yield compactBuffer(buf);
-            }
-            case CommandType.Garrison g -> {
-                ByteBuffer buf = ByteBuffer.allocate(4 + g.unitIds().length * 4 + 4);
-                buf.putInt(g.unitIds().length);
-                for (int id : g.unitIds()) buf.putInt(id);
-                buf.putInt(g.buildingId());
-                yield compactBuffer(buf);
-            }
-            case CommandType.Ungarrison u -> {
-                ByteBuffer buf = ByteBuffer.allocate(4);
-                buf.putInt(u.buildingId());
-                yield compactBuffer(buf);
-            }
-            case CommandType.Cancel c -> {
-                ByteBuffer buf = ByteBuffer.allocate(4);
-                buf.putInt(c.entityId());
-                yield compactBuffer(buf);
-            }
-            case CommandType.SiegeMode s -> {
-                ByteBuffer buf = ByteBuffer.allocate(5);
-                buf.putInt(s.unitId());
-                buf.put(s.enabled() ? (byte) 1 : (byte) 0);
-                yield compactBuffer(buf);
-            }
-            case CommandType.Stop st -> {
-                ByteBuffer buf = ByteBuffer.allocate(4 + st.unitIds().length * 4);
-                buf.putInt(st.unitIds().length);
-                for (int id : st.unitIds()) buf.putInt(id);
-                yield compactBuffer(buf);
-            }
-            case CommandType.Patrol pt -> {
-                ByteBuffer buf = ByteBuffer.allocate(4 + pt.unitIds().length * 4 + 8);
-                buf.putInt(pt.unitIds().length);
-                for (int id : pt.unitIds()) buf.putInt(id);
-                buf.putInt(pt.waypoint().x());
-                buf.putInt(pt.waypoint().y());
-                yield compactBuffer(buf);
-            }
-        };
-    }
-
-    /**
-     * Returns a compact byte array from the buffer (only the written portion).
-     */
-    private byte[] compactBuffer(ByteBuffer buf) {
-        byte[] result = new byte[buf.position()];
-        buf.rewind();
-        buf.get(result);
-        return result;
+        byte[] fullPayload = CommandSerializer.serialize(command);
+        return new ReplayEntry(command.tick(), typeOrd, command.playerId(), fullPayload);
     }
 }

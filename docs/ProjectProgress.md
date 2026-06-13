@@ -3,7 +3,7 @@
 > This file tracks everything that has been implemented and what remains.
 > Updated after each development session.
 
-## Status: Phase 5 COMPLETE — Spec Compliance ~80%
+## Status: Phase 8 IN PROGRESS — Spec Compliance ~90%
 
 ## Phase 0: Project Scaffolding ✅
 - [x] Gradle multi-module project initialized (5 modules: common, core, client, server, modding)
@@ -40,25 +40,25 @@
 - [x] Unit rendering (EntityRenderer with facing directions)
 - [x] Building rendering (with construction states)
 - [x] Minimap (MinimapRenderer.java)
-- [x] HUD (resources, selection info, action buttons)
+- [x] HUD (resources, selection info, action buttons, production queue display)
 - [x] Mouse selection (SelectionManager with box/click select)
 - [x] Right-click commands (InputHandler wired to CommandType records)
-- [ ] Production UI
+- [x] Production queue display (HUD shows current + queued production)
 - [x] Fog of war rendering (FogRenderer.java)
-- [ ] Health bars
+- [x] Health bars (EntityRenderer renders colored health bars above damaged entities)
 - [x] Main menu (MainMenuScene.java)
 - [x] GameScene wired to TickManager for game logic processing
 - [x] Building construction progress ticking
 - [x] Credits synced from EconomySystem
 
-## Phase 3: Movement & Pathfinding (IMPLEMENTED)
+## Phase 3: Movement & Pathfinding (COMPLETE)
 - [x] A* pathfinding (PathfindingSystem with octile heuristic, 8-directional)
 - [x] Terrain passability (per-unit-category system in TerrainType)
-- [x] Collision avoidance (CollisionSystem with push resolution)
+- [x] Collision avoidance (CollisionSystem with spatial hash grid, O(n) average)
 - [x] Formation movement (group move with spacing in MovementSystem)
 - [x] Stuck detection (stuckCounter threshold triggers re-pathfinding)
 - [x] Speed formula corrected: ticksPerCell = 10 - speed + 1 (higher speed = faster)
-- [ ] Garrison movement (garrison enter/exit not fully integrated)
+- [x] Garrison movement (garrison/ungarrison with position update, adjacent spawn)
 - [x] Large unit collision (2-cell Fortress support)
 
 ## Phase 4: Combat System (IMPLEMENTED)
@@ -87,18 +87,20 @@
 - [x] Building Upgrade System (3 levels, HP bonus, production speed modifier)
 - [x] StatsRegistry integration (all costs/stats from RE data)
 
-## Phase 6: AI System (IMPLEMENTED)
+## Phase 6: AI System (COMPLETE)
 - [x] AI decision system (AISystem coordinating economy/military/research)
 - [x] Difficulty levels (Easy, Normal, Hard)
 - [x] Base building logic (priority build order)
 - [x] Unit composition (game-phase-based decisions)
 - [x] Retreat behavior (threat assessment)
-- [ ] Fog-of-war awareness
+- [x] Fog-of-war awareness (MilitaryAI/EconomyAI only see VISIBLE enemy entities)
 
 ## Phase 7: Campaign System (PARTIALLY COMPLETE)
 - [x] Campaign data structures
 - [x] CampaignManager with episode progression
 - [x] SaveManager with serialization
+- [x] SaveManager.restore() for full game state reconstruction from SaveData
+- [x] Trigger.check() returns activated trigger (immutable record pattern)
 - [ ] Lua mission scripting
 - [ ] Episode missions
 - [ ] Custom missions
@@ -110,13 +112,40 @@
 - [x] Player authentication (JWT)
 - [x] Matchmaking system
 - [x] Lockstep P2P networking (Move commands pathfind via MovementSystem)
-- [x] Desync detection
-- [x] Command serialization (11 types)
-- [ ] Chat system
-- [ ] ELO ranking
+- [x] Desync detection (SyncChecker includes economy + research state in hash)
+- [x] Command serialization (11 types, unified CommandSerializer format)
+- [x] Replay format unified (ReplayRecorder uses CommandSerializer for wire compatibility)
+- [x] Chat system (WebSocket real-time + REST history, ChatMessage persistence)
+- [x] ELO ranking (K=32/24, starting 1000, leaderboard endpoints)
 
-## Phase 9-14: Remaining phases
-- See individual phase sections above for detailed status
+## Phase 9: Map Builder (PARTIALLY COMPLETE)
+- [x] Map editor UI (MapEditor, TilePainter, EntityPlacer)
+- [x] Map validation (MapValidationResult)
+- [ ] Map save/load (JSON format, integrated with server)
+- [ ] Map testing (play your map immediately)
+- [ ] Map sharing (upload to server, download community maps)
+
+## Phase 10: Modding System (PARTIALLY COMPLETE)
+- [x] Mod loader (ModLoader, ModManager, ModManifest)
+- [x] Data-driven overrides (DataOverride, GameDataRegistry)
+- [x] Lua scripting (LuaEngine, ScriptBindings, GameAPI)
+- [ ] Mod UI (browse, install, uninstall, enable/disable)
+
+## Phase 11: Replay System (COMPLETE)
+- [x] Command recording (ReplayRecorder using CommandSerializer format)
+- [x] Replay file format (binary, AOW2 magic header, version 1)
+- [x] Replay playback (ReplayPlayer with seek support)
+- [x] Replay sharing (upload to server via ReplayController)
+
+## Phase 12-14: Remaining phases
+- [ ] Web client (evaluate GraalVM WASM or separate frontend)
+- [ ] Performance optimization (target 60 FPS with 200+ units)
+- [ ] Tutorial system (TutorialSystem implemented, needs integration)
+- [ ] Accessibility (AccessibilitySettings implemented)
+- [ ] Audio (AudioManager + MusicPlayer implemented)
+- [ ] Full regression test pass
+- [ ] Development report
+- [ ] Release tag
 
 ---
 
@@ -131,18 +160,19 @@
 | 2026-06-14 | 5 | Building upgrades implemented (3 levels) | BuildingUpgradeSystem created | Resolved |
 | 2026-06-14 | 1 | Mine attackRange=sightRange | RE data lacks separate mine range | Active |
 | 2026-06-14 | 1 | Rebel stats partially derived | RE only has partial rebel data | Active |
+| 2026-06-14 | 6 | AI fog-of-war uses visible entities only | FogOfWarSystem filters enemy knowledge | Active |
 
 ## Known Issues
 
 | Date | Phase | Issue | Severity | Status |
 |------|-------|-------|----------|--------|
-| 2026-06-14 | 6 | AI has no fog-of-war | Medium | Open |
-| 2026-06-14 | 7 | Trigger.check() doesn't mutate activated state | Medium | Open |
-| 2026-06-14 | 7 | SaveManager can't fully restore | Medium | Open |
-| 2026-06-14 | 8 | SyncChecker missing economy/research state | Medium | Open |
-| 2026-06-14 | 11 | Two different wire formats for replay | Medium | Open |
-| 2026-06-14 | 1 | Tile.java orphaned (GameMap uses TerrainType[][]) | Low | Open |
-| 2026-06-14 | 3 | CollisionSystem O(n²), no spatial index | Low | Open |
+| 2026-06-14 | 6 | AI has no fog-of-war | Medium | **Fixed** |
+| 2026-06-14 | 7 | Trigger.check() doesn't mutate activated state | Medium | **Fixed** |
+| 2026-06-14 | 7 | SaveManager can't fully restore | Medium | **Fixed** |
+| 2026-06-14 | 8 | SyncChecker missing economy/research state | Medium | **Fixed** |
+| 2026-06-14 | 11 | Two different wire formats for replay | Medium | **Fixed** |
+| 2026-06-14 | 1 | Tile.java orphaned (GameMap uses TerrainType[][]) | Low | **Fixed** |
+| 2026-06-14 | 3 | CollisionSystem O(n²), no spatial index | Low | **Fixed** |
 
 ## Session History
 
@@ -150,3 +180,4 @@
 |------|--------|----------|
 | 2026-06-14 | ad56d9a | StatsRegistry, spec compliance fixes, wire client to engine |
 | 2026-06-14 | ce1c17c | HP Regen, Mine Detonation, Building Upgrades, 48-node TechTree, FoW 4-tick, nuclear 31x31 table, SPECIAL_MACHINERY |
+| 2026-06-14 | pending | Bug fixes (Trigger, SaveManager, SyncChecker, replay), AI fog-of-war, garrison movement, Chat, ELO, spatial hash, Tile integration |

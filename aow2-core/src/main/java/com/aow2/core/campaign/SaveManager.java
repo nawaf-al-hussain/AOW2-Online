@@ -1,8 +1,11 @@
 package com.aow2.core.campaign;
 
+import com.aow2.common.config.StatsRegistry;
+import com.aow2.common.model.BuildingStats;
 import com.aow2.common.model.BuildingType;
 import com.aow2.common.model.Faction;
 import com.aow2.common.model.GridPosition;
+import com.aow2.common.model.UnitStats;
 import com.aow2.common.model.UnitType;
 import com.aow2.core.engine.GameState;
 import com.aow2.core.entity.Building;
@@ -235,6 +238,41 @@ public final class SaveManager {
      */
     public Path getSaveDirectory() {
         return saveDirectory;
+    }
+
+    /**
+     * Result record containing the restored GameState and EntityManager
+     * from a SaveData snapshot.
+     */
+    public record GameStateRestore(GameState gameState, EntityManager entityManager) {}
+
+    /**
+     * Restores a GameState and EntityManager from a SaveData object.
+     * Creates a new GameState with the saved tick count and a new
+     * EntityManager populated with units and buildings from the save data.
+     *
+     * @param saveData the save data to restore from
+     * @return a GameStateRestore containing the restored game state and entity manager
+     */
+    public GameStateRestore restore(SaveData saveData) {
+        if (saveData == null) {
+            throw new IllegalArgumentException("saveData must not be null");
+        }
+
+        // Create a new GameState and advance to the saved tick
+        GameState state = new GameState();
+        for (long i = 0; i < saveData.gameTick(); i++) {
+            state.advanceTick();
+        }
+
+        // Create a new EntityManager and populate from save data
+        EntityManager entities = EntityManager.restoreFromSave(
+            saveData.units(), saveData.buildings());
+
+        LOG.info("Restored game state: tick={}, units={}, buildings={}",
+            saveData.gameTick(), saveData.units().size(), saveData.buildings().size());
+
+        return new GameStateRestore(state, entities);
     }
 
     // --- Private helpers ---

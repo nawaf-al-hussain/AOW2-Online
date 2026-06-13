@@ -83,20 +83,30 @@ public final class TickManager {
 
     /**
      * Set the fog of war system.
+     * Also passes it to the AI system if one is set.
      *
      * @param fogOfWar the fog of war system
      */
     public void setFogOfWar(FogOfWarSystem fogOfWar) {
         this.fogOfWar = fogOfWar;
+        // Wire fog of war to AI if both are set
+        if (aiSystem != null && fogOfWar != null) {
+            aiSystem.setFogOfWar(fogOfWar);
+        }
     }
 
     /**
      * Set the AI system for the non-human player.
+     * Also passes the fog of war system to the AI if one is set.
      *
      * @param aiSystem the AI system
      */
     public void setAISystem(AISystem aiSystem) {
         this.aiSystem = aiSystem;
+        // Wire fog of war to AI if both are set
+        if (aiSystem != null && fogOfWar != null) {
+            aiSystem.setFogOfWar(fogOfWar);
+        }
     }
 
     /**

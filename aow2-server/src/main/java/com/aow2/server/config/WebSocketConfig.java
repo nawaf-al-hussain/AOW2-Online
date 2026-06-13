@@ -1,5 +1,6 @@
 package com.aow2.server.config;
 
+import com.aow2.server.websocket.ChatWebSocketHandler;
 import com.aow2.server.websocket.GameWebSocketHandler;
 import com.aow2.server.websocket.LobbyWebSocketHandler;
 import org.springframework.context.annotation.Configuration;
@@ -9,7 +10,7 @@ import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
 
 /**
  * WebSocket configuration for the AOW2 multiplayer server.
- * Registers WebSocket endpoints for lobby matchmaking and in-game signaling.
+ * Registers WebSocket endpoints for lobby matchmaking, in-game signaling, and chat.
  * REF: multiplayer_architecture.md - TCP sender/receiver thread architecture
  * REF: protocol_specification.md - Type 12 MATCH_START, Type 30 GAME_STATE
  */
@@ -19,17 +20,21 @@ public class WebSocketConfig implements WebSocketConfigurer {
 
     private final LobbyWebSocketHandler lobbyWebSocketHandler;
     private final GameWebSocketHandler gameWebSocketHandler;
+    private final ChatWebSocketHandler chatWebSocketHandler;
 
     /**
      * Constructs the WebSocket configuration with the required handlers.
      *
      * @param lobbyWebSocketHandler handler for lobby/matchmaking events
      * @param gameWebSocketHandler  handler for in-game lockstep signaling
+     * @param chatWebSocketHandler  handler for real-time chat messages
      */
     public WebSocketConfig(LobbyWebSocketHandler lobbyWebSocketHandler,
-                           GameWebSocketHandler gameWebSocketHandler) {
+                           GameWebSocketHandler gameWebSocketHandler,
+                           ChatWebSocketHandler chatWebSocketHandler) {
         this.lobbyWebSocketHandler = lobbyWebSocketHandler;
         this.gameWebSocketHandler = gameWebSocketHandler;
+        this.chatWebSocketHandler = chatWebSocketHandler;
     }
 
     @Override
@@ -40,6 +45,10 @@ public class WebSocketConfig implements WebSocketConfigurer {
 
         // REF: multiplayer_architecture.md - Game signaling for P2P lockstep
         registry.addHandler(gameWebSocketHandler, "/ws/game")
+                .setAllowedOrigins("*");
+
+        // REF: protocol_specification.md - Chat messages between players
+        registry.addHandler(chatWebSocketHandler, "/ws/chat")
                 .setAllowedOrigins("*");
     }
 }

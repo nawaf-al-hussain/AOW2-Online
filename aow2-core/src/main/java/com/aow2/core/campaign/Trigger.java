@@ -33,11 +33,15 @@ public sealed interface Trigger permits
 
     /**
      * Checks whether this trigger should activate based on the current game state.
+     * Returns this trigger if not activated, or the activated version if the
+     * condition is met. The caller should replace the old trigger with the
+     * returned one.
      *
      * @param state     current game state
      * @param entities  entity manager for spatial and faction queries
+     * @return this trigger if not activated, or the activated version
      */
-    void check(GameState state, EntityManager entities);
+    Trigger check(GameState state, EntityManager entities);
 
     /**
      * Area trigger: fires when any unit of the specified faction enters a circular area.
@@ -57,9 +61,20 @@ public sealed interface Trigger permits
         }
 
         @Override
-        public void check(GameState state, EntityManager entities) {
-            // ASSUMPTION: Check is performed by CampaignManager after entity movement;
-            // activation state is updated via withActivated() when the condition is met.
+        public Trigger check(GameState state, EntityManager entities) {
+            if (activated) {
+                return this;
+            }
+            // Check if any unit of the specified faction is within the radius
+            for (var unit : entities.getAliveUnitsForPlayer(
+                    factionId == 0 ? Faction.CONFEDERATION : Faction.RESISTANCE)) {
+                int dx = unit.getPosition().x() - center.x();
+                int dy = unit.getPosition().y() - center.y();
+                if (dx * dx + dy * dy <= radius * radius) {
+                    return activate();
+                }
+            }
+            return this;
         }
 
         /**
@@ -90,16 +105,17 @@ public sealed interface Trigger permits
         }
 
         @Override
-        public void check(GameState state, EntityManager entities) {
+        public Trigger check(GameState state, EntityManager entities) {
             if (activated) {
-                return;
+                return this;
             }
             long count = entities.getAliveUnitsForPlayer(faction).stream()
                 .filter(u -> u.getUnitType() == unitType)
                 .count();
             if (count >= threshold) {
-                // ASSUMPTION: Caller replaces this trigger with activate() result
+                return activate();
             }
+            return this;
         }
 
         /**
@@ -128,13 +144,14 @@ public sealed interface Trigger permits
         }
 
         @Override
-        public void check(GameState state, EntityManager entities) {
+        public Trigger check(GameState state, EntityManager entities) {
             if (activated) {
-                return;
+                return this;
             }
             if (state.currentTick() >= triggerTick) {
-                // ASSUMPTION: Caller replaces this trigger with activate() result
+                return activate();
             }
+            return this;
         }
 
         /**
@@ -164,11 +181,17 @@ public sealed interface Trigger permits
         }
 
         @Override
-        public void check(GameState state, EntityManager entities) {
+        public Trigger check(GameState state, EntityManager entities) {
             if (activated) {
-                return;
+                return this;
             }
-            // ASSUMPTION: Checked by CampaignManager when BuildingDestroyedEvent is received
+            // Check if any building of the specified type and faction is no longer alive
+            for (var building : entities.getBuildingsForPlayer(faction)) {
+                if (building.getBuildingType() == buildingType && !building.isAlive()) {
+                    return activate();
+                }
+            }
+            return this;
         }
 
         /**

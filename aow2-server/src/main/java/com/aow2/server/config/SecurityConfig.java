@@ -61,6 +61,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/maps/**").authenticated()
                         .requestMatchers("/api/replays/**").authenticated()
                         .requestMatchers("/api/leaderboard/**").authenticated()
+                        .requestMatchers("/api/chat/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)

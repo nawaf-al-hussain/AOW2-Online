@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -52,6 +53,21 @@ public class LeaderboardController {
     }
 
     /**
+     * Gets the top N players on the leaderboard by ELO rating.
+     * GET /api/leaderboard/top?count=20
+     *
+     * @param count maximum number of entries to return (default 20, max 100)
+     * @return 200 with a list of ranked player entries
+     */
+    @GetMapping("/top")
+    public ResponseEntity<List<Map<String, Object>>> getTopPlayers(
+            @RequestParam(defaultValue = "20") int count
+    ) {
+        List<Map<String, Object>> leaderboard = rankingService.getLeaderboard(count);
+        return ResponseEntity.ok(leaderboard);
+    }
+
+    /**
      * Gets the authenticated player's own ranking.
      * GET /api/leaderboard/me
      *
@@ -63,6 +79,23 @@ public class LeaderboardController {
         Long playerId = (Long) authentication.getPrincipal();
         try {
             Map<String, Object> ranking = rankingService.getPlayerRanking(playerId);
+            return ResponseEntity.ok(ranking);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(404).body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    /**
+     * Gets a specific player's ELO ranking and statistics.
+     * GET /api/leaderboard/player/{id}
+     *
+     * @param id the player's ID
+     * @return 200 with the player's ranking data, or 404 if not found
+     */
+    @GetMapping("/player/{id}")
+    public ResponseEntity<Map<String, Object>> getPlayerRanking(@PathVariable Long id) {
+        try {
+            Map<String, Object> ranking = rankingService.getPlayerRanking(id);
             return ResponseEntity.ok(ranking);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(404).body(Map.of("error", e.getMessage()));

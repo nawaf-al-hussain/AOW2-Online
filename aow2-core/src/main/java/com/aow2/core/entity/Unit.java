@@ -66,6 +66,11 @@ public class Unit extends Entity {
     /** Tick accumulator for movement speed. Units move one cell per speed ticks. */
     private int moveTickAccumulator;
 
+    /** The building entity ID this unit is garrisoned inside (null = not garrisoned).
+     * When garrisoned, the unit is hidden inside a building and excluded from
+     * spatial queries and army strength calculations. */
+    private Integer garrisonedBuildingId;
+
     /** Whether this unit is in siege mode (deployed, increased range/damage, cannot move).
      * REF: combat_formulas.md - research ID 36: "Unit type 10 siege upgrade = 15"
      * Torrent and Sniper can enter siege mode for increased range and damage. */
@@ -100,6 +105,7 @@ public class Unit extends Entity {
         this.path = new ArrayList<>();
         this.pathIndex = 0;
         this.moveTickAccumulator = 0;
+        this.garrisonedBuildingId = null;
         this.siegeMode = false;
         this.siegeDeployTimer = 0;
     }
@@ -342,6 +348,34 @@ public class Unit extends Entity {
 
     public void setMoveTickAccumulator(int moveTickAccumulator) {
         this.moveTickAccumulator = moveTickAccumulator;
+    }
+
+    /**
+     * Returns the building entity ID this unit is garrisoned inside, or null if not garrisoned.
+     *
+     * @return the garrisoned building ID, or null
+     */
+    public Integer getGarrisonedBuildingId() {
+        return garrisonedBuildingId;
+    }
+
+    /**
+     * Sets the garrisoned building ID. Set to a building ID when garrisoning,
+     * or null when ungarrisoning.
+     *
+     * @param garrisonedBuildingId the building ID, or null
+     */
+    public void setGarrisonedBuildingId(Integer garrisonedBuildingId) {
+        this.garrisonedBuildingId = garrisonedBuildingId;
+    }
+
+    /**
+     * Returns whether this unit is currently garrisoned inside a building.
+     *
+     * @return true if the unit is garrisoned
+     */
+    public boolean isGarrisoned() {
+        return garrisonedBuildingId != null;
     }
 
     /**
