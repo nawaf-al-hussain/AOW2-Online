@@ -1,5 +1,6 @@
-package com.aow2.core.campaign;
+package com.aow2.mod.campaign;
 
+import com.aow2.core.campaign.ScriptEngine;
 import com.aow2.core.engine.GameState;
 import com.aow2.core.world.EntityManager;
 import com.aow2.mod.LuaEngine;
@@ -7,19 +8,17 @@ import org.luaj.vm2.LuaValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Executes mission scripts using LuaJ for campaign missions.
+ * Implements the core {@link ScriptEngine} interface to break circular dependencies.
  * Delegates to aow2-modding's {@link LuaEngine} for script execution.
  * Provides game-state bindings so scripts can query and modify the game world.
  * REF: campaign_guide.md Section 3 - trigger and script system
- * REF: campaign_guide.md Section 3.1 - reinforcement scheduling via am[][] arrays
- * REF: campaign_guide.md Section 3.2 - event types 24, 25, 27, 29
  */
-public final class MissionScriptEngine {
+public final class MissionScriptEngine implements ScriptEngine {
 
     private static final Logger LOG = LoggerFactory.getLogger(MissionScriptEngine.class);
 
@@ -48,7 +47,7 @@ public final class MissionScriptEngine {
      * @param state      current game state
      * @param entities   entity manager for queries
      */
-    public void loadScript(String scriptFile, GameState state, EntityManager entities) {
+    public boolean loadScript(String scriptFile, GameState state, EntityManager entities) {
         try {
             // Expose game state variables to Lua
             luaEngine.setGlobalInt("gameTick", (int) state.currentTick());
@@ -63,8 +62,10 @@ public final class MissionScriptEngine {
             } else {
                 LOG.warn("Failed to load mission script: {}", scriptFile);
             }
+            return loaded;
         } catch (Exception e) {
             LOG.error("Error loading mission script: {}", scriptFile, e);
+            return false;
         }
     }
 
@@ -76,7 +77,7 @@ public final class MissionScriptEngine {
      * @param state         current game state
      * @param entities      entity manager for queries
      */
-    public void loadScriptFromString(String scriptContent, String scriptName,
+    public boolean loadScriptFromString(String scriptContent, String scriptName,
                                      GameState state, EntityManager entities) {
         try {
             luaEngine.setGlobalInt("gameTick", (int) state.currentTick());
@@ -88,8 +89,10 @@ public final class MissionScriptEngine {
                 scriptActive = true;
                 LOG.info("Mission script loaded from string: {}", scriptName);
             }
+            return loaded;
         } catch (Exception e) {
             LOG.error("Error loading mission script from string: {}", scriptName, e);
+            return false;
         }
     }
 

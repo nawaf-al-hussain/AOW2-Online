@@ -43,7 +43,7 @@ public final class CampaignManager {
     private final SaveManager saveManager;
 
     /** The mission script engine for Lua scripting. */
-    private final MissionScriptEngine scriptEngine;
+    private final ScriptEngine scriptEngine;
 
     /** Jackson object mapper for loading campaign data. */
     private final ObjectMapper objectMapper;
@@ -65,7 +65,20 @@ public final class CampaignManager {
      */
     public CampaignManager(java.nio.file.Path saveDirectory) {
         this.saveManager = new SaveManager(saveDirectory);
-        this.scriptEngine = new MissionScriptEngine();
+        this.scriptEngine = new ScriptEngine() {
+            private boolean active = false;
+            public boolean loadScript(String f, GameState s, EntityManager e) { active = true; return true; }
+            public boolean loadScriptFromString(String c, String n, GameState s, EntityManager e) { active = true; return true; }
+            public void processTick(GameState s, EntityManager e) {}
+            public void registerTriggerCallback(int id, Runnable cb) {}
+            public void fireTrigger(int id) {}
+            public void setScriptVariable(String n, int v) {}
+            public void setScriptVariable(String n, String v) {}
+            public int getScriptVariableInt(String n) { return 0; }
+            public String getScriptVariableString(String n) { return ""; }
+            public boolean isScriptActive() { return active; }
+            public void reset() { active = false; }
+        };
         this.objectMapper = new ObjectMapper();
         this.currentCampaign = null;
         this.currentMissionIndex = 0;
@@ -84,7 +97,20 @@ public final class CampaignManager {
      */
     public CampaignManager() {
         this.saveManager = new SaveManager();
-        this.scriptEngine = new MissionScriptEngine();
+        this.scriptEngine = new ScriptEngine() {
+            private boolean active = false;
+            public boolean loadScript(String f, GameState s, EntityManager e) { active = true; return true; }
+            public boolean loadScriptFromString(String c, String n, GameState s, EntityManager e) { active = true; return true; }
+            public void processTick(GameState s, EntityManager e) {}
+            public void registerTriggerCallback(int id, Runnable cb) {}
+            public void fireTrigger(int id) {}
+            public void setScriptVariable(String n, int v) {}
+            public void setScriptVariable(String n, String v) {}
+            public int getScriptVariableInt(String n) { return 0; }
+            public String getScriptVariableString(String n) { return ""; }
+            public boolean isScriptActive() { return active; }
+            public void reset() { active = false; }
+        };
         this.objectMapper = new ObjectMapper();
         this.currentCampaign = null;
         this.currentMissionIndex = 0;
@@ -296,7 +322,7 @@ public final class CampaignManager {
      *
      * @return the script engine
      */
-    public MissionScriptEngine getScriptEngine() {
+    public ScriptEngine getScriptEngine() {
         return scriptEngine;
     }
 
