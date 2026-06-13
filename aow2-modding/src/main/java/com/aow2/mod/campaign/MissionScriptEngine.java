@@ -3,7 +3,7 @@ package com.aow2.mod.campaign;
 import com.aow2.core.campaign.ScriptEngine;
 import com.aow2.core.engine.GameState;
 import com.aow2.core.world.EntityManager;
-import com.aow2.mod.LuaEngine;
+import com.aow2.mod.script.LuaEngine;
 import org.luaj.vm2.LuaValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

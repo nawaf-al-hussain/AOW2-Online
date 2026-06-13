@@ -28,9 +28,10 @@ jobs:
       - name: Run tests
         run: ./gradlew :aow2-common:test :aow2-core:test :aow2-server:test :aow2-modding:test
         env:
-          JAVA_TOOL_OPTIONS: "-Djava.awt.headless=true"
+          JAVA_TOOL_OPTIONS: "-Djava.awt.headless=true -Dspring.main.lazy-initialization=true"
 
       - name: Generate JaCoCo report
+        if: always()
         run: ./gradlew :aow2-common:jacocoTestReport :aow2-core:jacocoTestReport :aow2-server:jacocoTestReport :aow2-modding:jacocoTestReport
 
       - name: Upload test results

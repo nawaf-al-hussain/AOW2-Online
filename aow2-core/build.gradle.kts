@@ -13,4 +13,5 @@ dependencies {
     testImplementation("org.mockito:mockito-junit-jupiter:5.11.0")
     testImplementation("com.fasterxml.jackson.core:jackson-core:2.17.0")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    testRuntimeOnly("ch.qos.logback:logback-classic:1.5.3")
 }

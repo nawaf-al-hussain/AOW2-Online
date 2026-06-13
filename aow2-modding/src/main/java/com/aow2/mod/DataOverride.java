@@ -1,5 +1,8 @@
 package com.aow2.mod;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 /**
  * Represents a data override from a mod.
  * Can override unit stats, building stats, tech tree, costs, etc.
@@ -13,10 +16,10 @@ package com.aow2.mod;
  * @param value      the new value to apply
  */
 public record DataOverride(
-    String targetType,
-    String targetId,
-    String field,
-    Object value
+    @JsonProperty("targetType") String targetType,
+    @JsonProperty("targetId") String targetId,
+    @JsonProperty("field") String field,
+    @JsonProperty("value") Object value
 ) {
     /**
      * Compact constructor with validation.

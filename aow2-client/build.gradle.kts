@@ -26,7 +26,3 @@ javafx {
 application {
     mainClass = "com.aow2.client.AOW2App"
 }
-
-tasks.named<JavaExec>("run") {
-    jvmArgs = listOf("--enable-preview")
-}
