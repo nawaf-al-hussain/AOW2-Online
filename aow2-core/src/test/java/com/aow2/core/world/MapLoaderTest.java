@@ -131,7 +131,7 @@ class MapLoaderTest {
 
             String json = """
                 {
-                  "width": 10,
+                  "width": 20,
                   "height": 1,
                   "tiles": [
                 %s

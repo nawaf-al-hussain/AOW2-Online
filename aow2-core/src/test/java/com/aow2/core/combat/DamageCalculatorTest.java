@@ -28,21 +28,35 @@ class DamageCalculatorTest {
     }
 
     @Test
-    @DisplayName("Zeus vs Infantry: 6*(10-5)/10 = 3")
-    void shouldCalculateDamageWithArmorReduction() {
-        assertEquals(3, DamageCalculator.calculateDamage(6, 5));
+    @DisplayName("Damage formula: weaponDamage*(10-armor)/10, clamped to min(damage, weaponDamage-armor)")
+    void shouldCalculateDamageWithTwoStepClamp() {
+        // REF: combat_formulas.md lines 46-48
+        // damage = weaponDamage * (10 - targetArmour) / 10
+        // damage = max(min(damage, weaponDamage - targetArmour), 1)
+        // Example: 6*(10-5)/10 = 3, min(3, 6-5=1) = 1, max(1,1) = 1
+        assertEquals(1, DamageCalculator.calculateDamage(6, 5));
     }
 
     @Test
     @DisplayName("Minimum damage is 1")
     void shouldClampMinimumDamageToOne() {
+        // damage = 1*(10-9)/10 = 0, min(0, 1-9=-8) = -8, max(-8, 1) = 1
         assertEquals(1, DamageCalculator.calculateDamage(1, 9));
     }
 
     @Test
-    @DisplayName("Damage clamped to weaponDamage - armor")
+    @DisplayName("Damage clamped to weaponDamage - armor when raw damage exceeds it")
     void shouldClampDamageToUpperBound() {
+        // damage = 10*(10-0)/10 = 10, min(10, 10-0=10) = 10
         assertEquals(10, DamageCalculator.calculateDamage(10, 0));
+    }
+
+    @Test
+    @DisplayName("Upper clamp example: weaponDamage=5, armor=2")
+    void shouldApplyUpperClampForLowWeaponDamage() {
+        // REF: combat_formulas.md - the min() clamp prevents inflated damage for low weaponDamage
+        // damage = 5*(10-2)/10 = 4, min(4, 5-2=3) = 3, max(3,1) = 3
+        assertEquals(3, DamageCalculator.calculateDamage(5, 2));
     }
 
     @Test
@@ -56,6 +70,17 @@ class DamageCalculatorTest {
     }
 
     @Test
+    @DisplayName("Building armor with research bonus")
+    void shouldCalculateBuildingArmorWithBonus() {
+        var buildingStats = new BuildingStats(BuildingType.CONFED_COMMAND_CENTRE, 120, 22, 7, 7,
+            4, 2, 20, 7, 8, 2, 6, 0, 0, 100, 450, List.of(300, 200, 200));
+        var building = new Building(1, Faction.CONFEDERATION, new GridPosition(32, 32),
+            BuildingType.CONFED_COMMAND_CENTRE, buildingStats);
+        // With bonus = 4 (Fortified Structures research)
+        assertEquals(4, DamageCalculator.calculateEffectiveArmor(building, 4));
+    }
+
+    @Test
     @DisplayName("Unit armor with research bonus")
     void shouldCalculateUnitArmorWithBonus() {
         var unit = new Unit(1, Faction.CONFEDERATION, new GridPosition(10, 10), UnitType.CONFED_INFANTRY, infantryStats);
@@ -64,12 +89,26 @@ class DamageCalculatorTest {
     }
 
     @Test
-    @DisplayName("Splash damage decreases with distance")
-    void shouldCalculateSplashDamageWithFalloff() {
+    @DisplayName("Regular artillery splash has no distance falloff")
+    void shouldCalculateSplashDamageWithoutFalloff() {
+        // REF: combat_formulas.md lines 214-228 - regular artillery: same damage for all in blast
         int directDamage = DamageCalculator.calculateSplashDamage(15, 5, 0);
         assertTrue(directDamage >= 1);
+        // Regular splash at distance 2 = same as direct (no falloff)
         int splashDamage = DamageCalculator.calculateSplashDamage(15, 5, 2);
-        assertTrue(splashDamage < directDamage);
+        assertEquals(directDamage, splashDamage,
+            "Regular artillery splash should deal same damage at all distances in blast radius");
+    }
+
+    @Test
+    @DisplayName("Nuclear splash has distance falloff")
+    void shouldCalculateNuclearSplashWithFalloff() {
+        // REF: combat_formulas.md lines 236-256 - nuclear: 1/(1+distance) falloff
+        int directDamage = DamageCalculator.calculateSplashDamage(15, 5, 0, true);
+        assertTrue(directDamage >= 1);
+        int splashDamage = DamageCalculator.calculateSplashDamage(15, 5, 2, true);
+        assertTrue(splashDamage < directDamage,
+            "Nuclear splash should decrease with distance");
         assertTrue(splashDamage >= 1);
     }
 
@@ -97,10 +136,18 @@ class DamageCalculatorTest {
     }
 
     @Test
-    @DisplayName("Artillery deals 150% damage to buildings")
-    void shouldApplySiegeBonusForTorrent() {
+    @DisplayName("Siege-capable units deal 150% damage to buildings")
+    void shouldApplySiegeBonusForSiegeCapable() {
         var torrent = new Unit(1, Faction.CONFEDERATION, new GridPosition(10, 10), UnitType.CONFED_TORRENT, torrentStats);
         assertEquals(1.5, DamageCalculator.getTargetMultiplier(torrent, true));
+    }
+
+    @Test
+    @DisplayName("Infantry deals reduced damage to machinery")
+    void shouldApplyReducedMultiplierInfantryVsMachinery() {
+        var infantry = new Unit(1, Faction.CONFEDERATION, new GridPosition(10, 10), UnitType.CONFED_INFANTRY, infantryStats);
+        // REF: combat_formulas.md lines 456-459 - infantry vs machinery reduction
+        assertEquals(0.7, DamageCalculator.getTargetMultiplier(infantry, false, true));
     }
 
     @Test
@@ -111,14 +158,15 @@ class DamageCalculatorTest {
     }
 
     @Test
-    @DisplayName("Full combat: Zeus(dmg=6) vs Infantry(armor=5) = 3 damage per hit")
+    @DisplayName("Full combat with corrected formula: Zeus(dmg=6) vs Infantry(armor=5)")
     void shouldVerifyFullCombatExchange() {
         var zeus = new Unit(1, Faction.CONFEDERATION, new GridPosition(10, 10), UnitType.CONFED_ZEUS, zeusStats);
         var infantry = new Unit(2, Faction.RESISTANCE, new GridPosition(11, 10), UnitType.CONFED_INFANTRY, infantryStats);
+        // REF: combat_formulas.md - damage = 6*(10-5)/10 = 3, min(3, 6-5=1) = 1, max(1,1) = 1
         int damage = DamageCalculator.calculateDamage(zeus.getStats().damage(), infantry.getStats().armor());
-        assertEquals(3, damage);
+        assertEquals(1, damage);
         infantry.takeDamage(damage);
-        assertEquals(37, infantry.getHp());
+        assertEquals(39, infantry.getHp());
         assertTrue(infantry.isAlive());
     }
 }

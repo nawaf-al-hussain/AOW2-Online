@@ -40,7 +40,8 @@ class CombatSystemTest {
         var attacker = new Unit(1, Faction.CONFEDERATION, new GridPosition(10, 10), UnitType.CONFED_ZEUS, zeusStats);
         var target = new Unit(2, Faction.RESISTANCE, new GridPosition(11, 10), UnitType.CONFED_INFANTRY, infantryStats);
         combatSystem.performAttack(attacker, target);
-        assertEquals(37, target.getHp());
+        // weaponDamage=6, targetArmor=5: raw=6*(10-5)/10=3, clamped=min(3,6-5)=1
+        assertEquals(39, target.getHp());
         assertTrue(target.isAlive());
     }
 
@@ -49,7 +50,9 @@ class CombatSystemTest {
     void shouldKillUnitWhenHpDropsToZero() {
         var attacker = new Unit(1, Faction.CONFEDERATION, new GridPosition(10, 10), UnitType.CONFED_ZEUS, zeusStats);
         var target = new Unit(2, Faction.RESISTANCE, new GridPosition(11, 10), UnitType.CONFED_INFANTRY, infantryStats);
-        for (int i = 0; i < 14; i++) {
+        // Each hit deals 1 damage (weaponDamage=6, targetArmor=5: clamped=min(3,1)=1)
+        // Need 40 hits to reduce 40 HP to 0 → death marker sets hp=-1
+        for (int i = 0; i < 40; i++) {
             combatSystem.performAttack(attacker, target);
         }
         assertFalse(target.isAlive());

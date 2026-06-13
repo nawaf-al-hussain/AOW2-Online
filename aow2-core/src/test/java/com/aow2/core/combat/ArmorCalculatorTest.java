@@ -148,19 +148,20 @@ class ArmorCalculatorTest {
     }
 
     @Test
-    @DisplayName("Should return zero bonus for infantry research on vehicle unit")
-    void shouldNotApplyInfantryResearchToVehicle() {
+    @DisplayName("Should apply research ID 0 to both infantry and vehicle units")
+    void shouldApplyResearchId0ToVehicleAndInfantry() {
         // Given
         Unit vehicle = new Unit(2, Faction.CONFEDERATION, new GridPosition(20, 20),
             UnitType.CONFED_ZEUS, VEHICLE_STATS);
-        // Research ID 0: +2 infantry armor (should not apply to vehicles)
+        // Research ID 0: +2 infantry armor AND +2 vehicle armor
+        // REF: combat_formulas.md line 303 - ID 0 also adds "Light armour +2" (vehicle)
         Set<Integer> research = Set.of(0);
 
         // When
         int bonus = armorCalculator.getResearchArmorBonus(vehicle, research);
 
         // Then
-        assertEquals(0, bonus, "Infantry armor research should not apply to vehicles");
+        assertEquals(2, bonus, "Research ID 0 gives +2 vehicle armor as well as infantry");
     }
 
     @Test
