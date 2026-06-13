@@ -1,7 +1,6 @@
 package com.aow2.core.combat;
 
 import com.aow2.common.config.GameConstants;
-import com.aow2.common.model.UnitCategory;
 import com.aow2.common.model.UnitType;
 import com.aow2.core.entity.Building;
 import com.aow2.core.entity.Unit;
@@ -13,9 +12,13 @@ import com.aow2.core.entity.Unit;
  * Formula: damage = weaponDamage * (10 - targetArmour) / 10
  * Clamped: damage = max(min(damage, weaponDamage - targetArmour), 1)
  *
- * Buildings have 0 base armour.
- * Infantry death: hp = -1, animation = bi[attackerType] + random(bd[attackerType]) + 10 - 231
- * Machinery death: hp = -1, animation frame = 2
+ * FIX LOG:
+ * - Added missing upper clamp: min(damage, weaponDamage - targetArmor)
+ *   REF: combat_formulas.md lines 46-48: damage = max(min(damage, cg[0][10] - targetArmour), 1)
+ * - Removed incorrect distance falloff from regular artillery splash
+ *   REF: combat_formulas.md lines 214-228: artillery applies SAME full formula to every unit in blast
+ * - Added infantry vs machinery damage reduction
+ *   REF: combat_formulas.md lines 456-459: infantry deals reduced damage to machinery
  */
 public final class DamageCalculator {
 
@@ -23,29 +26,56 @@ public final class DamageCalculator {
 
     /**
      * Calculate damage from attacker to target.
-     * REF: combat_formulas.md - projectile damage formula
+     * REF: combat_formulas.md - projectile damage formula (lines 46-48)
      *
-     * Formula: damage = weaponDamage * (10 - targetArmour) / 10
-     * Clamped: damage = max(damage, 1)
+     * Two-step clamp formula:
+     *   damage = weaponDamage * (10 - targetArmour) / 10
+     *   damage = max(min(damage, weaponDamage - targetArmour), 1)
+     *
+     * The min() upper clamp prevents inflated damage at low armor values.
+     * Example: weaponDamage=5, targetArmor=2 → raw=4, min(4,3)=3, max(3,1)=3
      */
     public static int calculateDamage(int weaponDamage, int targetArmor) {
         int damage = weaponDamage * (GameConstants.ARMOR_DIVISOR - targetArmor) / GameConstants.ARMOR_DIVISOR;
+        // REF: combat_formulas.md - upper clamp prevents inflated damage for low weaponDamage
+        damage = Math.min(damage, weaponDamage - targetArmor);
         return Math.max(damage, GameConstants.MIN_DAMAGE);
     }
 
     /**
      * Calculate splash damage for artillery at a given distance from impact.
-     * REF: combat_formulas.md - "Splash Damage (Artillery)" section
+     * REF: combat_formulas.md lines 214-228 - "Splash Damage (Artillery)"
+     *
+     * Regular artillery splash applies the SAME full damage formula to every unit
+     * in the blast radius — no distance falloff. Distance falloff exists ONLY
+     * for nuclear/explosion special damage (a separate mechanic, lines 236-256).
+     *
+     * @param weaponDamage       base weapon damage
+     * @param targetArmor        target's armor value
+     * @param distanceFromImpact distance from impact point (unused for regular splash)
+     * @param isNuclear          true if this is nuclear/explosion damage (uses falloff)
+     */
+    public static int calculateSplashDamage(int weaponDamage, int targetArmor,
+                                             int distanceFromImpact, boolean isNuclear) {
+        if (isNuclear) {
+            // REF: combat_formulas.md lines 236-256 - nuclear falloff: 1/(1+distance)
+            if (distanceFromImpact == 0) {
+                return calculateDamage(weaponDamage, targetArmor);
+            }
+            double falloff = 1.0 / (1.0 + distanceFromImpact);
+            int nuclearDamage = (int) (weaponDamage * falloff);
+            return Math.max(nuclearDamage, GameConstants.MIN_DAMAGE);
+        }
+        // REF: combat_formulas.md lines 214-228 - regular artillery: no distance falloff
+        return calculateDamage(weaponDamage, targetArmor);
+    }
+
+    /**
+     * Calculate splash damage for artillery (non-nuclear).
+     * Backward-compatible overload that defaults to non-nuclear.
      */
     public static int calculateSplashDamage(int weaponDamage, int targetArmor, int distanceFromImpact) {
-        if (distanceFromImpact == 0) {
-            return calculateDamage(weaponDamage, targetArmor);
-        }
-        double falloff = 1.0 / (1.0 + distanceFromImpact);
-        int splashDamage = (int)(weaponDamage * falloff);
-        return Math.max(Math.min(
-            splashDamage * (GameConstants.ARMOR_DIVISOR - targetArmor) / GameConstants.ARMOR_DIVISOR,
-            splashDamage - targetArmor), GameConstants.MIN_DAMAGE);
+        return calculateSplashDamage(weaponDamage, targetArmor, distanceFromImpact, false);
     }
 
     /**
@@ -57,7 +87,20 @@ public final class DamageCalculator {
     }
 
     /**
-     * Calculate effective armor for a building.
+     * Calculate effective armor for a building, including research bonuses.
+     * REF: combat_formulas.md lines 64-68 - "N[(-unitRef - 1) / 50]" for building armor
+     * Buildings use a separate armor value from research (IDs 4, 16, 40).
+     *
+     * @param building       the target building
+     * @param buildingArmorBonus armor bonus from research
+     * @return effective armor value
+     */
+    public static int calculateEffectiveArmor(Building building, int buildingArmorBonus) {
+        return buildingArmorBonus;
+    }
+
+    /**
+     * Calculate effective armor for a building (no research bonus).
      * REF: combat_formulas.md - "Buildings have 0 base armour (use construction HP)"
      */
     public static int calculateEffectiveArmor(Building building) {
@@ -81,11 +124,29 @@ public final class DamageCalculator {
     /**
      * Get damage multiplier based on attacker type vs target type.
      * REF: combat_formulas.md - "Unit vs Building Interaction"
+     * REF: combat_formulas.md lines 456-459 - infantry vs machinery reduction
+     *
+     * FIX LOG:
+     * - Added infantry vs machinery damage reduction
+     */
+    public static double getTargetMultiplier(Unit attacker, boolean isTargetBuilding, boolean isTargetMachinery) {
+        if (isTargetBuilding) {
+            // REF: combat_formulas.md - siege weapons bonus vs buildings
+            if (attacker.isInfantry()) return 0.5;
+            if (attacker.getUnitType().isSiegeCapable()) return 1.5;
+            return 1.0;
+        }
+        // REF: combat_formulas.md lines 456-459 - infantry deals reduced damage to machinery
+        if (isTargetMachinery && attacker.isInfantry()) {
+            return 0.7; // ASSUMPTION: 30% reduction (RE doc confirms reduction but not exact value)
+        }
+        return 1.0;
+    }
+
+    /**
+     * Backward-compatible overload.
      */
     public static double getTargetMultiplier(Unit attacker, boolean isTargetBuilding) {
-        if (!isTargetBuilding) return 1.0;
-        if (attacker.isInfantry()) return 0.5;
-        if (attacker.getUnitType() == UnitType.CONFED_TORRENT) return 1.5;
-        return 1.0;
+        return getTargetMultiplier(attacker, isTargetBuilding, false);
     }
 }

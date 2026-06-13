@@ -163,7 +163,7 @@ class EconomySystemTest {
         @DisplayName("Should afford when sufficient credits")
         void shouldAffordWhenSufficientCredits() {
             // Given: player has starting credits
-            int cost = EconomySystem.STARTING_CREDITS - 100;
+            int cost = EconomySystem.STARTING_CREDITS / 2;
 
             // When/Then
             assertTrue(economy.canAfford(0, cost));

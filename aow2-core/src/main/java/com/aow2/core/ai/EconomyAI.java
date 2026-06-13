@@ -370,8 +370,7 @@ public final class EconomyAI {
         UnitType[] infantryOrder = switch (faction) {
             case CONFEDERATION -> new UnitType[]{
                 UnitType.CONFED_INFANTRY,
-                UnitType.CONFED_GRENADIER,
-                UnitType.CONFED_FLAME_ASSAULT
+                UnitType.CONFED_GRENADIER
             };
             case RESISTANCE -> new UnitType[]{
                 UnitType.REBEL_INFANTRY,
@@ -404,8 +403,11 @@ public final class EconomyAI {
                                               int playerId, ResearchSystem research) {
         UnitType[] vehicleOrder = switch (faction) {
             case CONFEDERATION -> new UnitType[]{
+                UnitType.CONFED_LIGHT_ASSAULT,
                 UnitType.CONFED_HAMMER,
                 UnitType.CONFED_ZEUS,
+                UnitType.CONFED_HEAVY_ASSAULT,
+                UnitType.CONFED_FLAME_ASSAULT,
                 UnitType.CONFED_FORTRESS,
                 UnitType.CONFED_TORRENT
             };
@@ -438,6 +440,8 @@ public final class EconomyAI {
         return switch (type) {
             case CONFED_INFANTRY -> 10;
             case CONFED_GRENADIER -> 15;
+            case CONFED_LIGHT_ASSAULT -> 20;
+            case CONFED_HEAVY_ASSAULT -> 35;
             case CONFED_FLAME_ASSAULT -> 25;
             case CONFED_FORTRESS -> 50;
             case CONFED_HAMMER -> 30;

@@ -26,24 +26,43 @@ public final class ResourceGenerator {
     public static final int BASE_CC_INCOME = 100;
 
     /**
-     * Count Command Centres for a player to determine income.
-     * Counts all alive, completed HQ buildings (Command Centre or Headquarters)
-     * for the given player's faction.
+     * Count income-generating buildings for a player.
+     * REF: map_system.md Section 5.2: "data % 3 == 0" = income-generating buildings
+     * This includes Command Centres (HQ) AND Supply Centers.
      *
      * @param playerId the player ID (0 or 1)
      * @param entities the entity manager
-     * @return the number of Command Centres owned by the player
+     * @return the number of income-generating buildings owned by the player
      */
     public int countCommandCentres(int playerId, EntityManager entities) {
         Faction faction = EconomySystem.playerFaction(playerId);
         List<Building> buildings = entities.getBuildingsForPlayer(faction);
         int count = 0;
         for (Building building : buildings) {
-            if (building.isAlive() && !building.isUnderConstruction() && building.getBuildingType().isHQ()) {
-                count++;
+            if (building.isAlive() && !building.isUnderConstruction()) {
+                // REF: map_system.md Section 5.2 - income buildings: HQ + Supply Centers
+                if (building.getBuildingType().isHQ() || isIncomeBuilding(building.getBuildingType())) {
+                    count++;
+                }
             }
         }
         return count;
+    }
+
+    /**
+     * Check if a building type generates income (Supply Center equivalent).
+     * REF: map_system.md Section 5.2: "data % 3 == 0" = income-generating
+     * In the original game, both Command Centres and Supply Centers generate income.
+     *
+     * @param type the building type
+     * @return true if this building generates income
+     */
+    private boolean isIncomeBuilding(BuildingType type) {
+        // REF: map_system.md - income buildings include Command Centre and Supply Center
+        // Command Centre is already covered by isHQ().
+        // Supply Center is a dedicated income building not yet in the BuildingType enum.
+        // For now, only HQ buildings generate income until Supply Center is added.
+        return false;
     }
 
     /**
@@ -124,6 +143,8 @@ public final class ResourceGenerator {
             // Confederation infantry
             case CONFED_INFANTRY -> 10;
             case CONFED_GRENADIER -> 15;
+            case CONFED_LIGHT_ASSAULT -> 20;
+            case CONFED_HEAVY_ASSAULT -> 35;
             case CONFED_FLAME_ASSAULT -> 25;
             // Confederation vehicles
             case CONFED_FORTRESS -> 50;

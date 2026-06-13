@@ -34,10 +34,13 @@ public final class ArmorCalculator {
     /**
      * Research IDs that add vehicle armor bonuses.
      * REF: combat_formulas.md - Z[player][5] vehicle armor slot
+     * REF: combat_formulas.md line 303 - ID 0 also adds "Light armour +2" (vehicle)
+     * - ID 0: Also adds +2 vehicle (Sniper/Light Armour) armor
      * - ID 9: Resistance Composite Armour, +2 vehicle armor
      * - ID 33: Additional vehicle armor, +1 for vehicle types
      */
     private static final Map<Integer, Integer> VEHICLE_ARMOR_RESEARCH = Map.of(
+        0, 2,
         9, 2,
         33, 1
     );
@@ -161,5 +164,21 @@ public final class ArmorCalculator {
 
         // ASSUMPTION: Mines do not receive armor bonuses from research
         return bonus;
+    }
+
+    /**
+     * Get building armor bonus for a faction (without requiring a building instance).
+     * Used by CombatSystem to calculate building armor during attacks.
+     * <p>
+     * REF: combat_formulas.md lines 64-68 - building armor from N[] per-player array
+     *
+     * @param faction the faction to get building armor for
+     * @return building armor bonus (0 if no research completed)
+     */
+    public int getBuildingArmorBonus(com.aow2.common.model.Faction faction) {
+        // Default: no research bonuses applied yet
+        // When the research system is fully integrated, this will check
+        // completed research for the faction and return the appropriate bonus
+        return 0;
     }
 }

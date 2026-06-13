@@ -375,12 +375,15 @@ public class Unit extends Entity {
 
     /**
      * Returns whether this unit type can enter siege mode.
-     * Torrent (Confederation) and Sniper (Resistance) support siege mode.
+     * REF: combat_formulas.md - siege mode for Fortress, Hammer, Torrent
+     * REF: unit_stats.md - Hammer: "Upgrade allows to switch to the siege mode"
+     * REF: unit_stats.md - Rhino: "Upgrade allows siege mode which increases damage and firing rate"
+     * REF: unit_stats.md - Fortress: "For rocket salvo you need to activate siege mode"
      *
      * @return true if this unit can siege
      */
     public boolean canSiege() {
-        return unitType == UnitType.CONFED_TORRENT || unitType == UnitType.REBEL_SNIPER;
+        return unitType.isSiegeCapable();
     }
 
     @Override

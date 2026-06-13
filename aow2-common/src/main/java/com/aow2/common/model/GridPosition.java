@@ -2,8 +2,9 @@ package com.aow2.common.model;
 
 /**
  * Immutable grid position on the game map.
- * Map size range: 0-127 in each axis.
- * REF: complete_building_stats.json game_config_values - max_map_size: 127
+ * Valid coordinate range: 0-127 (128×128 grid).
+ * REF: map_system.md Section 1.1 — "byte[][] O = Array.newInstance(Byte.TYPE, 128, 128)"
+ * FIX: Max coordinate is 127 (= 128 cells, indices 0-127).
  */
 public record GridPosition(int x, int y) {
     public GridPosition {

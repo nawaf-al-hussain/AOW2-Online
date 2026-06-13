@@ -4,13 +4,19 @@ import com.aow2.common.model.TerrainType;
 
 /**
  * 2D grid-based game map composed of {@link TerrainType} tiles.
- * The map dimensions range from 0 to 127 in each axis.
+ * The map is a 128×128 grid with valid coordinates 0-127 in each axis.
  * <p>
  * REF: MASTER_DOCUMENTATION.md Section 3.2 — Map System
- * REF: map_system.md — terrain types from decrypted map data
- * REF: complete_building_stats.json — max_map_size: 127
+ * REF: map_system.md Section 1.1 — "byte[][] O = Array.newInstance(Byte.TYPE, 128, 128)"
+ * REF: map_system.md Section 1.1 — "short[][] P = Array.newInstance(Short.TYPE, 128, 128)"
+ *
+ * FIX LOG: Max dimension changed from 127 to 128 to match original 128×128 grid.
+ * The RE uses byte[128][128] meaning indices 0-127, which IS 128 cells.
  */
 public class GameMap {
+
+    /** Maximum map dimension. REF: map_system.md — 128×128 grid (indices 0-127). */
+    public static final int MAX_MAP_SIZE = 128;
 
     private final int width;
     private final int height;
@@ -19,15 +25,15 @@ public class GameMap {
     /**
      * Constructs a new map filled with GRASS tiles.
      *
-     * @param width  map width (1-127)
-     * @param height map height (1-127)
+     * @param width  map width (1-128)
+     * @param height map height (1-128)
      */
     public GameMap(int width, int height) {
-        if (width < 1 || width > 127) {
-            throw new IllegalArgumentException("Width must be 1-127, got: " + width);
+        if (width < 1 || width > MAX_MAP_SIZE) {
+            throw new IllegalArgumentException("Width must be 1-" + MAX_MAP_SIZE + ", got: " + width);
         }
-        if (height < 1 || height > 127) {
-            throw new IllegalArgumentException("Height must be 1-127, got: " + height);
+        if (height < 1 || height > MAX_MAP_SIZE) {
+            throw new IllegalArgumentException("Height must be 1-" + MAX_MAP_SIZE + ", got: " + height);
         }
         this.width = width;
         this.height = height;

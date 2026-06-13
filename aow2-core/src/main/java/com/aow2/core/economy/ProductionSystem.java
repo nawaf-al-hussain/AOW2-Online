@@ -277,6 +277,8 @@ public final class ProductionSystem {
         return switch (unitType) {
             case CONFED_INFANTRY -> 40;
             case CONFED_GRENADIER -> 50;
+            case CONFED_LIGHT_ASSAULT -> 55;
+            case CONFED_HEAVY_ASSAULT -> 75;
             case CONFED_FLAME_ASSAULT -> 60;
             case CONFED_FORTRESS -> 100;
             case CONFED_HAMMER -> 70;
@@ -305,6 +307,8 @@ public final class ProductionSystem {
         return switch (unitType) {
             case CONFED_INFANTRY -> 10;
             case CONFED_GRENADIER -> 15;
+            case CONFED_LIGHT_ASSAULT -> 20;
+            case CONFED_HEAVY_ASSAULT -> 35;
             case CONFED_FLAME_ASSAULT -> 25;
             case CONFED_FORTRESS -> 50;
             case CONFED_HAMMER -> 30;
@@ -354,6 +358,8 @@ public final class ProductionSystem {
         return switch (unitType) {
             case CONFED_INFANTRY -> new com.aow2.common.model.UnitStats(unitType, "Infantry", 40, 2, 1, 5, 5, 0, 4, 4, 4, 10, 650, 6, 255, 0, -1);
             case CONFED_GRENADIER -> new com.aow2.common.model.UnitStats(unitType, "Grenadier", 45, 4, 2, 5, 4, 0, 5, 5, 5, 15, 700, 6, 255, 0, -1);
+            case CONFED_LIGHT_ASSAULT -> new com.aow2.common.model.UnitStats(unitType, "Light Assault", 55, 4, 2, 6, 5, 0, 4, 5, 5, 20, 750, 6, 255, 0, -1);
+            case CONFED_HEAVY_ASSAULT -> new com.aow2.common.model.UnitStats(unitType, "Heavy Assault", 90, 7, 4, 4, 8, 0, 5, 5, 8, 35, 1000, 8, 255, 0, -1);
             case CONFED_FLAME_ASSAULT -> new com.aow2.common.model.UnitStats(unitType, "Flame Assault", 50, 6, 3, 5, 3, 0, 3, 3, 6, 25, 800, 6, 255, 0, -1);
             case CONFED_FORTRESS -> new com.aow2.common.model.UnitStats(unitType, "AV-40 Fortress", 120, 8, 5, 4, 7, 0, 6, 6, 10, 50, 1200, 8, 255, 0, -1);
             case CONFED_HAMMER -> new com.aow2.common.model.UnitStats(unitType, "T-21 Hammer", 70, 6, 3, 7, 5, 0, 2, 6, 7, 30, 300, 8, 255, 0, -1);

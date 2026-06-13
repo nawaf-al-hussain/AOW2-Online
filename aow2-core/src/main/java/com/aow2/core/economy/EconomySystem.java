@@ -32,8 +32,15 @@ public final class EconomySystem {
     /** Maximum number of players supported. */
     private static final int MAX_PLAYERS = GameConstants.MAX_PLAYERS_PER_MATCH;
 
-    /** Starting credits for each player. */
-    public static final int STARTING_CREDITS = 500;
+    /**
+     * Starting credits for each player.
+     * REF: map_system.md Section 6.1: "Q[i] = 100; // Starting credits"
+     * FIX: Changed from 500 to 100 to match original game.
+     */
+    public static final int STARTING_CREDITS = 100;
+
+    /** Maximum credits a player can accumulate. REF: map_system.md Section 5.2: income clamped to [0, 30000] */
+    public static final int MAX_CREDITS = 30000;
 
     /** Per-player credit tracking. Index = playerId (0 or 1). */
     private final int[] playerCredits;
@@ -148,7 +155,8 @@ public final class EconomySystem {
         if (playerId < 0 || playerId >= MAX_PLAYERS) {
             return;
         }
-        playerCredits[playerId] += amount;
+        // REF: map_system.md Section 5.2 - income clamped to [0, 30000]
+        playerCredits[playerId] = Math.min(playerCredits[playerId] + amount, MAX_CREDITS);
         LOG.debug("Player {} gained {} credits (total: {})", playerId, amount, playerCredits[playerId]);
     }
 

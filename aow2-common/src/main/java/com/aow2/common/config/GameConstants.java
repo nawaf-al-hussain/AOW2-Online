@@ -13,6 +13,7 @@ public final class GameConstants {
     public static final double TICK_DURATION_MS = 1000.0 / TICK_RATE;
 
     // Map constraints
+    /** Max map coordinate. REF: map_system.md — 128x128 grid (indices 0-127). */
     public static final int MIN_MAP_SIZE = 0;
     public static final int MAX_MAP_SIZE = 127;
 
@@ -57,7 +58,8 @@ public final class GameConstants {
 
     // Pathfinding & Movement
     // REF: pathfinding.md — max path length 50 steps in original game
-    public static final int MAX_PATH_LENGTH = 200;
+    // FIX: Changed from 200 to 50 to match original game's al[0][unit][0..49] limit
+    public static final int MAX_PATH_LENGTH = 50;
     // REF: pathfinding.md — stuckCounter >= 5 triggers path recalculation
     public static final int STUCK_THRESHOLD = 5;
     // REF: pathfinding.md — max 10 obstacle segments per path calculation
@@ -68,15 +70,23 @@ public final class GameConstants {
     public static final double DIAGONAL_COST_MULTIPLIER = 1.41;
     // Terrain movement costs (indexed by TerrainType ordinal)
     // REF: pathfinding.md — terrain costs affect pathfinding decisions
+    // REF: map_system.md Section 3.1 — 18+ terrain types with per-category passability
+    // FIX: Updated to match new TerrainType enum order
     public static final int[] TERRAIN_MOVEMENT_COSTS = {
-        1,                  // GRASS (ordinal 0)
-        2,                  // SAND (ordinal 1)
-        Integer.MAX_VALUE,  // WATER (ordinal 2) — impassable for ground units
-        Integer.MAX_VALUE,  // MOUNTAIN (ordinal 3) — impassable for ground units
-        3,                  // FOREST (ordinal 4) — reduced visibility, higher traversal cost
-        1,                  // ROAD (ordinal 5) — fastest movement
-        2,                  // BRIDGE (ordinal 6) — slightly slower than road
-        2                   // RUINS (ordinal 7) — moderately slow
+        Integer.MAX_VALUE,  // DEEP_WATER (ordinal 0) — impassable
+        Integer.MAX_VALUE,  // SHALLOW_WATER (ordinal 1) — only infantry
+        Integer.MAX_VALUE,  // WATER (ordinal 2) — alias for DEEP_WATER
+        2,                  // SAND (ordinal 3)
+        1,                  // GRASS (ordinal 4) — baseline
+        0,                  // ROAD (ordinal 5) — fastest
+        3,                  // HILLS (ordinal 6) — slower
+        2,                  // FOREST (ordinal 7) — cover, slower
+        1,                  // BRIDGE (ordinal 8) — same as grass
+        Integer.MAX_VALUE,  // MOUNTAIN (ordinal 9) — impassable
+        4,                  // SWAMP (ordinal 10) — very slow for vehicles
+        3,                  // SNOW (ordinal 11) — slow
+        2,                  // RUINS (ordinal 12) — moderately slow
+        1                   // RESOURCE_DEPOSIT (ordinal 13) — same as grass
     };
 
     // Network

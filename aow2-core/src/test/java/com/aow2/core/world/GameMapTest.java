@@ -28,17 +28,17 @@ class GameMapTest {
         }
 
         @Test
-        @DisplayName("Should reject height above 127")
-        void shouldRejectHeightAbove127() {
-            assertThrows(IllegalArgumentException.class, () -> new GameMap(10, 128));
+        @DisplayName("Should reject height above 128")
+        void shouldRejectHeightAboveMax() {
+            assertThrows(IllegalArgumentException.class, () -> new GameMap(10, 129));
         }
 
         @Test
-        @DisplayName("Should accept maximum valid dimensions 127x127")
+        @DisplayName("Should accept maximum valid dimensions 128x128")
         void shouldAcceptMaxDimensions() {
-            GameMap map = new GameMap(127, 127);
-            assertEquals(127, map.getWidth());
-            assertEquals(127, map.getHeight());
+            GameMap map = new GameMap(GameMap.MAX_MAP_SIZE, GameMap.MAX_MAP_SIZE);
+            assertEquals(GameMap.MAX_MAP_SIZE, map.getWidth());
+            assertEquals(GameMap.MAX_MAP_SIZE, map.getHeight());
         }
     }
 

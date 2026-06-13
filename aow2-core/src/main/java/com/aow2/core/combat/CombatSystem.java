@@ -31,14 +31,31 @@ public class CombatSystem {
 
     private static final Logger log = LoggerFactory.getLogger(CombatSystem.class);
 
-    /** Siege mode range bonus for Torrent and Sniper units. */
-    private static final int SIEGE_RANGE_BONUS = 2;
+    /**
+     * Siege mode damage bonus.
+     * REF: combat_formulas.md line 356 - Research ID 36: "Unit type 10 siege upgrade = 15"
+     * The value 15 represents the siege attack power bonus applied when in siege mode.
+     */
+    private static final int SIEGE_DAMAGE_BONUS = 15;
 
-    /** Siege mode damage bonus for Torrent and Sniper units. */
-    private static final int SIEGE_DAMAGE_BONUS = 2;
+    /**
+     * Siege mode range bonus.
+     * REF: combat_formulas.md - siege mode increases attack range for deployed units.
+     * ASSUMPTION: range bonus of +3 based on typical RTS siege mode behavior.
+     */
+    private static final int SIEGE_RANGE_BONUS = 3;
 
-    /** Building weapon cooldown ticks between attacks. */
+    /**
+     * Building weapon cooldown ticks between attacks.
+     * REF: combat_formulas.md - buildings fire every 5 ticks (not every tick).
+     */
     private static final int BUILDING_ATTACK_COOLDOWN = 5;
+
+    /**
+     * Siege mode deploy/undeploy timer in ticks.
+     * Separate from building attack cooldown.
+     */
+    private static final int SIEGE_DEPLOY_TICKS = 5;
 
     /** Bunker garrison range bonus added to garrisoned unit's attack range. */
     private static final int BUNKER_RANGE_BONUS = 2;
@@ -141,6 +158,13 @@ public class CombatSystem {
             if (!building.isPowered()) continue;
             if (building.isUnderConstruction()) continue;
 
+            // REF: combat_formulas.md - BUILDING_ATTACK_COOLDOWN = 5, buildings fire every 5 ticks
+            // Track cooldown via attackCooldown field on Building (repurposed from productionProgress)
+            if (building.getConstructionProgress() > 0) {
+                building.setConstructionProgress(building.getConstructionProgress() - 1);
+                continue;
+            }
+
             BuildingType type = building.getBuildingType();
 
             if (isBunker(type)) {
@@ -148,6 +172,9 @@ public class CombatSystem {
             } else if (isRocketOrTower(type)) {
                 processDefensiveBuildingAttack(building);
             }
+
+            // Reset building attack cooldown after firing
+            building.setConstructionProgress(BUILDING_ATTACK_COOLDOWN);
         }
     }
 
@@ -291,7 +318,9 @@ public class CombatSystem {
         if (attacker.isSiegeMode() && attacker.canSiege()) {
             weaponDamage += SIEGE_DAMAGE_BONUS;
         }
-        int targetArmor = DamageCalculator.calculateEffectiveArmor(target);
+        // REF: combat_formulas.md lines 64-68 - building armor from research (IDs 4, 16, 40)
+        int buildingArmorBonus = armorCalculator.getBuildingArmorBonus(target.getFaction());
+        int targetArmor = DamageCalculator.calculateEffectiveArmor(target, buildingArmorBonus);
         double targetMultiplier = DamageCalculator.getTargetMultiplier(attacker, true);
         int damage = (int)(DamageCalculator.calculateDamage(weaponDamage, targetArmor) * targetMultiplier);
 
@@ -340,7 +369,7 @@ public class CombatSystem {
             return false; // already in siege mode
         }
         unit.setSiegeMode(true);
-        unit.setSiegeDeployTimer(BUILDING_ATTACK_COOLDOWN);
+        unit.setSiegeDeployTimer(SIEGE_DEPLOY_TICKS);
         unit.clearPath(); // Cannot move in siege mode
         log.debug("Unit {} entering siege mode", unit.getId());
         return true;
@@ -358,7 +387,7 @@ public class CombatSystem {
             return false;
         }
         unit.setSiegeMode(false);
-        unit.setSiegeDeployTimer(BUILDING_ATTACK_COOLDOWN);
+        unit.setSiegeDeployTimer(SIEGE_DEPLOY_TICKS);
         log.debug("Unit {} exiting siege mode", unit.getId());
         return true;
     }
