@@ -89,11 +89,12 @@ class LuaEngineTest {
         @DisplayName("shouldExecuteLuaTableCreation")
         void shouldExecuteLuaTableCreation() {
             // When: creating a Lua table
-            Object result = engine.executeString("local t = {1, 2, 3}; return #t");
+            var result = engine.executeString("local t = {1, 2, 3}; return #t");
 
-            // Then: should return the table length
+            // Then: should return the table length as a LuaValue number
             assertNotNull(result);
-            assertEquals(3.0, ((Number) result).doubleValue(), 0.001);
+            assertTrue(result.isnumber(), "Result should be a number");
+            assertEquals(3, result.toint());
         }
 
         @Test

@@ -194,8 +194,8 @@ class ModManagerTest {
             // When: enabling the mod
             modManager.enableMod("stat_mod");
 
-            // Then: overrides should be applied to the registry
-            assertEquals(1, registry.overrideCount());
+            // Then: overrides should be applied to the registry (2 overrides from createDataOverrides)
+            assertEquals(2, registry.overrideCount());
         }
     }
 
