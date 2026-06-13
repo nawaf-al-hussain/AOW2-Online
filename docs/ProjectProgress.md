@@ -3,7 +3,7 @@
 > This file tracks everything that has been implemented and what remains.
 > Updated after each development session.
 
-## Status: Phase 1 COMPLETE — Phase 2 IN PROGRESS
+## Status: Phase 5 COMPLETE — Spec Compliance ~80%
 
 ## Phase 0: Project Scaffolding ✅
 - [x] Gradle multi-module project initialized (5 modules: common, core, client, server, modding)
@@ -29,6 +29,9 @@
 - [x] GameConstants corrected: TICK_RATE=10, MAX_BUILDINGS_PER_PLAYER=22
 - [x] BuildingType producesPower() includes CC/HQ (powerProduce=6 per RE spec)
 - [x] BuildingType isIncomeBuilding() for CC/HQ credit generation
+- [x] UnitCategory: SPECIAL_MACHINERY for Flame Assault (no infantry bit)
+- [x] UnitType.isMachinery() for combat damage modifiers
+- [x] Fog of War updates every 4 ticks per RE spec (gameTick & 3 == 0)
 
 ## Phase 2: Rendering & UI Framework (PARTIALLY COMPLETE)
 - [x] Isometric tile renderer (IsometricRenderer.java with diamond grid)
@@ -63,7 +66,7 @@
 - [x] Armor calculation (ArmorCalculator with research bonuses)
 - [x] Projectile system (ProjectileSystem, max 400 active)
 - [x] Splash damage (no falloff for regular artillery)
-- [x] Nuclear damage (distance factor lookup + two-step clamp)
+- [x] Nuclear damage (31x31 distance lookup table + two-step clamp per RE spec)
 - [x] Attack cooldowns (per-unit attack speed)
 - [x] Death animations (matching RE bi[]/bd[] arrays)
 - [x] Bunker garrison attacks
@@ -78,7 +81,10 @@
 - [x] Building construction (progress ticking, completion)
 - [x] Production queues (enqueue, cancel, progress, spawn)
 - [x] Research system (lifecycle: start, progress, complete)
-- [x] Research effects (16 base techs, lazy evaluation)
+- [x] Research effects (48 tech nodes: 25 Confed + 23 Rebel, lazy evaluation)
+- [x] HP Regeneration System (infantry recovery every 127 ticks, research triples rate)
+- [x] Mine Detonation System (Scorpio=anti-tank, Frog=area, Lizard=multi-charge)
+- [x] Building Upgrade System (3 levels, HP bonus, production speed modifier)
 - [x] StatsRegistry integration (all costs/stats from RE data)
 
 ## Phase 6: AI System (IMPLEMENTED)
@@ -122,7 +128,7 @@
 | 2026-06-14 | 5 | CANCEL_REFUND_PERCENT=50% | Not in RE data | Active |
 | 2026-06-14 | 4 | Infantry vs machinery=0.7x | Reduction confirmed, exact value unknown | Active |
 | 2026-06-14 | 4 | Siege vs building=1.5x | Bonus confirmed, exact value unknown | Active |
-| 2026-06-14 | 5 | Building upgrades not implemented | Needs upgrade command | Active |
+| 2026-06-14 | 5 | Building upgrades implemented (3 levels) | BuildingUpgradeSystem created | Resolved |
 | 2026-06-14 | 1 | Mine attackRange=sightRange | RE data lacks separate mine range | Active |
 | 2026-06-14 | 1 | Rebel stats partially derived | RE only has partial rebel data | Active |
 
@@ -137,3 +143,10 @@
 | 2026-06-14 | 11 | Two different wire formats for replay | Medium | Open |
 | 2026-06-14 | 1 | Tile.java orphaned (GameMap uses TerrainType[][]) | Low | Open |
 | 2026-06-14 | 3 | CollisionSystem O(n²), no spatial index | Low | Open |
+
+## Session History
+
+| Date | Commit | Changes |
+|------|--------|----------|
+| 2026-06-14 | ad56d9a | StatsRegistry, spec compliance fixes, wire client to engine |
+| 2026-06-14 | ce1c17c | HP Regen, Mine Detonation, Building Upgrades, 48-node TechTree, FoW 4-tick, nuclear 31x31 table, SPECIAL_MACHINERY |
