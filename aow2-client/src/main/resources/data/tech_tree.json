@@ -1,0 +1,681 @@
+{
+  "version": 1,
+  "technologies": {
+    "confederation": [
+      {
+        "id": 0,
+        "name": "Reinforced Plating",
+        "category": "INFANTRY_ARMOR",
+        "description": "Increases infantry armor by 2, reducing incoming damage.",
+        "cost": 30,
+        "researchTime": 300,
+        "prerequisiteId": -1,
+        "effect": {
+          "statName": "armor",
+          "value": 2,
+          "affectedUnitTypes": [0, 1, 2]
+        }
+      },
+      {
+        "id": 1,
+        "name": "Swift March",
+        "category": "INFANTRY_SPEED",
+        "description": "Increases infantry movement speed by 1.",
+        "cost": 25,
+        "researchTime": 250,
+        "prerequisiteId": -1,
+        "effect": {
+          "statName": "speed",
+          "value": 1,
+          "affectedUnitTypes": [0, 1, 2]
+        }
+      },
+      {
+        "id": 2,
+        "name": "Advanced Ammunition",
+        "category": "INFANTRY_WEAPONRY",
+        "description": "Increases infantry weapon damage by 1.",
+        "cost": 35,
+        "researchTime": 350,
+        "prerequisiteId": -1,
+        "effect": {
+          "statName": "damage",
+          "value": 1,
+          "affectedUnitTypes": [0, 1, 2]
+        }
+      },
+      {
+        "id": 3,
+        "name": "Heavy Ordnance",
+        "category": "VEHICLE_WEAPONRY",
+        "description": "Increases vehicle weapon damage by 3.",
+        "cost": 50,
+        "researchTime": 500,
+        "prerequisiteId": -1,
+        "effect": {
+          "statName": "damage",
+          "value": 3,
+          "affectedUnitTypes": [3, 4, 5, 6]
+        }
+      },
+      {
+        "id": 4,
+        "name": "Turbo Engines",
+        "category": "VEHICLE_SPEED",
+        "description": "Increases vehicle movement speed by 1.",
+        "cost": 40,
+        "researchTime": 400,
+        "prerequisiteId": -1,
+        "effect": {
+          "statName": "speed",
+          "value": 1,
+          "affectedUnitTypes": [3, 4, 5, 6]
+        }
+      },
+      {
+        "id": 5,
+        "name": "Fortified Structures",
+        "category": "BUILDING",
+        "description": "Increases building armor by 5 and extended armor by 3.",
+        "cost": 45,
+        "researchTime": 450,
+        "prerequisiteId": -1,
+        "effect": {
+          "statName": "armor",
+          "value": 5,
+          "affectedUnitTypes": []
+        }
+      },
+      {
+        "id": 6,
+        "name": "Supply Lines",
+        "category": "ECONOMY",
+        "description": "Reduces all unit production costs by 10%.",
+        "cost": 30,
+        "researchTime": 300,
+        "prerequisiteId": -1,
+        "effect": {
+          "statName": "costCredits",
+          "value": -10,
+          "affectedUnitTypes": [0, 1, 2, 3, 4, 5, 6]
+        }
+      },
+      {
+        "id": 7,
+        "name": "Satellite Uplink",
+        "category": "SPECIAL",
+        "description": "Reveals the entire map for 30 seconds. One-time use per research.",
+        "cost": 60,
+        "researchTime": 600,
+        "prerequisiteId": 5,
+        "effect": {
+          "statName": "sightRange",
+          "value": 127,
+          "affectedUnitTypes": []
+        }
+      },
+      {
+        "id": 8,
+        "name": "Composite Armor",
+        "category": "INFANTRY_ARMOR",
+        "description": "Further increases infantry armor by 3. Requires Reinforced Plating.",
+        "cost": 50,
+        "researchTime": 500,
+        "prerequisiteId": 0,
+        "effect": {
+          "statName": "armor",
+          "value": 3,
+          "affectedUnitTypes": [0, 1, 2]
+        }
+      },
+      {
+        "id": 9,
+        "name": "Rapid Fire",
+        "category": "INFANTRY_WEAPONRY",
+        "description": "Further increases infantry weapon damage by 2. Requires Advanced Ammunition.",
+        "cost": 55,
+        "researchTime": 550,
+        "prerequisiteId": 2,
+        "effect": {
+          "statName": "damage",
+          "value": 2,
+          "affectedUnitTypes": [0, 1, 2]
+        }
+      },
+      {
+        "id": 10,
+        "name": "Siegebreaker Shells",
+        "category": "VEHICLE_WEAPONRY",
+        "description": "Further increases vehicle weapon damage by 5. Requires Heavy Ordnance.",
+        "cost": 70,
+        "researchTime": 700,
+        "prerequisiteId": 3,
+        "effect": {
+          "statName": "damage",
+          "value": 5,
+          "affectedUnitTypes": [3, 4, 5, 6]
+        }
+      },
+      {
+        "id": 11,
+        "name": "Overdrive",
+        "category": "VEHICLE_SPEED",
+        "description": "Further increases vehicle speed by 1. Requires Turbo Engines.",
+        "cost": 60,
+        "researchTime": 600,
+        "prerequisiteId": 4,
+        "effect": {
+          "statName": "speed",
+          "value": 1,
+          "affectedUnitTypes": [3, 4, 5, 6]
+        }
+      },
+      {
+        "id": 12,
+        "name": "Power Grid Optimization",
+        "category": "ECONOMY",
+        "description": "Generators produce 30% more power. Requires Supply Lines.",
+        "cost": 45,
+        "researchTime": 450,
+        "prerequisiteId": 6,
+        "effect": {
+          "statName": "powerProduce",
+          "value": 3,
+          "affectedUnitTypes": []
+        }
+      },
+      {
+        "id": 13,
+        "name": "Extended Magazine",
+        "category": "INFANTRY_WEAPONRY",
+        "description": "Increases infantry attack range by 1.",
+        "cost": 40,
+        "researchTime": 400,
+        "prerequisiteId": 2,
+        "effect": {
+          "statName": "attackRange",
+          "value": 1,
+          "affectedUnitTypes": [0, 1, 2]
+        }
+      },
+      {
+        "id": 14,
+        "name": "Titanium Hull",
+        "category": "VEHICLE_WEAPONRY",
+        "description": "Increases vehicle armor by 3.",
+        "cost": 55,
+        "researchTime": 550,
+        "prerequisiteId": 3,
+        "effect": {
+          "statName": "armor",
+          "value": 3,
+          "affectedUnitTypes": [3, 4, 5, 6]
+        }
+      },
+      {
+        "id": 15,
+        "name": "Orbital Strike",
+        "category": "SPECIAL",
+        "description": "Calls down an orbital strike at a target location. Requires Satellite Uplink.",
+        "cost": 80,
+        "researchTime": 800,
+        "prerequisiteId": 7,
+        "effect": {
+          "statName": "specialOrbitalStrike",
+          "value": 1,
+          "affectedUnitTypes": []
+        }
+      },
+      {
+        "id": 16,
+        "name": "Night Vision",
+        "category": "INFANTRY_SPEED",
+        "description": "Increases infantry sight range by 2.",
+        "cost": 35,
+        "researchTime": 350,
+        "prerequisiteId": 1,
+        "effect": {
+          "statName": "sightRange",
+          "value": 2,
+          "affectedUnitTypes": [0, 1, 2]
+        }
+      },
+      {
+        "id": 17,
+        "name": "Self-Repair Protocol",
+        "category": "BUILDING",
+        "description": "Buildings slowly regenerate HP over time.",
+        "cost": 55,
+        "researchTime": 550,
+        "prerequisiteId": 5,
+        "effect": {
+          "statName": "hpRegen",
+          "value": 1,
+          "affectedUnitTypes": []
+        }
+      },
+      {
+        "id": 18,
+        "name": "Auto-Loader",
+        "category": "VEHICLE_WEAPONRY",
+        "description": "Decreases vehicle attack cooldown, increasing fire rate.",
+        "cost": 50,
+        "researchTime": 500,
+        "prerequisiteId": 3,
+        "effect": {
+          "statName": "attackBonus",
+          "value": 3,
+          "affectedUnitTypes": [3, 4, 5, 6]
+        }
+      },
+      {
+        "id": 19,
+        "name": "Rapid Deployment",
+        "category": "INFANTRY_SPEED",
+        "description": "Decreases infantry build time by 2 ticks.",
+        "cost": 40,
+        "researchTime": 400,
+        "prerequisiteId": 1,
+        "effect": {
+          "statName": "buildTime",
+          "value": -2,
+          "affectedUnitTypes": [0, 1, 2]
+        }
+      },
+      {
+        "id": 20,
+        "name": "Thermal Plating",
+        "category": "INFANTRY_ARMOR",
+        "description": "Increases infantry extended armor by 4. Requires Composite Armor.",
+        "cost": 60,
+        "researchTime": 600,
+        "prerequisiteId": 8,
+        "effect": {
+          "statName": "extendedArmor",
+          "value": 4,
+          "affectedUnitTypes": [0, 1, 2]
+        }
+      },
+      {
+        "id": 21,
+        "name": "Conveyor Assembly",
+        "category": "ECONOMY",
+        "description": "Decreases vehicle build time by 3 ticks. Requires Supply Lines.",
+        "cost": 50,
+        "researchTime": 500,
+        "prerequisiteId": 6,
+        "effect": {
+          "statName": "buildTime",
+          "value": -3,
+          "affectedUnitTypes": [3, 4, 5, 6]
+        }
+      },
+      {
+        "id": 22,
+        "name": "Flak Armor",
+        "category": "BUILDING",
+        "description": "Increases building extended armor by 5. Requires Fortified Structures.",
+        "cost": 50,
+        "researchTime": 500,
+        "prerequisiteId": 5,
+        "effect": {
+          "statName": "extendedArmor",
+          "value": 5,
+          "affectedUnitTypes": []
+        }
+      },
+      {
+        "id": 23,
+        "name": "EMP Shielding",
+        "category": "SPECIAL",
+        "description": "Buildings are immune to EMP effects.",
+        "cost": 65,
+        "researchTime": 650,
+        "prerequisiteId": 7,
+        "effect": {
+          "statName": "empImmune",
+          "value": 1,
+          "affectedUnitTypes": []
+        }
+      }
+    ],
+    "rebels": [
+      {
+        "id": 24,
+        "name": "Kevlar Weave",
+        "category": "INFANTRY_ARMOR",
+        "description": "Increases Resistance infantry armor by 2.",
+        "cost": 30,
+        "researchTime": 280,
+        "prerequisiteId": -1,
+        "effect": {
+          "statName": "armor",
+          "value": 2,
+          "affectedUnitTypes": [7, 8, 9]
+        }
+      },
+      {
+        "id": 25,
+        "name": "Guerrilla Tactics",
+        "category": "INFANTRY_SPEED",
+        "description": "Increases Resistance infantry movement speed by 2.",
+        "cost": 25,
+        "researchTime": 230,
+        "prerequisiteId": -1,
+        "effect": {
+          "statName": "speed",
+          "value": 2,
+          "affectedUnitTypes": [7, 8, 9]
+        }
+      },
+      {
+        "id": 26,
+        "name": "Armor Piercing Rounds",
+        "category": "INFANTRY_WEAPONRY",
+        "description": "Increases Resistance infantry weapon damage by 2.",
+        "cost": 35,
+        "researchTime": 330,
+        "prerequisiteId": -1,
+        "effect": {
+          "statName": "damage",
+          "value": 2,
+          "affectedUnitTypes": [7, 8, 9]
+        }
+      },
+      {
+        "id": 27,
+        "name": "Scrap Metal Shells",
+        "category": "VEHICLE_WEAPONRY",
+        "description": "Increases Resistance vehicle weapon damage by 4.",
+        "cost": 45,
+        "researchTime": 450,
+        "prerequisiteId": -1,
+        "effect": {
+          "statName": "damage",
+          "value": 4,
+          "affectedUnitTypes": [10, 11, 12, 13]
+        }
+      },
+      {
+        "id": 28,
+        "name": "Off-Road Suspension",
+        "category": "VEHICLE_SPEED",
+        "description": "Increases Resistance vehicle movement speed by 1.",
+        "cost": 35,
+        "researchTime": 350,
+        "prerequisiteId": -1,
+        "effect": {
+          "statName": "speed",
+          "value": 1,
+          "affectedUnitTypes": [10, 11, 12, 13]
+        }
+      },
+      {
+        "id": 29,
+        "name": "Camouflage Netting",
+        "category": "BUILDING",
+        "description": "Buildings become harder to detect. Reduces enemy sight range near buildings.",
+        "cost": 40,
+        "researchTime": 400,
+        "prerequisiteId": -1,
+        "effect": {
+          "statName": "stealth",
+          "value": 1,
+          "affectedUnitTypes": []
+        }
+      },
+      {
+        "id": 30,
+        "name": "Salvage Operations",
+        "category": "ECONOMY",
+        "description": "Earn credits when enemy units are destroyed near your buildings.",
+        "cost": 30,
+        "researchTime": 280,
+        "prerequisiteId": -1,
+        "effect": {
+          "statName": "salvageCredits",
+          "value": 5,
+          "affectedUnitTypes": [7, 8, 9, 10, 11, 12, 13]
+        }
+      },
+      {
+        "id": 31,
+        "name": "Ambush Protocol",
+        "category": "SPECIAL",
+        "description": "Snipers deal double damage on the first shot from stealth.",
+        "cost": 55,
+        "researchTime": 550,
+        "prerequisiteId": 29,
+        "effect": {
+          "statName": "ambushBonus",
+          "value": 2,
+          "affectedUnitTypes": [9]
+        }
+      },
+      {
+        "id": 32,
+        "name": "Hardened Fibers",
+        "category": "INFANTRY_ARMOR",
+        "description": "Further increases Resistance infantry armor by 3. Requires Kevlar Weave.",
+        "cost": 45,
+        "researchTime": 450,
+        "prerequisiteId": 24,
+        "effect": {
+          "statName": "armor",
+          "value": 3,
+          "affectedUnitTypes": [7, 8, 9]
+        }
+      },
+      {
+        "id": 33,
+        "name": "Hit and Run",
+        "category": "INFANTRY_SPEED",
+        "description": "Further increases Resistance infantry speed by 1. Requires Guerrilla Tactics.",
+        "cost": 40,
+        "researchTime": 400,
+        "prerequisiteId": 25,
+        "effect": {
+          "statName": "speed",
+          "value": 1,
+          "affectedUnitTypes": [7, 8, 9]
+        }
+      },
+      {
+        "id": 34,
+        "name": "Explosive Tips",
+        "category": "INFANTRY_WEAPONRY",
+        "description": "Further increases Resistance infantry damage by 2. Requires Armor Piercing Rounds.",
+        "cost": 50,
+        "researchTime": 500,
+        "prerequisiteId": 26,
+        "effect": {
+          "statName": "damage",
+          "value": 2,
+          "affectedUnitTypes": [7, 8, 9]
+        }
+      },
+      {
+        "id": 35,
+        "name": "Scavenger Ammo",
+        "category": "VEHICLE_WEAPONRY",
+        "description": "Further increases Resistance vehicle damage by 4. Requires Scrap Metal Shells.",
+        "cost": 60,
+        "researchTime": 600,
+        "prerequisiteId": 27,
+        "effect": {
+          "statName": "damage",
+          "value": 4,
+          "affectedUnitTypes": [10, 11, 12, 13]
+        }
+      },
+      {
+        "id": 36,
+        "name": "Nitro Boost",
+        "category": "VEHICLE_SPEED",
+        "description": "Further increases Resistance vehicle speed by 1. Requires Off-Road Suspension.",
+        "cost": 50,
+        "researchTime": 500,
+        "prerequisiteId": 28,
+        "effect": {
+          "statName": "speed",
+          "value": 1,
+          "affectedUnitTypes": [10, 11, 12, 13]
+        }
+      },
+      {
+        "id": 37,
+        "name": "Underground Bunkers",
+        "category": "BUILDING",
+        "description": "Increases building HP by 30. Requires Camouflage Netting.",
+        "cost": 50,
+        "researchTime": 500,
+        "prerequisiteId": 29,
+        "effect": {
+          "statName": "hp",
+          "value": 30,
+          "affectedUnitTypes": []
+        }
+      },
+      {
+        "id": 38,
+        "name": "Black Market",
+        "category": "ECONOMY",
+        "description": "All units cost 15% less to produce. Requires Salvage Operations.",
+        "cost": 50,
+        "researchTime": 500,
+        "prerequisiteId": 30,
+        "effect": {
+          "statName": "costCredits",
+          "value": -15,
+          "affectedUnitTypes": [7, 8, 9, 10, 11, 12, 13]
+        }
+      },
+      {
+        "id": 39,
+        "name": "Sabotage",
+        "category": "SPECIAL",
+        "description": "Infiltrators can disable enemy buildings for a short time. Requires Ambush Protocol.",
+        "cost": 70,
+        "researchTime": 700,
+        "prerequisiteId": 31,
+        "effect": {
+          "statName": "sabotage",
+          "value": 1,
+          "affectedUnitTypes": []
+        }
+      },
+      {
+        "id": 40,
+        "name": "Extended Barrel",
+        "category": "INFANTRY_WEAPONRY",
+        "description": "Increases Resistance infantry attack range by 1.",
+        "cost": 40,
+        "researchTime": 400,
+        "prerequisiteId": 26,
+        "effect": {
+          "statName": "attackRange",
+          "value": 1,
+          "affectedUnitTypes": [7, 8, 9]
+        }
+      },
+      {
+        "id": 41,
+        "name": "Reactive Armor",
+        "category": "VEHICLE_WEAPONRY",
+        "description": "Increases Resistance vehicle armor by 4.",
+        "cost": 50,
+        "researchTime": 500,
+        "prerequisiteId": 27,
+        "effect": {
+          "statName": "armor",
+          "value": 4,
+          "affectedUnitTypes": [10, 11, 12, 13]
+        }
+      },
+      {
+        "id": 42,
+        "name": "Spotter Network",
+        "category": "INFANTRY_SPEED",
+        "description": "Increases Resistance infantry sight range by 3.",
+        "cost": 35,
+        "researchTime": 350,
+        "prerequisiteId": 25,
+        "effect": {
+          "statName": "sightRange",
+          "value": 3,
+          "affectedUnitTypes": [7, 8, 9]
+        }
+      },
+      {
+        "id": 43,
+        "name": "Makeshift Repair",
+        "category": "BUILDING",
+        "description": "Vehicles slowly regenerate HP when near friendly buildings.",
+        "cost": 45,
+        "researchTime": 450,
+        "prerequisiteId": 29,
+        "effect": {
+          "statName": "hpRegenNearBuilding",
+          "value": 1,
+          "affectedUnitTypes": [10, 11, 12, 13]
+        }
+      },
+      {
+        "id": 44,
+        "name": "Rapid Mobilization",
+        "category": "INFANTRY_SPEED",
+        "description": "Decreases infantry build time by 3 ticks.",
+        "cost": 40,
+        "researchTime": 400,
+        "prerequisiteId": 25,
+        "effect": {
+          "statName": "buildTime",
+          "value": -3,
+          "affectedUnitTypes": [7, 8, 9]
+        }
+      },
+      {
+        "id": 45,
+        "name": "Ceramic Plating",
+        "category": "INFANTRY_ARMOR",
+        "description": "Increases Resistance infantry extended armor by 5. Requires Hardened Fibers.",
+        "cost": 55,
+        "researchTime": 550,
+        "prerequisiteId": 32,
+        "effect": {
+          "statName": "extendedArmor",
+          "value": 5,
+          "affectedUnitTypes": [7, 8, 9]
+        }
+      },
+      {
+        "id": 46,
+        "name": "Assembly Line",
+        "category": "ECONOMY",
+        "description": "Decreases vehicle build time by 4 ticks. Requires Salvage Operations.",
+        "cost": 50,
+        "researchTime": 500,
+        "prerequisiteId": 30,
+        "effect": {
+          "statName": "buildTime",
+          "value": -4,
+          "affectedUnitTypes": [10, 11, 12, 13]
+        }
+      },
+      {
+        "id": 47,
+        "name": "Insurgency",
+        "category": "SPECIAL",
+        "description": "All Resistance units gain +1 damage when attacking buildings. Requires Sabotage.",
+        "cost": 75,
+        "researchTime": 750,
+        "prerequisiteId": 39,
+        "effect": {
+          "statName": "siegeBonus",
+          "value": 1,
+          "affectedUnitTypes": [7, 8, 9, 10, 11, 12, 13]
+        }
+      }
+    ]
+  }
+}

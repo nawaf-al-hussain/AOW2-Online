@@ -1,6 +1,8 @@
 package com.aow2.core.world;
 
 import com.aow2.common.model.TerrainType;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,10 +13,11 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Loads a {@link GameMap} from JSON data.
+ * Loads a {@link GameMap} from JSON data using Jackson.
  * Expected JSON format:
  * <pre>
  * {
@@ -34,12 +37,51 @@ public class MapLoader {
 
     private static final Logger LOG = LoggerFactory.getLogger(MapLoader.class);
 
+    /** Shared Jackson ObjectMapper instance. */
+    private static final ObjectMapper MAPPER = new ObjectMapper();
+
+    /**
+     * Internal DTO for map JSON deserialization.
+     */
+    static final class MapData {
+        int width;
+        int height;
+        List<TileData> tiles;
+
+        @JsonProperty("width")
+        public void setWidth(int width) { this.width = width; }
+
+        @JsonProperty("height")
+        public void setHeight(int height) { this.height = height; }
+
+        @JsonProperty("tiles")
+        public void setTiles(List<TileData> tiles) { this.tiles = tiles; }
+    }
+
+    /**
+     * Internal DTO for tile entries in the map JSON.
+     */
+    static final class TileData {
+        int x;
+        int y;
+        String terrain;
+
+        @JsonProperty("x")
+        public void setX(int x) { this.x = x; }
+
+        @JsonProperty("y")
+        public void setY(int y) { this.y = y; }
+
+        @JsonProperty("terrain")
+        public void setTerrain(String terrain) { this.terrain = terrain; }
+    }
+
     /**
      * Loads a map from a JSON file on the filesystem.
      *
      * @param path path to the JSON file
      * @return loaded GameMap
-     * @throws IOException if the file cannot be read
+     * @throws IOException if the file cannot be read or parsed
      */
     public static GameMap loadFromFile(Path path) throws IOException {
         String json = Files.readString(path, StandardCharsets.UTF_8);
@@ -66,127 +108,48 @@ public class MapLoader {
     }
 
     /**
-     * Parses a JSON string into a GameMap.
-     * Uses simple string parsing — no external JSON library dependency.
+     * Parses a JSON string into a GameMap using Jackson.
      *
      * @param json JSON string
      * @return parsed GameMap
      */
     static GameMap parseJson(String json) {
-        // Extract width
-        int width = extractIntValue(json, "width");
-        int height = extractIntValue(json, "height");
-
-        if (width <= 0 || height <= 0) {
-            throw new IllegalArgumentException("Invalid map dimensions: " + width + "x" + height);
+        MapData mapData;
+        try {
+            mapData = MAPPER.readValue(json, MapData.class);
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Failed to parse map JSON: " + e.getMessage(), e);
         }
 
-        GameMap map = new GameMap(width, height);
+        if (mapData.width <= 0 || mapData.height <= 0) {
+            throw new IllegalArgumentException("Invalid map dimensions: " + mapData.width + "x" + mapData.height);
+        }
 
-        // Find the tiles array and parse each tile entry
-        int tilesStart = json.indexOf("\"tiles\"");
-        if (tilesStart < 0) {
+        GameMap map = new GameMap(mapData.width, mapData.height);
+
+        if (mapData.tiles == null || mapData.tiles.isEmpty()) {
             LOG.warn("No tiles array found in map JSON, returning empty GRASS map");
             return map;
         }
 
-        int arrayStart = json.indexOf('[', tilesStart);
-        int arrayEnd = json.indexOf(']', arrayStart);
-        if (arrayStart < 0 || arrayEnd < 0) {
-            LOG.warn("Malformed tiles array in map JSON");
-            return map;
-        }
-
-        String tilesContent = json.substring(arrayStart + 1, arrayEnd);
-
-        // Split on } to get individual tile objects
-        String[] tileObjects = tilesContent.split("\\}");
-        for (String tileObj : tileObjects) {
-            String trimmed = tileObj.trim();
-            if (trimmed.isEmpty() || trimmed.equals(",")) {
-                continue;
-            }
-
+        int tileOverrides = 0;
+        for (TileData tileData : mapData.tiles) {
             try {
-                int x = extractIntValue(trimmed, "x");
-                int y = extractIntValue(trimmed, "y");
-                String terrainName = extractStringValue(trimmed, "terrain");
-
-                TerrainType terrain = TerrainType.valueOf(terrainName);
-                if (map.isInBounds(x, y)) {
-                    map.setTile(x, y, terrain);
+                TerrainType terrain = TerrainType.valueOf(tileData.terrain);
+                if (map.isInBounds(tileData.x, tileData.y)) {
+                    map.setTile(tileData.x, tileData.y, terrain);
+                    tileOverrides++;
                 } else {
-                    LOG.warn("Tile ({}, {}) out of bounds for map {}x{}, skipping", x, y, width, height);
+                    LOG.warn("Tile ({}, {}) out of bounds for map {}x{}, skipping",
+                        tileData.x, tileData.y, mapData.width, mapData.height);
                 }
             } catch (IllegalArgumentException e) {
-                LOG.warn("Failed to parse tile entry: {}", trimmed, e);
+                LOG.warn("Failed to parse tile entry at ({}, {}): unknown terrain '{}'",
+                    tileData.x, tileData.y, tileData.terrain);
             }
         }
 
-        LOG.info("Loaded map {}x{} with {} tile overrides", width, height, tileObjects.length);
+        LOG.info("Loaded map {}x{} with {} tile overrides", mapData.width, mapData.height, tileOverrides);
         return map;
-    }
-
-    /**
-     * Extracts an integer value for the given key from a JSON fragment.
-     */
-    private static int extractIntValue(String json, String key) {
-        String searchKey = "\"" + key + "\"";
-        int keyIndex = json.indexOf(searchKey);
-        if (keyIndex < 0) {
-            throw new IllegalArgumentException("Key not found: " + key);
-        }
-
-        int colonIndex = json.indexOf(':', keyIndex + searchKey.length());
-        if (colonIndex < 0) {
-            throw new IllegalArgumentException("Colon not found after key: " + key);
-        }
-
-        // Skip whitespace after colon
-        int valueStart = colonIndex + 1;
-        while (valueStart < json.length() && Character.isWhitespace(json.charAt(valueStart))) {
-            valueStart++;
-        }
-
-        // Read digits (and optional minus sign)
-        int valueEnd = valueStart;
-        if (valueEnd < json.length() && json.charAt(valueEnd) == '-') {
-            valueEnd++;
-        }
-        while (valueEnd < json.length() && Character.isDigit(json.charAt(valueEnd))) {
-            valueEnd++;
-        }
-
-        return Integer.parseInt(json.substring(valueStart, valueEnd).trim());
-    }
-
-    /**
-     * Extracts a string value for the given key from a JSON fragment.
-     */
-    private static String extractStringValue(String json, String key) {
-        String searchKey = "\"" + key + "\"";
-        int keyIndex = json.indexOf(searchKey);
-        if (keyIndex < 0) {
-            throw new IllegalArgumentException("Key not found: " + key);
-        }
-
-        int colonIndex = json.indexOf(':', keyIndex + searchKey.length());
-        if (colonIndex < 0) {
-            throw new IllegalArgumentException("Colon not found after key: " + key);
-        }
-
-        // Find opening quote
-        int openQuote = json.indexOf('"', colonIndex + 1);
-        if (openQuote < 0) {
-            throw new IllegalArgumentException("Opening quote not found for key: " + key);
-        }
-
-        // Find closing quote
-        int closeQuote = json.indexOf('"', openQuote + 1);
-        if (closeQuote < 0) {
-            throw new IllegalArgumentException("Closing quote not found for key: " + key);
-        }
-
-        return json.substring(openQuote + 1, closeQuote);
     }
 }

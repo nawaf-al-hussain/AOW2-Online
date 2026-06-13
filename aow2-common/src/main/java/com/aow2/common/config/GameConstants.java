@@ -55,6 +55,30 @@ public final class GameConstants {
     // Map record count
     public static final int MAP_RECORD_COUNT = 193;
 
+    // Pathfinding & Movement
+    // REF: pathfinding.md — max path length 50 steps in original game
+    public static final int MAX_PATH_LENGTH = 200;
+    // REF: pathfinding.md — stuckCounter >= 5 triggers path recalculation
+    public static final int STUCK_THRESHOLD = 5;
+    // REF: pathfinding.md — max 10 obstacle segments per path calculation
+    public static final int MAX_OBSTACLE_SEGMENTS = 10;
+    // REF: pathfinding.md — 8x8 spatial hash grid per player
+    public static final int SPATIAL_HASH_GRID_SIZE = 8;
+    // Diagonal movement cost multiplier (sqrt(2) ≈ 1.41)
+    public static final double DIAGONAL_COST_MULTIPLIER = 1.41;
+    // Terrain movement costs (indexed by TerrainType ordinal)
+    // REF: pathfinding.md — terrain costs affect pathfinding decisions
+    public static final int[] TERRAIN_MOVEMENT_COSTS = {
+        1,                  // GRASS (ordinal 0)
+        2,                  // SAND (ordinal 1)
+        Integer.MAX_VALUE,  // WATER (ordinal 2) — impassable for ground units
+        Integer.MAX_VALUE,  // MOUNTAIN (ordinal 3) — impassable for ground units
+        3,                  // FOREST (ordinal 4) — reduced visibility, higher traversal cost
+        1,                  // ROAD (ordinal 5) — fastest movement
+        2,                  // BRIDGE (ordinal 6) — slightly slower than road
+        2                   // RUINS (ordinal 7) — moderately slow
+    };
+
     // Network
     public static final int DEFAULT_PORT = 47584;
     public static final int PORT_RANGE = 5;

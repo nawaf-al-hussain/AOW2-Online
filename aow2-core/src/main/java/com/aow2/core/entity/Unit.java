@@ -2,9 +2,13 @@ package com.aow2.core.entity;
 
 import com.aow2.common.model.Faction;
 import com.aow2.common.model.GridPosition;
-import com.aow2.common.model.UnitCategory;
+import com.aow2.common.model.MovementState;
 import com.aow2.common.model.UnitStats;
 import com.aow2.common.model.UnitType;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * A game unit (infantry, vehicle, or mine).
@@ -13,6 +17,7 @@ import com.aow2.common.model.UnitType;
  * REF: MASTER_DOCUMENTATION.md Section 5 — Unit Encyclopedia
  * REF: complete_unit_stats.json — all stat values
  * REF: combat_formulas.md — attack cycles, cooldowns, death marker
+ * REF: pathfinding.md — path stored in al[0][unit][], al[1][unit][], max 50 steps
  */
 public class Unit extends Entity {
 
@@ -49,6 +54,18 @@ public class Unit extends Entity {
     /** Accumulated experience points. */
     private int experience;
 
+    /** Current movement state. REF: pathfinding.md — stuck/attacking/idle states */
+    private MovementState movementState;
+
+    /** Computed path as a list of waypoints. REF: pathfinding.md — al[0][unit][], al[1][unit][] */
+    private List<GridPosition> path;
+
+    /** Current index within the path list. REF: pathfinding.md — ca[unit + 1010] pathStart */
+    private int pathIndex;
+
+    /** Tick accumulator for movement speed. Units move one cell per speed ticks. */
+    private int moveTickAccumulator;
+
     /**
      * Constructs a new unit.
      *
@@ -71,6 +88,10 @@ public class Unit extends Entity {
         this.weaponCooldown = 0;
         this.rank = 0;
         this.experience = 0;
+        this.movementState = MovementState.IDLE;
+        this.path = new ArrayList<>();
+        this.pathIndex = 0;
+        this.moveTickAccumulator = 0;
     }
 
     // --- Category checks (delegate to UnitType) ---
@@ -215,6 +236,94 @@ public class Unit extends Entity {
 
     public void setExperience(int experience) {
         this.experience = experience;
+    }
+
+    public MovementState getMovementState() {
+        return movementState;
+    }
+
+    public void setMovementState(MovementState movementState) {
+        this.movementState = movementState;
+    }
+
+    /**
+     * Returns the current movement path as an unmodifiable list.
+     * REF: pathfinding.md — al[0][unit][0..49], al[1][unit][0..49]
+     *
+     * @return unmodifiable list of grid positions in the path
+     */
+    public List<GridPosition> getPath() {
+        return Collections.unmodifiableList(path);
+    }
+
+    /**
+     * Sets the unit's movement path and resets the path index to 0.
+     *
+     * @param path list of grid positions forming the path
+     */
+    public void setPath(List<GridPosition> path) {
+        this.path = new ArrayList<>(path);
+        this.pathIndex = 0;
+    }
+
+    public int getPathIndex() {
+        return pathIndex;
+    }
+
+    public void setPathIndex(int pathIndex) {
+        this.pathIndex = pathIndex;
+    }
+
+    /**
+     * Returns the current waypoint the unit is heading toward,
+     * or null if the path is exhausted.
+     *
+     * @return next grid position, or null
+     */
+    public GridPosition getCurrentWaypoint() {
+        if (pathIndex < path.size()) {
+            return path.get(pathIndex);
+        }
+        return null;
+    }
+
+    /**
+     * Advances the path index by one step.
+     *
+     * @return true if there are more waypoints, false if the path is exhausted
+     */
+    public boolean advancePath() {
+        pathIndex++;
+        return pathIndex < path.size();
+    }
+
+    /**
+     * Returns whether the unit has remaining waypoints in its path.
+     *
+     * @return true if there are more waypoints to follow
+     */
+    public boolean hasPathRemaining() {
+        return pathIndex < path.size();
+    }
+
+    /**
+     * Clears the unit's path and resets movement state to IDLE.
+     */
+    public void clearPath() {
+        this.path.clear();
+        this.pathIndex = 0;
+        this.movementState = MovementState.IDLE;
+        this.targetPosition = null;
+        this.stuckCounter = 0;
+        this.moveTickAccumulator = 0;
+    }
+
+    public int getMoveTickAccumulator() {
+        return moveTickAccumulator;
+    }
+
+    public void setMoveTickAccumulator(int moveTickAccumulator) {
+        this.moveTickAccumulator = moveTickAccumulator;
     }
 
     @Override

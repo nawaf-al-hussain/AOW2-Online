@@ -51,7 +51,7 @@ public final class DamageCalculator {
      * REF: combat_formulas.md - "Armour Calculation" section
      */
     public static int calculateEffectiveArmor(Unit unit, int armorBonus) {
-        return unit.stats().armor() + armorBonus;
+        return unit.getStats().armor() + armorBonus;
     }
 
     /**
@@ -83,7 +83,7 @@ public final class DamageCalculator {
     public static double getTargetMultiplier(Unit attacker, boolean isTargetBuilding) {
         if (!isTargetBuilding) return 1.0;
         if (attacker.isInfantry()) return 0.5;
-        if (attacker.unitType() == UnitType.CONFED_TORRENT) return 1.5;
+        if (attacker.getUnitType() == UnitType.CONFED_TORRENT) return 1.5;
         return 1.0;
     }
 }
