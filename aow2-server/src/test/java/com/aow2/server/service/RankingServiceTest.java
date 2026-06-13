@@ -20,6 +20,9 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 /**
  * Tests for the RankingService ELO calculation and leaderboard management.
@@ -139,7 +142,8 @@ class RankingServiceTest {
         Player p1 = createPlayer(1L, 1500, 30);
         Player p2 = createPlayer(2L, 1200, 30);
         Player p3 = createPlayer(3L, 1800, 30);
-        when(playerRepository.findAllByOrderByEloRatingDesc()).thenReturn(List.of(p3, p1, p2));
+        Page<Player> page = new PageImpl<>(List.of(p3, p1, p2));
+        when(playerRepository.findAllByOrderByEloRatingDesc(any(Pageable.class))).thenReturn(page);
 
         List<Map<String, Object>> leaderboard = rankingService.getLeaderboard(10);
         assertEquals(3, leaderboard.size());
@@ -154,7 +158,8 @@ class RankingServiceTest {
         Player p1 = createPlayer(1L, 1800, 30);
         Player p3 = createPlayer(3L, 1000, 30);
         when(playerRepository.findById(2L)).thenReturn(Optional.of(p));
-        when(playerRepository.findAllByOrderByEloRatingDesc()).thenReturn(List.of(p1, p, p3));
+        Page<Player> page = new PageImpl<>(List.of(p1, p, p3));
+        when(playerRepository.findAllByOrderByEloRatingDesc(any(Pageable.class))).thenReturn(page);
 
         Map<String, Object> ranking = rankingService.getPlayerRanking(2L);
         assertEquals(2, ranking.get("rank"));
