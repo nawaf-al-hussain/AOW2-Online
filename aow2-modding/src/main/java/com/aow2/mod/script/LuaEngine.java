@@ -193,6 +193,128 @@ public final class LuaEngine {
     }
 
     /**
+     * Sets a Lua global variable to an integer value.
+     *
+     * @param name  the variable name
+     * @param value the integer value
+     */
+    public void setGlobalInt(String name, int value) {
+        ensureInitialized();
+        globals.set(name, LuaValue.valueOf(value));
+    }
+
+    /**
+     * Sets a Lua global variable to a string value.
+     *
+     * @param name  the variable name
+     * @param value the string value
+     */
+    public void setGlobalString(String name, String value) {
+        ensureInitialized();
+        globals.set(name, LuaValue.valueOf(value));
+    }
+
+    /**
+     * Gets a Lua global variable as an integer.
+     *
+     * @param name the variable name
+     * @return the integer value, or 0 if not defined or not a number
+     */
+    public int getGlobalInt(String name) {
+        ensureInitialized();
+        LuaValue val = globals.get(name);
+        return val.isint() ? val.toint() : (val.isnumber() ? val.toint() : 0);
+    }
+
+    /**
+     * Gets a Lua global variable as a string.
+     *
+     * @param name the variable name
+     * @return the string value, or empty string if not defined or not a string
+     */
+    public String getGlobalString(String name) {
+        ensureInitialized();
+        LuaValue val = globals.get(name);
+        return val.isstring() ? val.tojstring() : "";
+    }
+
+    /**
+     * Loads a Lua script from a classpath resource.
+     *
+     * @param scriptFile path to the script resource
+     * @return true if loaded successfully
+     */
+    public boolean loadScript(String scriptFile) {
+        ensureInitialized();
+        try {
+            var is = getClass().getClassLoader().getResourceAsStream(scriptFile);
+            if (is == null) {
+                LOG.error("Script resource not found: {}", scriptFile);
+                return false;
+            }
+            String script = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+            globals.load(script, scriptFile).call();
+            LOG.info("Loaded Lua script from resource: {}", scriptFile);
+            return true;
+        } catch (Exception e) {
+            LOG.error("Failed to load Lua script: {}", scriptFile, e);
+            return false;
+        }
+    }
+
+    /**
+     * Loads a Lua script from a raw string.
+     *
+     * @param scriptContent the script source code
+     * @param scriptName    name for error reporting
+     * @return true if loaded successfully
+     */
+    public boolean loadScriptFromString(String scriptContent, String scriptName) {
+        ensureInitialized();
+        try {
+            globals.load(scriptContent, scriptName).call();
+            LOG.info("Loaded Lua script from string: {}", scriptName);
+            return true;
+        } catch (Exception e) {
+            LOG.error("Failed to load Lua script from string: {}", scriptName, e);
+            return false;
+        }
+    }
+
+    /**
+     * Fires a trigger in the Lua environment by calling the onTrigger function if defined.
+     *
+     * @param triggerId the trigger ID
+     * @param arg       the LuaValue argument to pass
+     */
+    public void fireTrigger(int triggerId, LuaValue arg) {
+        ensureInitialized();
+        try {
+            LuaValue onTrigger = globals.get("onTrigger");
+            if (!onTrigger.isnil()) {
+                onTrigger.call(LuaValue.valueOf(triggerId), arg);
+            }
+        } catch (Exception e) {
+            LOG.error("Error firing Lua trigger: {}", triggerId, e);
+        }
+    }
+
+    /**
+     * Resets the Lua engine state, clearing all globals and scripts.
+     */
+    public void reset() {
+        if (initialized && globals != null) {
+            // Clear all Lua globals by re-creating the standard globals
+            globals = JsePlatform.standardGlobals();
+        }
+        gameState = null;
+        entityManager = null;
+        scriptBindings = null;
+        initialized = false;
+        LOG.debug("LuaEngine reset");
+    }
+
+    /**
      * Ensures the engine is initialized before use.
      *
      * @throws IllegalStateException if not initialized
