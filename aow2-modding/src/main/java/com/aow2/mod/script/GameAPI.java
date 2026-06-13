@@ -277,8 +277,9 @@ public final class GameAPI {
 
     /**
      * Clears all script state (objectives, timers, hooks).
+     * Called when a mission ends or the LuaEngine is reset.
      */
-    static void reset() {
+    public static void reset() {
         objectives.clear();
         timers.clear();
         eventHooks.clear();
