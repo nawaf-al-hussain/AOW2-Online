@@ -62,8 +62,8 @@ class GameMapTest {
         void shouldSetAndGetTile() {
             GameMap map = new GameMap(5, 5);
 
-            map.setTile(2, 3, TerrainType.WATER);
-            assertEquals(TerrainType.WATER, map.getTile(2, 3));
+            map.setTile(2, 3, TerrainType.DEEP_WATER);
+            assertEquals(TerrainType.DEEP_WATER, map.getTile(2, 3));
 
             map.setTile(0, 0, TerrainType.MOUNTAIN);
             assertEquals(TerrainType.MOUNTAIN, map.getTile(0, 0));
@@ -77,11 +77,11 @@ class GameMapTest {
         void shouldThrowWhenSettingOutOfBounds() {
             GameMap map = new GameMap(5, 5);
             assertThrows(IndexOutOfBoundsException.class,
-                () -> map.setTile(5, 0, TerrainType.WATER));
+                () -> map.setTile(5, 0, TerrainType.DEEP_WATER));
             assertThrows(IndexOutOfBoundsException.class,
-                () -> map.setTile(0, 5, TerrainType.WATER));
+                () -> map.setTile(0, 5, TerrainType.DEEP_WATER));
             assertThrows(IndexOutOfBoundsException.class,
-                () -> map.setTile(-1, 0, TerrainType.WATER));
+                () -> map.setTile(-1, 0, TerrainType.DEEP_WATER));
         }
     }
 
@@ -100,7 +100,7 @@ class GameMapTest {
         @DisplayName("WATER should not be passable")
         void waterNotPassable() {
             GameMap map = new GameMap(5, 5);
-            map.setTile(2, 2, TerrainType.WATER);
+            map.setTile(2, 2, TerrainType.DEEP_WATER);
             assertFalse(map.isPassable(2, 2));
         }
 
@@ -185,8 +185,8 @@ class GameMapTest {
             assertEquals(8, map.getHeight());
 
             // River across middle
-            assertEquals(TerrainType.WATER, map.getTile(0, 3));
-            assertEquals(TerrainType.WATER, map.getTile(0, 4));
+            assertEquals(TerrainType.DEEP_WATER, map.getTile(0, 3));
+            assertEquals(TerrainType.DEEP_WATER, map.getTile(0, 4));
 
             // Bridge
             assertEquals(TerrainType.BRIDGE, map.getTile(3, 3));

@@ -29,6 +29,9 @@ public class Building extends Entity {
     /** Ticks of construction progress (0 = just placed). */
     private int constructionProgress;
 
+    /** Cooldown ticks remaining before this building can attack again. */
+    private int attackCooldown;
+
     /** Whether this building is receiving power. REF: power_system.md */
     private boolean powered;
 
@@ -72,6 +75,7 @@ public class Building extends Entity {
         this.productionProgress = 0;
         this.garrisonedUnitRef = null;
         this.researchId = null;
+        this.attackCooldown = 0;
     }
 
     /**
@@ -230,6 +234,49 @@ public class Building extends Entity {
 
     public void setResearchId(String researchId) {
         this.researchId = researchId;
+    }
+
+    public int getAttackCooldown() {
+        return attackCooldown;
+    }
+
+    public void setAttackCooldown(int v) {
+        this.attackCooldown = v;
+    }
+
+    /** Decrements the attack cooldown by 1 if it is currently > 0. */
+    public void decrementAttackCooldown() {
+        if (attackCooldown > 0) attackCooldown--;
+    }
+
+    /**
+     * Sets the current production item.
+     * Used when cancelling the active production to clear or restart it.
+     *
+     * @param production the unit type being produced, or null to clear
+     */
+    public void setCurrentProduction(UnitType production) {
+        this.currentProduction = production;
+        if (production == null) {
+            this.productionProgress = 0;
+        }
+    }
+
+    /**
+     * Clears the entire production queue and current production.
+     * Used when rebuilding the queue after a cancellation.
+     */
+    public void clearProductionQueue() {
+        this.productionQueue.clear();
+    }
+
+    /**
+     * Sets the production progress.
+     *
+     * @param progress the new production progress value
+     */
+    public void setProductionProgress(int progress) {
+        this.productionProgress = progress;
     }
 
     @Override

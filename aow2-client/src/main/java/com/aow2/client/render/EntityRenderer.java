@@ -152,9 +152,9 @@ public class EntityRenderer {
             gc.strokeOval(sx - UNIT_RADIUS, sy - UNIT_RADIUS, UNIT_RADIUS * 2, UNIT_RADIUS * 2);
         }
 
-        // Direction indicator arrow
-        renderDirectionArrow(gc, sx, sy, unit.getStats().attackRange() > 1
-            ? Direction.SOUTH : Direction.SOUTH);
+        // Direction indicator arrow — compute facing from current position and target
+        Direction facing = computeFacing(unit);
+        renderDirectionArrow(gc, sx, sy, facing);
 
         // Health bar (only show if damaged)
         if (unit.getHp() < unit.getMaxHp()) {
@@ -212,6 +212,38 @@ public class EntityRenderer {
             case WEST      -> Math.PI;
             case NORTH_WEST -> -3 * Math.PI / 4;
         };
+    }
+
+    /**
+     * Computes the facing direction of a unit based on its current position and target.
+     * Falls back to SOUTH if the unit has no movement target (idle).
+     *
+     * @param unit the unit
+     * @return the computed facing direction
+     */
+    private Direction computeFacing(Unit unit) {
+        GridPosition target = unit.getTargetPosition();
+        if (target == null) {
+            return Direction.SOUTH;
+        }
+        GridPosition pos = unit.getPosition();
+        int dx = target.x() - pos.x();
+        int dy = target.y() - pos.y();
+        if (dx == 0 && dy == 0) {
+            return Direction.SOUTH;
+        }
+        // Compute angle and map to 8 directions
+        double angle = Math.atan2(dy, dx);
+        // Normalize to [0, 2*PI)
+        if (angle < 0) angle += 2 * Math.PI;
+        // Divide into 8 sectors of PI/4, offset by PI/8 so centres align with compass points
+        int sector = (int) Math.round(angle / (Math.PI / 4)) % 8;
+        // sector 0 = EAST, going counter-clockwise in math convention,
+        // but our Direction codes go: N=0, NE=1, E=2, SE=3, S=4, SW=5, W=6, NW=7
+        // atan2 gives: 0=E, PI/4=NE, PI/2=N... wait, atan2(y,x) with grid coords
+        // In grid coords: +x = right, +y = down (screen convention for grid)
+        // sector mapping: 0=E(2), 1=SE(3), 2=S(4), 3=SW(5), 4=W(6), 5=NW(7), 6=N(0), 7=NE(1)
+        return Direction.fromCode((sector + 2) % 8);
     }
 
     /**

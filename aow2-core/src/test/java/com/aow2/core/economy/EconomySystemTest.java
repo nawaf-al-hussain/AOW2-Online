@@ -1,6 +1,7 @@
 package com.aow2.core.economy;
 
 import com.aow2.common.model.BuildingStats;
+import com.aow2.common.model.WeaponType;
 import com.aow2.common.model.BuildingType;
 import com.aow2.common.model.Faction;
 import com.aow2.common.model.GridPosition;
@@ -39,8 +40,7 @@ class EconomySystemTest {
     private BuildingStats createCommandCentreStats() {
         return new BuildingStats(
             BuildingType.CONFED_COMMAND_CENTRE, 120, 100, 0, 10, 0, 10,
-            60, 0, 15, 0, 0, 5, 0, 100, 50, List.of(100, 200, 300)
-        );
+            60, 0, 15, 0, 0, 5, 0, 100, 50, 0, WeaponType.NONE, List.of(100, 200, 300));
     }
 
     /**
@@ -49,8 +49,7 @@ class EconomySystemTest {
     private BuildingStats createHeadquartersStats() {
         return new BuildingStats(
             BuildingType.REBEL_HEADQUARTERS, 120, 100, 0, 10, 0, 10,
-            60, 0, 15, 0, 0, 5, 0, 100, 50, List.of(100, 200, 300)
-        );
+            60, 0, 15, 0, 0, 5, 0, 100, 50, 0, WeaponType.NONE, List.of(100, 200, 300));
     }
 
     /**

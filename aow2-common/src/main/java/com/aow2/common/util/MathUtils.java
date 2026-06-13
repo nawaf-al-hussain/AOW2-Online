@@ -2,16 +2,13 @@ package com.aow2.common.util;
 
 /**
  * Math utilities for game calculations.
+ *
+ * NOTE: The custom clamp() method has been removed in favor of
+ * Java 21's built-in Math.clamp(). This class is retained as a
+ * utility class for future math operations.
  */
 public final class MathUtils {
     private MathUtils() {}
-
-    /**
-     * Clamp value between min and max (inclusive).
-     */
-    public static int clamp(int value, int min, int max) {
-        return Math.max(min, Math.min(max, value));
-    }
 
     /**
      * Calculate Manhattan distance between two grid positions.

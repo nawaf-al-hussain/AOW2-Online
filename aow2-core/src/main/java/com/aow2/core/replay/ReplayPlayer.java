@@ -2,6 +2,7 @@ package com.aow2.core.replay;
 
 import com.aow2.common.model.CommandType;
 import com.aow2.common.model.Faction;
+import com.aow2.core.network.CommandSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -191,18 +192,44 @@ public final class ReplayPlayer {
 
     /**
      * Deserializes a ReplayEntry back into a CommandType.
-     * ASSUMPTION: simplified deserialization for core replay system;
-     * production version would use CommandSerializer from Phase 8.
+     * Reconstructs the command from the binary payload using CommandSerializer
+     * format: the payload contains [typeId:1][tick:8][playerId:4][...fields].
      *
      * @param entry the replay entry to deserialize
      * @return the deserialized command, or null on error
      */
     private CommandType deserializeCommand(ReplayEntry entry) {
-        // ASSUMPTION: For replay playback, we just need the entry metadata.
-        // Full deserialization would reconstruct the CommandType record
-        // from the binary payload using CommandSerializer.
-        // For now, we create a minimal representation for callback.
-        return null; // Will be implemented with full CommandSerializer integration
+        try {
+            // The entry payload follows the CommandSerializer wire format:
+            // [typeId:1][tick:8][playerId:4][...variable payload...]
+            // We prepend the type byte to match the full serialized format
+            // that CommandSerializer.deserialize() expects.
+            byte[] payload = entry.payload();
+            byte[] fullData = new byte[1 + 8 + 4 + payload.length];
+            fullData[0] = (byte) entry.typeOrd();           // typeId
+            // tick as long (8 bytes, big-endian)
+            long tick = entry.tick();
+            fullData[1] = (byte) (tick >>> 56);
+            fullData[2] = (byte) (tick >>> 48);
+            fullData[3] = (byte) (tick >>> 40);
+            fullData[4] = (byte) (tick >>> 32);
+            fullData[5] = (byte) (tick >>> 24);
+            fullData[6] = (byte) (tick >>> 16);
+            fullData[7] = (byte) (tick >>> 8);
+            fullData[8] = (byte) tick;
+            // playerId as int (4 bytes, big-endian)
+            int pid = entry.playerId();
+            fullData[9]  = (byte) (pid >>> 24);
+            fullData[10] = (byte) (pid >>> 16);
+            fullData[11] = (byte) (pid >>> 8);
+            fullData[12] = (byte) pid;
+            // Copy remaining payload (command-specific fields)
+            System.arraycopy(payload, 0, fullData, 13, payload.length);
+            return CommandSerializer.deserialize(fullData);
+        } catch (Exception e) {
+            LOG.error("Failed to deserialize replay entry at tick {}: {}", entry.tick(), e.getMessage());
+            return null;
+        }
     }
 
     /**

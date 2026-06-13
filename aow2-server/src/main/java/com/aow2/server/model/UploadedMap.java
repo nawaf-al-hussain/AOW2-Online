@@ -5,7 +5,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
 
 import java.time.Instant;
@@ -32,8 +31,7 @@ public class UploadedMap {
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
-    @Lob
-    @Column(name = "map_data", nullable = false, columnDefinition = "TEXT")
+    @Column(name = "map_data", nullable = false, columnDefinition = "JSONB")
     private String mapData;
 
     @Column(name = "download_count", nullable = false)

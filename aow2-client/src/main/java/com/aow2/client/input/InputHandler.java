@@ -167,17 +167,24 @@ public class InputHandler {
             boolean ctrlDown = event.isControlDown();
 
             // Check if this was a click or a drag
-            double dx = Math.abs(event.getSceneX() - selectionManager.getDragBox()[0]);
-            double dy = Math.abs(event.getSceneY() - selectionManager.getDragBox()[1]);
-
-            if (dx < 5.0 && dy < 5.0) {
-                // Click - convert screen to grid and select
+            double[] dragBox = selectionManager.getDragBox();
+            if (dragBox == null) {
+                // No active drag box — treat as a single click
                 int[] grid = screenToGrid(event.getSceneX(), event.getSceneY());
                 selectionManager.handleClick(grid[0], grid[1], shiftDown, ctrlDown);
             } else {
-                // Drag box selection
-                selectionManager.endDrag(event.getSceneX(), event.getSceneY(), shiftDown,
-                    this::screenToGridForDrag);
+                double dx = Math.abs(event.getSceneX() - dragBox[0]);
+                double dy = Math.abs(event.getSceneY() - dragBox[1]);
+
+                if (dx < 5.0 && dy < 5.0) {
+                    // Click - convert screen to grid and select
+                    int[] grid = screenToGrid(event.getSceneX(), event.getSceneY());
+                    selectionManager.handleClick(grid[0], grid[1], shiftDown, ctrlDown);
+                } else {
+                    // Drag box selection
+                    selectionManager.endDrag(event.getSceneX(), event.getSceneY(), shiftDown,
+                        this::screenToGridForDrag);
+                }
             }
         } else if (event.getButton() == MouseButton.SECONDARY) {
             // Right click - issue command

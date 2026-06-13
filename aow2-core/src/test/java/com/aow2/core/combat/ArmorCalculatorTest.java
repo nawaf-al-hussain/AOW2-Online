@@ -6,6 +6,7 @@ import com.aow2.common.model.Faction;
 import com.aow2.common.model.GridPosition;
 import com.aow2.common.model.UnitCategory;
 import com.aow2.common.model.UnitStats;
+import com.aow2.common.model.WeaponType;
 import com.aow2.common.model.UnitType;
 import com.aow2.core.entity.Building;
 import com.aow2.core.entity.Unit;
@@ -29,24 +30,24 @@ class ArmorCalculatorTest {
 
     // Test unit stats
     private static final UnitStats INFANTRY_STATS = new UnitStats(
-        UnitType.CONFED_INFANTRY, "Infantry", 40, 2, 1, 5, 5,
-        0, 4, 4, 4, 10, 650, 6, 255, 0, -1);
+        UnitType.CONFED_INFANTRY, "Infantry", 40, 2, 5, 5,
+        0, 4, 4, WeaponType.BULLET, 5, 4, 10, 650, 6, 255, 0, -1);
 
     private static final UnitStats VEHICLE_STATS = new UnitStats(
-        UnitType.CONFED_ZEUS, "T-22 Zeus", 70, 6, 3, 7, 5,
-        0, 2, 6, 14, 30, 300, 8, 255, 0, -1);
+        UnitType.CONFED_ZEUS, "T-22 Zeus", 70, 6, 7, 5,
+        0, 2, 6, WeaponType.MACHINE_GUN, 2, 14, 30, 300, 8, 255, 0, -1);
 
     private static final UnitStats REBEL_INFANTRY_STATS = new UnitStats(
-        UnitType.REBEL_INFANTRY, "Infantry", 40, 2, 1, 5, 5,
-        0, 4, 4, 4, 10, 650, 6, 255, 0, -1);
+        UnitType.REBEL_INFANTRY, "Infantry", 40, 2, 5, 5,
+        0, 4, 4, WeaponType.BULLET, 5, 4, 10, 650, 6, 255, 0, -1);
 
     private static final UnitStats REBEL_VEHICLE_STATS = new UnitStats(
-        UnitType.REBEL_RHINO, "Rhino", 80, 10, 6, 4, 7,
-        2, 6, 5, 9, 50, 350, 8, 255, 0, -1);
+        UnitType.REBEL_RHINO, "Rhino", 80, 10, 4, 7,
+        2, 6, 5, WeaponType.ARTILLERY, 8, 9, 50, 350, 8, 255, 0, -1);
 
     private static final BuildingStats BUILDING_STATS = new BuildingStats(
         BuildingType.CONFED_COMMAND_CENTRE, 120, 22, 7, 7,
-        4, 2, 20, 7, 8, 2, 6, 0, 0, 100, 450, List.of(300, 200, 200));
+        4, 2, 20, 7, 8, 2, 6, 0, 0, 100, 450, 0, WeaponType.NONE, List.of(300, 200, 200));
 
     @BeforeEach
     void setUp() {

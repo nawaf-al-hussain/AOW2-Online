@@ -311,6 +311,8 @@ public final class LuaEngine {
         entityManager = null;
         scriptBindings = null;
         initialized = false;
+        // Also reset the static GameAPI state to prevent stale references
+        GameAPI.reset();
         LOG.debug("LuaEngine reset");
     }
 

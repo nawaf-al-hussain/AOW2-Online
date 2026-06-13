@@ -4,6 +4,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import java.util.EnumSet;
+import java.util.Set;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class ResearchNodeTest {
@@ -17,47 +20,46 @@ class ResearchNodeTest {
         @Test
         @DisplayName("Should create valid research effect")
         void shouldCreateValidEffect() {
-            ResearchEffect effect = new ResearchEffect("armor", 2, new int[]{0, 1, 2});
-            assertEquals("armor", effect.statName());
+            Set<UnitType> types = EnumSet.of(UnitType.CONFED_INFANTRY, UnitType.CONFED_GRENADIER);
+            ResearchEffect effect = new ResearchEffect(ResearchEffect.StatType.ARMOR, 2, types);
+            assertEquals(ResearchEffect.StatType.ARMOR, effect.statType());
             assertEquals(2, effect.value());
-            assertArrayEquals(new int[]{0, 1, 2}, effect.affectedUnitTypes());
+            assertTrue(effect.affectedUnitTypes().contains(UnitType.CONFED_INFANTRY));
+            assertTrue(effect.affectedUnitTypes().contains(UnitType.CONFED_GRENADIER));
         }
 
         @Test
-        @DisplayName("Should reject null or blank stat name")
-        void shouldRejectBlankStatName() {
+        @DisplayName("Should reject null stat type")
+        void shouldRejectNullStatType() {
             assertThrows(IllegalArgumentException.class,
-                () -> new ResearchEffect(null, 2, new int[]{0}));
-            assertThrows(IllegalArgumentException.class,
-                () -> new ResearchEffect("", 2, new int[]{0}));
-            assertThrows(IllegalArgumentException.class,
-                () -> new ResearchEffect("  ", 2, new int[]{0}));
+                () -> new ResearchEffect(null, 2, EnumSet.of(UnitType.CONFED_INFANTRY)));
         }
 
         @Test
-        @DisplayName("Should default to empty array when affectedUnitTypes is null")
+        @DisplayName("Should default to empty set when affectedUnitTypes is null")
         void shouldDefaultToEmptyWhenNull() {
-            ResearchEffect effect = new ResearchEffect("damage", 5, null);
+            ResearchEffect effect = new ResearchEffect(ResearchEffect.StatType.DAMAGE, 5, null);
             assertNotNull(effect.affectedUnitTypes());
-            assertEquals(0, effect.affectedUnitTypes().length);
+            assertTrue(effect.affectedUnitTypes().isEmpty());
         }
 
         @Test
         @DisplayName("Should detect affected unit type")
         void shouldDetectAffectedUnitType() {
-            ResearchEffect effect = new ResearchEffect("armor", 2, new int[]{0, 1, 2});
-            assertTrue(effect.affectsUnitType(0));
-            assertTrue(effect.affectsUnitType(1));
-            assertTrue(effect.affectsUnitType(2));
-            assertFalse(effect.affectsUnitType(3));
+            Set<UnitType> types = EnumSet.of(UnitType.CONFED_INFANTRY, UnitType.CONFED_GRENADIER);
+            ResearchEffect effect = new ResearchEffect(ResearchEffect.StatType.ARMOR, 2, types);
+            assertTrue(effect.affectsUnitType(UnitType.CONFED_INFANTRY));
+            assertTrue(effect.affectsUnitType(UnitType.CONFED_GRENADIER));
+            assertFalse(effect.affectsUnitType(UnitType.CONFED_FLAME_ASSAULT));
         }
 
         @Test
         @DisplayName("Should implement equals and hashCode correctly")
         void shouldImplementEqualsAndHashCode() {
-            ResearchEffect a = new ResearchEffect("armor", 2, new int[]{0, 1});
-            ResearchEffect b = new ResearchEffect("armor", 2, new int[]{0, 1});
-            ResearchEffect c = new ResearchEffect("damage", 2, new int[]{0, 1});
+            Set<UnitType> typesAB = EnumSet.of(UnitType.CONFED_INFANTRY, UnitType.CONFED_GRENADIER);
+            ResearchEffect a = new ResearchEffect(ResearchEffect.StatType.ARMOR, 2, typesAB);
+            ResearchEffect b = new ResearchEffect(ResearchEffect.StatType.ARMOR, 2, typesAB);
+            ResearchEffect c = new ResearchEffect(ResearchEffect.StatType.DAMAGE, 2, typesAB);
 
             assertEquals(a, b);
             assertEquals(a.hashCode(), b.hashCode());
@@ -67,9 +69,10 @@ class ResearchNodeTest {
         @Test
         @DisplayName("Should produce meaningful toString")
         void shouldProduceToString() {
-            ResearchEffect effect = new ResearchEffect("speed", 1, new int[]{3, 4});
+            Set<UnitType> types = EnumSet.of(UnitType.CONFED_FLAME_ASSAULT);
+            ResearchEffect effect = new ResearchEffect(ResearchEffect.StatType.SPEED, 1, types);
             String str = effect.toString();
-            assertTrue(str.contains("speed"));
+            assertTrue(str.contains("SPEED"));
             assertTrue(str.contains("1"));
         }
     }
@@ -81,7 +84,8 @@ class ResearchNodeTest {
     class ResearchNodeTests {
 
         private ResearchEffect createInfantryArmorEffect() {
-            return new ResearchEffect("armor", 2, new int[]{0, 1, 2});
+            return new ResearchEffect(ResearchEffect.StatType.ARMOR, 2,
+                EnumSet.of(UnitType.CONFED_INFANTRY, UnitType.CONFED_GRENADIER));
         }
 
         @Test

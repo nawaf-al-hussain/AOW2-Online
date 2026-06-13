@@ -1,6 +1,7 @@
 package com.aow2.core.ai;
 
 import com.aow2.common.model.BuildingStats;
+import com.aow2.common.model.WeaponType;
 import com.aow2.common.model.BuildingType;
 import com.aow2.common.model.Faction;
 import com.aow2.common.model.GridPosition;
@@ -86,7 +87,7 @@ class AISystemTest {
     }
 
     private BuildingStats createCCStats(BuildingType type) {
-        return new BuildingStats(type, 120, 100, 0, 10, 0, 10, 60, 0, 15, 0, 0, 5, 0, 100, 50, List.of(100, 200, 300));
+        return new BuildingStats(type, 120, 100, 0, 10, 0, 10, 60, 0, 15, 0, 0, 5, 0, 100, 50, 0, WeaponType.NONE, List.of(100, 200, 300));
     }
 
     @Nested

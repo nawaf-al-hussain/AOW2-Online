@@ -2,14 +2,14 @@ package com.aow2.common.model;
 
 /**
  * All unit types from the original game.
- * REF: complete_unit_stats.json - 9 Confederation units + 7 Rebels units + 3 mines
+ * REF: complete_unit_stats.json - 7 Confederation units + 7 Rebels units + 3 mines
  * REF: game_data.json - unit type definitions with categories
- * REF: unit_stats.md - Type IDs: Infantry=1, Grenadier=2, Sniper=3, LightAssault=4,
- * HeavyAssault=7, FlameAssault=8, MineFrog=9, MineLizard=10, MineScorpio=11,
+ * REF: unit_stats.md - Type IDs: Infantry=1, Grenadier=2, Sniper=3,
+ * FlameAssault=8, MineFrog=9, MineLizard=10, MineScorpio=11,
  * Coyote=15, Zeus=16, Hammer=17, Rhino=18, Fortress=19, Torrent=20, Armadillo=21, Porcupine=22
  *
  * FIX LOG:
- * - Added CONFED_LIGHT_ASSAULT (typeId=4) and CONFED_HEAVY_ASSAULT (typeId=7)
+ * - Removed CONFED_LIGHT_ASSAULT and CONFED_HEAVY_ASSAULT (not in the original 7-unit-per-faction list)
  * - Changed CONFED_FLAME_ASSAULT category from INFANTRY to VEHICLE
  *   (REF: game_data.json categorizes as "machinery", unit_stats.md as "Special machinery")
  * - Added isSiegeCapable() method for Hammer, Rhino, Fortress, Torrent, Sniper
@@ -19,9 +19,7 @@ public enum UnitType {
     CONFED_INFANTRY(1, "Infantry", Faction.CONFEDERATION, UnitCategory.INFANTRY),
     CONFED_GRENADIER(2, "Grenadier", Faction.CONFEDERATION, UnitCategory.INFANTRY),
 
-    // Confederation Vehicles (including Light Assault, Heavy Assault, Flame Assault)
-    CONFED_LIGHT_ASSAULT(4, "Light Assault", Faction.CONFEDERATION, UnitCategory.VEHICLE),
-    CONFED_HEAVY_ASSAULT(7, "Heavy Assault", Faction.CONFEDERATION, UnitCategory.VEHICLE),
+    // Confederation Vehicles
     CONFED_FLAME_ASSAULT(8, "Flame Assault", Faction.CONFEDERATION, UnitCategory.VEHICLE),
     CONFED_FORTRESS(19, "AV-40 Fortress", Faction.CONFEDERATION, UnitCategory.VEHICLE),
     CONFED_HAMMER(17, "T-21 Hammer", Faction.CONFEDERATION, UnitCategory.VEHICLE),

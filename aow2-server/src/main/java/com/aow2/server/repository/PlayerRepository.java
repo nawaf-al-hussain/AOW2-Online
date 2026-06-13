@@ -1,6 +1,8 @@
 package com.aow2.server.repository;
 
 import com.aow2.server.model.Player;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -37,4 +39,13 @@ public interface PlayerRepository extends JpaRepository<Player, Long> {
      * @return iterable of players sorted by ELO descending
      */
     Iterable<Player> findAllByOrderByEloRatingDesc();
+
+    /**
+     * Finds players ordered by ELO rating descending, with pagination support.
+     * Uses the database index on elo_rating for efficient querying.
+     *
+     * @param pageable pagination information (page number and size)
+     * @return a page of players sorted by ELO descending
+     */
+    Page<Player> findAllByOrderByEloRatingDesc(Pageable pageable);
 }

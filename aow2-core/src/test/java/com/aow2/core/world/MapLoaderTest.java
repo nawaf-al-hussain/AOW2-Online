@@ -36,7 +36,7 @@ class MapLoaderTest {
 
             assertEquals(8, map.getWidth());
             assertEquals(8, map.getHeight());
-            assertEquals(TerrainType.WATER, map.getTile(0, 0));
+            assertEquals(TerrainType.DEEP_WATER, map.getTile(0, 0));
             assertEquals(TerrainType.MOUNTAIN, map.getTile(1, 0));
             assertEquals(TerrainType.FOREST, map.getTile(2, 2));
             assertEquals(TerrainType.GRASS, map.getTile(3, 3)); // default
@@ -94,7 +94,7 @@ class MapLoaderTest {
 
             GameMap map = MapLoader.parseJson(json);
 
-            assertEquals(TerrainType.WATER, map.getTile(0, 0));
+            assertEquals(TerrainType.DEEP_WATER, map.getTile(0, 0));
             assertNull(map.getTile(10, 10)); // out of bounds
         }
 
@@ -114,7 +114,7 @@ class MapLoaderTest {
 
             GameMap map = MapLoader.parseJson(json);
 
-            assertEquals(TerrainType.WATER, map.getTile(0, 0));
+            assertEquals(TerrainType.DEEP_WATER, map.getTile(0, 0));
             assertEquals(TerrainType.GRASS, map.getTile(1, 1)); // not overridden
         }
 
@@ -186,7 +186,7 @@ class MapLoaderTest {
             assertNotNull(map);
             assertEquals(16, map.getWidth());
             assertEquals(16, map.getHeight());
-            assertEquals(TerrainType.WATER, map.getTile(0, 7));
+            assertEquals(TerrainType.DEEP_WATER, map.getTile(0, 7));
             assertEquals(TerrainType.BRIDGE, map.getTile(7, 7));
         }
 

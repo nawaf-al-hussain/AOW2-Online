@@ -333,7 +333,7 @@ public final class MapEditor {
         for (int x = 0; x < currentMap.getWidth(); x++) {
             for (int y = 0; y < currentMap.getHeight(); y++) {
                 TerrainType t = currentMap.getTile(x, y);
-                if (t == TerrainType.WATER) waterCount++;
+                if (t == TerrainType.DEEP_WATER) waterCount++;
                 if (t == TerrainType.MOUNTAIN) mountainCount++;
             }
         }

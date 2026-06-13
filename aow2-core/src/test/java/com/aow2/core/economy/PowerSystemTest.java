@@ -1,6 +1,7 @@
 package com.aow2.core.economy;
 
 import com.aow2.common.model.BuildingStats;
+import com.aow2.common.model.WeaponType;
 import com.aow2.common.model.BuildingType;
 import com.aow2.common.model.Faction;
 import com.aow2.common.model.GridPosition;
@@ -30,22 +31,19 @@ class PowerSystemTest {
     private BuildingStats createCommandCentreStats() {
         return new BuildingStats(
             BuildingType.CONFED_COMMAND_CENTRE, 120, 100, 0, 10, 0, 10,
-            60, 0, 15, 0, 0, 5, 0, 100, 50, List.of(100, 200, 300)
-        );
+            60, 0, 15, 0, 0, 5, 0, 100, 50, 0, WeaponType.NONE, List.of(100, 200, 300));
     }
 
     private BuildingStats createGeneratorStats() {
         return new BuildingStats(
             BuildingType.CONFED_GENERATOR, 60, 20, 0, 3, 0, 6,
-            30, 0, 5, 0, 10, 0, 0, 20, 10, List.of()
-        );
+            30, 0, 5, 0, 10, 0, 0, 20, 10, 0, WeaponType.NONE, List.of());
     }
 
     private BuildingStats createInfantryCentreStats() {
         return new BuildingStats(
             BuildingType.CONFED_INFANTRY_CENTRE, 80, 30, 0, 5, 0, 8,
-            40, 0, 10, 5, 0, 5, 0, 30, 15, List.of(50, 100, 150)
-        );
+            40, 0, 10, 5, 0, 5, 0, 30, 15, 0, WeaponType.NONE, List.of(50, 100, 150));
     }
 
     /**
@@ -241,7 +239,7 @@ class PowerSystemTest {
             // And: a Resistance building nearby
             BuildingStats rebelStats = new BuildingStats(
                 BuildingType.REBEL_BARRACKS, 80, 30, 0, 5, 0, 8,
-                40, 0, 10, 5, 0, 5, 0, 30, 15, List.of(50, 100, 150));
+                40, 0, 10, 5, 0, 5, 0, 30, 15, 0, WeaponType.NONE, List.of(50, 100, 150));
             Building rebelBarracks = new Building(entities.allocateEntityId(), Faction.RESISTANCE,
                 new GridPosition(52, 50), BuildingType.REBEL_BARRACKS, rebelStats);
             rebelBarracks.setConstructionProgress(rebelStats.buildTime());

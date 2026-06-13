@@ -95,8 +95,8 @@ public class MinimapRenderer {
         if (map != null) {
             this.scaleX = (double) MINIMAP_WIDTH / map.getWidth();
             this.scaleY = (double) MINIMAP_HEIGHT / map.getHeight();
-            LOG.info("MinimapRenderer map set: {}x{}, scale: {:.2f}x{:.2f}",
-                map.getWidth(), map.getHeight(), scaleX, scaleY);
+            LOG.info("MinimapRenderer map set: {}x{}, scale: {}x{}",
+                map.getWidth(), map.getHeight(), String.format("%.2f", scaleX), String.format("%.2f", scaleY));
         }
     }
 

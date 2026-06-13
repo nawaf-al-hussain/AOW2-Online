@@ -231,6 +231,16 @@ public class CameraController {
      */
     public void handleScroll(ScrollEvent event) {
         double delta = event.getDeltaY() > 0 ? ZOOM_STEP : -ZOOM_STEP;
+        adjustZoom(delta);
+    }
+
+    /**
+     * Adjusts the zoom level by the given delta, clamped between MIN_ZOOM and MAX_ZOOM.
+     * Can be called programmatically (e.g., from the map editor) as well as from scroll input.
+     *
+     * @param delta the zoom delta (positive to zoom in, negative to zoom out)
+     */
+    public void adjustZoom(double delta) {
         targetZoom = Math.clamp(targetZoom + delta, MIN_ZOOM, MAX_ZOOM);
     }
 

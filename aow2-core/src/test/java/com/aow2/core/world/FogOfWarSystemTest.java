@@ -3,6 +3,7 @@ package com.aow2.core.world;
 import com.aow2.common.model.Faction;
 import com.aow2.common.model.GridPosition;
 import com.aow2.common.model.UnitStats;
+import com.aow2.common.model.WeaponType;
 import com.aow2.common.model.UnitType;
 import com.aow2.core.entity.Building;
 import com.aow2.common.model.BuildingStats;
@@ -74,7 +75,7 @@ class FogOfWarSystemTest {
         fogOfWar.initialize(map);
 
         // Create a unit at position (8, 8) with sight range 4
-        UnitStats stats = new UnitStats(UnitType.CONFED_INFANTRY, "Infantry", 40, 2, 1, 5, 5, 0, 4, 4, 4, 10, 650, 6, 255, 0, -1);
+        UnitStats stats = new UnitStats(UnitType.CONFED_INFANTRY, "Infantry", 40, 2, 5, 5, 0, 4, 4, WeaponType.BULLET, 5, 4, 10, 650, 6, 255, 0, -1);
         Unit unit = new Unit(1, Faction.CONFEDERATION, new GridPosition(8, 8), UnitType.CONFED_INFANTRY, stats);
         entities.addUnit(unit);
 
@@ -96,7 +97,7 @@ class FogOfWarSystemTest {
         fogOfWar.initialize(map);
 
         // Create a unit at position (8, 8) with sight range 4
-        UnitStats stats = new UnitStats(UnitType.CONFED_INFANTRY, "Infantry", 40, 2, 1, 5, 5, 0, 4, 4, 4, 10, 650, 6, 255, 0, -1);
+        UnitStats stats = new UnitStats(UnitType.CONFED_INFANTRY, "Infantry", 40, 2, 5, 5, 0, 4, 4, WeaponType.BULLET, 5, 4, 10, 650, 6, 255, 0, -1);
         Unit unit = new Unit(1, Faction.CONFEDERATION, new GridPosition(8, 8), UnitType.CONFED_INFANTRY, stats);
         entities.addUnit(unit);
 
@@ -126,7 +127,7 @@ class FogOfWarSystemTest {
         fogOfWar.initialize(map);
 
         // Create a building at position (5, 5) with sight range
-        BuildingStats bStats = new BuildingStats(BuildingType.CONFED_COMMAND_CENTRE, 120, 100, 0, 10, 0, 10, 60, 0, 15, 0, 0, 5, 0, 100, 50, java.util.List.of());
+        BuildingStats bStats = new BuildingStats(BuildingType.CONFED_COMMAND_CENTRE, 120, 100, 0, 10, 0, 10, 60, 0, 15, 0, 0, 5, 0, 100, 50, 0, WeaponType.NONE, java.util.List.of());
         Building building = new Building(1, Faction.CONFEDERATION, new GridPosition(5, 5),
             BuildingType.CONFED_COMMAND_CENTRE, bStats);
         building.setConstructionProgress(200); // Complete construction
@@ -145,7 +146,7 @@ class FogOfWarSystemTest {
     void playerVisibilityIsIndependent() {
         fogOfWar.initialize(map);
 
-        UnitStats stats = new UnitStats(UnitType.CONFED_INFANTRY, "Infantry", 40, 2, 1, 5, 5, 0, 4, 4, 4, 10, 650, 6, 255, 0, -1);
+        UnitStats stats = new UnitStats(UnitType.CONFED_INFANTRY, "Infantry", 40, 2, 5, 5, 0, 4, 4, WeaponType.BULLET, 5, 4, 10, 650, 6, 255, 0, -1);
         Unit unit = new Unit(1, Faction.CONFEDERATION, new GridPosition(8, 8), UnitType.CONFED_INFANTRY, stats);
         entities.addUnit(unit);
 
@@ -164,7 +165,7 @@ class FogOfWarSystemTest {
     void resetClearsVisibility() {
         fogOfWar.initialize(map);
 
-        UnitStats stats = new UnitStats(UnitType.CONFED_INFANTRY, "Infantry", 40, 2, 1, 5, 5, 0, 4, 4, 4, 10, 650, 6, 255, 0, -1);
+        UnitStats stats = new UnitStats(UnitType.CONFED_INFANTRY, "Infantry", 40, 2, 5, 5, 0, 4, 4, WeaponType.BULLET, 5, 4, 10, 650, 6, 255, 0, -1);
         Unit unit = new Unit(1, Faction.CONFEDERATION, new GridPosition(8, 8), UnitType.CONFED_INFANTRY, stats);
         entities.addUnit(unit);
 

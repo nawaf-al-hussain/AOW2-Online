@@ -3,6 +3,7 @@ package com.aow2.mod;
 import com.aow2.common.model.BuildingStats;
 import com.aow2.common.model.BuildingType;
 import com.aow2.common.model.UnitStats;
+import com.aow2.common.model.WeaponType;
 import com.aow2.common.model.UnitType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -27,14 +28,14 @@ class GameDataRegistryTest {
     private UnitStats createDefaultUnitStats() {
         return new UnitStats(
             UnitType.CONFED_INFANTRY, "Standard infantry", 80, 10,
-            100, 4, 2, 0, 5, 4, 60, 100, 5, 2, 0, 0, 0
+            4, 2, 0, 5, 4, WeaponType.NONE, 0, 60, 100, 5, 2, 0, 0, 0
         );
     }
 
     private BuildingStats createDefaultBuildingStats() {
         return new BuildingStats(
             BuildingType.CONFED_COMMAND_CENTRE, 500, 0, 0, 5,
-            0, 10, 600, 6, 5, 0, 10, 1, 0, 0, 0, java.util.List.of()
+            0, 10, 600, 6, 5, 0, 10, 1, 0, 0, 0, 0, WeaponType.NONE, java.util.List.of()
         );
     }
 

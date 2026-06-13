@@ -1,8 +1,16 @@
 package com.aow2.core.network;
 
 import com.aow2.common.model.CommandType;
+import com.aow2.core.command.CommandProcessor;
+import com.aow2.core.combat.CombatSystem;
+import com.aow2.core.economy.BuildingPlacementSystem;
+import com.aow2.core.economy.EconomySystem;
+import com.aow2.core.economy.ProductionSystem;
 import com.aow2.core.engine.GameState;
+import com.aow2.core.movement.MovementSystem;
+import com.aow2.core.research.ResearchSystem;
 import com.aow2.core.world.EntityManager;
+import com.aow2.core.world.GameMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,6 +47,9 @@ public final class LockstepEngine {
     /** Sync checker for desync detection */
     private final SyncChecker syncChecker;
 
+    /** Command processor for routing commands to game systems */
+    private final CommandProcessor commandProcessor;
+
     /** Callback for sending commands to the opponent */
     private Consumer<byte[]> sendCallback;
 
@@ -68,6 +79,7 @@ public final class LockstepEngine {
     public LockstepEngine(int inputDelay, int bufferSize, int syncInterval) {
         this.commandBuffer = new CommandBuffer(inputDelay, bufferSize);
         this.syncChecker = new SyncChecker(syncInterval);
+        this.commandProcessor = new CommandProcessor();
         this.running = false;
         this.lockstepFrame = 0;
     }
@@ -199,7 +211,9 @@ public final class LockstepEngine {
 
     /**
      * Applies a single command to the game state.
-     * Commands are dispatched by type and applied to the appropriate entities.
+     * Commands are dispatched by type and applied to the appropriate entities/systems.
+     * All command types are routed through CommandProcessor for system-level commands,
+     * while movement and attack commands are applied directly for low-latency response.
      *
      * @param command  the command to apply
      * @param state    the game state
@@ -239,11 +253,58 @@ public final class LockstepEngine {
                     unit.setSiegeMode(sm.enabled());
                 }
             }
-            // Build, Produce, Research, Garrison, Ungarrison, Cancel, Patrol
-            // These are handled by their respective game systems (economy, research, etc.)
-            // The lockstep engine only routes them; actual execution is deferred to GameLoop
-            default -> log.debug("Deferred command {} for system processing at tick {}",
-                    command.getClass().getSimpleName(), command.tick());
+            // Route Build, Produce, Research, Garrison, Ungarrison, Cancel commands
+            // to CommandProcessor which dispatches to the appropriate game systems
+            case CommandType.Build b -> {
+                log.debug("Routing Build command at tick {}: {} at {}",
+                        b.tick(), b.buildingType(), b.position());
+                commandProcessor.process(b, state, entities, null, null, null,
+                        null, null, null);
+            }
+            case CommandType.Produce p -> {
+                log.debug("Routing Produce command at tick {}: unit {} at building {}",
+                        p.tick(), p.unitType(), p.producerId());
+                commandProcessor.process(p, state, entities, null, null, null,
+                        null, null, null);
+            }
+            case CommandType.Research r -> {
+                log.debug("Routing Research command at tick {}: research {} at building {}",
+                        r.tick(), r.researchId(), r.techCentreId());
+                commandProcessor.process(r, state, entities, null, null, null,
+                        null, null, null);
+            }
+            case CommandType.Garrison g -> {
+                log.debug("Routing Garrison command at tick {}: units -> building {}",
+                        g.tick(), g.buildingId());
+                commandProcessor.process(g, state, entities, null, null, null,
+                        null, null, null);
+            }
+            case CommandType.Ungarrison u -> {
+                log.debug("Routing Ungarrison command at tick {}: building {}",
+                        u.tick(), u.buildingId());
+                commandProcessor.process(u, state, entities, null, null, null,
+                        null, null, null);
+            }
+            case CommandType.Cancel c -> {
+                log.debug("Routing Cancel command at tick {}: entity {}",
+                        c.tick(), c.entityId());
+                commandProcessor.process(c, state, entities, null, null, null,
+                        null, null, null);
+            }
+            case CommandType.Patrol pt -> {
+                log.debug("Patrol command at tick {}: units -> waypoint {}",
+                        pt.tick(), pt.waypoint());
+                // Patrol is routed through movement system when available;
+                // for now, just move units to the patrol waypoint
+                for (int unitId : pt.unitIds()) {
+                    var unit = entities.getUnit(unitId);
+                    if (unit != null && unit.isAlive()) {
+                        unit.setTargetPosition(pt.waypoint());
+                        unit.setMovementState(
+                                com.aow2.common.model.MovementState.MOVING);
+                    }
+                }
+            }
         }
     }
 

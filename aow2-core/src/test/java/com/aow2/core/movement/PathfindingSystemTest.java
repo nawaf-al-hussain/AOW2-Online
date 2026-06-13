@@ -82,7 +82,7 @@ class PathfindingSystemTest {
             GameMap map = new GameMap(10, 10);
             // Wall of water at x=5
             for (int y = 0; y < 10; y++) {
-                map.setTile(5, y, TerrainType.WATER);
+                map.setTile(5, y, TerrainType.DEEP_WATER);
             }
             // Leave a gap at y=0
             map.setTile(5, 0, TerrainType.GRASS);
@@ -99,7 +99,7 @@ class PathfindingSystemTest {
 
             // Verify path does not go through water
             for (GridPosition pos : path) {
-                assertNotEquals(TerrainType.WATER, map.getTile(pos.x(), pos.y()),
+                assertNotEquals(TerrainType.DEEP_WATER, map.getTile(pos.x(), pos.y()),
                     "Path should not pass through water at " + pos);
             }
         }
@@ -140,7 +140,7 @@ class PathfindingSystemTest {
             for (int dx = -1; dx <= 1; dx++) {
                 for (int dy = -1; dy <= 1; dy++) {
                     if (dx == 0 && dy == 0) continue;
-                    map.setTile(5 + dx, 5 + dy, TerrainType.WATER);
+                    map.setTile(5 + dx, 5 + dy, TerrainType.DEEP_WATER);
                 }
             }
 
@@ -159,7 +159,7 @@ class PathfindingSystemTest {
         void shouldReturnEmptyPathForImpassableStart() {
             // Given: start position is on impassable terrain
             GameMap map = new GameMap(10, 10);
-            map.setTile(0, 0, TerrainType.WATER);
+            map.setTile(0, 0, TerrainType.DEEP_WATER);
 
             GridPosition start = new GridPosition(0, 0);
             GridPosition goal = new GridPosition(5, 5);
@@ -219,8 +219,8 @@ class PathfindingSystemTest {
             // Start at (1,1), goal at (2,2)
             // (2,1) and (1,2) are both water — diagonal from (1,1) to (2,2) should be blocked
             GameMap map = new GameMap(10, 10);
-            map.setTile(2, 1, TerrainType.WATER);
-            map.setTile(1, 2, TerrainType.WATER);
+            map.setTile(2, 1, TerrainType.DEEP_WATER);
+            map.setTile(1, 2, TerrainType.DEEP_WATER);
 
             GridPosition start = new GridPosition(1, 1);
             GridPosition goal = new GridPosition(2, 2);
@@ -303,7 +303,7 @@ class PathfindingSystemTest {
             // When/Then: verify costs match GameConstants.TERRAIN_MOVEMENT_COSTS (indexed by TerrainType ordinal)
             assertEquals(Integer.MAX_VALUE, pathfinding.getTerrainCost(TerrainType.DEEP_WATER));       // ordinal 0
             assertEquals(Integer.MAX_VALUE, pathfinding.getTerrainCost(TerrainType.SHALLOW_WATER));    // ordinal 1
-            assertEquals(Integer.MAX_VALUE, pathfinding.getTerrainCost(TerrainType.WATER));            // ordinal 2
+            assertEquals(Integer.MAX_VALUE, pathfinding.getTerrainCost(TerrainType.DEEP_WATER));            // ordinal 2
             assertEquals(2, pathfinding.getTerrainCost(TerrainType.SAND));                             // ordinal 3
             assertEquals(1, pathfinding.getTerrainCost(TerrainType.GRASS));                            // ordinal 4
             assertEquals(0, pathfinding.getTerrainCost(TerrainType.ROAD));                             // ordinal 5
@@ -425,7 +425,7 @@ class PathfindingSystemTest {
             for (int x = 0; x < 50; x++) {
                 for (int y = 0; y < 50; y++) {
                     if ((x + y) % 3 == 0) {
-                        map.setTile(x, y, TerrainType.WATER);
+                        map.setTile(x, y, TerrainType.DEEP_WATER);
                     }
                 }
             }
@@ -446,7 +446,7 @@ class PathfindingSystemTest {
                 assertEquals(goal, path.get(path.size() - 1));
                 // Verify no water in path
                 for (GridPosition pos : path) {
-                    assertNotEquals(TerrainType.WATER, map.getTile(pos.x(), pos.y()));
+                    assertNotEquals(TerrainType.DEEP_WATER, map.getTile(pos.x(), pos.y()));
                 }
             }
             assertTrue(elapsedMs < 500,
@@ -486,7 +486,7 @@ class PathfindingSystemTest {
             // Given: a map with a complete wall of water
             GameMap map = new GameMap(10, 10);
             for (int x = 0; x < 10; x++) {
-                map.setTile(x, 5, TerrainType.WATER);
+                map.setTile(x, 5, TerrainType.DEEP_WATER);
             }
 
             GridPosition start = new GridPosition(5, 2);
@@ -550,7 +550,7 @@ class PathfindingSystemTest {
             GameMap map = new GameMap(20, 20);
             // Add some obstacles for complexity
             for (int y = 3; y <= 8; y++) {
-                map.setTile(5, y, TerrainType.WATER);
+                map.setTile(5, y, TerrainType.DEEP_WATER);
             }
 
             GridPosition start = new GridPosition(0, 5);

@@ -1,6 +1,7 @@
 package com.aow2.core.ai;
 
 import com.aow2.common.model.BuildingStats;
+import com.aow2.common.model.WeaponType;
 import com.aow2.common.model.BuildingType;
 import com.aow2.common.model.Faction;
 import com.aow2.common.model.GridPosition;
@@ -41,35 +42,35 @@ class ResearchAITest {
      * Creates a completed Command Centre stat block.
      */
     private BuildingStats createCCStats(BuildingType type) {
-        return new BuildingStats(type, 120, 100, 0, 10, 0, 10, 60, 0, 15, 0, 0, 5, 0, 100, 50, List.of(100, 200, 300));
+        return new BuildingStats(type, 120, 100, 0, 10, 0, 10, 60, 0, 15, 0, 0, 5, 0, 100, 50, 0, WeaponType.NONE, List.of(100, 200, 300));
     }
 
     /**
      * Creates a completed Tech Centre stat block.
      */
     private BuildingStats createTechCentreStats(BuildingType type) {
-        return new BuildingStats(type, 70, 60, 0, 4, 0, 8, 45, 0, 8, 5, 0, 1, 0, 60, 30, List.of());
+        return new BuildingStats(type, 70, 60, 0, 4, 0, 8, 45, 0, 8, 5, 0, 1, 0, 60, 30, 0, WeaponType.NONE, List.of());
     }
 
     /**
      * Creates a completed Machine Factory stat block.
      */
     private BuildingStats createFactoryStats(BuildingType type) {
-        return new BuildingStats(type, 100, 50, 0, 7, 0, 8, 50, 0, 12, 8, 0, 5, 0, 50, 25, List.of(75, 150, 225));
+        return new BuildingStats(type, 100, 50, 0, 7, 0, 8, 50, 0, 12, 8, 0, 5, 0, 50, 25, 0, WeaponType.NONE, List.of(75, 150, 225));
     }
 
     /**
      * Creates a completed Infantry Centre stat block.
      */
     private BuildingStats createInfantryCentreStats(BuildingType type) {
-        return new BuildingStats(type, 80, 30, 0, 5, 0, 8, 40, 0, 10, 5, 0, 5, 0, 30, 15, List.of(50, 100, 150));
+        return new BuildingStats(type, 80, 30, 0, 5, 0, 8, 40, 0, 10, 5, 0, 5, 0, 30, 15, 0, WeaponType.NONE, List.of(50, 100, 150));
     }
 
     /**
      * Creates a completed Generator stat block.
      */
     private BuildingStats createGeneratorStats(BuildingType type) {
-        return new BuildingStats(type, 60, 20, 0, 3, 0, 6, 30, 0, 5, 0, 10, 0, 0, 20, 10, List.of());
+        return new BuildingStats(type, 60, 20, 0, 3, 0, 6, 30, 0, 5, 0, 10, 0, 0, 20, 10, 0, WeaponType.NONE, List.of());
     }
 
     private Building placeCompletedBuilding(int playerId, BuildingType type, BuildingStats stats, GridPosition pos) {

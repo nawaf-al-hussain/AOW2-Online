@@ -4,6 +4,7 @@ import com.aow2.common.model.BuildingStats;
 import com.aow2.common.model.BuildingType;
 import com.aow2.common.model.UnitStats;
 import com.aow2.common.model.UnitType;
+import com.aow2.common.model.WeaponType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -236,12 +237,13 @@ public final class GameDataRegistry {
     private UnitStats applyUnitOverrides(UnitStats base, Map<String, DataOverride> overrides) {
         int hp = base.hp();
         int damage = base.damage();
-        int baseCost = base.baseCost();
         int speed = base.speed();
         int armor = base.armor();
         int attackBonus = base.attackBonus();
         int sightRange = base.sightRange();
         int attackRange = base.attackRange();
+        WeaponType weaponType = base.weaponType();
+        int attackSpeed = base.attackSpeed();
         int buildTime = base.buildTime();
         int costCredits = base.costCredits();
         int rewardCredits = base.rewardCredits();
@@ -252,12 +254,12 @@ public final class GameDataRegistry {
 
         if (overrides.containsKey("hp")) hp = overrides.get("hp").intValue();
         if (overrides.containsKey("damage")) damage = overrides.get("damage").intValue();
-        if (overrides.containsKey("baseCost")) baseCost = overrides.get("baseCost").intValue();
         if (overrides.containsKey("speed")) speed = overrides.get("speed").intValue();
         if (overrides.containsKey("armor")) armor = overrides.get("armor").intValue();
         if (overrides.containsKey("attackBonus")) attackBonus = overrides.get("attackBonus").intValue();
         if (overrides.containsKey("sightRange")) sightRange = overrides.get("sightRange").intValue();
         if (overrides.containsKey("attackRange")) attackRange = overrides.get("attackRange").intValue();
+        if (overrides.containsKey("attackSpeed")) attackSpeed = overrides.get("attackSpeed").intValue();
         if (overrides.containsKey("buildTime")) buildTime = overrides.get("buildTime").intValue();
         if (overrides.containsKey("costCredits")) costCredits = overrides.get("costCredits").intValue();
         if (overrides.containsKey("rewardCredits")) rewardCredits = overrides.get("rewardCredits").intValue();
@@ -267,8 +269,9 @@ public final class GameDataRegistry {
         if (overrides.containsKey("availabilityFlag")) availabilityFlag = overrides.get("availabilityFlag").intValue();
 
         return new UnitStats(
-            base.unitType(), base.description(), hp, damage, baseCost, speed, armor,
-            attackBonus, sightRange, attackRange, buildTime, costCredits, rewardCredits,
+            base.unitType(), base.description(), hp, damage, speed, armor,
+            attackBonus, sightRange, attackRange, weaponType, attackSpeed,
+            buildTime, costCredits, rewardCredits,
             extendedArmor, siegeTargets, upgradeLevel, availabilityFlag
         );
     }
@@ -309,7 +312,7 @@ public final class GameDataRegistry {
     private BuildingStats applyBuildingOverrides(BuildingStats base, Map<String, DataOverride> overrides) {
         int hp = base.hp();
         int baseCost = base.baseCost();
-        int speed = base.speed();
+        int attackSpeed = base.attackSpeed();
         int armor = base.armor();
         int attackBonus = base.attackBonus();
         int sightRange = base.sightRange();
@@ -322,10 +325,12 @@ public final class GameDataRegistry {
         int techRequirement = base.techRequirement();
         int costCredits = base.costCredits();
         int rewardCredits = base.rewardCredits();
+        int garrisonCapacity = base.garrisonCapacity();
+        WeaponType weaponType = base.weaponType();
 
         if (overrides.containsKey("hp")) hp = overrides.get("hp").intValue();
         if (overrides.containsKey("baseCost")) baseCost = overrides.get("baseCost").intValue();
-        if (overrides.containsKey("speed")) speed = overrides.get("speed").intValue();
+        if (overrides.containsKey("attackSpeed")) attackSpeed = overrides.get("attackSpeed").intValue();
         if (overrides.containsKey("armor")) armor = overrides.get("armor").intValue();
         if (overrides.containsKey("attackBonus")) attackBonus = overrides.get("attackBonus").intValue();
         if (overrides.containsKey("sightRange")) sightRange = overrides.get("sightRange").intValue();
@@ -338,12 +343,13 @@ public final class GameDataRegistry {
         if (overrides.containsKey("techRequirement")) techRequirement = overrides.get("techRequirement").intValue();
         if (overrides.containsKey("costCredits")) costCredits = overrides.get("costCredits").intValue();
         if (overrides.containsKey("rewardCredits")) rewardCredits = overrides.get("rewardCredits").intValue();
+        if (overrides.containsKey("garrisonCapacity")) garrisonCapacity = overrides.get("garrisonCapacity").intValue();
 
         return new BuildingStats(
-            base.buildingType(), hp, baseCost, speed, armor, attackBonus,
+            base.buildingType(), hp, baseCost, attackSpeed, armor, attackBonus,
             sightRange, buildTime, attackRange, extendedArmor, powerConsume,
             powerProduce, queueSlots, techRequirement, costCredits, rewardCredits,
-            base.upgradeCosts()
+            garrisonCapacity, weaponType, base.upgradeCosts()
         );
     }
 }

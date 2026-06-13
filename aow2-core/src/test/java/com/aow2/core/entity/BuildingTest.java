@@ -1,6 +1,7 @@
 package com.aow2.core.entity;
 
 import com.aow2.common.model.BuildingStats;
+import com.aow2.common.model.WeaponType;
 import com.aow2.common.model.BuildingType;
 import com.aow2.common.model.Faction;
 import com.aow2.common.model.GridPosition;
@@ -24,7 +25,7 @@ class BuildingTest {
             BuildingType.CONFED_COMMAND_CENTRE,
             120,    // hp
             100,    // baseCost
-            0,      // speed
+            0,      // attackSpeed
             10,     // armor
             0,      // attackBonus
             10,     // sightRange
@@ -37,6 +38,8 @@ class BuildingTest {
             0,      // techRequirement
             100,    // costCredits
             50,     // rewardCredits
+            0,      // garrisonCapacity
+            WeaponType.NONE, // weaponType
             List.of(100, 200, 300)  // upgradeCosts
         );
     }
@@ -50,7 +53,7 @@ class BuildingTest {
             BuildingType.REBEL_BARRACKS,
             80,     // hp
             30,     // baseCost
-            0,      // speed
+            0,      // attackSpeed
             5,      // armor
             0,      // attackBonus
             8,      // sightRange
@@ -63,6 +66,8 @@ class BuildingTest {
             0,      // techRequirement
             30,     // costCredits
             15,     // rewardCredits
+            0,      // garrisonCapacity
+            WeaponType.NONE, // weaponType
             List.of(50, 100, 150)  // upgradeCosts
         );
     }
@@ -76,7 +81,7 @@ class BuildingTest {
             BuildingType.CONFED_GENERATOR,
             60,     // hp
             20,     // baseCost
-            0,      // speed
+            0,      // attackSpeed
             3,      // armor
             0,      // attackBonus
             6,      // sightRange
@@ -89,6 +94,8 @@ class BuildingTest {
             0,      // techRequirement
             20,     // costCredits
             10,     // rewardCredits
+            0,      // garrisonCapacity
+            WeaponType.NONE, // weaponType
             List.of()  // upgradeCosts
         );
     }

@@ -18,8 +18,8 @@ class EntityManagerTest {
      */
     private UnitStats createInfantryStats() {
         return new UnitStats(
-            UnitType.REBEL_INFANTRY, "Infantry", 40, 5, 10,
-            4, 5, 0, 8, 5, 30, 10, 5, 10, 0, 0, 1
+            UnitType.REBEL_INFANTRY, "Infantry", 40, 5,
+            4, 5, 0, 8, 5, WeaponType.BULLET, 5, 30, 10, 5, 10, 0, 0, 1
         );
     }
 
@@ -29,8 +29,7 @@ class EntityManagerTest {
     private BuildingStats createBarracksStats() {
         return new BuildingStats(
             BuildingType.REBEL_BARRACKS, 80, 30, 0, 5, 0,
-            8, 40, 0, 10, 5, 0, 5, 0, 30, 15, List.of()
-        );
+            8, 40, 0, 10, 5, 0, 5, 0, 30, 15, 0, WeaponType.NONE, List.of());
     }
 
     @Nested
@@ -65,8 +64,8 @@ class EntityManagerTest {
             EntityManager manager = new EntityManager();
             UnitStats rebelStats = createInfantryStats();
             UnitStats confedStats = new UnitStats(
-                UnitType.CONFED_INFANTRY, "Infantry", 40, 5, 10,
-                4, 5, 0, 8, 5, 30, 10, 5, 10, 0, 0, 1
+                UnitType.CONFED_INFANTRY, "Infantry", 40, 5,
+                4, 5, 0, 8, 5, WeaponType.BULLET, 5, 30, 10, 5, 10, 0, 0, 1
             );
 
             manager.addUnit(new Unit(1, Faction.RESISTANCE, new GridPosition(0, 0), UnitType.REBEL_INFANTRY, rebelStats));
@@ -148,8 +147,7 @@ class EntityManagerTest {
             BuildingStats rebelStats = createBarracksStats();
             BuildingStats confedStats = new BuildingStats(
                 BuildingType.CONFED_INFANTRY_CENTRE, 80, 30, 0, 5, 0,
-                8, 40, 0, 10, 5, 0, 5, 0, 30, 15, List.of()
-            );
+                8, 40, 0, 10, 5, 0, 5, 0, 30, 15, 0, WeaponType.NONE, List.of());
 
             manager.addBuilding(new Building(1, Faction.RESISTANCE, new GridPosition(0, 0),
                 BuildingType.REBEL_BARRACKS, rebelStats));

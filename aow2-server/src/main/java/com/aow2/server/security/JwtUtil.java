@@ -35,7 +35,7 @@ public class JwtUtil {
      * @param expirationMs   token expiration time in milliseconds
      */
     public JwtUtil(
-            @Value("${aow2.jwt.secret:aow2-default-secret-key-that-is-at-least-32-bytes-long-for-hmac}") String secret,
+            @Value("${aow2.jwt.secret}") String secret,
             @Value("${aow2.jwt.expiration-ms:86400000}") long expirationMs
     ) {
         this.signingKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));

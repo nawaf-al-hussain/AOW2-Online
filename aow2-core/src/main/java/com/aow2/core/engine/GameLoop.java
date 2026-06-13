@@ -59,7 +59,8 @@ public class GameLoop {
 
             while (accumulator >= tickDuration) {
                 updateCallback.run();
-                gameState.advanceTick();
+                // TickManager.processTick() already calls advanceTick(), so we must not
+                // advance again here or the game state will advance by 2 ticks per frame.
                 accumulator -= tickDuration;
             }
 

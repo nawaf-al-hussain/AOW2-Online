@@ -3,6 +3,7 @@ package com.aow2.mod.campaign;
 import com.aow2.core.campaign.ScriptEngine;
 import com.aow2.core.engine.GameState;
 import com.aow2.core.world.EntityManager;
+import com.aow2.mod.script.GameAPI;
 import com.aow2.mod.script.LuaEngine;
 import org.luaj.vm2.LuaValue;
 import org.slf4j.Logger;
@@ -49,6 +50,11 @@ public final class MissionScriptEngine implements ScriptEngine {
      */
     public boolean loadScript(String scriptFile, GameState state, EntityManager entities) {
         try {
+            // Initialize the Lua engine before setting globals
+            if (!luaEngine.isInitialized()) {
+                luaEngine.initialize(state, entities);
+            }
+
             // Expose game state variables to Lua
             luaEngine.setGlobalInt("gameTick", (int) state.currentTick());
             luaEngine.setGlobalInt("unitCount", entities.unitCount());
@@ -224,6 +230,7 @@ public final class MissionScriptEngine implements ScriptEngine {
      */
     public void reset() {
         luaEngine.reset();
+        GameAPI.reset();
         triggerCallbacks.clear();
         scriptActive = false;
         LOG.debug("MissionScriptEngine reset");

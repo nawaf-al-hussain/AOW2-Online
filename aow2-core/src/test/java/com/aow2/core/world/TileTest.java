@@ -28,8 +28,8 @@ class TileTest {
         @Test
         @DisplayName("Should create simple tile with default state using factory method")
         void shouldCreateSimpleTileWithFactory() {
-            Tile tile = Tile.of(TerrainType.WATER, 3, 7);
-            assertEquals(TerrainType.WATER, tile.terrain());
+            Tile tile = Tile.of(TerrainType.DEEP_WATER, 3, 7);
+            assertEquals(TerrainType.DEEP_WATER, tile.terrain());
             assertEquals(3, tile.x());
             assertEquals(7, tile.y());
             assertEquals(-1, tile.occupyingEntityId());
@@ -148,10 +148,10 @@ class TileTest {
         @DisplayName("Should create copy with different terrain")
         void shouldCreateCopyWithTerrain() {
             Tile original = Tile.of(TerrainType.GRASS, 5, 10, 3, true, true);
-            Tile modified = original.withTerrain(TerrainType.WATER);
+            Tile modified = original.withTerrain(TerrainType.DEEP_WATER);
 
             assertEquals(TerrainType.GRASS, original.terrain());
-            assertEquals(TerrainType.WATER, modified.terrain());
+            assertEquals(TerrainType.DEEP_WATER, modified.terrain());
             assertEquals(3, modified.occupyingEntityId());
             assertTrue(modified.explored());
         }
@@ -175,7 +175,7 @@ class TileTest {
         void shouldNotModifyOriginal() {
             Tile original = Tile.of(TerrainType.GRASS, 5, 10);
             original.withOccupant(1);
-            original.withTerrain(TerrainType.WATER);
+            original.withTerrain(TerrainType.DEEP_WATER);
             original.withVisibility(true, true);
 
             assertEquals(-1, original.occupyingEntityId());
@@ -199,7 +199,7 @@ class TileTest {
         @Test
         @DisplayName("Should not be passable when terrain is impassable")
         void shouldNotBePassableWhenTerrainImpassable() {
-            Tile tile = Tile.of(TerrainType.WATER, 0, 0);
+            Tile tile = Tile.of(TerrainType.DEEP_WATER, 0, 0);
             assertFalse(tile.isPassable());
         }
 

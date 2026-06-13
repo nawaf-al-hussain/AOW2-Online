@@ -5,6 +5,7 @@ import com.aow2.common.model.GridPosition;
 import com.aow2.common.model.UnitCategory;
 import com.aow2.common.model.UnitStats;
 import com.aow2.common.model.UnitType;
+import com.aow2.common.model.WeaponType;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -25,12 +26,13 @@ class UnitTest {
             "Resistance Infantry",
             40,     // hp
             5,      // damage
-            10,     // baseCost
             4,      // speed
             5,      // armor
             0,      // attackBonus
             8,      // sightRange
             5,      // attackRange
+            WeaponType.BULLET, // weaponType
+            5,      // attackSpeed
             30,     // buildTime
             10,     // costCredits
             5,      // rewardCredits
@@ -51,12 +53,13 @@ class UnitTest {
             "AV-40 Fortress",
             200,    // hp
             30,     // damage
-            60,     // baseCost
             2,      // speed
             15,     // armor
             5,      // attackBonus
             10,     // sightRange
             7,      // attackRange
+            WeaponType.ARTILLERY, // weaponType
+            10,     // attackSpeed
             120,    // buildTime
             60,     // costCredits
             30,     // rewardCredits

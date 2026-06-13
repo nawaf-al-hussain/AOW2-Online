@@ -5,6 +5,7 @@ import com.aow2.common.model.BuildingType;
 import com.aow2.common.model.Faction;
 import com.aow2.common.model.GridPosition;
 import com.aow2.common.model.UnitStats;
+import com.aow2.common.model.WeaponType;
 import com.aow2.common.model.UnitType;
 import com.aow2.core.economy.EconomySystem;
 import com.aow2.core.economy.ResourceGenerator;
@@ -42,35 +43,35 @@ class MilitaryAITest {
      * Creates a completed Command Centre stat block.
      */
     private BuildingStats createCCStats(BuildingType type) {
-        return new BuildingStats(type, 120, 100, 0, 10, 0, 10, 60, 0, 15, 0, 0, 5, 0, 100, 50, List.of(100, 200, 300));
+        return new BuildingStats(type, 120, 100, 0, 10, 0, 10, 60, 0, 15, 0, 0, 5, 0, 100, 50, 0, WeaponType.NONE, List.of(100, 200, 300));
     }
 
     /**
      * Creates Confederation infantry stats.
      */
     private UnitStats createConfedInfantryStats() {
-        return new UnitStats(UnitType.CONFED_INFANTRY, "Infantry", 40, 2, 1, 5, 5, 0, 4, 4, 4, 10, 650, 6, 255, 0, -1);
+        return new UnitStats(UnitType.CONFED_INFANTRY, "Infantry", 40, 2, 5, 5, 0, 4, 4, WeaponType.BULLET, 5, 4, 10, 650, 6, 255, 0, -1);
     }
 
     /**
      * Creates Resistance infantry stats.
      */
     private UnitStats createRebelInfantryStats() {
-        return new UnitStats(UnitType.REBEL_INFANTRY, "Infantry", 40, 2, 1, 5, 5, 0, 4, 4, 4, 10, 650, 6, 255, 0, -1);
+        return new UnitStats(UnitType.REBEL_INFANTRY, "Infantry", 40, 2, 5, 5, 0, 4, 4, WeaponType.BULLET, 5, 4, 10, 650, 6, 255, 0, -1);
     }
 
     /**
      * Creates Confederation vehicle stats (Hammer).
      */
     private UnitStats createHammerStats() {
-        return new UnitStats(UnitType.CONFED_HAMMER, "T-21 Hammer", 70, 6, 3, 7, 5, 0, 2, 6, 7, 30, 300, 8, 255, 0, -1);
+        return new UnitStats(UnitType.CONFED_HAMMER, "T-21 Hammer", 70, 6, 7, 5, 0, 2, 6, WeaponType.MACHINE_GUN, 2, 7, 30, 300, 8, 255, 0, -1);
     }
 
     /**
      * Creates Resistance vehicle stats (Coyote).
      */
     private UnitStats createCoyoteStats() {
-        return new UnitStats(UnitType.REBEL_COYOTE, "Coyote", 60, 5, 2, 8, 4, 0, 2, 5, 6, 25, 400, 7, 255, 0, -1);
+        return new UnitStats(UnitType.REBEL_COYOTE, "Coyote", 60, 5, 8, 4, 0, 2, 5, WeaponType.MACHINE_GUN, 4, 6, 25, 400, 7, 255, 0, -1);
     }
 
     private Building placeCompletedCC(int playerId) {

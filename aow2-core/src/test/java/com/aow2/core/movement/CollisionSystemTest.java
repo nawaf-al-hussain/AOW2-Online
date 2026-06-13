@@ -7,6 +7,7 @@ import com.aow2.common.model.GridPosition;
 import com.aow2.common.model.MovementState;
 import com.aow2.common.model.TerrainType;
 import com.aow2.common.model.UnitStats;
+import com.aow2.common.model.WeaponType;
 import com.aow2.common.model.UnitType;
 import com.aow2.core.entity.Building;
 import com.aow2.core.entity.Unit;
@@ -31,8 +32,8 @@ class CollisionSystemTest {
      */
     private UnitStats createInfantryStats() {
         return new UnitStats(
-            UnitType.REBEL_INFANTRY, "Infantry", 40, 5, 10,
-            1, 5, 0, 8, 5, 30, 10, 5, 10, 0, 0, 1
+            UnitType.REBEL_INFANTRY, "Infantry", 40, 5,
+            1, 5, 0, 8, 5, WeaponType.BULLET, 5, 30, 10, 5, 10, 0, 0, 1
         );
     }
 
@@ -41,8 +42,8 @@ class CollisionSystemTest {
      */
     private UnitStats createFortressStats() {
         return new UnitStats(
-            UnitType.CONFED_FORTRESS, "Fortress", 200, 30, 60,
-            2, 15, 5, 10, 7, 120, 60, 30, 20, 1, 0, 1
+            UnitType.CONFED_FORTRESS, "Fortress", 200, 30,
+            2, 15, 5, 10, 7, WeaponType.ARTILLERY, 10, 120, 60, 30, 20, 1, 0, 1
         );
     }
 
@@ -52,8 +53,7 @@ class CollisionSystemTest {
     private BuildingStats createBarracksStats() {
         return new BuildingStats(
             BuildingType.REBEL_BARRACKS, 80, 30, 0, 5, 0,
-            8, 40, 0, 10, 5, 0, 5, 0, 30, 15, List.of()
-        );
+            8, 40, 0, 10, 5, 0, 5, 0, 30, 15, 0, WeaponType.NONE, List.of());
     }
 
     @BeforeEach
@@ -81,7 +81,7 @@ class CollisionSystemTest {
         void shouldDetectCellUnavailableOnImpassableTerrain() {
             // Given: a map with water at (5,5)
             GameMap map = new GameMap(20, 20);
-            map.setTile(5, 5, TerrainType.WATER);
+            map.setTile(5, 5, TerrainType.DEEP_WATER);
 
             // When/Then: water cell should be unavailable
             assertFalse(collision.isCellAvailable(new GridPosition(5, 5), map, entities, -1));
@@ -283,7 +283,7 @@ class CollisionSystemTest {
         void shouldRejectLargeUnitPlacementWhenSecondaryCellBlocked() {
             // Given: a map where the secondary cell (x+1) is water
             GameMap map = new GameMap(20, 20);
-            map.setTile(6, 5, TerrainType.WATER); // secondary cell for fortress at (5,5)
+            map.setTile(6, 5, TerrainType.DEEP_WATER); // secondary cell for fortress at (5,5)
 
             // When: checking placement at (5,5)
             boolean valid = collision.isLargeUnitPlacementValid(new GridPosition(5, 5), map, entities);

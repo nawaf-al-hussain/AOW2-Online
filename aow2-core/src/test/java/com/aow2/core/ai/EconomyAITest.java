@@ -5,6 +5,7 @@ import com.aow2.common.model.BuildingType;
 import com.aow2.common.model.Faction;
 import com.aow2.common.model.GridPosition;
 import com.aow2.common.model.UnitStats;
+import com.aow2.common.model.WeaponType;
 import com.aow2.common.model.UnitType;
 import com.aow2.core.economy.BuildingPlacementSystem;
 import com.aow2.core.economy.EconomySystem;
@@ -50,42 +51,42 @@ class EconomyAITest {
      * Creates a completed Command Centre stat block.
      */
     private BuildingStats createCCStats(BuildingType type) {
-        return new BuildingStats(type, 120, 100, 0, 10, 0, 10, 60, 0, 15, 0, 0, 5, 0, 100, 50, List.of(100, 200, 300));
+        return new BuildingStats(type, 120, 100, 0, 10, 0, 10, 60, 0, 15, 0, 0, 5, 0, 100, 50, 0, WeaponType.NONE, List.of(100, 200, 300));
     }
 
     /**
      * Creates a completed Generator stat block.
      */
     private BuildingStats createGeneratorStats(BuildingType type) {
-        return new BuildingStats(type, 60, 20, 0, 3, 0, 6, 30, 0, 5, 0, 10, 0, 0, 20, 10, List.of());
+        return new BuildingStats(type, 60, 20, 0, 3, 0, 6, 30, 0, 5, 0, 10, 0, 0, 20, 10, 0, WeaponType.NONE, List.of());
     }
 
     /**
      * Creates a completed Infantry Centre stat block.
      */
     private BuildingStats createInfantryCentreStats(BuildingType type) {
-        return new BuildingStats(type, 80, 30, 0, 5, 0, 8, 40, 0, 10, 5, 0, 5, 0, 30, 15, List.of(50, 100, 150));
+        return new BuildingStats(type, 80, 30, 0, 5, 0, 8, 40, 0, 10, 5, 0, 5, 0, 30, 15, 0, WeaponType.NONE, List.of(50, 100, 150));
     }
 
     /**
      * Creates a completed Machine Factory stat block.
      */
     private BuildingStats createFactoryStats(BuildingType type) {
-        return new BuildingStats(type, 100, 50, 0, 7, 0, 8, 50, 0, 12, 8, 0, 5, 0, 50, 25, List.of(75, 150, 225));
+        return new BuildingStats(type, 100, 50, 0, 7, 0, 8, 50, 0, 12, 8, 0, 5, 0, 50, 25, 0, WeaponType.NONE, List.of(75, 150, 225));
     }
 
     /**
      * Creates a completed Tech Centre stat block.
      */
     private BuildingStats createTechCentreStats(BuildingType type) {
-        return new BuildingStats(type, 70, 60, 0, 4, 0, 8, 45, 0, 8, 5, 0, 1, 0, 60, 30, List.of());
+        return new BuildingStats(type, 70, 60, 0, 4, 0, 8, 45, 0, 8, 5, 0, 1, 0, 60, 30, 0, WeaponType.NONE, List.of());
     }
 
     /**
      * Creates a completed Bunker stat block.
      */
     private BuildingStats createBunkerStats(BuildingType type) {
-        return new BuildingStats(type, 150, 15, 0, 12, 0, 7, 25, 5, 18, 3, 0, 1, 0, 15, 8, List.of());
+        return new BuildingStats(type, 150, 15, 0, 12, 0, 7, 25, 5, 18, 3, 0, 1, 0, 15, 8, 0, WeaponType.NONE, List.of());
     }
 
     private Building placeCompletedBuilding(int playerId, BuildingType type, BuildingStats stats, GridPosition pos) {
@@ -232,7 +233,7 @@ class EconomyAITest {
                 createInfantryCentreStats(BuildingType.CONFED_INFANTRY_CENTRE), new GridPosition(11, 10));
 
             // Add 50 units
-            UnitStats infantryStats = new UnitStats(UnitType.CONFED_INFANTRY, "Infantry", 40, 2, 1, 5, 5, 0, 4, 4, 4, 10, 650, 6, 255, 0, -1);
+            UnitStats infantryStats = new UnitStats(UnitType.CONFED_INFANTRY, "Infantry", 40, 2, 5, 5, 0, 4, 4, WeaponType.BULLET, 5, 4, 10, 650, 6, 255, 0, -1);
             for (int i = 0; i < 50; i++) {
                 Unit unit = new Unit(entities.allocateEntityId(), Faction.CONFEDERATION,
                     new GridPosition(10 + (i % 10), 20 + (i / 10)), UnitType.CONFED_INFANTRY, infantryStats);
@@ -280,7 +281,7 @@ class EconomyAITest {
                 createCCStats(BuildingType.CONFED_COMMAND_CENTRE), new GridPosition(10, 10));
 
             // Place enemy unit near base (within 20 cells)
-            UnitStats rebelStats = new UnitStats(UnitType.REBEL_INFANTRY, "Infantry", 40, 2, 1, 5, 5, 0, 4, 4, 4, 10, 650, 6, 255, 0, -1);
+            UnitStats rebelStats = new UnitStats(UnitType.REBEL_INFANTRY, "Infantry", 40, 2, 5, 5, 0, 4, 4, WeaponType.BULLET, 5, 4, 10, 650, 6, 255, 0, -1);
             Unit enemy = new Unit(entities.allocateEntityId(), Faction.RESISTANCE,
                 new GridPosition(15, 15), UnitType.REBEL_INFANTRY, rebelStats);
             entities.addUnit(enemy);
@@ -300,7 +301,7 @@ class EconomyAITest {
                 createCCStats(BuildingType.CONFED_COMMAND_CENTRE), new GridPosition(10, 10));
 
             // Place enemy unit far from base
-            UnitStats rebelStats = new UnitStats(UnitType.REBEL_INFANTRY, "Infantry", 40, 2, 1, 5, 5, 0, 4, 4, 4, 10, 650, 6, 255, 0, -1);
+            UnitStats rebelStats = new UnitStats(UnitType.REBEL_INFANTRY, "Infantry", 40, 2, 5, 5, 0, 4, 4, WeaponType.BULLET, 5, 4, 10, 650, 6, 255, 0, -1);
             Unit enemy = new Unit(entities.allocateEntityId(), Faction.RESISTANCE,
                 new GridPosition(50, 50), UnitType.REBEL_INFANTRY, rebelStats);
             entities.addUnit(enemy);

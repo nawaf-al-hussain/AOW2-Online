@@ -353,7 +353,7 @@ public class MapEditorScene {
 
         editorCanvas.setOnScroll(e -> {
             double zoomDelta = e.getDeltaY() > 0 ? 0.1 : -0.1;
-            cameraController.zoom(zoomDelta);
+            cameraController.adjustZoom(zoomDelta);
         });
 
         editorCanvas.setFocusTraversable(true);

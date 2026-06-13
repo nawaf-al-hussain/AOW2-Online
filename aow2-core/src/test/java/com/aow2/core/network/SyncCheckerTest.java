@@ -3,6 +3,7 @@ package com.aow2.core.network;
 import com.aow2.common.model.Faction;
 import com.aow2.common.model.GridPosition;
 import com.aow2.common.model.UnitStats;
+import com.aow2.common.model.WeaponType;
 import com.aow2.common.model.UnitType;
 import com.aow2.core.engine.GameState;
 import com.aow2.core.entity.Unit;
@@ -57,8 +58,8 @@ class SyncCheckerTest {
     void hashIncludesUnits() {
         long hash1 = checker.computeStateHash(state, entities);
 
-        var stats = new UnitStats(UnitType.CONFED_INFANTRY, "Test", 100, 10, 50,
-                5, 3, 1, 8, 1, 20, 50, 5, 0, 0, 0, 0);
+        var stats = new UnitStats(UnitType.CONFED_INFANTRY, "Test", 100, 10,
+                5, 3, 1, 8, 1, WeaponType.BULLET, 5, 20, 50, 5, 0, 0, 0, 0);
         var unit = new Unit(1, Faction.CONFEDERATION, new GridPosition(5, 5),
                 UnitType.CONFED_INFANTRY, stats);
         entities.addUnit(unit);
@@ -131,8 +132,8 @@ class SyncCheckerTest {
     @Test
     @DisplayName("Deterministic: same state produces same hash")
     void deterministicHash() {
-        var stats = new UnitStats(UnitType.CONFED_INFANTRY, "Test", 100, 10, 50,
-                5, 3, 1, 8, 1, 20, 50, 5, 0, 0, 0, 0);
+        var stats = new UnitStats(UnitType.CONFED_INFANTRY, "Test", 100, 10,
+                5, 3, 1, 8, 1, WeaponType.BULLET, 5, 20, 50, 5, 0, 0, 0, 0);
         entities.addUnit(new Unit(1, Faction.CONFEDERATION, new GridPosition(5, 5),
                 UnitType.CONFED_INFANTRY, stats));
 

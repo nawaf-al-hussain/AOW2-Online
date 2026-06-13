@@ -107,21 +107,29 @@ public final class AudioManager {
             return;
         }
 
-        AudioClip clip = sfxCache.computeIfAbsent(sfxName, name -> {
-            String resourcePath = SFX_BASE_PATH + name + ".wav";
-            URL resource = getClass().getResource(resourcePath);
-            if (resource == null) {
-                LOG.warn("SFX not found: {}", resourcePath);
-                return null;
-            }
-            return new AudioClip(resource.toExternalForm());
-        });
-
+        // Check if already cached
+        AudioClip clip = sfxCache.get(sfxName);
         if (clip != null) {
             clip.setVolume(sfxVolume);
             clip.play();
             LOG.debug("Playing SFX: {}", sfxName);
+            return;
         }
+
+        // Load the SFX resource — check for null BEFORE calling computeIfAbsent,
+        // as ConcurrentHashMap.computeIfAbsent() cannot return null (throws NPE)
+        String resourcePath = SFX_BASE_PATH + sfxName + ".wav";
+        URL resource = getClass().getResource(resourcePath);
+        if (resource == null) {
+            LOG.warn("SFX not found: {}", resourcePath);
+            return;
+        }
+
+        AudioClip newClip = new AudioClip(resource.toExternalForm());
+        sfxCache.put(sfxName, newClip);
+        newClip.setVolume(sfxVolume);
+        newClip.play();
+        LOG.debug("Playing SFX: {}", sfxName);
     }
 
     /**

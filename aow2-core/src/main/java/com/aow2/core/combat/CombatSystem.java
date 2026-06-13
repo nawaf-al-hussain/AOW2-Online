@@ -159,9 +159,8 @@ public class CombatSystem {
             if (building.isUnderConstruction()) continue;
 
             // REF: combat_formulas.md - BUILDING_ATTACK_COOLDOWN = 5, buildings fire every 5 ticks
-            // Track cooldown via attackCooldown field on Building (repurposed from productionProgress)
-            if (building.getConstructionProgress() > 0) {
-                building.setConstructionProgress(building.getConstructionProgress() - 1);
+            if (building.getAttackCooldown() > 0) {
+                building.decrementAttackCooldown();
                 continue;
             }
 
@@ -174,7 +173,7 @@ public class CombatSystem {
             }
 
             // Reset building attack cooldown after firing
-            building.setConstructionProgress(BUILDING_ATTACK_COOLDOWN);
+            building.setAttackCooldown(BUILDING_ATTACK_COOLDOWN);
         }
     }
 

@@ -6,6 +6,7 @@ import com.aow2.common.model.Faction;
 import com.aow2.common.model.GridPosition;
 import com.aow2.common.model.UnitType;
 import com.aow2.common.model.UnitStats;
+import com.aow2.common.model.WeaponType;
 import com.aow2.core.entity.Building;
 import com.aow2.core.entity.Unit;
 import com.aow2.core.world.EntityManager;
@@ -51,13 +52,13 @@ public final class EntityPlacer {
         for (UnitType type : UnitType.values()) {
             defaultUnitStats.put(type, new UnitStats(
                 type, "Editor placeholder", 100, 10,
-                100, 4, 2, 0, 5, 4, 60, 100, 5, 2, 0, 0, 0
+                4, 2, 0, 5, 4, WeaponType.NONE, 0, 60, 100, 5, 2, 0, 0, 0
             ));
         }
 
         for (BuildingType type : BuildingType.values()) {
             defaultBuildingStats.put(type, new BuildingStats(
-                type, 500, 0, 0, 5, 0, 10, 600, 6, 5, 0, 10, 1, 0, 0, 0, java.util.List.of()
+                type, 500, 0, 0, 5, 0, 10, 600, 6, 5, 0, 10, 1, 0, 0, 0, 0, WeaponType.NONE, java.util.List.of()
             ));
         }
     }

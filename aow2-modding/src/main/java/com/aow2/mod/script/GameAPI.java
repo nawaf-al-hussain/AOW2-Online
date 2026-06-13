@@ -4,6 +4,7 @@ import com.aow2.common.model.Faction;
 import com.aow2.common.model.GridPosition;
 import com.aow2.common.model.UnitStats;
 import com.aow2.common.model.UnitType;
+import com.aow2.common.model.WeaponType;
 import com.aow2.core.engine.GameState;
 import com.aow2.core.entity.Unit;
 import com.aow2.core.world.EntityManager;
@@ -82,7 +83,7 @@ public final class GameAPI {
 
             // ASSUMPTION: default stats for scripting-spawned units
             UnitStats stats = new UnitStats(type, "Script spawned", 100, 10,
-                100, 4, 2, 0, 5, 4, 60, 100, 5, 2, 0, 0, 0);
+                4, 2, 0, 5, 4, WeaponType.NONE, 0, 60, 100, 5, 2, 0, 0, 0);
 
             int id = entityManager.allocateEntityId();
             Unit unit = new Unit(id, f, pos, type, stats);

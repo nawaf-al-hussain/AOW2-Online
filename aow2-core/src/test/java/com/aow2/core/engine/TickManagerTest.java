@@ -4,6 +4,7 @@ import com.aow2.common.model.CommandType;
 import com.aow2.common.model.Faction;
 import com.aow2.common.model.GridPosition;
 import com.aow2.common.model.UnitStats;
+import com.aow2.common.model.WeaponType;
 import com.aow2.common.model.UnitType;
 import com.aow2.core.combat.CombatSystem;
 import com.aow2.core.combat.ProjectileSystem;
@@ -84,7 +85,7 @@ class TickManagerTest {
     @Test
     @DisplayName("Enqueued commands are processed during tick")
     void enqueuedCommandsAreProcessed() {
-        UnitStats stats = new UnitStats(UnitType.CONFED_INFANTRY, "Infantry", 40, 2, 1, 5, 5, 0, 4, 4, 4, 10, 650, 6, 255, 0, -1);
+        UnitStats stats = new UnitStats(UnitType.CONFED_INFANTRY, "Infantry", 40, 2, 5, 5, 0, 4, 4, WeaponType.BULLET, 5, 4, 10, 650, 6, 255, 0, -1);
         var unit = new com.aow2.core.entity.Unit(1, Faction.CONFEDERATION, new GridPosition(5, 5),
             UnitType.CONFED_INFANTRY, stats);
         entities.addUnit(unit);
@@ -110,7 +111,7 @@ class TickManagerTest {
         tickManager.setFogOfWar(fogOfWar);
 
         // Add a unit so there's something to reveal
-        UnitStats stats = new UnitStats(UnitType.CONFED_INFANTRY, "Infantry", 40, 2, 1, 5, 5, 0, 4, 4, 4, 10, 650, 6, 255, 0, -1);
+        UnitStats stats = new UnitStats(UnitType.CONFED_INFANTRY, "Infantry", 40, 2, 5, 5, 0, 4, 4, WeaponType.BULLET, 5, 4, 10, 650, 6, 255, 0, -1);
         var unit = new com.aow2.core.entity.Unit(1, Faction.CONFEDERATION, new GridPosition(8, 8),
             UnitType.CONFED_INFANTRY, stats);
         entities.addUnit(unit);
@@ -130,7 +131,7 @@ class TickManagerTest {
     @Test
     @DisplayName("Dead entities are removed after tick")
     void deadEntitiesAreRemoved() {
-        UnitStats stats = new UnitStats(UnitType.CONFED_INFANTRY, "Infantry", 40, 2, 1, 5, 5, 0, 4, 4, 4, 10, 650, 6, 255, 0, -1);
+        UnitStats stats = new UnitStats(UnitType.CONFED_INFANTRY, "Infantry", 40, 2, 5, 5, 0, 4, 4, WeaponType.BULLET, 5, 4, 10, 650, 6, 255, 0, -1);
         var unit = new com.aow2.core.entity.Unit(1, Faction.CONFEDERATION, new GridPosition(5, 5),
             UnitType.CONFED_INFANTRY, stats);
         entities.addUnit(unit);

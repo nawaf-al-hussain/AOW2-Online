@@ -113,8 +113,8 @@ public class GameMap {
 
         // River of water across the middle
         for (int x = 0; x < 8; x++) {
-            map.setTile(x, 3, TerrainType.WATER);
-            map.setTile(x, 4, TerrainType.WATER);
+            map.setTile(x, 3, TerrainType.DEEP_WATER);
+            map.setTile(x, 4, TerrainType.DEEP_WATER);
         }
 
         // Bridge across the river

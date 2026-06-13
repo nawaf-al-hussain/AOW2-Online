@@ -6,6 +6,8 @@ import com.aow2.server.repository.MatchResultRepository;
 import com.aow2.server.repository.PlayerRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -141,10 +143,10 @@ public class RankingService {
         int effectiveLimit = Math.min(limit, MAX_LEADERBOARD_ENTRIES);
         List<Map<String, Object>> leaderboard = new ArrayList<>();
 
-        Iterable<Player> players = playerRepository.findAllByOrderByEloRatingDesc();
+        Pageable pageable = PageRequest.of(0, effectiveLimit);
+        List<Player> players = playerRepository.findAllByOrderByEloRatingDesc(pageable).getContent();
         int rank = 1;
         for (Player player : players) {
-            if (rank > effectiveLimit) break;
             leaderboard.add(Map.of(
                     "rank", rank,
                     "id", player.getId(),
@@ -172,9 +174,10 @@ public class RankingService {
         Player player = playerRepository.findById(playerId)
                 .orElseThrow(() -> new IllegalArgumentException("Player not found: " + playerId));
 
-        // Calculate approximate rank by counting players with higher ELO
+        // Calculate rank using pagination — count players with higher ELO
+        Pageable topPage = PageRequest.of(0, Integer.MAX_VALUE);
+        List<Player> allPlayers = playerRepository.findAllByOrderByEloRatingDesc(topPage).getContent();
         int rank = 1;
-        Iterable<Player> allPlayers = playerRepository.findAllByOrderByEloRatingDesc();
         for (Player p : allPlayers) {
             if (p.getId().equals(playerId)) break;
             rank++;

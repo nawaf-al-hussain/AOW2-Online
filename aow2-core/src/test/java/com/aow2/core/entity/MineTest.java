@@ -4,6 +4,7 @@ import com.aow2.common.model.Faction;
 import com.aow2.common.model.GridPosition;
 import com.aow2.common.model.UnitStats;
 import com.aow2.common.model.UnitType;
+import com.aow2.common.model.WeaponType;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -22,12 +23,13 @@ class MineTest {
             "Mine Scorpio",
             1,      // hp
             25,     // damage
-            1,      // baseCost
             0,      // speed
             0,      // armor
             0,      // attackBonus
             1,      // sightRange
             0,      // attackRange
+            WeaponType.NONE, // weaponType
+            1,      // attackSpeed
             5,      // buildTime
             15,     // costCredits
             0,      // rewardCredits
@@ -48,12 +50,13 @@ class MineTest {
             "Mine Frog",
             1,      // hp
             50,     // damage
-            1,      // baseCost
             0,      // speed
             0,      // armor
             0,      // attackBonus
             1,      // sightRange
             0,      // attackRange
+            WeaponType.NONE, // weaponType
+            1,      // attackSpeed
             5,      // buildTime
             20,     // costCredits
             0,      // rewardCredits

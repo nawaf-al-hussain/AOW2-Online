@@ -22,6 +22,10 @@ import com.aow2.core.entity.Unit;
  */
 public final class DamageCalculator {
 
+    // Seeded RNG for lockstep determinism
+    private static final long SEED = 42L;
+    private static final java.util.Random RNG = new java.util.Random(SEED);
+
     private DamageCalculator() {}
 
     /**
@@ -115,7 +119,7 @@ public final class DamageCalculator {
         if (dyingUnit.isInfantry()) {
             int base = GameConstants.DEATH_ANIM_BASE[attackerCategory];
             int range = GameConstants.DEATH_ANIM_RANGE[attackerCategory];
-            return (base + (int)(Math.random() * range)) + 10 - 231;
+            return (base + (int)(RNG.nextDouble() * range)) + 10 - 231;
         } else {
             return 2;
         }

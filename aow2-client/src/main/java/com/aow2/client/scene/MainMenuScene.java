@@ -1,8 +1,5 @@
 package com.aow2.client.scene;
 
-import com.almasb.fxgl.app.SceneController;
-import com.almasb.fxgl.ui.FXGLButton;
-
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;

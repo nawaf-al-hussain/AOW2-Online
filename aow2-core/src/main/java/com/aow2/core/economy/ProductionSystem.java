@@ -6,6 +6,7 @@ import com.aow2.common.model.BuildingType;
 import com.aow2.common.model.Faction;
 import com.aow2.common.model.UnitCategory;
 import com.aow2.common.model.UnitType;
+import com.aow2.common.model.WeaponType;
 import com.aow2.core.engine.GameState;
 import com.aow2.core.entity.Building;
 import com.aow2.core.entity.Unit;
@@ -162,16 +163,23 @@ public final class ProductionSystem {
         int refund = (int) (getUnitCost(cancelledType) * CANCEL_REFUND_PERCENT);
         economy.addCredits(playerId, refund);
 
-        // ASSUMPTION: cancellation removes the item from the queue.
-        // The Building class doesn't have a removeProduction method,
-        // so we handle it by clearing and re-adding.
+        // Build the remaining list after removing the cancelled item
         java.util.List<UnitType> remaining = new java.util.ArrayList<>(queue);
         remaining.remove(queueIndex);
 
-        // Clear and re-add remaining items
-        // Since Building's productionQueue is managed internally,
-        // we need to complete and re-enqueue. This is a simplified approach.
-        // A proper implementation would add a cancelProduction method to Building.
+        // If the cancelled item is the currently producing item (index 0),
+        // clear current production and reset progress
+        if (queueIndex == 0 && producer.isProducing()) {
+            producer.setCurrentProduction(null);
+            producer.setProductionProgress(0);
+        }
+
+        // Rebuild the production queue: clear and re-enqueue remaining items
+        producer.clearProductionQueue();
+        for (UnitType type : remaining) {
+            producer.enqueueProduction(type);
+        }
+
         LOG.info("Player {} cancelled {} production, refund: {} credits", playerId, cancelledType.displayName(), refund);
         return true;
     }
@@ -277,8 +285,7 @@ public final class ProductionSystem {
         return switch (unitType) {
             case CONFED_INFANTRY -> 40;
             case CONFED_GRENADIER -> 50;
-            case CONFED_LIGHT_ASSAULT -> 55;
-            case CONFED_HEAVY_ASSAULT -> 75;
+
             case CONFED_FLAME_ASSAULT -> 60;
             case CONFED_FORTRESS -> 100;
             case CONFED_HAMMER -> 70;
@@ -307,8 +314,7 @@ public final class ProductionSystem {
         return switch (unitType) {
             case CONFED_INFANTRY -> 10;
             case CONFED_GRENADIER -> 15;
-            case CONFED_LIGHT_ASSAULT -> 20;
-            case CONFED_HEAVY_ASSAULT -> 35;
+
             case CONFED_FLAME_ASSAULT -> 25;
             case CONFED_FORTRESS -> 50;
             case CONFED_HAMMER -> 30;
@@ -356,25 +362,24 @@ public final class ProductionSystem {
      */
     private com.aow2.common.model.UnitStats createUnitStats(UnitType unitType) {
         return switch (unitType) {
-            case CONFED_INFANTRY -> new com.aow2.common.model.UnitStats(unitType, "Infantry", 40, 2, 1, 5, 5, 0, 4, 4, 4, 10, 650, 6, 255, 0, -1);
-            case CONFED_GRENADIER -> new com.aow2.common.model.UnitStats(unitType, "Grenadier", 45, 4, 2, 5, 4, 0, 5, 5, 5, 15, 700, 6, 255, 0, -1);
-            case CONFED_LIGHT_ASSAULT -> new com.aow2.common.model.UnitStats(unitType, "Light Assault", 55, 4, 2, 6, 5, 0, 4, 5, 5, 20, 750, 6, 255, 0, -1);
-            case CONFED_HEAVY_ASSAULT -> new com.aow2.common.model.UnitStats(unitType, "Heavy Assault", 90, 7, 4, 4, 8, 0, 5, 5, 8, 35, 1000, 8, 255, 0, -1);
-            case CONFED_FLAME_ASSAULT -> new com.aow2.common.model.UnitStats(unitType, "Flame Assault", 50, 6, 3, 5, 3, 0, 3, 3, 6, 25, 800, 6, 255, 0, -1);
-            case CONFED_FORTRESS -> new com.aow2.common.model.UnitStats(unitType, "AV-40 Fortress", 120, 8, 5, 4, 7, 0, 6, 6, 10, 50, 1200, 8, 255, 0, -1);
-            case CONFED_HAMMER -> new com.aow2.common.model.UnitStats(unitType, "T-21 Hammer", 70, 6, 3, 7, 5, 0, 2, 6, 7, 30, 300, 8, 255, 0, -1);
-            case CONFED_ZEUS -> new com.aow2.common.model.UnitStats(unitType, "T-22 Zeus", 70, 6, 3, 7, 5, 0, 2, 6, 7, 30, 300, 8, 255, 0, -1);
-            case CONFED_TORRENT -> new com.aow2.common.model.UnitStats(unitType, "MLRS Torrent", 80, 15, 8, 4, 7, 2, 6, 6, 8, 50, 250, 8, 255, 2, -1);
-            case CONFED_MINE_SCORPIO -> new com.aow2.common.model.UnitStats(unitType, "Mine Scorpio", 10, 20, 1, 3, 0, 0, 0, 0, 3, 10, 100, 4, 255, 0, -1);
-            case CONFED_MINE_FROG -> new com.aow2.common.model.UnitStats(unitType, "Mine Frog", 10, 15, 1, 3, 0, 0, 0, 0, 3, 10, 100, 4, 255, 0, -1);
-            case CONFED_MINE_LIZARD -> new com.aow2.common.model.UnitStats(unitType, "Mine Lizard", 10, 18, 1, 3, 0, 0, 0, 0, 3, 10, 100, 4, 255, 0, -1);
-            case REBEL_INFANTRY -> new com.aow2.common.model.UnitStats(unitType, "Infantry", 40, 2, 1, 5, 5, 0, 4, 4, 4, 10, 650, 6, 255, 0, -1);
-            case REBEL_GRENADIER -> new com.aow2.common.model.UnitStats(unitType, "Grenadier", 45, 4, 2, 5, 4, 0, 5, 5, 5, 15, 700, 6, 255, 0, -1);
-            case REBEL_SNIPER -> new com.aow2.common.model.UnitStats(unitType, "Sniper", 35, 8, 2, 3, 4, 0, 7, 7, 6, 20, 750, 6, 255, 0, -1);
-            case REBEL_COYOTE -> new com.aow2.common.model.UnitStats(unitType, "Coyote", 60, 5, 2, 8, 4, 0, 2, 5, 6, 25, 400, 7, 255, 0, -1);
-            case REBEL_ARMADILLO -> new com.aow2.common.model.UnitStats(unitType, "Armadillo", 100, 7, 4, 5, 8, 0, 5, 5, 9, 40, 1000, 8, 255, 0, -1);
-            case REBEL_RHINO -> new com.aow2.common.model.UnitStats(unitType, "Rhino", 75, 6, 3, 6, 6, 0, 3, 6, 8, 35, 350, 8, 255, 0, -1);
-            case REBEL_PORCUPINE -> new com.aow2.common.model.UnitStats(unitType, "MMC Porcupine", 85, 12, 5, 4, 6, 1, 5, 5, 9, 45, 280, 8, 255, 1, -1);
+            case CONFED_INFANTRY -> new com.aow2.common.model.UnitStats(unitType, "Infantry", 40, 2, 5, 5, 0, 4, 4, WeaponType.BULLET, 5, 4, 10, 650, 6, 255, 0, -1);
+            case CONFED_GRENADIER -> new com.aow2.common.model.UnitStats(unitType, "Grenadier", 45, 4, 5, 4, 0, 5, 5, WeaponType.ROCKET, 8, 5, 15, 700, 6, 255, 0, -1);
+
+            case CONFED_FLAME_ASSAULT -> new com.aow2.common.model.UnitStats(unitType, "Flame Assault", 50, 6, 5, 3, 0, 3, 3, WeaponType.FLAME, 3, 6, 25, 800, 6, 255, 0, -1);
+            case CONFED_FORTRESS -> new com.aow2.common.model.UnitStats(unitType, "AV-40 Fortress", 120, 8, 4, 7, 0, 6, 6, WeaponType.ARTILLERY, 10, 10, 50, 1200, 8, 255, 0, -1);
+            case CONFED_HAMMER -> new com.aow2.common.model.UnitStats(unitType, "T-21 Hammer", 70, 6, 7, 5, 0, 2, 6, WeaponType.ARTILLERY, 8, 7, 30, 300, 8, 255, 0, -1);
+            case CONFED_ZEUS -> new com.aow2.common.model.UnitStats(unitType, "T-22 Zeus", 70, 6, 7, 5, 0, 2, 6, WeaponType.MACHINE_GUN, 2, 7, 30, 300, 8, 255, 0, -1);
+            case CONFED_TORRENT -> new com.aow2.common.model.UnitStats(unitType, "MLRS Torrent", 80, 15, 4, 7, 2, 6, 6, WeaponType.ROCKET, 12, 8, 50, 250, 8, 255, 2, -1);
+            case CONFED_MINE_SCORPIO -> new com.aow2.common.model.UnitStats(unitType, "Mine Scorpio", 10, 20, 3, 0, 0, 0, 0, WeaponType.NONE, 1, 3, 10, 100, 4, 255, 0, -1);
+            case CONFED_MINE_FROG -> new com.aow2.common.model.UnitStats(unitType, "Mine Frog", 10, 15, 3, 0, 0, 0, 0, WeaponType.NONE, 1, 3, 10, 100, 4, 255, 0, -1);
+            case CONFED_MINE_LIZARD -> new com.aow2.common.model.UnitStats(unitType, "Mine Lizard", 10, 18, 3, 0, 0, 0, 0, WeaponType.NONE, 1, 3, 10, 100, 4, 255, 0, -1);
+            case REBEL_INFANTRY -> new com.aow2.common.model.UnitStats(unitType, "Infantry", 40, 2, 5, 5, 0, 4, 4, WeaponType.BULLET, 5, 4, 10, 650, 6, 255, 0, -1);
+            case REBEL_GRENADIER -> new com.aow2.common.model.UnitStats(unitType, "Grenadier", 45, 4, 5, 4, 0, 5, 5, WeaponType.ROCKET, 8, 5, 15, 700, 6, 255, 0, -1);
+            case REBEL_SNIPER -> new com.aow2.common.model.UnitStats(unitType, "Sniper", 35, 8, 3, 4, 0, 7, 7, WeaponType.SNIPER_RIFLE, 15, 6, 20, 750, 6, 255, 0, -1);
+            case REBEL_COYOTE -> new com.aow2.common.model.UnitStats(unitType, "Coyote", 60, 5, 8, 4, 0, 2, 5, WeaponType.MACHINE_GUN, 4, 6, 25, 400, 7, 255, 0, -1);
+            case REBEL_ARMADILLO -> new com.aow2.common.model.UnitStats(unitType, "Armadillo", 100, 7, 5, 8, 0, 5, 5, WeaponType.ARTILLERY, 6, 9, 40, 1000, 8, 255, 0, -1);
+            case REBEL_RHINO -> new com.aow2.common.model.UnitStats(unitType, "Rhino", 75, 6, 6, 6, 0, 3, 6, WeaponType.ARTILLERY, 8, 8, 35, 350, 8, 255, 0, -1);
+            case REBEL_PORCUPINE -> new com.aow2.common.model.UnitStats(unitType, "MMC Porcupine", 85, 12, 4, 6, 1, 5, 5, WeaponType.ROCKET, 10, 9, 45, 280, 8, 255, 1, -1);
         };
     }
 }

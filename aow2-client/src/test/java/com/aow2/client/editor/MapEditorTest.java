@@ -64,7 +64,7 @@ class MapEditorTest {
         void shouldClearPreviousStateWhenCreatingNewMap() {
             // Given: an editor with an existing map
             editor.createNewMap(10, 10);
-            editor.paintTerrain(new GridPosition(5, 5), TerrainType.WATER);
+            editor.paintTerrain(new GridPosition(5, 5), TerrainType.DEEP_WATER);
 
             // When: creating a new map
             editor.createNewMap(20, 20);
@@ -98,10 +98,10 @@ class MapEditorTest {
             GridPosition pos = new GridPosition(5, 5);
 
             // When: painting water terrain
-            editor.paintTerrain(pos, TerrainType.WATER);
+            editor.paintTerrain(pos, TerrainType.DEEP_WATER);
 
             // Then: the tile should be WATER
-            assertEquals(TerrainType.WATER, editor.getCurrentMap().getTile(5, 5));
+            assertEquals(TerrainType.DEEP_WATER, editor.getCurrentMap().getTile(5, 5));
         }
 
         @Test
@@ -123,16 +123,16 @@ class MapEditorTest {
         void shouldPaintWithBrushSize() {
             // Given: tile painter with medium (3x3) brush
             editor.getTilePainter().setBrushSize(TilePainter.BrushSize.MEDIUM);
-            editor.getTilePainter().setSelectedTerrain(TerrainType.WATER);
+            editor.getTilePainter().setSelectedTerrain(TerrainType.DEEP_WATER);
 
             // When: painting at center position
             var painted = editor.getTilePainter().paint(new GridPosition(10, 10));
 
             // Then: 9 tiles should be painted (3x3 area)
             assertTrue(painted.size() >= 9);
-            assertEquals(TerrainType.WATER, editor.getCurrentMap().getTile(9, 9));
-            assertEquals(TerrainType.WATER, editor.getCurrentMap().getTile(10, 10));
-            assertEquals(TerrainType.WATER, editor.getCurrentMap().getTile(11, 11));
+            assertEquals(TerrainType.DEEP_WATER, editor.getCurrentMap().getTile(9, 9));
+            assertEquals(TerrainType.DEEP_WATER, editor.getCurrentMap().getTile(10, 10));
+            assertEquals(TerrainType.DEEP_WATER, editor.getCurrentMap().getTile(11, 11));
         }
 
         @Test
@@ -142,7 +142,7 @@ class MapEditorTest {
             MapEditor emptyEditor = new MapEditor();
 
             // When/Then: painting should not throw
-            assertDoesNotThrow(() -> emptyEditor.paintTerrain(new GridPosition(5, 5), TerrainType.WATER));
+            assertDoesNotThrow(() -> emptyEditor.paintTerrain(new GridPosition(5, 5), TerrainType.DEEP_WATER));
         }
     }
 
@@ -196,7 +196,7 @@ class MapEditorTest {
         @DisplayName("shouldRejectUnitOnImpassableTerrain")
         void shouldRejectUnitOnImpassableTerrain() {
             // Given: water terrain at a position
-            editor.paintTerrain(new GridPosition(5, 5), TerrainType.WATER);
+            editor.paintTerrain(new GridPosition(5, 5), TerrainType.DEEP_WATER);
 
             // When: trying to place a unit on water
             boolean placed = editor.placeUnit(
@@ -332,7 +332,7 @@ class MapEditorTest {
             // Paint >50% water
             for (int x = 0; x < 10; x++) {
                 for (int y = 0; y < 6; y++) {
-                    editor.paintTerrain(new GridPosition(x, y), TerrainType.WATER);
+                    editor.paintTerrain(new GridPosition(x, y), TerrainType.DEEP_WATER);
                 }
             }
 
@@ -355,7 +355,7 @@ class MapEditorTest {
 
             // Fill a dividing wall of water
             for (int y = 0; y < 10; y++) {
-                editor.paintTerrain(new GridPosition(5, y), TerrainType.WATER);
+                editor.paintTerrain(new GridPosition(5, y), TerrainType.DEEP_WATER);
             }
 
             // When: validating
@@ -377,7 +377,7 @@ class MapEditorTest {
         void shouldSaveAndLoadMapPreservingTerrain() throws Exception {
             // Given: a map with custom terrain
             editor.createNewMap(10, 10);
-            editor.paintTerrain(new GridPosition(3, 3), TerrainType.WATER);
+            editor.paintTerrain(new GridPosition(3, 3), TerrainType.DEEP_WATER);
             editor.paintTerrain(new GridPosition(7, 7), TerrainType.MOUNTAIN);
             editor.setStartingPosition(0, new GridPosition(0, 0));
             editor.setStartingPosition(1, new GridPosition(9, 9));
@@ -392,7 +392,7 @@ class MapEditorTest {
                 assertTrue(loadedEditor.loadMap(tempFile));
 
                 // Then: terrain should be preserved
-                assertEquals(TerrainType.WATER, loadedEditor.getCurrentMap().getTile(3, 3));
+                assertEquals(TerrainType.DEEP_WATER, loadedEditor.getCurrentMap().getTile(3, 3));
                 assertEquals(TerrainType.MOUNTAIN, loadedEditor.getCurrentMap().getTile(7, 7));
                 assertEquals(TerrainType.GRASS, loadedEditor.getCurrentMap().getTile(5, 5));
                 assertEquals(new GridPosition(0, 0), loadedEditor.getStartingPositions().get(0));

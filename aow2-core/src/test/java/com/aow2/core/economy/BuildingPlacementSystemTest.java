@@ -1,6 +1,7 @@
 package com.aow2.core.economy;
 
 import com.aow2.common.model.BuildingStats;
+import com.aow2.common.model.WeaponType;
 import com.aow2.common.model.BuildingType;
 import com.aow2.common.model.Faction;
 import com.aow2.common.model.GridPosition;
@@ -39,15 +40,13 @@ class BuildingPlacementSystemTest {
     private BuildingStats createCommandCentreStats() {
         return new BuildingStats(
             BuildingType.CONFED_COMMAND_CENTRE, 120, 100, 0, 10, 0, 10,
-            60, 0, 15, 0, 0, 5, 0, 100, 50, List.of(100, 200, 300)
-        );
+            60, 0, 15, 0, 0, 5, 0, 100, 50, 0, WeaponType.NONE, List.of(100, 200, 300));
     }
 
     private BuildingStats createGeneratorStats() {
         return new BuildingStats(
             BuildingType.CONFED_GENERATOR, 60, 20, 0, 3, 0, 6,
-            30, 0, 5, 0, 10, 0, 0, 20, 10, List.of()
-        );
+            30, 0, 5, 0, 10, 0, 0, 20, 10, 0, WeaponType.NONE, List.of());
     }
 
     /**
@@ -122,7 +121,7 @@ class BuildingPlacementSystemTest {
         @DisplayName("Should reject placement on impassable terrain")
         void shouldRejectPlacementOnImpassableTerrain() {
             // Given: map with water at (55,50), player has CC
-            map.setTile(55, 50, TerrainType.WATER);
+            map.setTile(55, 50, TerrainType.DEEP_WATER);
             placeCompletedCC(new GridPosition(50, 50));
             economy.setCredits(0, 1000);
 

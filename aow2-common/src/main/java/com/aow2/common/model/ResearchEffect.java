@@ -1,6 +1,9 @@
 package com.aow2.common.model;
 
-import java.util.Arrays;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.Objects;
+import java.util.Set;
 
 /**
  * Represents the stat modification that a research node applies when completed.
@@ -9,40 +12,56 @@ import java.util.Arrays;
  * REF: combat_formulas.md section "Research/Upgrade Effects"
  * REF: complete_unit_stats.json technologies section - asymmetric per faction
  *
- * @param statName          the stat field name that this research modifies (e.g., "armor", "damage", "speed")
+ * FIX LOG:
+ * - Changed affectedUnitTypes from int[] to Set<UnitType> for type safety
+ * - Changed affectsUnitType from int ordinal to UnitType parameter
+ * - Changed statName from String to StatType enum for compile-time safety
+ *
+ * @param statType          the stat that this research modifies
  * @param value             the integer modification value to apply to the stat
- * @param affectedUnitTypes array of UnitType ordinals that are affected by this research
+ * @param affectedUnitTypes set of UnitType values that are affected by this research
  */
 public record ResearchEffect(
-    String statName,
+    StatType statType,
     int value,
-    int[] affectedUnitTypes
+    Set<UnitType> affectedUnitTypes
 ) {
+    /**
+     * Types of stats that research can modify.
+     */
+    public enum StatType {
+        ARMOR,
+        DAMAGE,
+        SPEED,
+        ATTACK_RANGE,
+        SIGHT_RANGE,
+        HP,
+        COST
+    }
+
     /**
      * Compact constructor validating research effect fields.
      */
     public ResearchEffect {
-        if (statName == null || statName.isBlank()) {
-            throw new IllegalArgumentException("statName must not be null or blank");
+        if (statType == null) {
+            throw new IllegalArgumentException("statType must not be null");
         }
         if (affectedUnitTypes == null) {
-            affectedUnitTypes = new int[0];
+            affectedUnitTypes = Collections.emptySet();
+        } else {
+            // Defensive copy using unmodifiable set
+            affectedUnitTypes = Collections.unmodifiableSet(EnumSet.copyOf(affectedUnitTypes));
         }
     }
 
     /**
-     * Checks whether the given unit type ordinal is affected by this research.
+     * Checks whether the given unit type is affected by this research.
      *
-     * @param unitTypeOrdinal the ordinal of the UnitType to check
+     * @param type the UnitType to check
      * @return true if this research affects the specified unit type
      */
-    public boolean affectsUnitType(int unitTypeOrdinal) {
-        for (int type : affectedUnitTypes) {
-            if (type == unitTypeOrdinal) {
-                return true;
-            }
-        }
-        return false;
+    public boolean affectsUnitType(UnitType type) {
+        return affectedUnitTypes.contains(type);
     }
 
     @Override
@@ -50,21 +69,18 @@ public record ResearchEffect(
         if (this == o) return true;
         if (!(o instanceof ResearchEffect that)) return false;
         return value == that.value
-            && statName.equals(that.statName)
-            && Arrays.equals(affectedUnitTypes, that.affectedUnitTypes);
+            && statType == that.statType
+            && affectedUnitTypes.equals(that.affectedUnitTypes);
     }
 
     @Override
     public int hashCode() {
-        int result = statName.hashCode();
-        result = 31 * result + value;
-        result = 31 * result + Arrays.hashCode(affectedUnitTypes);
-        return result;
+        return Objects.hash(statType, value, affectedUnitTypes);
     }
 
     @Override
     public String toString() {
-        return "ResearchEffect{statName='" + statName + "', value=" + value +
-               ", affectedUnitTypes=" + Arrays.toString(affectedUnitTypes) + "}";
+        return "ResearchEffect{statType=" + statType + ", value=" + value +
+               ", affectedUnitTypes=" + affectedUnitTypes + "}";
     }
 }

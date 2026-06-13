@@ -283,13 +283,13 @@ class ModManagerTest {
         var buildingType = com.aow2.common.model.BuildingType.CONFED_COMMAND_CENTRE;
 
         registry.registerUnitStats(unitType, new com.aow2.common.model.UnitStats(
-            unitType, "Test infantry", 80, 10, 100, 4, 2, 0, 5, 4,
+            unitType, "Test infantry", 80, 10, 4, 2, 0, 5, 4, WeaponType.NONE, 0,
             60, 100, 5, 2, 0, 0, 0
         ));
 
         registry.registerBuildingStats(buildingType, new com.aow2.common.model.BuildingStats(
-            buildingType, 500, 0, 0, 5, 0, 10, 600, 6, 5, 0, 10, 1, 0, 0, 0,
-            java.util.List.of()
+            buildingType, 500, 0, 0, 5, 0, 10, 600, 6, 5, 0, 10, 1, 0, 0, 0, 0,
+            com.aow2.common.model.WeaponType.NONE, java.util.List.of()
         ));
     }
 }

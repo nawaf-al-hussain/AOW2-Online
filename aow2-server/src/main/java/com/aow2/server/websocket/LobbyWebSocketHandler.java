@@ -16,6 +16,7 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -32,6 +33,9 @@ public class LobbyWebSocketHandler extends TextWebSocketHandler {
 
     /** Active lobby WebSocket sessions keyed by session ID */
     private final Map<String, WebSocketSession> sessions = new ConcurrentHashMap<>();
+
+    /** Tracks which players have signaled ready, keyed by session UUID */
+    private final Map<String, Set<String>> readyPlayers = new ConcurrentHashMap<>();
 
     private final MatchmakingService matchmakingService;
     private final SessionService sessionService;
@@ -164,7 +168,7 @@ public class LobbyWebSocketHandler extends TextWebSocketHandler {
 
     /**
      * Handles a ready signal from a player.
-     * When both players signal ready, the game session transitions to STARTING.
+     * When BOTH players signal ready, the game session transitions to STARTING.
      * REF: session_lifecycle.md - Both players confirm → match begins
      *
      * @param session the WebSocket session
@@ -183,27 +187,50 @@ public class LobbyWebSocketHandler extends TextWebSocketHandler {
         }
 
         var gs = gameSession.get();
-        if (gs.getState() == GameSession.SessionState.WAITING) {
-            sessionService.startSession(gs.getSessionUuid());
+        if (gs.getState() != GameSession.SessionState.WAITING) {
+            sendError(session, "Session is not in WAITING state");
+            return;
+        }
 
-            // Notify both players that the game is starting
-            String ws1 = getSessionForPlayer(gs.getPlayer1Id());
-            String ws2 = getSessionForPlayer(gs.getPlayer2Id());
+        // Track ready state per session UUID
+        String sessionUuid = gs.getSessionUuid();
+        Set<String> ready = readyPlayers.computeIfAbsent(sessionUuid, k -> ConcurrentHashMap.newKeySet());
+        ready.add(playerId.toString());
 
-            Map<String, Object> startMsg = Map.of(
-                    "type", "game_start",
-                    "sessionUuid", gs.getSessionUuid(),
-                    "player1Id", gs.getPlayer1Id(),
-                    "player2Id", gs.getPlayer2Id()
-            );
+        // Send acknowledgement to the player who just readied
+        sendMessage(session, Map.of(
+                "type", "ready_ack",
+                "playerId", playerId,
+                "sessionUuid", sessionUuid
+        ));
 
-            if (ws1 != null) sendToSessionId(ws1, startMsg);
-            if (ws2 != null) sendToSessionId(ws2, startMsg);
+        // Only transition when BOTH players have signaled ready
+        if (ready.size() < 2) {
+            log.info("Player {} ready for session {}, waiting for opponent", playerId, sessionUuid);
+            return;
+        }
 
-            // Link players for P2P relay
-            if (ws1 != null && ws2 != null) {
-                sessionService.linkPlayers(gs.getPlayer1Id(), gs.getPlayer2Id(), ws1, ws2);
-            }
+        // Both players ready — clean up ready tracking and start the session
+        readyPlayers.remove(sessionUuid);
+        sessionService.startSession(sessionUuid);
+
+        // Notify both players that the game is starting
+        String ws1 = getSessionForPlayer(gs.getPlayer1Id());
+        String ws2 = getSessionForPlayer(gs.getPlayer2Id());
+
+        Map<String, Object> startMsg = Map.of(
+                "type", "game_start",
+                "sessionUuid", sessionUuid,
+                "player1Id", gs.getPlayer1Id(),
+                "player2Id", gs.getPlayer2Id()
+        );
+
+        if (ws1 != null) sendToSessionId(ws1, startMsg);
+        if (ws2 != null) sendToSessionId(ws2, startMsg);
+
+        // Link players for P2P relay
+        if (ws1 != null && ws2 != null) {
+            sessionService.linkPlayers(gs.getPlayer1Id(), gs.getPlayer2Id(), ws1, ws2);
         }
     }
 

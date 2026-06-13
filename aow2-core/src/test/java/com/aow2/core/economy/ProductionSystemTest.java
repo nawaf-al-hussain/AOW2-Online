@@ -1,6 +1,7 @@
 package com.aow2.core.economy;
 
 import com.aow2.common.model.BuildingStats;
+import com.aow2.common.model.WeaponType;
 import com.aow2.common.model.BuildingType;
 import com.aow2.common.model.Faction;
 import com.aow2.common.model.GridPosition;
@@ -41,15 +42,13 @@ class ProductionSystemTest {
     private BuildingStats createInfantryCentreStats() {
         return new BuildingStats(
             BuildingType.CONFED_INFANTRY_CENTRE, 80, 30, 0, 5, 0, 8,
-            40, 0, 10, 5, 0, 5, 0, 30, 15, List.of(50, 100, 150)
-        );
+            40, 0, 10, 5, 0, 5, 0, 30, 15, 0, WeaponType.NONE, List.of(50, 100, 150));
     }
 
     private BuildingStats createMachineFactoryStats() {
         return new BuildingStats(
             BuildingType.CONFED_MACHINE_FACTORY, 100, 50, 0, 7, 0, 8,
-            50, 0, 12, 8, 0, 5, 0, 50, 25, List.of(75, 150, 225)
-        );
+            50, 0, 12, 8, 0, 5, 0, 50, 25, 0, WeaponType.NONE, List.of(75, 150, 225));
     }
 
     /**

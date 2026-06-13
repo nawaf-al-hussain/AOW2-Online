@@ -4,6 +4,7 @@ import com.aow2.common.model.CommandType;
 import com.aow2.common.model.Faction;
 import com.aow2.common.model.GridPosition;
 import com.aow2.common.model.UnitStats;
+import com.aow2.common.model.WeaponType;
 import com.aow2.common.model.UnitType;
 import com.aow2.core.combat.CombatSystem;
 import com.aow2.core.economy.BuildingPlacementSystem;
@@ -61,7 +62,7 @@ class CommandProcessorTest {
     @Test
     @DisplayName("Move command processes without error")
     void moveCommandProcesses() {
-        UnitStats stats = new UnitStats(UnitType.CONFED_INFANTRY, "Infantry", 40, 2, 1, 5, 5, 0, 4, 4, 4, 10, 650, 6, 255, 0, -1);
+        UnitStats stats = new UnitStats(UnitType.CONFED_INFANTRY, "Infantry", 40, 2, 5, 5, 0, 4, 4, WeaponType.BULLET, 5, 4, 10, 650, 6, 255, 0, -1);
         var unit = new com.aow2.core.entity.Unit(1, Faction.CONFEDERATION, new GridPosition(5, 5),
             UnitType.CONFED_INFANTRY, stats);
         entities.addUnit(unit);
@@ -75,7 +76,7 @@ class CommandProcessorTest {
     @Test
     @DisplayName("Stop command clears unit path and target")
     void stopCommandClearsUnitState() {
-        UnitStats stats = new UnitStats(UnitType.CONFED_INFANTRY, "Infantry", 40, 2, 1, 5, 5, 0, 4, 4, 4, 10, 650, 6, 255, 0, -1);
+        UnitStats stats = new UnitStats(UnitType.CONFED_INFANTRY, "Infantry", 40, 2, 5, 5, 0, 4, 4, WeaponType.BULLET, 5, 4, 10, 650, 6, 255, 0, -1);
         var unit = new com.aow2.core.entity.Unit(1, Faction.CONFEDERATION, new GridPosition(5, 5),
             UnitType.CONFED_INFANTRY, stats);
         unit.setTargetUnitRef(2);
@@ -93,7 +94,7 @@ class CommandProcessorTest {
     @Test
     @DisplayName("Attack command sets target reference")
     void attackCommandSetsTarget() {
-        UnitStats stats = new UnitStats(UnitType.CONFED_INFANTRY, "Infantry", 40, 2, 1, 5, 5, 0, 4, 4, 4, 10, 650, 6, 255, 0, -1);
+        UnitStats stats = new UnitStats(UnitType.CONFED_INFANTRY, "Infantry", 40, 2, 5, 5, 0, 4, 4, WeaponType.BULLET, 5, 4, 10, 650, 6, 255, 0, -1);
         var attacker = new com.aow2.core.entity.Unit(1, Faction.CONFEDERATION, new GridPosition(5, 5),
             UnitType.CONFED_INFANTRY, stats);
         var target = new com.aow2.core.entity.Unit(2, Faction.RESISTANCE, new GridPosition(6, 5),
@@ -161,7 +162,7 @@ class CommandProcessorTest {
     @Test
     @DisplayName("Siege mode command processes for valid unit")
     void siegeModeCommandProcesses() {
-        UnitStats stats = new UnitStats(UnitType.CONFED_TORRENT, "Torrent", 80, 15, 8, 4, 7, 2, 6, 6, 8, 50, 250, 8, 255, 2, -1);
+        UnitStats stats = new UnitStats(UnitType.CONFED_TORRENT, "Torrent", 80, 15, 4, 7, 2, 6, 6, WeaponType.ROCKET, 12, 8, 50, 250, 8, 255, 2, -1);
         var unit = new com.aow2.core.entity.Unit(1, Faction.CONFEDERATION, new GridPosition(5, 5),
             UnitType.CONFED_TORRENT, stats);
         entities.addUnit(unit);
@@ -176,7 +177,7 @@ class CommandProcessorTest {
     @Test
     @DisplayName("Patrol command issues move order")
     void patrolCommandIssuesMove() {
-        UnitStats stats = new UnitStats(UnitType.CONFED_INFANTRY, "Infantry", 40, 2, 1, 5, 5, 0, 4, 4, 4, 10, 650, 6, 255, 0, -1);
+        UnitStats stats = new UnitStats(UnitType.CONFED_INFANTRY, "Infantry", 40, 2, 5, 5, 0, 4, 4, WeaponType.BULLET, 5, 4, 10, 650, 6, 255, 0, -1);
         var unit = new com.aow2.core.entity.Unit(1, Faction.CONFEDERATION, new GridPosition(5, 5),
             UnitType.CONFED_INFANTRY, stats);
         entities.addUnit(unit);

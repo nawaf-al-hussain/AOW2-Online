@@ -143,8 +143,6 @@ public final class ResourceGenerator {
             // Confederation infantry
             case CONFED_INFANTRY -> 10;
             case CONFED_GRENADIER -> 15;
-            case CONFED_LIGHT_ASSAULT -> 20;
-            case CONFED_HEAVY_ASSAULT -> 35;
             case CONFED_FLAME_ASSAULT -> 25;
             // Confederation vehicles
             case CONFED_FORTRESS -> 50;

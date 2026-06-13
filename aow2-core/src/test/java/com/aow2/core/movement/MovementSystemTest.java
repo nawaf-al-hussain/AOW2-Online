@@ -4,6 +4,7 @@ import com.aow2.common.model.Faction;
 import com.aow2.common.model.GridPosition;
 import com.aow2.common.model.MovementState;
 import com.aow2.common.model.UnitStats;
+import com.aow2.common.model.WeaponType;
 import com.aow2.common.model.UnitType;
 import com.aow2.core.entity.Unit;
 import com.aow2.core.world.EntityManager;
@@ -30,8 +31,8 @@ class MovementSystemTest {
      */
     private UnitStats createFastInfantryStats() {
         return new UnitStats(
-            UnitType.REBEL_INFANTRY, "Infantry", 40, 5, 10,
-            1, 5, 0, 8, 5, 30, 10, 5, 10, 0, 0, 1
+            UnitType.REBEL_INFANTRY, "Infantry", 40, 5,
+            1, 5, 0, 8, 5, WeaponType.BULLET, 5, 30, 10, 5, 10, 0, 0, 1
         );
     }
 
@@ -40,8 +41,8 @@ class MovementSystemTest {
      */
     private UnitStats createSlowUnitStats() {
         return new UnitStats(
-            UnitType.CONFED_FORTRESS, "Fortress", 200, 30, 60,
-            4, 15, 5, 10, 7, 120, 60, 30, 20, 1, 0, 1
+            UnitType.CONFED_FORTRESS, "Fortress", 200, 30,
+            4, 15, 5, 10, 7, WeaponType.ARTILLERY, 10, 120, 60, 30, 20, 1, 0, 1
         );
     }
 
@@ -103,7 +104,7 @@ class MovementSystemTest {
             Unit unit = new Unit(1, Faction.RESISTANCE, new GridPosition(0, 0),
                 UnitType.REBEL_INFANTRY, stats);
             entities.addUnit(unit);
-            map.setTile(5, 0, com.aow2.common.model.TerrainType.WATER);
+            map.setTile(5, 0, com.aow2.common.model.TerrainType.DEEP_WATER);
 
             // When: issuing a move command to water
             movement.issueMoveCommand(unit, new GridPosition(5, 0), map, entities);

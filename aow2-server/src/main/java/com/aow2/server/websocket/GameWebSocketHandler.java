@@ -2,6 +2,7 @@ package com.aow2.server.websocket;
 
 import com.aow2.server.model.GameSession;
 import com.aow2.server.security.JwtUtil;
+import com.aow2.server.service.RankingService;
 import com.aow2.server.service.SessionService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -34,16 +35,19 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
     private final Map<String, WebSocketSession> sessions = new ConcurrentHashMap<>();
 
     private final SessionService sessionService;
+    private final RankingService rankingService;
     private final JwtUtil jwtUtil;
 
     /**
      * Constructs the GameWebSocketHandler.
      *
-     * @param sessionService the session management service
-     * @param jwtUtil        the JWT utility for token validation
+     * @param sessionService  the session management service
+     * @param rankingService  the ranking service for recording match results
+     * @param jwtUtil         the JWT utility for token validation
      */
-    public GameWebSocketHandler(SessionService sessionService, JwtUtil jwtUtil) {
+    public GameWebSocketHandler(SessionService sessionService, RankingService rankingService, JwtUtil jwtUtil) {
         this.sessionService = sessionService;
+        this.rankingService = rankingService;
         this.jwtUtil = jwtUtil;
     }
 
@@ -213,6 +217,19 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         int durationSeconds = payload.has("durationSeconds") ? payload.get("durationSeconds").asInt() : 0;
 
         sessionService.completeSession(sessionUuid, winnerId, durationSeconds);
+
+        // Record match result for ELO ranking
+        var completedSession = sessionService.getSessionForPlayer(playerId);
+        if (completedSession.isPresent()) {
+            var gs = completedSession.get();
+            rankingService.recordMatchResult(
+                    gs.getPlayer1Id(),
+                    gs.getPlayer2Id(),
+                    winnerId,
+                    gs.getMapName(),
+                    durationSeconds
+            );
+        }
 
         // Notify opponent
         String opponentWs = sessionService.getOpponentWsSession(playerId);

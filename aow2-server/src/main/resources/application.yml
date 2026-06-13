@@ -6,8 +6,8 @@ spring:
     name: aow2-server
   datasource:
     url: jdbc:postgresql://localhost:5432/aow2
-    username: aow2
-    password: aow2_dev
+    username: ${DB_USERNAME:aow2}
+    password: ${DB_PASSWORD:aow2_dev}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
@@ -22,7 +22,7 @@ spring:
 
 aow2:
   jwt:
-    secret: aow2-production-jwt-secret-key-must-be-at-least-32-bytes-long
+    secret: ${AOW2_JWT_SECRET:aow2-dev-only-secret-key-that-is-at-least-32-bytes-long-for-hmac}
     expiration-ms: 86400000
 
 logging:

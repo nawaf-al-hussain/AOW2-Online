@@ -244,20 +244,20 @@ public class GameScene {
         // Confederation units
         var confedInfantryStats = new com.aow2.common.model.UnitStats(
             com.aow2.common.model.UnitType.CONFED_INFANTRY, "Standard infantry", 80, 10,
-            100, 4, 2, 0, 5, 4, 60, 100, 5, 4, 0, 0, 0);
+            4, 2, 0, 5, 4, com.aow2.common.model.WeaponType.BULLET, 5, 60, 100, 5, 4, 0, 0, 0);
 
         var confedGrenadierStats = new com.aow2.common.model.UnitStats(
             com.aow2.common.model.UnitType.CONFED_GRENADIER, "Grenadier", 60, 25,
-            150, 3, 1, 0, 5, 5, 90, 150, 8, 2, 0, 0, 0);
+            3, 1, 0, 5, 5, com.aow2.common.model.WeaponType.ROCKET, 8, 90, 150, 8, 2, 0, 0, 0);
 
         // Resistance units
         var rebelInfantryStats = new com.aow2.common.model.UnitStats(
             com.aow2.common.model.UnitType.REBEL_INFANTRY, "Rebel infantry", 70, 9,
-            80, 5, 1, 0, 5, 4, 50, 80, 4, 3, 0, 0, 0);
+            5, 1, 0, 5, 4, com.aow2.common.model.WeaponType.BULLET, 5, 50, 80, 4, 3, 0, 0, 0);
 
         var rebelSniperStats = new com.aow2.common.model.UnitStats(
             com.aow2.common.model.UnitType.REBEL_SNIPER, "Sniper", 50, 35,
-            200, 3, 0, 0, 7, 7, 120, 200, 10, 1, 0, 0, 0);
+            3, 0, 0, 7, 7, com.aow2.common.model.WeaponType.SNIPER_RIFLE, 15, 120, 200, 10, 1, 0, 0, 0);
 
         // Place Confederation units on the left side
         entityManager.addUnit(new com.aow2.core.entity.Unit(
@@ -281,7 +281,7 @@ public class GameScene {
         // Confederation building
         var commandCentreStats = new com.aow2.common.model.BuildingStats(
             com.aow2.common.model.BuildingType.CONFED_COMMAND_CENTRE, 500, 0, 0, 5,
-            0, 10, 600, 6, 5, 0, 10, 1, 0, 0, 0, java.util.List.of());
+            0, 10, 600, 6, 5, 0, 10, 1, 0, 0, 0, 0, com.aow2.common.model.WeaponType.NONE, java.util.List.of());
         entityManager.addBuilding(new com.aow2.core.entity.Building(
             entityManager.allocateEntityId(), Faction.CONFEDERATION,
             new GridPosition(0, 0), com.aow2.common.model.BuildingType.CONFED_COMMAND_CENTRE,
@@ -290,7 +290,7 @@ public class GameScene {
         // Resistance headquarters
         var headquartersStats = new com.aow2.common.model.BuildingStats(
             com.aow2.common.model.BuildingType.REBEL_HEADQUARTERS, 450, 0, 0, 4,
-            0, 10, 500, 6, 4, 0, 10, 1, 0, 0, 0, java.util.List.of());
+            0, 10, 500, 6, 4, 0, 10, 1, 0, 0, 0, 0, com.aow2.common.model.WeaponType.NONE, java.util.List.of());
         entityManager.addBuilding(new com.aow2.core.entity.Building(
             entityManager.allocateEntityId(), Faction.RESISTANCE,
             new GridPosition(7, 7), com.aow2.common.model.BuildingType.REBEL_HEADQUARTERS,

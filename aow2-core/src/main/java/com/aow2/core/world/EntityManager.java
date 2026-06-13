@@ -3,6 +3,7 @@ package com.aow2.core.world;
 import com.aow2.common.model.Faction;
 import com.aow2.common.model.GridPosition;
 import com.aow2.core.entity.Building;
+import com.aow2.core.entity.Mine;
 import com.aow2.core.entity.Projectile;
 import com.aow2.core.entity.Unit;
 
@@ -10,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -30,6 +32,9 @@ public class EntityManager {
 
     /** All active projectiles keyed by entity ID. */
     private final Map<Integer, Projectile> projectiles;
+
+    /** All mines in the game world. */
+    private final List<Mine> mines = new ArrayList<>();
 
     /** Counter for allocating unique entity IDs. */
     private final AtomicInteger nextEntityId;
@@ -162,6 +167,36 @@ public class EntityManager {
         return Collections.unmodifiableList(new ArrayList<>(buildings.values()));
     }
 
+    // --- Mine operations ---
+
+    /**
+     * Adds a mine to the manager.
+     *
+     * @param mine the mine to add
+     */
+    public void addMine(Mine mine) {
+        mines.add(mine);
+    }
+
+    /**
+     * Returns all mines in the manager.
+     *
+     * @return unmodifiable list of all mines
+     */
+    public List<Mine> getMines() {
+        return Collections.unmodifiableList(mines);
+    }
+
+    /**
+     * Gets a mine by its entity ID.
+     *
+     * @param id entity ID
+     * @return an Optional containing the mine, or empty if not found
+     */
+    public Optional<Mine> getMine(int id) {
+        return mines.stream().filter(m -> m.getId() == id).findFirst();
+    }
+
     // --- Projectile operations ---
 
     /**
@@ -213,6 +248,7 @@ public class EntityManager {
         units.entrySet().removeIf(entry -> !entry.getValue().isAlive());
         buildings.entrySet().removeIf(entry -> !entry.getValue().isAlive());
         projectiles.entrySet().removeIf(entry -> entry.getValue().hasReachedTarget());
+        mines.removeIf(mine -> mine.getHp() <= 0);
     }
 
     // --- Spatial queries ---

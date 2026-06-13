@@ -40,8 +40,8 @@ class SaveManagerTest {
 
     private Unit createTestUnit(int id, Faction faction) {
         UnitStats stats = new UnitStats(
-            UnitType.CONFED_INFANTRY, "Test Infantry", 100, 10, 50,
-            8, 3, 0, 7, 3, 20, 50, 15, 0, 0, 0, 1);
+            UnitType.CONFED_INFANTRY, "Test Infantry", 100, 10,
+            8, 3, 0, 7, 3, WeaponType.BULLET, 5, 20, 50, 15, 0, 0, 0, 1);
         return new Unit(id, faction, new GridPosition(10, 10),
             UnitType.CONFED_INFANTRY, stats);
     }
@@ -49,7 +49,7 @@ class SaveManagerTest {
     private Building createTestBuilding(int id, Faction faction) {
         BuildingStats stats = new BuildingStats(
             BuildingType.CONFED_COMMAND_CENTRE, 500, 500, 0, 5,
-            0, 10, 120, 0, 0, 0, 10, 0, 0, 200, 100, List.of());
+            0, 10, 120, 0, 0, 0, 10, 0, 0, 200, 100, 0, WeaponType.NONE, List.of());
         return new Building(id, faction, new GridPosition(20, 20),
             BuildingType.CONFED_COMMAND_CENTRE, stats);
     }

@@ -1,6 +1,7 @@
 package com.aow2.core.research;
 
 import com.aow2.common.model.BuildingStats;
+import com.aow2.common.model.WeaponType;
 import com.aow2.common.model.BuildingType;
 import com.aow2.common.model.Faction;
 import com.aow2.common.model.GridPosition;
@@ -40,15 +41,13 @@ class ResearchSystemTest {
     private BuildingStats createTechCentreStats() {
         return new BuildingStats(
             BuildingType.CONFED_TECH_CENTRE, 70, 60, 0, 4, 0, 8,
-            45, 0, 8, 5, 0, 1, 0, 60, 30, List.of()
-        );
+            45, 0, 8, 5, 0, 1, 0, 60, 30, 0, WeaponType.NONE, List.of());
     }
 
     private BuildingStats createLaboratoryStats() {
         return new BuildingStats(
             BuildingType.REBEL_LABORATORY, 70, 60, 0, 4, 0, 8,
-            45, 0, 8, 5, 0, 1, 0, 60, 30, List.of()
-        );
+            45, 0, 8, 5, 0, 1, 0, 60, 30, 0, WeaponType.NONE, List.of());
     }
 
     /**

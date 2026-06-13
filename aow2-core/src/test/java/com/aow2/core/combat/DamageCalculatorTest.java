@@ -19,12 +19,12 @@ class DamageCalculatorTest {
 
     @BeforeEach
     void setUp() {
-        infantryStats = new UnitStats(UnitType.CONFED_INFANTRY, "Infantry", 40, 2, 1, 5, 5,
-            0, 4, 4, 4, 10, 650, 6, 255, 0, -1);
-        zeusStats = new UnitStats(UnitType.CONFED_ZEUS, "T-22 Zeus", 70, 6, 3, 7, 5,
-            0, 2, 6, 14, 30, 300, 8, 255, 0, -1);
-        torrentStats = new UnitStats(UnitType.CONFED_TORRENT, "MLRS Torrent", 80, 15, 8, 4, 7,
-            2, 6, 6, 7, 50, 250, 8, 255, 2, -1);
+        infantryStats = new UnitStats(UnitType.CONFED_INFANTRY, "Infantry", 40, 2, 5, 5,
+            0, 4, 4, WeaponType.BULLET, 5, 4, 10, 650, 6, 255, 0, -1);
+        zeusStats = new UnitStats(UnitType.CONFED_ZEUS, "T-22 Zeus", 70, 6, 7, 5,
+            0, 2, 6, WeaponType.MACHINE_GUN, 2, 14, 30, 300, 8, 255, 0, -1);
+        torrentStats = new UnitStats(UnitType.CONFED_TORRENT, "MLRS Torrent", 80, 15, 4, 7,
+            2, 6, 6, WeaponType.ROCKET, 12, 7, 50, 250, 8, 255, 2, -1);
     }
 
     @Test
@@ -63,7 +63,7 @@ class DamageCalculatorTest {
     @DisplayName("Building armor is 0 per RE docs")
     void shouldCalculateBuildingArmorAsZero() {
         var buildingStats = new BuildingStats(BuildingType.CONFED_COMMAND_CENTRE, 120, 22, 7, 7,
-            4, 2, 20, 7, 8, 2, 6, 0, 0, 100, 450, List.of(300, 200, 200));
+            4, 2, 20, 7, 8, 2, 6, 0, 0, 100, 450, 0, WeaponType.NONE, List.of(300, 200, 200));
         var building = new Building(1, Faction.CONFEDERATION, new GridPosition(32, 32),
             BuildingType.CONFED_COMMAND_CENTRE, buildingStats);
         assertEquals(0, DamageCalculator.calculateEffectiveArmor(building));
@@ -73,7 +73,7 @@ class DamageCalculatorTest {
     @DisplayName("Building armor with research bonus")
     void shouldCalculateBuildingArmorWithBonus() {
         var buildingStats = new BuildingStats(BuildingType.CONFED_COMMAND_CENTRE, 120, 22, 7, 7,
-            4, 2, 20, 7, 8, 2, 6, 0, 0, 100, 450, List.of(300, 200, 200));
+            4, 2, 20, 7, 8, 2, 6, 0, 0, 100, 450, 0, WeaponType.NONE, List.of(300, 200, 200));
         var building = new Building(1, Faction.CONFEDERATION, new GridPosition(32, 32),
             BuildingType.CONFED_COMMAND_CENTRE, buildingStats);
         // With bonus = 4 (Fortified Structures research)

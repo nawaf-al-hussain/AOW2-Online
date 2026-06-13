@@ -135,10 +135,16 @@ public final class AISystem {
 
         LOG.debug("AI player {} processing decision at tick {}", playerId, currentTick);
 
+        // Reset task count at the start of each decision cycle
+        resetTaskCount();
+
         // Execute AI decision pipeline
         processEconomyDecisions(entities, map, economy, research, production, placement);
+        taskCompleted();
         processResearchDecisions(entities, economy, research);
+        taskCompleted();
         processMilitaryDecisions(entities, map, movement);
+        taskCompleted();
     }
 
     /**
@@ -324,6 +330,15 @@ public final class AISystem {
         if (activeTaskCount > 0) {
             activeTaskCount--;
         }
+    }
+
+    /**
+     * Resets the active task count at the start of each decision cycle.
+     * This prevents the counter from growing unboundedly due to tasks
+     * that were started but never decremented.
+     */
+    public void resetTaskCount() {
+        activeTaskCount = 0;
     }
 
     // --- Getters ---

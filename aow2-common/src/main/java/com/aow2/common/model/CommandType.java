@@ -1,11 +1,19 @@
 package com.aow2.common.model;
 
+import java.util.Arrays;
+import java.util.Objects;
+
 /**
  * Sealed interface for all player commands in the game.
  * Used by lockstep networking and replay system to ensure deterministic simulation.
  * Each command records the tick at which it should be processed and the issuing player.
  * REF: protocol_specification.md - 34 multiplayer message types
  * REF: MASTER_DOCUMENTATION.md Section 3.3 - Lockstep networking
+ *
+ * FIX LOG:
+ * - Added defensive copy (clone) for int[] unitIds in compact constructors
+ * - Overrode equals() to use Arrays.equals() for unitIds comparison
+ * - Overrode hashCode() to use Arrays.hashCode() for unitIds field
  */
 public sealed interface CommandType permits
     CommandType.Move, CommandType.Attack, CommandType.Build,
@@ -43,6 +51,25 @@ public sealed interface CommandType permits
             if (target == null) {
                 throw new IllegalArgumentException("target must not be null");
             }
+            unitIds = unitIds.clone();
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof Move that)) return false;
+            return tick == that.tick && playerId == that.playerId
+                && Arrays.equals(unitIds, that.unitIds)
+                && Objects.equals(target, that.target);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = Long.hashCode(tick);
+            result = 31 * result + playerId;
+            result = 31 * result + Arrays.hashCode(unitIds);
+            result = 31 * result + Objects.hashCode(target);
+            return result;
         }
     }
 
@@ -62,6 +89,25 @@ public sealed interface CommandType permits
             if (targetId < 0) {
                 throw new IllegalArgumentException("targetId must not be negative, got: " + targetId);
             }
+            unitIds = unitIds.clone();
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof Attack that)) return false;
+            return tick == that.tick && playerId == that.playerId
+                && targetId == that.targetId
+                && Arrays.equals(unitIds, that.unitIds);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = Long.hashCode(tick);
+            result = 31 * result + playerId;
+            result = 31 * result + Arrays.hashCode(unitIds);
+            result = 31 * result + targetId;
+            return result;
         }
     }
 
@@ -138,6 +184,25 @@ public sealed interface CommandType permits
             if (buildingId < 0) {
                 throw new IllegalArgumentException("buildingId must not be negative, got: " + buildingId);
             }
+            unitIds = unitIds.clone();
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof Garrison that)) return false;
+            return tick == that.tick && playerId == that.playerId
+                && buildingId == that.buildingId
+                && Arrays.equals(unitIds, that.unitIds);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = Long.hashCode(tick);
+            result = 31 * result + playerId;
+            result = 31 * result + Arrays.hashCode(unitIds);
+            result = 31 * result + buildingId;
+            return result;
         }
     }
 
@@ -200,6 +265,23 @@ public sealed interface CommandType permits
             if (unitIds == null || unitIds.length == 0) {
                 throw new IllegalArgumentException("unitIds must not be null or empty");
             }
+            unitIds = unitIds.clone();
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof Stop that)) return false;
+            return tick == that.tick && playerId == that.playerId
+                && Arrays.equals(unitIds, that.unitIds);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = Long.hashCode(tick);
+            result = 31 * result + playerId;
+            result = 31 * result + Arrays.hashCode(unitIds);
+            return result;
         }
     }
 
@@ -219,6 +301,25 @@ public sealed interface CommandType permits
             if (waypoint == null) {
                 throw new IllegalArgumentException("waypoint must not be null");
             }
+            unitIds = unitIds.clone();
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof Patrol that)) return false;
+            return tick == that.tick && playerId == that.playerId
+                && Arrays.equals(unitIds, that.unitIds)
+                && Objects.equals(waypoint, that.waypoint);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = Long.hashCode(tick);
+            result = 31 * result + playerId;
+            result = 31 * result + Arrays.hashCode(unitIds);
+            result = 31 * result + Objects.hashCode(waypoint);
+            return result;
         }
     }
 }
