@@ -38,14 +38,14 @@ public final class ResearchAI {
     /** Confederation late-game research priority (vehicle propulsion). REF: combat_formulas.md ID 7 */
     private static final int CONFED_LATE_RESEARCH = 7;
 
-    /** Resistance early-game research priority (guerrilla tactics). REF: combat_formulas.md ID 8 */
-    private static final int REBEL_EARLY_RESEARCH = 8;
+    /** Resistance early-game research priority (titanium jacket). REF: combat_formulas.md ID 24 */
+    private static final int REBEL_EARLY_RESEARCH = 24;
 
-    /** Resistance mid-game research priority (quick reload). REF: combat_formulas.md ID 11 */
-    private static final int REBEL_MID_RESEARCH = 11;
+    /** Resistance mid-game research priority (sniper upgrade). REF: combat_formulas.md ID 30 */
+    private static final int REBEL_MID_RESEARCH = 30;
 
-    /** Resistance late-game research priority (siege artillery). REF: combat_formulas.md ID 14 */
-    private static final int REBEL_LATE_RESEARCH = 14;
+    /** Resistance late-game research priority (siege artillery). REF: combat_formulas.md ID 38 */
+    private static final int REBEL_LATE_RESEARCH = 38;
 
     /**
      * Decide which research to start next.
@@ -179,9 +179,9 @@ public final class ResearchAI {
                 case LATE -> new int[]{CONFED_LATE_RESEARCH, 6};
             };
             case RESISTANCE -> switch (phase) {
-                case EARLY -> new int[]{REBEL_EARLY_RESEARCH, 9, 10};
-                case MID -> new int[]{REBEL_MID_RESEARCH, 12, 13};
-                case LATE -> new int[]{REBEL_LATE_RESEARCH, 14};
+                case EARLY -> new int[]{REBEL_EARLY_RESEARCH, 25, 26};
+                case MID -> new int[]{REBEL_MID_RESEARCH, 33, 34};
+                case LATE -> new int[]{REBEL_LATE_RESEARCH, 39};
             };
             default -> new int[]{};
         };

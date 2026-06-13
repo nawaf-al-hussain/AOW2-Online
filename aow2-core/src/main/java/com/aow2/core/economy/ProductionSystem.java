@@ -268,7 +268,8 @@ public final class ProductionSystem {
             return unitType.category() == UnitCategory.INFANTRY || unitType.category() == UnitCategory.MINE;
         }
         if (isVehicleBuilding) {
-            return unitType.category() == UnitCategory.VEHICLE;
+            // SPECIAL_MACHINERY (Flame Assault) is also built in the vehicle factory
+            return unitType.category() == UnitCategory.VEHICLE || unitType.category() == UnitCategory.SPECIAL_MACHINERY;
         }
         return false;
     }

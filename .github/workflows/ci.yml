@@ -2,12 +2,12 @@ name: CI
 
 on:
   push:
-    branches: [main, dev]
+    branches: [ main, dev ]
   pull_request:
-    branches: [main, dev]
+    branches: [ main, dev ]
 
 jobs:
-  build:
+  build-and-test:
     runs-on: ubuntu-latest
 
     steps:
@@ -19,31 +19,27 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle.kts', 'gradle.properties') }}
+          restore-keys: ${{ runner.os }}-gradle-
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
 
       - name: Build all modules
-        run: ./gradlew :aow2-common:build :aow2-core:build :aow2-server:build :aow2-modding:build :aow2-client:build -x test
+        run: ./gradlew classes --no-daemon
 
-      - name: Run tests
-        run: ./gradlew :aow2-common:test :aow2-core:test :aow2-server:test :aow2-modding:test
-        env:
-          JAVA_TOOL_OPTIONS: "-Djava.awt.headless=true -Dspring.main.lazy-initialization=true"
-
-      - name: Generate JaCoCo report
-        if: always()
-        run: ./gradlew :aow2-common:jacocoTestReport :aow2-core:jacocoTestReport :aow2-server:jacocoTestReport :aow2-modding:jacocoTestReport
+      - name: Run tests (common, core, server, modding)
+        run: ./gradlew :aow2-common:test :aow2-core:test :aow2-server:test :aow2-modding:test --no-daemon
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: test-results
-          path: '**/build/reports/tests/'
-
-      - name: Upload coverage report
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: coverage-report
-          path: '**/build/reports/jacoco/'
+          path: '**/build/test-results/test/*.xml'

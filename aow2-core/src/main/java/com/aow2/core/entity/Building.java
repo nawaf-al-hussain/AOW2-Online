@@ -50,6 +50,12 @@ public class Building extends Entity {
     /** Entity ID of a garrisoned unit inside this building (null = empty). */
     private Integer garrisonedUnitRef;
 
+    /** Current upgrade level (0 = base, 1-3 = upgraded). REF: building_stats.md — 1x3 Upgrade levels */
+    private int upgradeLevel;
+
+    /** Bonus HP from upgrades. REF: building_stats.md — upgrade increases HP cap. */
+    private int upgradeMaxHpBonus;
+
     /** Identifier of the active research project (null if not researching). */
     private String researchId;
 
@@ -76,6 +82,8 @@ public class Building extends Entity {
         this.garrisonedUnitRef = null;
         this.researchId = null;
         this.attackCooldown = 0;
+        this.upgradeLevel = 0;
+        this.upgradeMaxHpBonus = 0;
     }
 
     /**
@@ -247,6 +255,52 @@ public class Building extends Entity {
     /** Decrements the attack cooldown by 1 if it is currently > 0. */
     public void decrementAttackCooldown() {
         if (attackCooldown > 0) attackCooldown--;
+    }
+
+    /**
+     * Returns the current upgrade level of this building.
+     * REF: building_stats.md — 1x3 Upgrade levels
+     *
+     * @return upgrade level (0-3)
+     */
+    public int getUpgradeLevel() {
+        return upgradeLevel;
+    }
+
+    /**
+     * Sets the upgrade level of this building.
+     *
+     * @param level the new upgrade level (0-3)
+     */
+    public void setUpgradeLevel(int level) {
+        this.upgradeLevel = Math.max(0, Math.min(level, 3));
+    }
+
+    /**
+     * Returns the HP bonus from upgrades.
+     *
+     * @return bonus HP from upgrades
+     */
+    public int getUpgradeMaxHpBonus() {
+        return upgradeMaxHpBonus;
+    }
+
+    /**
+     * Sets the HP bonus from upgrades.
+     *
+     * @param bonus the HP bonus to add
+     */
+    public void setUpgradeMaxHpBonus(int bonus) {
+        this.upgradeMaxHpBonus = bonus;
+    }
+
+    /**
+     * Returns the effective max HP including upgrade bonuses.
+     *
+     * @return max HP + upgrade bonus
+     */
+    public int getEffectiveMaxHp() {
+        return getMaxHp() + upgradeMaxHpBonus;
     }
 
     /**

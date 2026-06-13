@@ -185,7 +185,7 @@ public final class MilitaryAI {
         // Sort: vehicles first, then by health percentage (healthy first), then by damage
         List<Unit> sorted = new ArrayList<>(units);
         sorted.sort(Comparator
-            .comparing((Unit u) -> u.isVehicle() ? 0 : 1) // Vehicles first
+            .comparing((Unit u) -> u.isMachinery() ? 0 : 1) // Machinery (vehicles + SPECIAL_MACHINERY) first
             .thenComparing(Comparator.comparingDouble((Unit u) -> (double) u.getHp() / u.getMaxHp()).reversed()) // Healthy first
             .thenComparing(Comparator.comparingInt((Unit u) -> u.getStats().damage()).reversed()) // High damage
         );
@@ -334,7 +334,7 @@ public final class MilitaryAI {
     private List<Integer> selectDefenders(List<Unit> aiUnits, GridPosition basePosition) {
         return aiUnits.stream()
             .sorted(Comparator
-                .comparing((Unit u) -> u.isVehicle() ? 0 : 1) // Vehicles first
+                .comparing((Unit u) -> u.isMachinery() ? 0 : 1) // Machinery (vehicles + SPECIAL_MACHINERY) first
                 .thenComparingDouble(u -> u.getPosition().distanceTo(basePosition)) // Closest first
             )
             .limit(10) // ASSUMPTION: max 10 defenders
@@ -347,7 +347,7 @@ public final class MilitaryAI {
      * REF: ai_analysis.md — light machinery (types 4, 21) used for scouts/raids
      */
     private boolean hasFastUnits(List<Unit> aiUnits) {
-        return aiUnits.stream().anyMatch(u -> u.isVehicle());
+        return aiUnits.stream().anyMatch(u -> u.isMachinery());
     }
 
     /**

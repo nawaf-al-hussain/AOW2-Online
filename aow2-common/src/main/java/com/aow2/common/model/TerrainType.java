@@ -97,7 +97,7 @@ public enum TerrainType {
             case DEEP_WATER -> false; // No ground units can cross deep water
             case SHALLOW_WATER -> category == UnitCategory.INFANTRY; // Only infantry
             case MOUNTAIN -> false; // Impassable for all
-            case SWAMP -> category != UnitCategory.VEHICLE; // Vehicles bog down
+            case SWAMP -> category != UnitCategory.VEHICLE && category != UnitCategory.SPECIAL_MACHINERY; // Vehicles and SPECIAL_MACHINERY bog down
             default -> passableByDefault;
         };
     }

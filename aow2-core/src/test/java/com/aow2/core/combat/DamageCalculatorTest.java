@@ -117,21 +117,21 @@ class DamageCalculatorTest {
     @Test
     @DisplayName("Nuclear damage applies two-step armor clamp")
     void shouldApplyArmorClampToNuclearDamage() {
-        // REF: combat_formulas.md — nuclear uses same two-step clamp as normal damage
-        // Distance 0, weaponDamage=10, armor=2:
-        //   effectiveDamage = 10*12/12 = 10
+        // REF: combat_formulas.md — nuclear uses 31x31 distance table + two-step clamp
+        // Distance 0 (dx=0,dy=0), weaponDamage=10, armor=2:
+        //   distClass=0, distanceFactor = 10*(12-0)/12 = 10
         //   raw = 10*(10-2)/10 = 8, min(8, 10-2=8) = 8, max(8,1) = 8
         assertEquals(8, DamageCalculator.calculateNuclearDamage(10, 2, 0));
 
-        // Distance 1, weaponDamage=10, armor=2:
-        //   effectiveDamage = 10*10/12 = 8
-        //   raw = 8*(10-2)/10 = 6, min(6, 8-2=6) = 6, max(6,1) = 6
-        assertEquals(6, DamageCalculator.calculateNuclearDamage(10, 2, 1));
+        // Distance 1 (dx=1,dy=0), weaponDamage=10, armor=2:
+        //   distClass=1, distanceFactor = 10*(12-1)/12 = 9
+        //   raw = 9*(10-2)/10 = 7, min(7, 9-2=7) = 7, max(7,1) = 7
+        assertEquals(7, DamageCalculator.calculateNuclearDamage(10, 2, 1));
 
-        // Distance 3, weaponDamage=10, armor=2:
-        //   effectiveDamage = 10*5/12 = 4
-        //   raw = 4*(10-2)/10 = 3, min(3, 4-2=2) = 2, max(2,1) = 2
-        assertEquals(2, DamageCalculator.calculateNuclearDamage(10, 2, 3));
+        // Distance 3 (dx=3,dy=0), weaponDamage=10, armor=2:
+        //   distClass=3, distanceFactor = 10*(12-3)/12 = 7
+        //   raw = 7*(10-2)/10 = 5, min(5, 7-2=5) = 5, max(5,1) = 5
+        assertEquals(5, DamageCalculator.calculateNuclearDamage(10, 2, 3));
     }
 
     @Test
@@ -200,5 +200,60 @@ class DamageCalculatorTest {
         infantry.takeDamage(damage);
         assertEquals(39, infantry.getHp());
         assertTrue(infantry.isAlive());
+    }
+
+    // --- Nuclear dx,dy overload tests ---
+
+    @Test
+    @DisplayName("Nuclear dx,dy overload: center (0,0) = full damage")
+    void shouldDealFullNuclearDamageAtCenter() {
+        // dx=0, dy=0 → distClass=0, distanceFactor = weaponDamage*(12-0)/12 = weaponDamage
+        int damage = DamageCalculator.calculateNuclearDamage(10, 2, 0, 0);
+        // distanceFactor=10, raw=10*8/10=8, min(8,8)=8, max(8,1)=8
+        assertEquals(8, damage);
+    }
+
+    @Test
+    @DisplayName("Nuclear dx,dy overload: damage decreases with distance")
+    void shouldDecreaseNuclearDamageWithDistance() {
+        int centerDamage = DamageCalculator.calculateNuclearDamage(15, 3, 0, 0);
+        int nearDamage = DamageCalculator.calculateNuclearDamage(15, 3, 2, 2);
+        int farDamage = DamageCalculator.calculateNuclearDamage(15, 3, 5, 5);
+
+        assertTrue(centerDamage > nearDamage,
+            "Center damage should be higher than near damage");
+        assertTrue(nearDamage > farDamage,
+            "Near damage should be higher than far damage");
+        assertTrue(farDamage >= 1,
+            "Far damage should still be at least 1");
+    }
+
+    @Test
+    @DisplayName("Nuclear dx,dy overload: edge of table (15,15) still deals some damage")
+    void shouldDealDamageAtEdgeOfTable() {
+        // dx=15, dy=15 → distClass=15, distanceFactor = weaponDamage*(12-15)/12 = negative → 0
+        // But clamped to MIN_DAMAGE = 1
+        int damage = DamageCalculator.calculateNuclearDamage(20, 0, 15, 15);
+        assertEquals(1, damage, "Edge of 31x31 table should still deal minimum 1 damage");
+    }
+
+    @Test
+    @DisplayName("Nuclear dx,dy overload: beyond table returns minimum damage")
+    void shouldReturnMinimumDamageBeyondTable() {
+        // dx=16 is beyond the 31x31 table (range -15..+15)
+        int damage = DamageCalculator.calculateNuclearDamage(100, 0, 16, 0);
+        assertEquals(1, damage, "Beyond table range should return minimum 1 damage");
+    }
+
+    @Test
+    @DisplayName("Nuclear dx,dy overload: diagonal equals max of dx,dy (Chebyshev)")
+    void shouldUseChebyshevDistanceInTable() {
+        // (3,0) and (0,3) and (3,3) should have distClass 3, 3, 3 respectively
+        int damageAxis = DamageCalculator.calculateNuclearDamage(12, 0, 3, 0);
+        int damageDiag = DamageCalculator.calculateNuclearDamage(12, 0, 3, 3);
+        // (3,0): distClass=3, distanceFactor=12*(12-3)/12=9, damage=9
+        // (3,3): distClass=3, distanceFactor=12*(12-3)/12=9, damage=9
+        assertEquals(damageAxis, damageDiag,
+            "Chebyshev: (3,0) and (3,3) both have distClass=3, should deal same damage");
     }
 }

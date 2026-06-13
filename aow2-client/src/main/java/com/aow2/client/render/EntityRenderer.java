@@ -146,8 +146,8 @@ public class EntityRenderer {
         gc.setFill(factionColor);
         gc.fillOval(sx - UNIT_RADIUS, sy - UNIT_RADIUS, UNIT_RADIUS * 2, UNIT_RADIUS * 2);
 
-        // Vehicle units get a slightly different shape indicator
-        if (unit.isVehicle()) {
+        // Machinery units (vehicles + SPECIAL_MACHINERY) get a slightly different shape indicator
+        if (unit.isMachinery()) {
             gc.setStroke(factionColor.brighter());
             gc.setLineWidth(1.5);
             gc.strokeOval(sx - UNIT_RADIUS, sy - UNIT_RADIUS, UNIT_RADIUS * 2, UNIT_RADIUS * 2);

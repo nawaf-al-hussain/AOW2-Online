@@ -5,6 +5,8 @@ import com.aow2.common.model.CommandType;
 import com.aow2.core.ai.AISystem;
 import com.aow2.core.command.CommandProcessor;
 import com.aow2.core.combat.CombatSystem;
+import com.aow2.core.combat.HPRegenerationSystem;
+import com.aow2.core.combat.MineDetonationSystem;
 import com.aow2.core.combat.ProjectileSystem;
 import com.aow2.core.economy.BuildingPlacementSystem;
 import com.aow2.core.economy.EconomySystem;
@@ -53,6 +55,12 @@ public final class TickManager {
     /** The AI system for player 1 (if AI-controlled). */
     private AISystem aiSystem;
 
+    /** The HP regeneration system. Optional — set after construction. */
+    private HPRegenerationSystem hpRegenerationSystem;
+
+    /** The mine detonation system. Optional — set after construction. */
+    private MineDetonationSystem mineDetonationSystem;
+
     /**
      * Constructs a TickManager with a default command processor.
      */
@@ -89,6 +97,24 @@ public final class TickManager {
      */
     public void setAISystem(AISystem aiSystem) {
         this.aiSystem = aiSystem;
+    }
+
+    /**
+     * Set the HP regeneration system.
+     *
+     * @param hpRegenerationSystem the HP regeneration system
+     */
+    public void setHPRegenerationSystem(HPRegenerationSystem hpRegenerationSystem) {
+        this.hpRegenerationSystem = hpRegenerationSystem;
+    }
+
+    /**
+     * Set the mine detonation system.
+     *
+     * @param mineDetonationSystem the mine detonation system
+     */
+    public void setMineDetonationSystem(MineDetonationSystem mineDetonationSystem) {
+        this.mineDetonationSystem = mineDetonationSystem;
     }
 
     /**
@@ -131,6 +157,18 @@ public final class TickManager {
         // Step 3: Process combat (attacks + projectiles)
         combat.processTick();
 
+        // Step 3.1: Process mine detonation (after combat, before HP regen)
+        // REF: unit_stats.md — mines detonate on proximity, checked each tick
+        if (mineDetonationSystem != null) {
+            mineDetonationSystem.processTick(entities, state);
+        }
+
+        // Step 3.5: Process HP regeneration (after combat, before production)
+        // REF: combat_formulas.md — HP recovery applied periodically every 127 ticks
+        if (hpRegenerationSystem != null) {
+            hpRegenerationSystem.processTick(entities, (int) state.currentTick());
+        }
+
         // Step 4: Process production
         production.processTick(entities, state, economy);
 
@@ -146,8 +184,9 @@ public final class TickManager {
                 production, placement, movement, combat, state);
         }
 
-        // Step 8: Update fog of war
-        if (fogOfWar != null) {
+        // Step 8: Update fog of war (every 4 ticks)
+        // REF: MASTER_DOCUMENTATION.md — fog updates every 4 ticks: (gameTick & 3) == 0
+        if (fogOfWar != null && (state.currentTick() % GameConstants.FOG_UPDATE_INTERVAL) == 0) {
             for (int playerId = 0; playerId < GameConstants.MAX_PLAYERS_PER_MATCH; playerId++) {
                 fogOfWar.updateVisibility(playerId, entities, map);
             }

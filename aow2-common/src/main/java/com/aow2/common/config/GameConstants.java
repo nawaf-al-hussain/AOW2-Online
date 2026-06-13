@@ -40,6 +40,10 @@ public final class GameConstants {
     // REF: MASTER_DOCUMENTATION.md — Q[i] = 100
     public static final int STARTING_CREDITS = 100;
 
+    // Fog of War
+    // REF: MASTER_DOCUMENTATION.md — fog updates every 4 ticks: (gameTick & 3) == 0
+    public static final int FOG_UPDATE_INTERVAL = 4;
+
     public static final double CC_DIMINISHING_RETURNS = 0.30;
     public static final int POWER_UPGRADE_BONUS_PERCENT = 30;
 

@@ -46,52 +46,76 @@ public final class DamageCalculator {
     }
 
     /**
-     * Distance factor lookup table for nuclear damage.
-     * REF: combat_formulas.md lines 236-256 — simplified version of RE's
-     * bS[bT[79]+attackType] * distanceTable approach.
-     * distanceFactor decreases with distance; used as: effectiveDamage = weaponDamage * distFactor / 12
+     * 31x31 distance lookup table for nuclear damage, indexed by (dy+15)*31+(dx+15).
+     * REF: combat_formulas.md lines 236-256 — RE uses bS[bT[79]+attackType] * distanceTable[(dy+15)*31+(dx+15)] / 12
+     * The table is essentially a precomputed Chebyshev distance class (square falloff pattern).
+     * Each cell stores max(|dx|, |dy|) — the distance class (0-15).
+     * Distances beyond 15 return minimum damage.
      */
-    private static final int[] NUCLEAR_DISTANCE_FACTOR = {
-        12, // distance 0: full damage
-        10, // distance 1
-        7,  // distance 2
-        5,  // distance 3
-        3,  // distance 4
-        2,  // distance 5
-        1   // distance 6+
-    };
+    private static final int[] NUCLEAR_DISTANCE_TABLE = new int[31 * 31];
+
+    static {
+        for (int dy = -15; dy <= 15; dy++) {
+            for (int dx = -15; dx <= 15; dx++) {
+                // Chebyshev distance = max(|dx|, |dy|) — gives square damage falloff matching original
+                int distClass = Math.max(Math.abs(dx), Math.abs(dy));
+                NUCLEAR_DISTANCE_TABLE[(dy + 15) * 31 + (dx + 15)] = distClass;
+            }
+        }
+    }
 
     /**
-     * Calculate nuclear damage at a given distance from impact.
-     * REF: combat_formulas.md lines 236-256 — nuclear damage uses distance-based factor
+     * Calculate nuclear damage at offset (dx, dy) from impact point.
+     * REF: combat_formulas.md lines 236-256 — nuclear damage uses 31x31 distance lookup table
      * with the same two-step clamp as normal damage.
      *
      * RE formula:
-     *   distanceFactor = baseDamage * distanceTable[dy][dx] / 12
+     *   distanceFactor = bS[bT[79]+attackType] * distanceTable[(dy+15)*31+(dx+15)] / 12
      *   damage = max(min(((10 - armour) * distanceFactor) / 10, distanceFactor - armour), 1)
      *
-     * Simplified: compute effectiveDamage = weaponDamage * distFactor / 12,
-     * then apply the same two-step clamp used in calculateDamage().
+     * Our implementation uses Chebyshev distance from the 31x31 table as the distance class.
+     * distanceFactor = weaponDamage * (12 - distClass) / 12
+     * Then apply the same two-step clamp.
+     *
+     * @param weaponDamage base weapon damage
+     * @param targetArmor  target's armor value
+     * @param dx           x offset from impact point
+     * @param dy           y offset from impact point
+     * @return nuclear damage after distance falloff and armor clamp
+     */
+    public static int calculateNuclearDamage(int weaponDamage, int targetArmor, int dx, int dy) {
+        // Distances beyond the 31x31 table (|dx|>15 or |dy|>15) return minimum damage
+        if (dx < -15 || dx > 15 || dy < -15 || dy > 15) {
+            return GameConstants.MIN_DAMAGE;
+        }
+
+        // Look up the distance class from the 31x31 table
+        int distClass = NUCLEAR_DISTANCE_TABLE[(dy + 15) * 31 + (dx + 15)];
+
+        // distanceFactor = weaponDamage * (12 - distClass) / 12
+        // At distClass 0 (center): full weaponDamage; at distClass 12+: weaponDamage * 0 / 12 = 0
+        int distanceFactor = weaponDamage * (12 - distClass) / 12;
+
+        // Apply the same two-step clamp as normal damage:
+        // damage = max(min(distanceFactor * (10 - armor) / 10, distanceFactor - armor), 1)
+        int damage = distanceFactor * (GameConstants.ARMOR_DIVISOR - targetArmor) / GameConstants.ARMOR_DIVISOR;
+        damage = Math.min(damage, distanceFactor - targetArmor);
+        return Math.max(damage, GameConstants.MIN_DAMAGE);
+    }
+
+    /**
+     * Calculate nuclear damage at a given distance from impact (backward-compatible overload).
+     * Computes Chebyshev distance internally and delegates to the dx,dy overload.
      *
      * @param weaponDamage       base weapon damage
      * @param targetArmor        target's armor value
-     * @param distanceFromImpact distance from impact point
+     * @param distanceFromImpact Chebyshev distance from impact point
      * @return nuclear damage after distance falloff and armor clamp
      */
     public static int calculateNuclearDamage(int weaponDamage, int targetArmor, int distanceFromImpact) {
-        // REF: combat_formulas.md — distance factor lookup
-        int distFactor = distanceFromImpact < NUCLEAR_DISTANCE_FACTOR.length
-            ? NUCLEAR_DISTANCE_FACTOR[distanceFromImpact]
-            : NUCLEAR_DISTANCE_FACTOR[NUCLEAR_DISTANCE_FACTOR.length - 1]; // distance 6+
-
-        // effectiveDamage = weaponDamage * distFactor / 12
-        int effectiveDamage = weaponDamage * distFactor / 12;
-
-        // Apply the same two-step clamp as normal damage:
-        // damage = max(min(effectiveDamage * (10 - armor) / 10, effectiveDamage - armor), 1)
-        int damage = effectiveDamage * (GameConstants.ARMOR_DIVISOR - targetArmor) / GameConstants.ARMOR_DIVISOR;
-        damage = Math.min(damage, effectiveDamage - targetArmor);
-        return Math.max(damage, GameConstants.MIN_DAMAGE);
+        // Use dx=distanceFromImpact, dy=0 for backward compatibility
+        // This gives the same Chebyshev distance as the original single-distance call
+        return calculateNuclearDamage(weaponDamage, targetArmor, distanceFromImpact, 0);
     }
 
     /**

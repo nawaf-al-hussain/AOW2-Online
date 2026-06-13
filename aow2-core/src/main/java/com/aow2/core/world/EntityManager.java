@@ -188,6 +188,16 @@ public class EntityManager {
     }
 
     /**
+     * Returns all mines in the manager.
+     * Alias for {@link #getMines()} for naming consistency with {@link #getAllUnits()}.
+     *
+     * @return unmodifiable list of all mines
+     */
+    public List<Mine> getAllMines() {
+        return Collections.unmodifiableList(mines);
+    }
+
+    /**
      * Gets a mine by its entity ID.
      *
      * @param id entity ID

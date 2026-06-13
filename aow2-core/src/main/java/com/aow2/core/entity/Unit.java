@@ -128,6 +128,14 @@ public class Unit extends Entity {
     }
 
     /**
+     * Whether this unit is treated as machinery for combat calculations.
+     * Delegates to UnitType.isMachinery().
+     */
+    public boolean isMachinery() {
+        return unitType.isMachinery();
+    }
+
+    /**
      * @return true if this unit occupies 2 cells (e.g., Fortress)
      * REF: unit_stats.md — bitmask 65536 for 2-cell collision units
      */

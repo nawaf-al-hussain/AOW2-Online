@@ -20,7 +20,7 @@ public enum UnitType {
     CONFED_GRENADIER(2, "Grenadier", Faction.CONFEDERATION, UnitCategory.INFANTRY),
 
     // Confederation Vehicles
-    CONFED_FLAME_ASSAULT(8, "Flame Assault", Faction.CONFEDERATION, UnitCategory.VEHICLE),
+    CONFED_FLAME_ASSAULT(8, "Flame Assault", Faction.CONFEDERATION, UnitCategory.SPECIAL_MACHINERY),
     CONFED_FORTRESS(19, "AV-40 Fortress", Faction.CONFEDERATION, UnitCategory.VEHICLE),
     CONFED_HAMMER(17, "T-21 Hammer", Faction.CONFEDERATION, UnitCategory.VEHICLE),
     CONFED_ZEUS(16, "T-22 Zeus", Faction.CONFEDERATION, UnitCategory.VEHICLE),
@@ -62,6 +62,15 @@ public enum UnitType {
     public boolean isInfantry() { return category == UnitCategory.INFANTRY; }
     public boolean isVehicle() { return category == UnitCategory.VEHICLE; }
     public boolean isMine() { return category == UnitCategory.MINE; }
+
+    /**
+     * Whether this unit is treated as machinery for combat calculations.
+     * REF: unit_stats.md — Flame Assault has no infantry bit set, treated as machinery
+     * SPECIAL_MACHINERY and VEHICLE are both machinery for damage modifier purposes.
+     */
+    public boolean isMachinery() {
+        return category == UnitCategory.VEHICLE || category == UnitCategory.SPECIAL_MACHINERY;
+    }
 
     /**
      * Whether this unit type occupies 2 cells (larger collision footprint).

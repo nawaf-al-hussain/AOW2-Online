@@ -157,7 +157,8 @@ public final class ArmorCalculator {
                     bonus += entry.getValue();
                 }
             }
-        } else if (unit.isVehicle()) {
+        } else if (unit.isMachinery()) {
+            // VEHICLE and SPECIAL_MACHINERY both use vehicle armor research
             for (Map.Entry<Integer, Integer> entry : VEHICLE_ARMOR_RESEARCH.entrySet()) {
                 if (completedResearch.contains(entry.getKey())) {
                     bonus += entry.getValue();
