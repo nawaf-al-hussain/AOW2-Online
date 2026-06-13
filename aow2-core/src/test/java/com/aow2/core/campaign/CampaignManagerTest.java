@@ -138,14 +138,16 @@ class CampaignManagerTest {
         }
 
         @Test
-        @DisplayName("duplicate completion of same mission does not double-record")
-        void noDuplicateCompletion() {
+        @DisplayName("completing multiple missions records each once")
+        void completingMultipleMissionsRecordsEachOnce() {
             manager.startCampaign(CampaignEpisode.GLOBAL_CONFEDERATION);
             manager.completeCurrentMission(); // mission 0
             manager.completeCurrentMission(); // mission 1
 
-            // Manually trigger complete again (shouldn't add duplicate)
-            assertEquals(1, manager.getCompletedMissionCount(CampaignEpisode.GLOBAL_CONFEDERATION));
+            // Each mission should be recorded exactly once
+            assertEquals(2, manager.getCompletedMissionCount(CampaignEpisode.GLOBAL_CONFEDERATION));
+            assertTrue(manager.isMissionCompleted(CampaignEpisode.GLOBAL_CONFEDERATION, 0));
+            assertTrue(manager.isMissionCompleted(CampaignEpisode.GLOBAL_CONFEDERATION, 1));
         }
     }
 
