@@ -3,7 +3,7 @@ package com.aow2.mod.script;
 import com.aow2.core.engine.GameState;
 import com.aow2.core.world.EntityManager;
 import org.luaj.vm2.Globals;
-import org.luaj.vm2.LibFunction;
+import org.luaj.vm2.lib.LibFunction;
 import org.luaj.vm2.LuaTable;
 import org.luaj.vm2.LuaValue;
 import org.luaj.vm2.Varargs;
@@ -100,8 +100,11 @@ public final class ScriptBindings {
     /** aow2.spawnUnit(faction, unitType, x, y) -> unitId */
     static final class SpawnUnitFunction extends LibFunction {
         @Override
-        public LuaValue call(LuaValue faction, LuaValue unitType, LuaValue x, LuaValue y) {
-            int id = GameAPI.spawnUnit(faction.tojstring(), unitType.tojstring(), x.toint(), y.toint());
+        public Varargs invoke(Varargs args) {
+            int id = GameAPI.spawnUnit(
+                args.arg(1).tojstring(), args.arg(2).tojstring(),
+                args.arg(3).toint(), args.arg(4).toint()
+            );
             return LuaValue.valueOf(id);
         }
     }
