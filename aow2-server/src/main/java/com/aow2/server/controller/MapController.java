@@ -140,16 +140,16 @@ public class MapController {
     ) {
         Long playerId = (Long) authentication.getPrincipal();
         return uploadedMapRepository.findById(id)
-                .map(map -> {
+                .<ResponseEntity<Map<String, Object>>>map(map -> {
                     if (!map.getUploaderId().equals(playerId)) {
                         return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                                .<Map<String, Object>>body(Map.of("error", "Not the map owner"));
+                                .body(Map.<String, Object>of("error", "Not the map owner"));
                     }
                     uploadedMapRepository.delete(map);
                     log.info("Map deleted: {} (ID: {}) by player {}", map.getName(), id, playerId);
-                    return ResponseEntity.ok(Map.of("status", "deleted", "id", id));
+                    return ResponseEntity.ok(Map.<String, Object>of("status", "deleted", "id", id));
                 })
-                .orElse(ResponseEntity.<Map<String, Object>>status(HttpStatus.NOT_FOUND)
-                        .body(Map.of("error", "Map not found: " + id)));
+                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.<String, Object>of("error", "Map not found: " + id)));
     }
 }
