@@ -56,6 +56,15 @@ public final class LockstepEngine {
     /** Callback for desync notification */
     private Consumer<Long> desyncCallback;
 
+    /** Game systems needed for command routing */
+    private GameMap gameMap;
+    private MovementSystem movementSystem;
+    private CombatSystem combatSystem;
+    private EconomySystem economySystem;
+    private ProductionSystem productionSystem;
+    private ResearchSystem researchSystem;
+    private BuildingPlacementSystem buildingPlacementSystem;
+
     /** Whether the engine is currently running */
     private boolean running;
 
@@ -210,6 +219,30 @@ public final class LockstepEngine {
     }
 
     /**
+     * Injects game systems needed for command routing.
+     * Must be called before processFrame() if economy/research/garrison commands are expected.
+     *
+     * @param map          the game map
+     * @param movement     the movement system
+     * @param combat       the combat system
+     * @param economy      the economy system
+     * @param production   the production system
+     * @param research     the research system
+     * @param placement    the building placement system
+     */
+    public void setGameSystems(GameMap map, MovementSystem movement, CombatSystem combat,
+                               EconomySystem economy, ProductionSystem production,
+                               ResearchSystem research, BuildingPlacementSystem placement) {
+        this.gameMap = map;
+        this.movementSystem = movement;
+        this.combatSystem = combat;
+        this.economySystem = economy;
+        this.productionSystem = production;
+        this.researchSystem = research;
+        this.buildingPlacementSystem = placement;
+    }
+
+    /**
      * Applies a single command to the game state.
      * Commands are dispatched by type and applied to the appropriate entities/systems.
      * All command types are routed through CommandProcessor for system-level commands,
@@ -254,42 +287,54 @@ public final class LockstepEngine {
                 }
             }
             // Route Build, Produce, Research, Garrison, Ungarrison, Cancel commands
-            // to CommandProcessor which dispatches to the appropriate game systems
+            // to CommandProcessor which dispatches to the appropriate game systems.
+            // Game systems must be injected via setGameSystems() before these commands
+            // can be processed. If not set, commands are logged and skipped.
             case CommandType.Build b -> {
-                log.debug("Routing Build command at tick {}: {} at {}",
-                        b.tick(), b.buildingType(), b.position());
-                commandProcessor.process(b, state, entities, null, null, null,
-                        null, null, null);
+                if (economySystem == null || buildingPlacementSystem == null) {
+                    log.warn("Build command skipped: game systems not injected (call setGameSystems())");
+                } else {
+                    commandProcessor.process(b, state, entities, gameMap, movementSystem,
+                            combatSystem, economySystem, productionSystem, researchSystem,
+                            buildingPlacementSystem);
+                }
             }
             case CommandType.Produce p -> {
-                log.debug("Routing Produce command at tick {}: unit {} at building {}",
-                        p.tick(), p.unitType(), p.producerId());
-                commandProcessor.process(p, state, entities, null, null, null,
-                        null, null, null);
+                if (economySystem == null || productionSystem == null) {
+                    log.warn("Produce command skipped: game systems not injected (call setGameSystems())");
+                } else {
+                    commandProcessor.process(p, state, entities, gameMap, movementSystem,
+                            combatSystem, economySystem, productionSystem, researchSystem,
+                            buildingPlacementSystem);
+                }
             }
             case CommandType.Research r -> {
-                log.debug("Routing Research command at tick {}: research {} at building {}",
-                        r.tick(), r.researchId(), r.techCentreId());
-                commandProcessor.process(r, state, entities, null, null, null,
-                        null, null, null);
+                if (economySystem == null || researchSystem == null) {
+                    log.warn("Research command skipped: game systems not injected (call setGameSystems())");
+                } else {
+                    commandProcessor.process(r, state, entities, gameMap, movementSystem,
+                            combatSystem, economySystem, productionSystem, researchSystem,
+                            buildingPlacementSystem);
+                }
             }
             case CommandType.Garrison g -> {
-                log.debug("Routing Garrison command at tick {}: units -> building {}",
-                        g.tick(), g.buildingId());
-                commandProcessor.process(g, state, entities, null, null, null,
-                        null, null, null);
+                commandProcessor.process(g, state, entities, gameMap, movementSystem,
+                        combatSystem, economySystem, productionSystem, researchSystem,
+                        buildingPlacementSystem);
             }
             case CommandType.Ungarrison u -> {
-                log.debug("Routing Ungarrison command at tick {}: building {}",
-                        u.tick(), u.buildingId());
-                commandProcessor.process(u, state, entities, null, null, null,
-                        null, null, null);
+                commandProcessor.process(u, state, entities, gameMap, movementSystem,
+                        combatSystem, economySystem, productionSystem, researchSystem,
+                        buildingPlacementSystem);
             }
             case CommandType.Cancel c -> {
-                log.debug("Routing Cancel command at tick {}: entity {}",
-                        c.tick(), c.entityId());
-                commandProcessor.process(c, state, entities, null, null, null,
-                        null, null, null);
+                if (economySystem == null || productionSystem == null) {
+                    log.warn("Cancel command skipped: game systems not injected (call setGameSystems())");
+                } else {
+                    commandProcessor.process(c, state, entities, gameMap, movementSystem,
+                            combatSystem, economySystem, productionSystem, researchSystem,
+                            buildingPlacementSystem);
+                }
             }
             case CommandType.Patrol pt -> {
                 log.debug("Patrol command at tick {}: units -> waypoint {}",
