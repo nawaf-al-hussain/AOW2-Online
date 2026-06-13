@@ -8,7 +8,7 @@ plugins {
 dependencies {
     implementation(project(":aow2-common"))
     implementation(project(":aow2-core"))
-    implementation("com.github.AlmasB.FXGL:fxgl:21")
+    implementation("com.github.almasb:fxgl:21")
     implementation("org.slf4j:slf4j-api:2.0.12")
     implementation("ch.qos.logback:logback-classic:1.5.3")
 
