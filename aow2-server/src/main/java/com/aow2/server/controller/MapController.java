@@ -149,7 +149,7 @@ public class MapController {
                     log.info("Map deleted: {} (ID: {}) by player {}", map.getName(), id, playerId);
                     return ResponseEntity.ok(Map.of("status", "deleted", "id", id));
                 })
-                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .<Map<String, Object>>body(Map.of("error", "Map not found: " + id)));
+                .orElse(ResponseEntity.<Map<String, Object>>status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("error", "Map not found: " + id)));
     }
 }

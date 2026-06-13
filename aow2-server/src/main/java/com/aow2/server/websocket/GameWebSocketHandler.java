@@ -231,10 +231,14 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
      * @param sessionId the target WebSocket session ID
      * @param data      the data to send
      */
-    private void sendToSessionId(String sessionId, Map<String, Object> data) throws IOException {
-        WebSocketSession ws = sessions.get(sessionId);
-        if (ws != null && ws.isOpen()) {
-            sendMessage(ws, data);
+    private void sendToSessionId(String sessionId, Map<String, Object> data) {
+        try {
+            WebSocketSession ws = sessions.get(sessionId);
+            if (ws != null && ws.isOpen()) {
+                sendMessage(ws, data);
+            }
+        } catch (IOException e) {
+            log.warn("Failed to send message to session {}: {}", sessionId, e.getMessage());
         }
     }
 
