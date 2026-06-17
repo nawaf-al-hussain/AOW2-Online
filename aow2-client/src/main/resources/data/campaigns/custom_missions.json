@@ -8,7 +8,7 @@
       "description": "Control a small island with limited resources.",
       "briefing": "Two forces clash on a tiny island. Resources are scarce — every credit counts. Build wisely and strike decisively.",
       "playerFaction": "CONFEDERATION",
-      "mapFile": "maps/custom_mission1.map",
+      "mapFile": "data/maps/custom_mission1.json",
       "objectives": [
         { "type": "destroy", "name": "Destroy all enemy forces", "targetCount": 12 }
       ],
@@ -24,7 +24,7 @@
       "description": "Navigate through a narrow valley filled with enemy ambushes.",
       "briefing": "The valley is a killing ground. Enemy forces lurk on the ridges. Push through with armor support or be annihilated.",
       "playerFaction": "CONFEDERATION",
-      "mapFile": "maps/custom_mission2.map",
+      "mapFile": "data/maps/custom_mission2.json",
       "objectives": [
         { "type": "escort", "name": "Escort convoy through valley", "unitId": 300, "destX": 100, "destY": 64 }
       ],
@@ -41,7 +41,7 @@
       "description": "Eliminate a network of fortified bunkers.",
       "briefing": "The enemy has built an intricate bunker network. Flame Assault units can flush them out, but watch for counterattacks.",
       "playerFaction": "CONFEDERATION",
-      "mapFile": "maps/custom_mission3.map",
+      "mapFile": "data/maps/custom_mission3.json",
       "objectives": [
         { "type": "destroy", "name": "Destroy enemy bunkers", "targetCount": 5 }
       ],
@@ -57,7 +57,7 @@
       "description": "Win a fast-paced armored engagement.",
       "briefing": "No time for building — both sides start with full armies. Command your armor to swift victory.",
       "playerFaction": "CONFEDERATION",
-      "mapFile": "maps/custom_mission4.map",
+      "mapFile": "data/maps/custom_mission4.json",
       "objectives": [
         { "type": "destroy", "name": "Destroy enemy army", "targetCount": 20 },
         { "type": "timed", "name": "Win quickly", "durationTicks": 3600 }
@@ -74,7 +74,7 @@
       "description": "Defend a critical position against overwhelming odds.",
       "briefing": "Waves of enemies approach. Our base must hold. Repair, reinforce, and survive.",
       "playerFaction": "CONFEDERATION",
-      "mapFile": "maps/custom_mission5.map",
+      "mapFile": "data/maps/custom_mission5.json",
       "objectives": [
         { "type": "defend", "name": "Defend Command Centre", "entityId": 1, "durationTicks": 9000 }
       ],
@@ -92,7 +92,7 @@
       "description": "Retreat and deny resources to the advancing enemy.",
       "briefing": "We cannot hold this position. Destroy our own buildings to deny them to the enemy, and evacuate our forces to the extraction point.",
       "playerFaction": "RESISTANCE",
-      "mapFile": "maps/custom_mission6.map",
+      "mapFile": "data/maps/custom_mission6.json",
       "objectives": [
         { "type": "destroy", "name": "Destroy own buildings before enemy captures", "targetCount": 4 },
         { "type": "escort", "name": "Evacuate commander", "unitId": 400, "destX": 5, "destY": 5 }
@@ -109,7 +109,7 @@
       "description": "Fight through dense jungle terrain with limited visibility.",
       "briefing": "The jungle hides both friend and foe. Use Snipers to scout ahead and Coyotes for quick strikes. Watch for ambushes.",
       "playerFaction": "RESISTANCE",
-      "mapFile": "maps/custom_mission7.map",
+      "mapFile": "data/maps/custom_mission7.json",
       "objectives": [
         { "type": "destroy", "name": "Eliminate enemy patrol", "targetCount": 15 },
         { "type": "capture", "name": "Capture jungle outpost", "targetX": 70, "targetY": 70 }
@@ -126,7 +126,7 @@
       "description": "Defend against attacks from two directions simultaneously.",
       "briefing": "Enemies approach from both east and west. Split your defenses carefully — if one front falls, all is lost.",
       "playerFaction": "CONFEDERATION",
-      "mapFile": "maps/custom_mission8.map",
+      "mapFile": "data/maps/custom_mission8.json",
       "objectives": [
         { "type": "defend", "name": "Hold eastern front", "entityId": 1, "durationTicks": 7200 },
         { "type": "defend", "name": "Hold western front", "entityId": 2, "durationTicks": 7200 }
@@ -145,7 +145,7 @@
       "description": "Infiltrate and sabotage enemy power infrastructure.",
       "briefing": "Their Generators power the defenses. Destroy them and the enemy base goes dark. Then strike while they're vulnerable.",
       "playerFaction": "RESISTANCE",
-      "mapFile": "maps/custom_mission9.map",
+      "mapFile": "data/maps/custom_mission9.json",
       "objectives": [
         { "type": "destroy", "name": "Destroy enemy Generators", "targetCount": 3 },
         { "type": "destroy", "name": "Destroy powerless defenses", "targetCount": 4 }
@@ -162,7 +162,7 @@
       "description": "Survive a relentless armored onslaught.",
       "briefing": "Wave after wave of enemy armor. Our anti-vehicle capabilities are our only hope. Mine placement and Rocket Launchers will be key.",
       "playerFaction": "CONFEDERATION",
-      "mapFile": "maps/custom_mission10.map",
+      "mapFile": "data/maps/custom_mission10.json",
       "objectives": [
         { "type": "defend", "name": "Survive the assault", "entityId": 1, "durationTicks": 10800 },
         { "type": "destroy", "name": "Destroy enemy tanks", "targetCount": 20 }
@@ -181,7 +181,7 @@
       "description": "Control the strategic crossroads against a determined foe.",
       "briefing": "The crossroads controls the supply lines. Both sides need this position. Build fast and hold the center.",
       "playerFaction": "RESISTANCE",
-      "mapFile": "maps/custom_mission11.map",
+      "mapFile": "data/maps/custom_mission11.json",
       "objectives": [
         { "type": "capture", "name": "Hold the crossroads", "targetX": 64, "targetY": 64 },
         { "type": "destroy", "name": "Destroy enemy base", "targetCount": 5 }
@@ -199,7 +199,7 @@
       "description": "Capture and hold the communications relay.",
       "briefing": "The Locator relay station broadcasts enemy positions. Capture it to reveal the entire map, then use the intelligence to mount a devastating attack.",
       "playerFaction": "CONFEDERATION",
-      "mapFile": "maps/custom_mission12.map",
+      "mapFile": "data/maps/custom_mission12.json",
       "objectives": [
         { "type": "capture", "name": "Capture the relay station", "targetX": 50, "targetY": 50 },
         { "type": "destroy", "name": "Destroy enemy Command Centre", "targetCount": 1 }
@@ -217,7 +217,7 @@
       "description": "Execute a coordinated two-pronged attack.",
       "briefing": "Divide your forces for a simultaneous attack from north and south. Timing is everything — if one prong attacks too early, the enemy will reinforce.",
       "playerFaction": "RESISTANCE",
-      "mapFile": "maps/custom_mission13.map",
+      "mapFile": "data/maps/custom_mission13.json",
       "objectives": [
         { "type": "destroy", "name": "Destroy northern defenses", "targetCount": 4 },
         { "type": "destroy", "name": "Destroy southern defenses", "targetCount": 4 },
@@ -236,7 +236,7 @@
       "description": "A massive battle with all unit types available.",
       "briefing": "Full-scale war. Every unit, every building, every strategy matters. Only the most skilled commander will prevail.",
       "playerFaction": "CONFEDERATION",
-      "mapFile": "maps/custom_mission14.map",
+      "mapFile": "data/maps/custom_mission14.json",
       "objectives": [
         { "type": "destroy", "name": "Destroy all enemy buildings", "targetCount": 8 },
         { "type": "destroy", "name": "Annihilate enemy forces", "targetCount": 40 }
@@ -256,7 +256,7 @@
       "description": "Survive the longest mission against endless waves.",
       "briefing": "There is no victory here — only survival. How long can you hold out against an enemy with unlimited resources? Test your endurance, Commander.",
       "playerFaction": "RESISTANCE",
-      "mapFile": "maps/custom_mission15.map",
+      "mapFile": "data/maps/custom_mission15.json",
       "objectives": [
         { "type": "defend", "name": "Survive as long as possible", "entityId": 1, "durationTicks": 14400 },
         { "type": "destroy", "name": "Destroy wave attackers", "targetCount": 50 }

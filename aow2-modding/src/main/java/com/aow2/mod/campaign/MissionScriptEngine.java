@@ -2,6 +2,7 @@ package com.aow2.mod.campaign;
 
 import com.aow2.core.campaign.ScriptEngine;
 import com.aow2.core.engine.GameState;
+import com.aow2.core.economy.EconomySystem;
 import com.aow2.core.world.EntityManager;
 import com.aow2.mod.script.GameAPI;
 import com.aow2.mod.script.LuaEngine;
@@ -49,10 +50,23 @@ public final class MissionScriptEngine implements ScriptEngine {
      * @param entities   entity manager for queries
      */
     public boolean loadScript(String scriptFile, GameState state, EntityManager entities) {
+        return loadScript(scriptFile, state, entities, null);
+    }
+
+    /**
+     * Loads and executes a mission script, exposing game state and economy to the Lua environment.
+     *
+     * @param scriptFile    path to the Lua script (classpath resource)
+     * @param state         current game state
+     * @param entities      entity manager for queries
+     * @param economySystem economy system for credit queries (may be null)
+     */
+    public boolean loadScript(String scriptFile, GameState state, EntityManager entities,
+                              EconomySystem economySystem) {
         try {
             // Initialize the Lua engine before setting globals
             if (!luaEngine.isInitialized()) {
-                luaEngine.initialize(state, entities);
+                luaEngine.initialize(state, entities, economySystem);
             }
 
             // Expose game state variables to Lua
@@ -85,7 +99,25 @@ public final class MissionScriptEngine implements ScriptEngine {
      */
     public boolean loadScriptFromString(String scriptContent, String scriptName,
                                      GameState state, EntityManager entities) {
+        return loadScriptFromString(scriptContent, scriptName, state, entities, null);
+    }
+
+    /**
+     * Loads a mission script from a raw string, exposing game state and economy to the Lua environment.
+     *
+     * @param scriptContent the Lua script source code
+     * @param scriptName    name for error reporting
+     * @param state         current game state
+     * @param entities      entity manager for queries
+     * @param economySystem economy system for credit queries (may be null)
+     */
+    public boolean loadScriptFromString(String scriptContent, String scriptName,
+                                     GameState state, EntityManager entities,
+                                     EconomySystem economySystem) {
         try {
+            if (!luaEngine.isInitialized()) {
+                luaEngine.initialize(state, entities, economySystem);
+            }
             luaEngine.setGlobalInt("gameTick", (int) state.currentTick());
             luaEngine.setGlobalInt("unitCount", entities.unitCount());
             luaEngine.setGlobalInt("buildingCount", entities.buildingCount());

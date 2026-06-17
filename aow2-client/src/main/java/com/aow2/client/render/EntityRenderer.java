@@ -10,21 +10,21 @@ import com.aow2.core.entity.Unit;
 import com.aow2.core.world.EntityManager;
 
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
 import java.util.Set;
 
 /**
  * Renders units and buildings on the isometric game scene.
- * Uses colored shapes as placeholders until sprite assets are available.
+ * Uses the SpriteManager for sprite images with fallback to colored shapes.
  * <p>
  * Rendering conventions:
- * - Units: colored circles (blue=CONFEDERATION, red=RESISTANCE)
- * - Buildings: colored rectangles with health bars
+ * - Units: sprites from SpriteManager (fallback: colored circles)
+ * - Buildings: sprites from SpriteManager (fallback: colored rectangles)
  * - Direction indicator: small arrow showing unit facing
  * - Health bars: above entities
  * - Selection highlight: yellow circle/ring for selected units
@@ -36,13 +36,13 @@ public class EntityRenderer {
 
     private static final Logger LOG = LoggerFactory.getLogger(EntityRenderer.class);
 
-    /** Radius of unit circles in pixels. */
+    /** Radius of unit circles in pixels (fallback). */
     private static final double UNIT_RADIUS = 6.0;
 
-    /** Width of building rectangles in pixels. */
+    /** Width of building rectangles in pixels (fallback). */
     private static final double BUILDING_WIDTH = 24.0;
 
-    /** Height of building rectangles in pixels. */
+    /** Height of building rectangles in pixels (fallback). */
     private static final double BUILDING_HEIGHT = 16.0;
 
     /** Health bar width. */
@@ -63,6 +63,9 @@ public class EntityRenderer {
     /** The isometric renderer for coordinate conversion. */
     private final IsometricRenderer isoRenderer;
 
+    /** The sprite manager for sprite images (nullable). */
+    private SpriteManager spriteManager;
+
     /** Set of currently selected entity IDs. */
     private Set<Integer> selectedEntityIds;
 
@@ -73,7 +76,19 @@ public class EntityRenderer {
      */
     public EntityRenderer(IsometricRenderer isoRenderer) {
         this.isoRenderer = isoRenderer;
+        this.spriteManager = null;
         this.selectedEntityIds = Set.of();
+    }
+
+    /**
+     * Sets the SpriteManager for sprite-based rendering.
+     * When set, the renderer will use sprite images instead of colored shapes.
+     *
+     * @param spriteManager the sprite manager instance
+     */
+    public void setSpriteManager(SpriteManager spriteManager) {
+        this.spriteManager = spriteManager;
+        LOG.info("EntityRenderer SpriteManager set: initialized={}", spriteManager.isInitialized());
     }
 
     /**
@@ -88,11 +103,11 @@ public class EntityRenderer {
     /**
      * Renders all entities (buildings then units, for correct z-ordering).
      *
-     * @param gc           the graphics context
+     * @param gc            the graphics context
      * @param entityManager the entity manager containing all entities
      * @param cameraOffsetX camera horizontal offset
      * @param cameraOffsetY camera vertical offset
-     * @param zoom         zoom scale factor
+     * @param zoom          zoom scale factor
      */
     public void render(GraphicsContext gc, EntityManager entityManager,
                        double cameraOffsetX, double cameraOffsetY, double zoom) {
@@ -118,7 +133,8 @@ public class EntityRenderer {
     }
 
     /**
-     * Renders a single unit as a colored circle with direction indicator and health bar.
+     * Renders a single unit using a sprite from SpriteManager if available,
+     * otherwise falls back to a colored circle with direction indicator.
      *
      * @param gc   graphics context
      * @param unit the unit to render
@@ -130,6 +146,84 @@ public class EntityRenderer {
         Color factionColor = factionColor(unit.getFaction());
         boolean isSelected = selectedEntityIds.contains(unit.getId());
 
+        // Attempt sprite rendering
+        Image sprite = null;
+        Direction facing = computeFacing(unit);
+        if (spriteManager != null) {
+            sprite = spriteManager.getUnitSprite(unit.getUnitType(), facing);
+        }
+
+        if (sprite != null) {
+            renderUnitWithSprite(gc, sx, sy, sprite, isSelected, unit, factionColor, facing);
+        } else {
+            renderUnitFallback(gc, sx, sy, factionColor, isSelected, unit, facing);
+        }
+    }
+
+    /**
+     * Renders a unit using its sprite image with overlays.
+     *
+     * @param gc           graphics context
+     * @param sx           screen x position
+     * @param sy           screen y position
+     * @param sprite       the unit sprite image
+     * @param isSelected   whether the unit is selected
+     * @param unit         the unit entity
+     * @param factionColor the faction color
+     * @param facing       the facing direction
+     */
+    private void renderUnitWithSprite(GraphicsContext gc, double sx, double sy,
+                                       Image sprite, boolean isSelected,
+                                       Unit unit, Color factionColor, Direction facing) {
+        double spriteW = sprite.getWidth();
+        double spriteH = sprite.getHeight();
+
+        // Draw sprite centered at grid position, offset upward so feet are at grid center
+        double drawX = sx - spriteW / 2.0;
+        double drawY = sy - spriteH + 4; // Offset so bottom of sprite aligns with tile center
+
+        // Selection highlight ring (behind sprite)
+        if (isSelected) {
+            gc.setStroke(Color.YELLOW);
+            gc.setLineWidth(2.0);
+            gc.strokeOval(
+                sx - UNIT_RADIUS - SELECTION_RING_OFFSET,
+                sy - UNIT_RADIUS - SELECTION_RING_OFFSET,
+                (UNIT_RADIUS + SELECTION_RING_OFFSET) * 2,
+                (UNIT_RADIUS + SELECTION_RING_OFFSET) * 2
+            );
+        }
+
+        // Draw the sprite
+        gc.drawImage(sprite, drawX, drawY);
+
+        // Health bar (only show if damaged)
+        if (unit.getHp() < unit.getMaxHp()) {
+            renderHealthBar(gc, sx, sy - spriteH / 2.0 - HEALTH_BAR_OFFSET, unit.getHp(), unit.getMaxHp(), factionColor);
+        }
+
+        // Rank indicator for ranked units
+        if (unit.getRank() > 0) {
+            gc.setFill(Color.GOLD);
+            String rankStr = "*".repeat(unit.getRank());
+            gc.fillText(rankStr, sx - 3, sy - spriteH / 2.0 - HEALTH_BAR_OFFSET - 2);
+        }
+    }
+
+    /**
+     * Renders a unit using colored circle fallback (original behavior).
+     *
+     * @param gc           graphics context
+     * @param sx           screen x position
+     * @param sy           screen y position
+     * @param factionColor the faction color
+     * @param isSelected   whether the unit is selected
+     * @param unit         the unit entity
+     * @param facing       the facing direction
+     */
+    private void renderUnitFallback(GraphicsContext gc, double sx, double sy,
+                                     Color factionColor, boolean isSelected,
+                                     Unit unit, Direction facing) {
         // Selection highlight ring
         if (isSelected) {
             gc.setStroke(Color.YELLOW);
@@ -153,8 +247,7 @@ public class EntityRenderer {
             gc.strokeOval(sx - UNIT_RADIUS, sy - UNIT_RADIUS, UNIT_RADIUS * 2, UNIT_RADIUS * 2);
         }
 
-        // Direction indicator arrow — compute facing from current position and target
-        Direction facing = computeFacing(unit);
+        // Direction indicator arrow
         renderDirectionArrow(gc, sx, sy, facing);
 
         // Health bar (only show if damaged)
@@ -204,13 +297,13 @@ public class EntityRenderer {
      */
     private double directionToAngle(Direction direction) {
         return switch (direction) {
-            case NORTH     -> -Math.PI / 2;
+            case NORTH      -> -Math.PI / 2;
             case NORTH_EAST -> -Math.PI / 4;
-            case EAST      -> 0;
+            case EAST       -> 0;
             case SOUTH_EAST -> Math.PI / 4;
-            case SOUTH     -> Math.PI / 2;
+            case SOUTH      -> Math.PI / 2;
             case SOUTH_WEST -> 3 * Math.PI / 4;
-            case WEST      -> Math.PI;
+            case WEST       -> Math.PI;
             case NORTH_WEST -> -3 * Math.PI / 4;
         };
     }
@@ -248,7 +341,8 @@ public class EntityRenderer {
     }
 
     /**
-     * Renders a single building as a colored rectangle with health bar.
+     * Renders a single building using a sprite from SpriteManager if available,
+     * otherwise falls back to a colored rectangle with health bar.
      *
      * @param gc       graphics context
      * @param building the building to render
@@ -260,6 +354,92 @@ public class EntityRenderer {
         Color factionColor = factionColor(building.getFaction());
         boolean isSelected = selectedEntityIds.contains(building.getId());
 
+        // Attempt sprite rendering
+        Image sprite = null;
+        if (spriteManager != null) {
+            sprite = spriteManager.getBuildingSprite(building.getBuildingType(), building.getFaction());
+        }
+
+        if (sprite != null) {
+            renderBuildingWithSprite(gc, sx, sy, sprite, isSelected, building, factionColor);
+        } else {
+            renderBuildingFallback(gc, sx, sy, factionColor, isSelected, building);
+        }
+    }
+
+    /**
+     * Renders a building using its sprite image with overlays.
+     *
+     * @param gc           graphics context
+     * @param sx           screen x position
+     * @param sy           screen y position
+     * @param sprite       the building sprite image
+     * @param isSelected   whether the building is selected
+     * @param building     the building entity
+     * @param factionColor the faction color
+     */
+    private void renderBuildingWithSprite(GraphicsContext gc, double sx, double sy,
+                                           Image sprite, boolean isSelected,
+                                           Building building, Color factionColor) {
+        double spriteW = sprite.getWidth();
+        double spriteH = sprite.getHeight();
+
+        // Draw sprite centered at grid position, offset upward so base aligns with tile center
+        double drawX = sx - spriteW / 2.0;
+        double drawY = sy - spriteH + 6; // Offset so bottom of sprite aligns with tile center
+
+        // Selection highlight
+        if (isSelected) {
+            gc.setStroke(Color.YELLOW);
+            gc.setLineWidth(2.5);
+            gc.strokeRect(drawX - 3, drawY - 3, spriteW + 6, spriteH + 6);
+        }
+
+        // Draw the sprite
+        gc.drawImage(sprite, drawX, drawY);
+
+        // Construction overlay (semi-transparent if under construction)
+        if (building.isUnderConstruction()) {
+            gc.setFill(Color.rgb(255, 255, 255, 0.4));
+            gc.fillRect(drawX, drawY, spriteW, spriteH);
+
+            // Construction progress text
+            double progress = (double) building.getConstructionProgress() / building.getStats().buildTime();
+            gc.setFill(Color.WHITE);
+            gc.fillText(String.format("%.0f%%", progress * 100), drawX + 2, drawY + spriteH / 2.0 + 4);
+        }
+
+        // Powered indicator for buildings that consume/produce power
+        if (building.getBuildingType().producesPower() && building.isPowered()) {
+            gc.setFill(Color.YELLOW);
+            gc.fillOval(drawX + spriteW - 5, drawY + 1, 4, 4);
+        }
+
+        // Health bar
+        if (building.getHp() < building.getMaxHp()) {
+            renderHealthBar(gc, sx, drawY - 4, building.getHp(), building.getMaxHp(), factionColor);
+        }
+
+        // Building label
+        gc.setFill(Color.WHITE);
+        gc.setFont(javafx.scene.text.Font.font(8));
+        String label = buildingLabel(building.getBuildingType());
+        gc.fillText(label, drawX, drawY + spriteH + 10);
+    }
+
+    /**
+     * Renders a building using colored rectangle fallback (original behavior).
+     *
+     * @param gc           graphics context
+     * @param sx           screen x position
+     * @param sy           screen y position
+     * @param factionColor the faction color
+     * @param isSelected   whether the building is selected
+     * @param building     the building entity
+     */
+    private void renderBuildingFallback(GraphicsContext gc, double sx, double sy,
+                                         Color factionColor, boolean isSelected,
+                                         Building building) {
         // Building size varies by type
         double w = BUILDING_WIDTH;
         double h = BUILDING_HEIGHT;
@@ -344,11 +524,11 @@ public class EntityRenderer {
     /**
      * Renders a health bar above an entity.
      *
-     * @param gc      graphics context
-     * @param cx      center x of the entity
-     * @param topY    y position for the top of the health bar
-     * @param hp      current hit points
-     * @param maxHp   maximum hit points
+     * @param gc           graphics context
+     * @param cx           center x of the entity
+     * @param topY         y position for the top of the health bar
+     * @param hp           current hit points
+     * @param maxHp        maximum hit points
      * @param factionColor the faction color for the bar
      */
     private void renderHealthBar(GraphicsContext gc, double cx, double topY,

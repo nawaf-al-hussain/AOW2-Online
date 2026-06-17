@@ -13,6 +13,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Constructor;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -27,6 +29,10 @@ import java.util.Optional;
 public final class CampaignManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(CampaignManager.class);
+
+    /** Fully-qualified class name of the MissionScriptEngine in aow2-modding. */
+    private static final String MISSION_SCRIPT_ENGINE_CLASS =
+        "com.aow2.mod.campaign.MissionScriptEngine";
 
     /** File paths for campaign data. */
     private static final String EP1_RESOURCE = "data/campaigns/episode1_global_confederation.json";
@@ -59,26 +65,15 @@ public final class CampaignManager {
     private final List<Integer> completedCustomMissions;
 
     /**
-     * Constructs a new CampaignManager with the specified save directory.
+     * Constructs a new CampaignManager with the specified save directory
+     * and an externally-provided script engine.
      *
      * @param saveDirectory directory for save file storage
+     * @param scriptEngine  the script engine to use for mission scripting
      */
-    public CampaignManager(java.nio.file.Path saveDirectory) {
+    public CampaignManager(Path saveDirectory, ScriptEngine scriptEngine) {
         this.saveManager = new SaveManager(saveDirectory);
-        this.scriptEngine = new ScriptEngine() {
-            private boolean active = false;
-            public boolean loadScript(String f, GameState s, EntityManager e) { active = true; return true; }
-            public boolean loadScriptFromString(String c, String n, GameState s, EntityManager e) { active = true; return true; }
-            public void processTick(GameState s, EntityManager e) {}
-            public void registerTriggerCallback(int id, Runnable cb) {}
-            public void fireTrigger(int id) {}
-            public void setScriptVariable(String n, int v) {}
-            public void setScriptVariable(String n, String v) {}
-            public int getScriptVariableInt(String n) { return 0; }
-            public String getScriptVariableString(String n) { return ""; }
-            public boolean isScriptActive() { return active; }
-            public void reset() { active = false; }
-        };
+        this.scriptEngine = scriptEngine;
         this.objectMapper = new ObjectMapper();
         this.currentCampaign = null;
         this.currentMissionIndex = 0;
@@ -93,24 +88,13 @@ public final class CampaignManager {
     }
 
     /**
-     * Constructs a new CampaignManager with in-memory save storage.
+     * Constructs a new CampaignManager with in-memory save storage
+     * and a no-op script engine.
+     * Suitable for testing and scenarios where Lua scripting is not required.
      */
     public CampaignManager() {
         this.saveManager = new SaveManager();
-        this.scriptEngine = new ScriptEngine() {
-            private boolean active = false;
-            public boolean loadScript(String f, GameState s, EntityManager e) { active = true; return true; }
-            public boolean loadScriptFromString(String c, String n, GameState s, EntityManager e) { active = true; return true; }
-            public void processTick(GameState s, EntityManager e) {}
-            public void registerTriggerCallback(int id, Runnable cb) {}
-            public void fireTrigger(int id) {}
-            public void setScriptVariable(String n, int v) {}
-            public void setScriptVariable(String n, String v) {}
-            public int getScriptVariableInt(String n) { return 0; }
-            public String getScriptVariableString(String n) { return ""; }
-            public boolean isScriptActive() { return active; }
-            public void reset() { active = false; }
-        };
+        this.scriptEngine = new NoOpScriptEngine();
         this.objectMapper = new ObjectMapper();
         this.currentCampaign = null;
         this.currentMissionIndex = 0;
@@ -122,6 +106,39 @@ public final class CampaignManager {
         this.completedCustomMissions = new ArrayList<>();
 
         loadAllCampaignData();
+    }
+
+    /**
+     * Factory method that creates a CampaignManager with the LuaJ-backed
+     * MissionScriptEngine from the aow2-modding module.
+     * <p>
+     * Uses reflection to instantiate MissionScriptEngine, avoiding a
+     * compile-time circular dependency between aow2-core and aow2-modding.
+     * The aow2-modding module must be on the runtime classpath for this
+     * method to succeed.
+     *
+     * @param saveDirectory directory for save file storage
+     * @return a new CampaignManager with a MissionScriptEngine
+     * @throws IllegalStateException if aow2-modding is not on the classpath
+     *                              or MissionScriptEngine cannot be instantiated
+     */
+    public static CampaignManager createWithLuaEngine(Path saveDirectory) {
+        try {
+            Class<?> engineClass = Class.forName(MISSION_SCRIPT_ENGINE_CLASS);
+            Constructor<?> constructor = engineClass.getConstructor();
+            ScriptEngine luaEngine = (ScriptEngine) constructor.newInstance();
+            LOG.info("MissionScriptEngine loaded via reflection from aow2-modding");
+            return new CampaignManager(saveDirectory, luaEngine);
+        } catch (ClassNotFoundException e) {
+            throw new IllegalStateException(
+                "Cannot create CampaignManager with Lua engine: "
+                + "aow2-modding module not on classpath (class not found: "
+                + MISSION_SCRIPT_ENGINE_CLASS + ")", e);
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalStateException(
+                "Cannot create CampaignManager with Lua engine: "
+                + "failed to instantiate MissionScriptEngine", e);
+        }
     }
 
     /**
@@ -490,4 +507,52 @@ public final class CampaignManager {
      * Internal campaign state holder.
      */
     private record Campaign(CampaignEpisode episode, List<Mission> missions) {}
+
+    /**
+     * Minimal no-op ScriptEngine used when no Lua engine is available.
+     * Suitable for testing and headless environments.
+     */
+    private static final class NoOpScriptEngine implements ScriptEngine {
+
+        private boolean active;
+
+        @Override
+        public boolean loadScript(String f, GameState s, EntityManager e) {
+            active = true;
+            return true;
+        }
+
+        @Override
+        public boolean loadScriptFromString(String c, String n, GameState s, EntityManager e) {
+            active = true;
+            return true;
+        }
+
+        @Override
+        public void processTick(GameState s, EntityManager e) { }
+
+        @Override
+        public void registerTriggerCallback(int id, Runnable cb) { }
+
+        @Override
+        public void fireTrigger(int id) { }
+
+        @Override
+        public void setScriptVariable(String n, int v) { }
+
+        @Override
+        public void setScriptVariable(String n, String v) { }
+
+        @Override
+        public int getScriptVariableInt(String n) { return 0; }
+
+        @Override
+        public String getScriptVariableString(String n) { return ""; }
+
+        @Override
+        public boolean isScriptActive() { return active; }
+
+        @Override
+        public void reset() { active = false; }
+    }
 }

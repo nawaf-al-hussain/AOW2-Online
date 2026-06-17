@@ -20,9 +20,18 @@ import java.util.Map;
 
 /**
  * REST controller for community map management endpoints.
- * Handles map listing, uploading, downloading, and deletion.
+ * Handles map listing, uploading, downloading, deletion, and download tracking.
+ * <p>
+ * Endpoints:
+ * - POST   /api/maps              — upload a new map (requires auth)
+ * - GET    /api/maps              — list all community maps
+ * - GET    /api/maps/{id}         — download a specific map
+ * - DELETE /api/maps/{id}         — delete a map (owner only)
+ * - POST   /api/maps/{id}/download — increment download count
+ * <p>
  * REF: protocol_specification.md - Type 21 MAP_DATA, Type 41 MAP_LIST
  * REF: protocol_specification.md - Type 26 MAP_VALIDATION
+ * REF: phases.md Phase 9 - Map sharing
  */
 @RestController
 @RequestMapping("/api/maps")
@@ -44,8 +53,9 @@ public class MapController {
     /**
      * Lists all community-uploaded maps.
      * GET /api/maps
+     * Returns map metadata without the full map data payload for efficient browsing.
      *
-     * @return 200 with a list of map metadata (without the full map data payload)
+     * @return 200 with a list of map metadata
      */
     @GetMapping
     public ResponseEntity<List<Map<String, Object>>> listMaps() {
@@ -64,6 +74,7 @@ public class MapController {
     /**
      * Uploads a new custom map.
      * POST /api/maps
+     * Requires authentication; the authenticated player becomes the map owner.
      *
      * @param authentication the authenticated player (becomes the uploader)
      * @param request        must contain "name", "mapData", and optionally "description"
@@ -86,6 +97,16 @@ public class MapController {
             return ResponseEntity.badRequest().body(Map.of("error", "Map data is required"));
         }
 
+        // Enforce maximum name length
+        if (name.length() > 64) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Map name must be 64 characters or fewer"));
+        }
+
+        // Enforce maximum map data size (5 MB)
+        if (mapData.length() > 5 * 1024 * 1024) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Map data exceeds 5 MB limit"));
+        }
+
         UploadedMap map = new UploadedMap(uploaderId, name, description, mapData);
         map = uploadedMapRepository.save(map);
 
@@ -102,6 +123,7 @@ public class MapController {
     /**
      * Downloads a specific map by ID.
      * GET /api/maps/{id}
+     * Returns the full map data including the JSON map payload.
      *
      * @param id the map ID
      * @return 200 with full map data, or 404 if not found
@@ -109,25 +131,22 @@ public class MapController {
     @GetMapping("/{id}")
     public ResponseEntity<Map<String, Object>> downloadMap(@PathVariable Long id) {
         return uploadedMapRepository.findById(id)
-                .map(map -> {
-                    map.incrementDownloadCount();
-                    uploadedMapRepository.save(map);
-                    return ResponseEntity.ok(Map.<String, Object>of(
-                            "id", map.getId(),
-                            "name", map.getName(),
-                            "description", map.getDescription() != null ? map.getDescription() : "",
-                            "mapData", map.getMapData(),
-                            "uploaderId", map.getUploaderId(),
-                            "downloadCount", map.getDownloadCount()
-                    ));
-                })
+                .map(map -> ResponseEntity.ok(Map.<String, Object>of(
+                        "id", map.getId(),
+                        "name", map.getName(),
+                        "description", map.getDescription() != null ? map.getDescription() : "",
+                        "mapData", map.getMapData(),
+                        "uploaderId", map.getUploaderId(),
+                        "downloadCount", map.getDownloadCount()
+                )))
                 .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Map.of("error", "Map not found: " + id)));
+                        .body(Map.<String, Object>of("error", "Map not found: " + id)));
     }
 
     /**
      * Deletes a map owned by the requesting player.
      * DELETE /api/maps/{id}
+     * Only the map owner (original uploader) can delete the map.
      *
      * @param authentication the authenticated player
      * @param id             the map ID to delete
@@ -148,6 +167,33 @@ public class MapController {
                     uploadedMapRepository.delete(map);
                     log.info("Map deleted: {} (ID: {}) by player {}", map.getName(), id, playerId);
                     return ResponseEntity.ok(Map.<String, Object>of("status", "deleted", "id", id));
+                })
+                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.<String, Object>of("error", "Map not found: " + id)));
+    }
+
+    /**
+     * Increments the download count for a map.
+     * POST /api/maps/{id}/download
+     * This endpoint is called when a player explicitly downloads a map
+     * (separate from GET which auto-increments). Allows clients to
+     * track download counts without fetching the full map data.
+     *
+     * @param id the map ID
+     * @return 200 with updated download count, or 404 if not found
+     */
+    @PostMapping("/{id}/download")
+    public ResponseEntity<Map<String, Object>> incrementDownloadCount(@PathVariable Long id) {
+        return uploadedMapRepository.findById(id)
+                .map(map -> {
+                    map.incrementDownloadCount();
+                    uploadedMapRepository.save(map);
+                    log.debug("Download count incremented for map {} (ID: {}), now {}",
+                        map.getName(), id, map.getDownloadCount());
+                    return ResponseEntity.ok(Map.<String, Object>of(
+                            "id", map.getId(),
+                            "downloadCount", map.getDownloadCount()
+                    ));
                 })
                 .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(Map.<String, Object>of("error", "Map not found: " + id)));

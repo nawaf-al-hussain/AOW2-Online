@@ -6,6 +6,7 @@ import com.aow2.common.model.UnitStats;
 import com.aow2.common.model.UnitType;
 import com.aow2.common.model.WeaponType;
 import com.aow2.core.engine.GameState;
+import com.aow2.core.economy.EconomySystem;
 import com.aow2.core.entity.Unit;
 import com.aow2.core.world.EntityManager;
 import org.slf4j.Logger;
@@ -34,6 +35,9 @@ public final class GameAPI {
     /** Entity manager reference. */
     private static EntityManager entityManager;
 
+    /** Economy system reference for credit queries. */
+    private static EconomySystem economySystem;
+
     /** Objective status map. Key = objective name, Value = status string. */
     private static final Map<String, String> objectives = new HashMap<>();
 
@@ -49,14 +53,16 @@ public final class GameAPI {
     private GameAPI() {}
 
     /**
-     * Initializes the GameAPI with game state and entity manager references.
+     * Initializes the GameAPI with game state, entity manager, and economy system references.
      *
-     * @param state    game state
-     * @param entities entity manager
+     * @param state          game state
+     * @param entities       entity manager
+     * @param economy        economy system for credit queries
      */
-    static void initialize(GameState state, EntityManager entities) {
+    public static void initialize(GameState state, EntityManager entities, EconomySystem economy) {
         gameState = state;
         entityManager = entities;
+        economySystem = economy;
     }
 
     // --- Spawn / Destroy ---
@@ -224,14 +230,16 @@ public final class GameAPI {
 
     /**
      * Returns the current credits for a faction.
-     * ASSUMPTION: credits tracked by EconomySystem; returns 0 for API stub.
+     * Delegates to the EconomySystem which tracks per-player credit balances.
      *
      * @param faction faction name
-     * @return credit amount
+     * @return credit amount, or 0 if economy system is not available
      */
     public static int getCredits(String faction) {
-        // ASSUMPTION: would need reference to EconomySystem for real implementation
-        return 0;
+        if (economySystem == null) return 0;
+        Faction f = resolveFaction(faction);
+        int playerId = EconomySystem.playerId(f);
+        return economySystem.getCredits(playerId);
     }
 
     /**

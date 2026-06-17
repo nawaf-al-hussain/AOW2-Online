@@ -8,9 +8,13 @@ plugins {
 dependencies {
     implementation(project(":aow2-common"))
     implementation(project(":aow2-core"))
+    implementation(project(":aow2-modding"))
     implementation("com.github.almasb:fxgl:21")
     implementation("org.slf4j:slf4j-api:2.0.12")
     implementation("ch.qos.logback:logback-classic:1.5.3")
+    implementation("jakarta.websocket:jakarta.websocket-api:2.1.1")
+    implementation("org.glassfish.tyrus.bundles:tyrus-standalone-client:2.1.5")
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.17.0")
 
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.2")
     testImplementation("org.mockito:mockito-core:5.11.0")

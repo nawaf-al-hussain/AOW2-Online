@@ -1,6 +1,7 @@
 package com.aow2.mod.script;
 
 import com.aow2.core.engine.GameState;
+import com.aow2.core.economy.EconomySystem;
 import com.aow2.core.world.EntityManager;
 import org.luaj.vm2.Globals;
 import org.luaj.vm2.lib.LibFunction;
@@ -22,6 +23,7 @@ import org.slf4j.LoggerFactory;
  * aow2.setTimer(10, "onTimerExpired")
  * aow2.onUnitKilled("onUnitDeath")
  * local count = aow2.getUnitCount("resistance")
+ * local credits = aow2.getCredits("confederation")
  * local tick = aow2.getTick()
  * </pre>
  * <p>
@@ -41,6 +43,9 @@ public final class ScriptBindings {
     /** Entity manager reference. */
     private final EntityManager entityManager;
 
+    /** Economy system reference for credit queries. */
+    private final EconomySystem economySystem;
+
     /**
      * Constructs ScriptBindings.
      *
@@ -49,9 +54,23 @@ public final class ScriptBindings {
      * @param entityManager entity manager
      */
     public ScriptBindings(Globals globals, GameState gameState, EntityManager entityManager) {
+        this(globals, gameState, entityManager, null);
+    }
+
+    /**
+     * Constructs ScriptBindings with economy system reference.
+     *
+     * @param globals       Lua globals
+     * @param gameState     game state
+     * @param entityManager entity manager
+     * @param economySystem economy system for credit queries
+     */
+    public ScriptBindings(Globals globals, GameState gameState, EntityManager entityManager,
+                          EconomySystem economySystem) {
         this.globals = globals;
         this.gameState = gameState;
         this.entityManager = entityManager;
+        this.economySystem = economySystem;
     }
 
     /**
@@ -59,7 +78,7 @@ public final class ScriptBindings {
      */
     public void bindAll() {
         // Initialize GameAPI with references
-        GameAPI.initialize(gameState, entityManager);
+        GameAPI.initialize(gameState, entityManager, economySystem);
 
         // Create the aow2 table
         LuaTable aow2 = new LuaTable();

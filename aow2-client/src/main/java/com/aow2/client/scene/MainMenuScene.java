@@ -28,7 +28,7 @@ import org.slf4j.LoggerFactory;
  * <p>
  * Features:
  * - Title "Art of War 2: Online"
- * - Buttons: Campaign, Skirmish, Multiplayer, Map Editor, Settings, Quit
+ * - Buttons: Campaign, Skirmish, Multiplayer, Map Editor, Mods, Settings, Quit
  * - Styling with dark theme matching military aesthetic
  * - Background with subtle animation
  * <p>
@@ -123,13 +123,13 @@ public class MainMenuScene {
         titleBox.getChildren().addAll(title, subtitle, version);
         content.setTop(titleBox);
 
-        // Menu buttons
+        // Menu buttons — "Mods" positioned between "Map Editor" and "Settings"
         VBox buttonBox = new VBox(12);
         buttonBox.setAlignment(Pos.CENTER);
         buttonBox.setPadding(new Insets(0, 0, 80, 0));
 
-        String[] buttonLabels = {"Campaign", "Skirmish", "Multiplayer", "Map Editor", "Settings", "Quit"};
-        String[] actions = {"campaign", "skirmish", "multiplayer", "map_editor", "settings", "quit"};
+        String[] buttonLabels = {"Campaign", "Skirmish", "Multiplayer", "Map Editor", "Mods", "Settings", "Quit"};
+        String[] actions = {"campaign", "skirmish", "multiplayer", "map_editor", "mods", "settings", "quit"};
 
         for (int i = 0; i < buttonLabels.length; i++) {
             javafx.scene.control.Button btn = new javafx.scene.control.Button(buttonLabels[i]);

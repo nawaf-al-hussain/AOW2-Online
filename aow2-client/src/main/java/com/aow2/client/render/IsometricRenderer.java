@@ -4,6 +4,7 @@ import com.aow2.common.model.TerrainType;
 import com.aow2.core.world.GameMap;
 
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
 
 import org.slf4j.Logger;
@@ -18,6 +19,10 @@ import org.slf4j.LoggerFactory;
  *   sx = (x - y) * TILE_HALF_WIDTH + offsetX
  *   sy = (x + y) * TILE_HALF_HEIGHT + offsetY
  * </pre>
+ * <p>
+ * When a SpriteManager is available, terrain tiles are rendered using sprite images
+ * instead of colored diamonds for improved visual quality.
+ * <p>
  * REF: MASTER_DOCUMENTATION.md Section 3.2 - Map System (isometric tile rendering)
  */
 public class IsometricRenderer {
@@ -39,6 +44,9 @@ public class IsometricRenderer {
     /** The game map to render. */
     private GameMap map;
 
+    /** The sprite manager for terrain sprite images (nullable). */
+    private SpriteManager spriteManager;
+
     /**
      * Constructs a new IsometricRenderer.
      * Initial offsets are set to 0; they should be configured via {@link #centerOnMap(int, int)}.
@@ -47,6 +55,19 @@ public class IsometricRenderer {
         this.offsetX = 0;
         this.offsetY = 0;
         this.map = null;
+        this.spriteManager = null;
+    }
+
+    /**
+     * Sets the SpriteManager for terrain sprite rendering.
+     * When set, terrain tiles will use sprite images instead of colored diamonds.
+     *
+     * @param spriteManager the sprite manager instance
+     */
+    public void setSpriteManager(SpriteManager spriteManager) {
+        this.spriteManager = spriteManager;
+        LOG.info("IsometricRenderer SpriteManager set: initialized={}",
+            spriteManager != null && spriteManager.isInitialized());
     }
 
     /**
@@ -117,11 +138,13 @@ public class IsometricRenderer {
 
     /**
      * Renders the entire map terrain.
+     * Uses sprite images when SpriteManager is available, otherwise falls back
+     * to colored diamonds.
      *
-     * @param gc           the graphics context to draw on
+     * @param gc            the graphics context to draw on
      * @param cameraOffsetX camera horizontal offset for panning
      * @param cameraOffsetY camera vertical offset for panning
-     * @param zoom         zoom scale factor
+     * @param zoom          zoom scale factor
      */
     public void render(GraphicsContext gc, double cameraOffsetX, double cameraOffsetY, double zoom) {
         if (map == null) {
@@ -132,11 +155,17 @@ public class IsometricRenderer {
         gc.translate(cameraOffsetX, cameraOffsetY);
         gc.scale(zoom, zoom);
 
+        boolean useSprites = spriteManager != null && spriteManager.isInitialized();
+
         for (int y = 0; y < map.getHeight(); y++) {
             for (int x = 0; x < map.getWidth(); x++) {
                 TerrainType terrain = map.getTile(x, y);
                 if (terrain != null) {
-                    renderTile(gc, x, y, terrain);
+                    if (useSprites) {
+                        renderTileWithSprite(gc, x, y, terrain);
+                    } else {
+                        renderTile(gc, x, y, terrain);
+                    }
                 }
             }
         }
@@ -148,7 +177,33 @@ public class IsometricRenderer {
     }
 
     /**
+     * Renders a single isometric diamond tile using a sprite image.
+     * The sprite is drawn centered on the tile position.
+     *
+     * @param gc      graphics context
+     * @param gx      grid x
+     * @param gy      grid y
+     * @param terrain terrain type
+     */
+    private void renderTileWithSprite(GraphicsContext gc, int gx, int gy, TerrainType terrain) {
+        double sx = gridToScreenX(gx, gy);
+        double sy = gridToScreenY(gx, gy);
+
+        Image sprite = spriteManager.getTerrainSprite(terrain);
+        if (sprite != null) {
+            // Draw sprite centered on the tile's diamond center
+            double drawX = sx - sprite.getWidth() / 2.0;
+            double drawY = sy - sprite.getHeight() / 2.0;
+            gc.drawImage(sprite, drawX, drawY);
+        } else {
+            // Fall back to colored diamond if sprite is unavailable
+            renderTile(gc, gx, gy, terrain);
+        }
+    }
+
+    /**
      * Renders a single isometric diamond tile at the given grid position.
+     * Uses colored fill based on terrain type (original fallback behavior).
      *
      * @param gc      graphics context
      * @param gx      grid x
@@ -211,7 +266,7 @@ public class IsometricRenderer {
 
     /**
      * Returns the JavaFX color associated with a terrain type.
-     * Uses placeholder colors since sprite assets are not yet available.
+     * Used by the colored diamond fallback and by ProceduralSpriteGenerator.
      *
      * @param terrain the terrain type
      * @return the associated color

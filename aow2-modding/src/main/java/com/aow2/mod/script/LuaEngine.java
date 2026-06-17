@@ -1,6 +1,7 @@
 package com.aow2.mod.script;
 
 import com.aow2.core.engine.GameState;
+import com.aow2.core.economy.EconomySystem;
 import com.aow2.core.world.EntityManager;
 import org.luaj.vm2.Globals;
 import org.luaj.vm2.LuaValue;
@@ -37,6 +38,9 @@ public final class LuaEngine {
     /** The entity manager reference. */
     private EntityManager entityManager;
 
+    /** The economy system reference. */
+    private EconomySystem economySystem;
+
     /** Script bindings for Java-to-Lua bridging. */
     private ScriptBindings scriptBindings;
 
@@ -55,14 +59,27 @@ public final class LuaEngine {
      * @param entities the entity manager
      */
     public void initialize(GameState state, EntityManager entities) {
+        initialize(state, entities, null);
+    }
+
+    /**
+     * Initializes the Lua engine with game API bindings including economy system.
+     * Creates a sandboxed Lua environment and registers the game API.
+     *
+     * @param state          the current game state
+     * @param entities       the entity manager
+     * @param economySystem  the economy system for credit queries
+     */
+    public void initialize(GameState state, EntityManager entities, EconomySystem economySystem) {
         this.gameState = state;
         this.entityManager = entities;
+        this.economySystem = economySystem;
 
         // Create Lua globals with standard libraries
         this.globals = JsePlatform.standardGlobals();
 
         // Create and apply script bindings
-        this.scriptBindings = new ScriptBindings(globals, state, entities);
+        this.scriptBindings = new ScriptBindings(globals, state, entities, economySystem);
         scriptBindings.bindAll();
 
         this.initialized = true;
@@ -309,6 +326,7 @@ public final class LuaEngine {
         }
         gameState = null;
         entityManager = null;
+        economySystem = null;
         scriptBindings = null;
         initialized = false;
         // Also reset the static GameAPI state to prevent stale references

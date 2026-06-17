@@ -3,6 +3,8 @@ package com.aow2.client;
 import com.aow2.client.scene.GameScene;
 import com.aow2.client.scene.MainMenuScene;
 import com.aow2.client.scene.MapEditorScene;
+import com.aow2.client.scene.ModManagerScene;
+import com.aow2.client.scene.MultiplayerLobbyScene;
 
 import com.almasb.fxgl.app.GameApplication;
 import com.almasb.fxgl.app.GameSettings;
@@ -40,6 +42,12 @@ public class AOW2App extends GameApplication {
     /** Map editor scene. */
     private MapEditorScene mapEditorScene;
 
+    /** Multiplayer lobby scene. */
+    private MultiplayerLobbyScene multiplayerLobbyScene;
+
+    /** Mod manager scene. */
+    private ModManagerScene modManagerScene;
+
     /** Current active scene state. */
     private ActiveScene activeScene;
 
@@ -47,7 +55,7 @@ public class AOW2App extends GameApplication {
      * Enum representing which scene is currently active.
      */
     private enum ActiveScene {
-        MAIN_MENU, GAME, MAP_EDITOR
+        MAIN_MENU, GAME, MAP_EDITOR, MULTIPLAYER_LOBBY, MOD_MANAGER
     }
 
     @Override
@@ -110,6 +118,59 @@ public class AOW2App extends GameApplication {
     }
 
     /**
+     * Shows the multiplayer lobby scene.
+     */
+    private void showMultiplayerLobby() {
+        if (multiplayerLobbyScene != null) {
+            multiplayerLobbyScene.dispose();
+        }
+
+        multiplayerLobbyScene = new MultiplayerLobbyScene();
+        multiplayerLobbyScene.setCallback(new MultiplayerLobbyScene.SceneCallback() {
+            @Override
+            public void onSearchMatch() {
+                LOG.info("Player searching for match");
+            }
+
+            @Override
+            public void onCancelSearch() {
+                LOG.info("Player cancelled matchmaking");
+            }
+
+            @Override
+            public void onMatchFound(String sessionUuid) {
+                LOG.info("Match found! Session: {}", sessionUuid);
+                showGame();
+            }
+
+            @Override
+            public void onBack() {
+                showMainMenu();
+            }
+        });
+
+        FXGL.getGameScene().clearUINodes();
+        FXGL.getGameScene().addUINode(multiplayerLobbyScene.getRoot());
+
+        activeScene = ActiveScene.MULTIPLAYER_LOBBY;
+        LOG.info("Multiplayer lobby scene displayed");
+    }
+
+    /**
+     * Shows the mod manager scene.
+     */
+    private void showModManager() {
+        modManagerScene = new ModManagerScene();
+        modManagerScene.setOnBackCallback(this::showMainMenu);
+
+        FXGL.getGameScene().clearUINodes();
+        FXGL.getGameScene().addUINode(modManagerScene.getRoot());
+
+        activeScene = ActiveScene.MOD_MANAGER;
+        LOG.info("Mod manager scene displayed");
+    }
+
+    /**
      * Handles menu actions from the main menu.
      *
      * @param action the action string from MainMenuScene
@@ -127,16 +188,19 @@ public class AOW2App extends GameApplication {
                 showGame();
             }
             case "multiplayer" -> {
-                LOG.info("Multiplayer not yet implemented");
-                // Will be implemented in a future phase
+                LOG.info("Starting Multiplayer lobby");
+                showMultiplayerLobby();
             }
             case "map_editor" -> {
                 LOG.info("Starting Map Editor");
                 showMapEditor();
             }
+            case "mods" -> {
+                LOG.info("Opening Mod Manager");
+                showModManager();
+            }
             case "settings" -> {
                 LOG.info("Settings not yet implemented");
-                // Will be implemented in a future phase
             }
             case "quit" -> {
                 LOG.info("Quit requested");
@@ -177,6 +241,9 @@ public class AOW2App extends GameApplication {
         }
         if (mapEditorScene != null) {
             mapEditorScene.stop();
+        }
+        if (multiplayerLobbyScene != null) {
+            multiplayerLobbyScene.dispose();
         }
         if (mainMenuScene != null) {
             mainMenuScene.dispose();
