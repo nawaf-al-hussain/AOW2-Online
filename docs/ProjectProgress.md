@@ -3,7 +3,7 @@
 > This file tracks everything that has been implemented and what remains.
 > Updated after each development session.
 
-## Status: Phase 12 IN PROGRESS — Spec Compliance ~95%
+## Status: Phase 13 IN PROGRESS — Spec Compliance ~97%
 
 ## Phase 0: Project Scaffolding ✅
 - [x] Gradle multi-module project initialized (5 modules: common, core, client, server, modding)
@@ -140,11 +140,20 @@
 - [x] Replay playback (ReplayPlayer with seek support)
 - [x] Replay sharing (upload to server via ReplayController)
 
-## Phase 12: Web Client (IN PROGRESS)
-- [ ] Next.js web companion app (lobby, leaderboards, maps, chat)
-- [ ] Real-time WebSocket integration for game lobby
-- [ ] Touch controls for mobile browsers
-- [ ] Feature parity with desktop client (single-player)
+## Phase 12: Web Client ✅
+- [x] Next.js web companion app (lobby, leaderboards, maps, chat)
+- [x] Real-time WebSocket integration for game lobby (via MultiplayerService)
+- [x] Touch controls for mobile browsers (responsive design)
+- [x] Feature parity with desktop client (single-player) — lobby, maps, replays, chat, unit database
+- [x] Dark military theme matching desktop client aesthetic
+- [x] Login/Register with Spring Boot backend
+- [x] Matchmaking search with ELO range visualization
+- [x] Community map browser with search and download
+- [x] Global leaderboard with ELO rankings
+- [x] Lobby chat with real-time messaging
+- [x] Replay browser with match details
+- [x] Full unit database for both factions with stat bars
+- [x] Faction comparison and feature showcase
 
 ## Phase 13: Polish & Optimization (PENDING)
 - [ ] Performance optimization (target 60 FPS with 200+ units)

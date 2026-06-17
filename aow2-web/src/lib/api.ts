@@ -1,0 +1,114 @@
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
+
+// Helper to build API URL with optional port transform
+function apiUrl(path: string, port?: number): string {
+  const base = API_BASE || "";
+  if (port) {
+    return `${base}${path}?XTransformPort=${port}`;
+  }
+  return `${base}${path}`;
+}
+
+// Auth API
+export async function register(username: string, password: string) {
+  const res = await fetch(apiUrl("/api/auth/register", 8080), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, password }),
+  });
+  if (!res.ok) throw new Error((await res.json()).message || "Registration failed");
+  return res.json();
+}
+
+export async function login(username: string, password: string) {
+  const res = await fetch(apiUrl("/api/auth/login", 8080), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, password }),
+  });
+  if (!res.ok) throw new Error((await res.json()).message || "Login failed");
+  return res.json();
+}
+
+// Leaderboard API
+export async function getLeaderboard() {
+  const res = await fetch(apiUrl("/api/leaderboard", 8080));
+  if (!res.ok) throw new Error("Failed to fetch leaderboard");
+  return res.json();
+}
+
+// Maps API
+export async function getMaps() {
+  const res = await fetch(apiUrl("/api/maps", 8080));
+  if (!res.ok) throw new Error("Failed to fetch maps");
+  return res.json();
+}
+
+export async function uploadMap(token: string, data: { name: string; description: string; mapData: string }) {
+  const res = await fetch(apiUrl("/api/maps", 8080), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error("Failed to upload map");
+  return res.json();
+}
+
+export async function downloadMap(mapId: number) {
+  const res = await fetch(apiUrl(`/api/maps/${mapId}`, 8080));
+  if (!res.ok) throw new Error("Failed to download map");
+  return res.json();
+}
+
+// Replay API
+export async function getReplays() {
+  const res = await fetch(apiUrl("/api/replays", 8080));
+  if (!res.ok) throw new Error("Failed to fetch replays");
+  return res.json();
+}
+
+// Chat API
+export async function getChatHistory() {
+  const res = await fetch(apiUrl("/api/chat/history", 8080));
+  if (!res.ok) throw new Error("Failed to fetch chat history");
+  return res.json();
+}
+
+// Player API
+export async function getPlayerInfo(token: string) {
+  const res = await fetch(apiUrl("/api/auth/me", 8080), {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error("Failed to fetch player info");
+  return res.json();
+}
+
+// Types
+export interface Player {
+  id: number;
+  username: string;
+  eloRating: number;
+  createdAt: string;
+}
+
+export interface MapEntry {
+  id: number;
+  name: string;
+  description: string;
+  uploaderId: number;
+  downloadCount: number;
+  createdAt: string;
+}
+
+export interface ReplayEntry {
+  id: number;
+  player1: string;
+  player2: string;
+  winner: string;
+  mapName: string;
+  duration: number;
+  playedAt: string;
+}
