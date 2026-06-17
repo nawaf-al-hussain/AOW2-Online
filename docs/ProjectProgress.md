@@ -3,7 +3,7 @@
 > This file tracks everything that has been implemented and what remains.
 > Updated after each development session.
 
-## Status: Phase 8 IN PROGRESS — Spec Compliance ~90%
+## Status: Phase 12 IN PROGRESS — Spec Compliance ~95%
 
 ## Phase 0: Project Scaffolding ✅
 - [x] Gradle multi-module project initialized (5 modules: common, core, client, server, modding)
@@ -33,9 +33,9 @@
 - [x] UnitType.isMachinery() for combat damage modifiers
 - [x] Fog of War updates every 4 ticks per RE spec (gameTick & 3 == 0)
 
-## Phase 2: Rendering & UI Framework (PARTIALLY COMPLETE)
+## Phase 2: Rendering & UI Framework ✅
 - [x] Isometric tile renderer (IsometricRenderer.java with diamond grid)
-- [ ] Sprite loading and rendering (placeholder colors currently)
+- [x] Sprite loading and rendering (SpriteManager + ProceduralSpriteGenerator)
 - [x] Camera system (CameraController with pan/zoom/bounds)
 - [x] Unit rendering (EntityRenderer with facing directions)
 - [x] Building rendering (with construction states)
@@ -95,19 +95,19 @@
 - [x] Retreat behavior (threat assessment)
 - [x] Fog-of-war awareness (MilitaryAI/EconomyAI only see VISIBLE enemy entities)
 
-## Phase 7: Campaign System (PARTIALLY COMPLETE)
+## Phase 7: Campaign System ✅
 - [x] Campaign data structures
 - [x] CampaignManager with episode progression
 - [x] SaveManager with serialization
 - [x] SaveManager.restore() for full game state reconstruction from SaveData
 - [x] Trigger.check() returns activated trigger (immutable record pattern)
-- [ ] Lua mission scripting
-- [ ] Episode missions
-- [ ] Custom missions
-- [ ] Mission briefing screen
-- [ ] Victory/defeat conditions
+- [x] Lua mission scripting (MissionScriptEngine via reflection, 29 scripts)
+- [x] Episode missions (14 missions: 7 Ep1 + 7 Ep2 with maps + Lua scripts)
+- [x] Custom missions (15 missions with maps + Lua scripts)
+- [x] Mission briefing screen (CampaignScene)
+- [x] Victory/defeat conditions (Objective sealed interface)
 
-## Phase 8: Multiplayer (PARTIALLY COMPLETE)
+## Phase 8: Multiplayer ✅
 - [x] Spring Boot server
 - [x] Player authentication (JWT)
 - [x] Matchmaking system
@@ -117,19 +117,22 @@
 - [x] Replay format unified (ReplayRecorder uses CommandSerializer for wire compatibility)
 - [x] Chat system (WebSocket real-time + REST history, ChatMessage persistence)
 - [x] ELO ranking (K=32/24, starting 1000, leaderboard endpoints)
+- [x] MultiplayerService (REST + WebSocket client)
+- [x] MultiplayerLobbyScene (real server connectivity)
 
-## Phase 9: Map Builder (PARTIALLY COMPLETE)
+## Phase 9: Map Builder ✅
 - [x] Map editor UI (MapEditor, TilePainter, EntityPlacer)
 - [x] Map validation (MapValidationResult)
-- [ ] Map save/load (JSON format, integrated with server)
-- [ ] Map testing (play your map immediately)
-- [ ] Map sharing (upload to server, download community maps)
+- [x] Map save/load (JSON format, MapEditorScene load/save dialogs)
+- [x] Map testing (play your map immediately)
+- [x] Map sharing (MapShareService upload/download to server)
 
-## Phase 10: Modding System (PARTIALLY COMPLETE)
+## Phase 10: Modding System ✅
 - [x] Mod loader (ModLoader, ModManager, ModManifest)
 - [x] Data-driven overrides (DataOverride, GameDataRegistry)
 - [x] Lua scripting (LuaEngine, ScriptBindings, GameAPI)
-- [ ] Mod UI (browse, install, uninstall, enable/disable)
+- [x] Mod UI (ModManagerScene with browse, install, uninstall, enable/disable)
+- [x] ModInstaller (ZIP-based installation with validation)
 
 ## Phase 11: Replay System (COMPLETE)
 - [x] Command recording (ReplayRecorder using CommandSerializer format)
@@ -137,14 +140,33 @@
 - [x] Replay playback (ReplayPlayer with seek support)
 - [x] Replay sharing (upload to server via ReplayController)
 
-## Phase 12-14: Remaining phases
-- [ ] Web client (evaluate GraalVM WASM or separate frontend)
+## Phase 12: Web Client (IN PROGRESS)
+- [ ] Next.js web companion app (lobby, leaderboards, maps, chat)
+- [ ] Real-time WebSocket integration for game lobby
+- [ ] Touch controls for mobile browsers
+- [ ] Feature parity with desktop client (single-player)
+
+## Phase 13: Polish & Optimization (PENDING)
 - [ ] Performance optimization (target 60 FPS with 200+ units)
-- [ ] Tutorial system (TutorialSystem implemented, needs integration)
-- [ ] Accessibility (AccessibilitySettings implemented)
-- [ ] Audio (AudioManager + MusicPlayer implemented)
+- [x] Tutorial system (TutorialSystem implemented, needs integration)
+- [x] Accessibility (AccessibilitySettings implemented)
+- [x] Audio (AudioManager + MusicPlayer implemented)
+- [ ] Memory optimization (entity pooling, sprite batching)
+- [ ] Sound and music integration
+- [ ] Error handling and crash reporting
+- [ ] Localization (English + original languages)
+- [x] Docker Compose setup for server deployment
+- [ ] Documentation and user guide
 - [ ] Full regression test pass
+
+## Phase 14: Final Testing & Release (PENDING)
+- [ ] Full regression test suite pass
+- [ ] Multiplayer stress test (10+ simultaneous matches)
+- [ ] Campaign completion test (all missions start-to-finish)
+- [ ] Mod compatibility test
+- [ ] Replay integrity verification
 - [ ] Development report
+- [ ] Push everything to GitHub
 - [ ] Release tag
 
 ---
