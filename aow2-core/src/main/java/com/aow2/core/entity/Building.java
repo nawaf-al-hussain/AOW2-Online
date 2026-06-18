@@ -53,7 +53,11 @@ public class Building extends Entity {
     /** Current upgrade level (0 = base, 1-3 = upgraded). REF: building_stats.md — 1x3 Upgrade levels */
     private int upgradeLevel;
 
-    /** Bonus HP from upgrades. REF: building_stats.md — upgrade increases HP cap. */
+    /** Bonus HP from upgrades.
+     * ASSUMPTION (L8): HP increase per upgrade level is not documented in the RE spec.
+     * The upgradeMaxHpBonus field exists to support HP scaling but the exact
+     * per-level increase formula is unknown. Currently set externally.
+     * REF: building_stats.md — upgrades exist but HP scaling formula not extracted. */
     private int upgradeMaxHpBonus;
 
     /** Identifier of the active research project (null if not researching). */

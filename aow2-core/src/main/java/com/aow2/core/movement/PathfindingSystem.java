@@ -17,9 +17,11 @@ import java.util.Set;
 /**
  * A* pathfinding on the game grid.
  * <p>
- * REF: pathfinding.md — original game uses A* with terrain costs and Bresenham optimization.
- * Our implementation uses a standard A* with 8-directional movement, terrain costs,
- * and unit-aware pathfinding that avoids occupied cells.
+ * REF: pathfinding.md — original game uses Bresenham line + obstacle avoidance routing.
+ * ASSUMPTION (L5): We use a true A* algorithm instead of the original Bresenham-based approach.
+ * This is a deliberate improvement: A* produces shorter paths and handles complex terrain better,
+ * but paths may differ from the original game in edge cases, which could cause minor
+ * replay divergence if comparing path choices tick-by-tick.
  * <p>
  * Key differences from the original game's Bresenham-based approach:
  * - We use a true A* algorithm instead of Bresenham line + obstacle avoidance.

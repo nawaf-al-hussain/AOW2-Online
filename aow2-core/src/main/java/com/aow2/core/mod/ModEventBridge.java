@@ -6,10 +6,17 @@ import com.aow2.common.model.UnitType;
 
 /**
  * Bridge for firing mod events from core systems without a compile-time dependency on aow2-modding.
- * The modding module registers implementations at runtime via reflection or service loader.
+ * <p>
+ * ARCHITECTURE NOTE (L17): aow2-core depends on aow2-modding at compile time (for LuaEngine
+ * and ScriptBindings in the campaign ScriptEngine). However, mod event dispatch flows in the
+ * opposite direction: core combat → mod events → modding scripts. This creates a potential
+ * circular dependency. We break it by using this static bridge class with callback interfaces
+ * registered at runtime. The modding module calls {@link #registerUnitKilledCallback} and
+ * {@link #registerBuildingDestroyedCallback} during mod initialization, and core systems
+ * call {@link #fireUnitKilled} / {@link #fireBuildingDestroyed} without importing modding classes.
  * <p>
  * This allows the core combat system to notify mods of unit kills and building destructions
- * without importing any modding classes.
+ * without importing any modding classes directly in combat code.
  */
 public final class ModEventBridge {
 

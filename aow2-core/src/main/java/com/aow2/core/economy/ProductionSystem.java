@@ -32,8 +32,9 @@ public final class ProductionSystem {
 
     private static final Logger LOG = LoggerFactory.getLogger(ProductionSystem.class);
 
-    // ASSUMPTION: 50% refund on production cancel — RE spec doesn't document exact refund percentage
+    // ASSUMPTION (L9): 50% refund on production cancel — RE spec doesn't document exact refund percentage
     // REF: MASTER_DOCUMENTATION.md — production cancellation exists but no refund rate specified
+    // The original game may have a different refund rate or no refund at all.
     private static final double CANCEL_REFUND_PERCENT = 0.50;
 
     /**
@@ -274,7 +275,11 @@ public final class ProductionSystem {
             return unitType.category() == UnitCategory.INFANTRY || unitType.category() == UnitCategory.MINE;
         }
         if (isVehicleBuilding) {
-            // SPECIAL_MACHINERY (Flame Assault) is also built in the vehicle factory
+            // ASSUMPTION (M13): Flame Assault (SPECIAL_MACHINERY) is built in the vehicle factory.
+            // RE data has a category conflict: Flame Assault has typeId=10 which the RE spec
+            // lists under "special_machinery", but its availability flag suggests it may be
+            // built from the Infantry Centre in the original game. We place it in the
+            // vehicle factory until confirmed otherwise.
             return unitType.category() == UnitCategory.VEHICLE || unitType.category() == UnitCategory.SPECIAL_MACHINERY;
         }
         return false;

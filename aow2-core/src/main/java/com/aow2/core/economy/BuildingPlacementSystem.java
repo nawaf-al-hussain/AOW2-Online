@@ -30,7 +30,8 @@ public final class BuildingPlacementSystem {
 
     private static final Logger LOG = LoggerFactory.getLogger(BuildingPlacementSystem.class);
 
-    // ASSUMPTION: 20-tile placement radius from Command Centre — RE spec confirms CC constrains placement radius but doesn't specify exact value
+    // ASSUMPTION (L7): 20-tile placement radius from Command Centre — RE spec confirms CC constrains placement radius but doesn't specify exact value
+    // The original game may use a different radius. This value affects how far from a CC players can build.
     // REF: MASTER_DOCUMENTATION.md Section 4 — Building placement rules
     public static final int CC_PLACEMENT_RADIUS = 20;
 
@@ -225,7 +226,7 @@ public final class BuildingPlacementSystem {
         if (terrain == null) {
             return false;
         }
-        // ASSUMPTION: Only GRASS, SAND, FOREST, ROAD, RUINS, BRIDGE are buildable
+        // ASSUMPTION: Only GRASS, SAND, FOREST, ROAD, BRIDGE are buildable (RUINS was fabricated and removed)
         return terrain.isPassable() && terrain != TerrainType.DEEP_WATER && terrain != TerrainType.MOUNTAIN;
     }
 

@@ -243,14 +243,14 @@ public final class GameConfig {
      * Builder for constructing GameConfig instances programmatically.
      */
     public static final class Builder {
-        private int[] turnTimeSettings = {30, 20, 10};
-        private int[] buildingFootprintWidths = {2, 2, 3, 2, 2, 2, 2, 2, 1, 2};
-        private int[] buildingFootprintHeights = {2, 2, 3, 2, 2, 2, 2, 2, 1, 2};
+        private int[] turnTimeSettings = {30, 20, 30, 20};
+        private int[] buildingFootprintWidths = {2, 2, 2, 3, 3, 3, 4, 4, 4};
+        private int[] buildingFootprintHeights = {2, 3, 4, 2, 3, 4, 2, 3, 4};
         private int[] buildingPowerRadius = {10, 20, 30, 40, 60, 127};
         private int[] rankExpThresholds = {20, 35, 50};
         private int[] rankCreditRewards = {10, 25, 51};
         private int[] rankBonusPoints = {0, 3, 6};
-        private int[] battleTimeLimits = {300, 600, 900, 1200};
+        private int[] battleTimeLimits = {1001, 1100, 1101, 1200};
 
         private Builder() {}
 

@@ -26,6 +26,12 @@ import java.util.Map;
  * <p>
  * REF: ai_analysis.md — AI build order priorities
  * <p>
+ * NOTE (M5): The original Art of War 2 does not have mine/resource-point capture behavior.
+ * Income is generated solely from Command Centres (CCs) on a 128-tick cycle.
+ * RESOURCE_DEPOSIT terrain tiles exist on the map but serve as map decoration only;
+ * they do not provide additional income or capture mechanics.
+ * The AI focuses on building CCs for income and does not need to capture resource points.
+ * <p>
  * Build priority order (from RE data):
  * 1. Command Centre (always first, generates income)
  * 2. Generator (needed to power other buildings)

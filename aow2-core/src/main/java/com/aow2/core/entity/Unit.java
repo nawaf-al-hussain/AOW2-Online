@@ -156,6 +156,11 @@ public class Unit extends Entity {
      * Adds experience points and handles rank-up logic.
      * Rank thresholds: [20, 35, 50] for ranks 1, 2, 3.
      * <p>
+     * ASSUMPTION (L11): Experience gain is always +1 per attack hit, unverified from RE spec.
+     * The original game may have variable experience based on damage dealt, target type,
+     * or kill vs assist. Current implementation awards flat +1 per attack action and +2
+     * for building attacks. Rank thresholds [20, 35, 50] are confirmed from RE data.
+     * <p>
      * REF: complete_building_stats.json — rank_exp_thresholds: [20, 35, 50]
      * REF: complete_building_stats.json — rank_credit_rewards: [10, 25, 51]
      *
