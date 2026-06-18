@@ -263,12 +263,9 @@ class StatsRegistryTest {
         @Test
         @DisplayName("Units with tech requirements return correct values")
         void techRequirementsWithValues() {
-            assertEquals(6, registry.getUnitTechRequirement(UnitType.CONFED_FLAME_ASSAULT));
-            assertEquals(10, registry.getUnitTechRequirement(UnitType.CONFED_HAMMER));
-            assertEquals(14, registry.getUnitTechRequirement(UnitType.CONFED_TORRENT));
+            assertEquals(5, registry.getUnitTechRequirement(UnitType.CONFED_FLAME_ASSAULT));
             assertEquals(4, registry.getUnitTechRequirement(UnitType.REBEL_SNIPER));
-            assertEquals(12, registry.getUnitTechRequirement(UnitType.REBEL_RHINO));
-            assertEquals(38, registry.getUnitTechRequirement(UnitType.REBEL_PORCUPINE));
+            assertEquals(7, registry.getUnitTechRequirement(UnitType.REBEL_RHINO));
         }
 
         @Test
@@ -276,10 +273,17 @@ class StatsRegistryTest {
         void techRequirementsZero() {
             assertEquals(0, registry.getUnitTechRequirement(UnitType.CONFED_INFANTRY));
             assertEquals(0, registry.getUnitTechRequirement(UnitType.CONFED_GRENADIER));
+            assertEquals(0, registry.getUnitTechRequirement(UnitType.CONFED_FORTRESS));
+            assertEquals(0, registry.getUnitTechRequirement(UnitType.CONFED_HAMMER));
+            // CONFED_TORRENT: availability_flag=-1 means available from start
+            assertEquals(0, registry.getUnitTechRequirement(UnitType.CONFED_TORRENT));
             assertEquals(0, registry.getUnitTechRequirement(UnitType.CONFED_ZEUS));
             assertEquals(0, registry.getUnitTechRequirement(UnitType.REBEL_INFANTRY));
             assertEquals(0, registry.getUnitTechRequirement(UnitType.REBEL_GRENADIER));
             assertEquals(0, registry.getUnitTechRequirement(UnitType.REBEL_COYOTE));
+            assertEquals(0, registry.getUnitTechRequirement(UnitType.REBEL_ARMADILLO));
+            // ASSUMPTION: REBEL_PORCUPINE — no specific tech ID found in RE spec
+            assertEquals(0, registry.getUnitTechRequirement(UnitType.REBEL_PORCUPINE));
         }
     }
 

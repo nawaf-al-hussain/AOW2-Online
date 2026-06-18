@@ -305,16 +305,13 @@ class PathfindingSystemTest {
             assertEquals(Integer.MAX_VALUE, pathfinding.getTerrainCost(TerrainType.SHALLOW_WATER));
             assertEquals(2, pathfinding.getTerrainCost(TerrainType.SAND));
             assertEquals(1, pathfinding.getTerrainCost(TerrainType.GRASS));
-            assertEquals(0, pathfinding.getTerrainCost(TerrainType.ROAD));
-            assertEquals(1, pathfinding.getTerrainCost(TerrainType.DIRT));
-            assertEquals(3, pathfinding.getTerrainCost(TerrainType.HILLS));
             assertEquals(2, pathfinding.getTerrainCost(TerrainType.FOREST));
-            assertEquals(1, pathfinding.getTerrainCost(TerrainType.BRIDGE));
+            assertEquals(3, pathfinding.getTerrainCost(TerrainType.HILLS));
             assertEquals(Integer.MAX_VALUE, pathfinding.getTerrainCost(TerrainType.MOUNTAIN));
+            assertEquals(0, pathfinding.getTerrainCost(TerrainType.ROAD));
+            assertEquals(1, pathfinding.getTerrainCost(TerrainType.BRIDGE));
             assertEquals(4, pathfinding.getTerrainCost(TerrainType.SWAMP));
             assertEquals(3, pathfinding.getTerrainCost(TerrainType.SNOW));
-            assertEquals(2, pathfinding.getTerrainCost(TerrainType.ICE));
-            assertEquals(2, pathfinding.getTerrainCost(TerrainType.RUINS));
             assertEquals(1, pathfinding.getTerrainCost(TerrainType.RESOURCE_DEPOSIT));
         }
 

@@ -7,12 +7,15 @@ import com.aow2.common.model.BuildingType;
 import com.aow2.common.model.Faction;
 import com.aow2.common.model.GridPosition;
 import com.aow2.common.model.WeaponType;
+import com.aow2.core.economy.EconomySystem;
 import com.aow2.core.engine.GameState;
 import com.aow2.core.entity.Building;
+import com.aow2.core.research.ResearchSystem;
 import com.aow2.core.world.EntityManager;
 import com.aow2.core.entity.Entity;
 import com.aow2.core.entity.Projectile;
 import com.aow2.core.entity.Unit;
+import com.aow2.core.mod.ModEventBridge;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,6 +46,8 @@ public class CombatSystem {
      * REF: combat_formulas.md - siege mode increases attack range for deployed units.
      * ASSUMPTION: range bonus of +3 based on typical RTS siege mode behavior.
      */
+    // ASSUMPTION: +3 range bonus in siege mode — RE spec confirms siege mode increases range but doesn't specify exact value
+    // REF: combat_formulas.md - siege mode increases attack range for deployed units
     private static final int SIEGE_RANGE_BONUS = 3;
 
     /**
@@ -67,6 +72,8 @@ public class CombatSystem {
 
     /**
      * Constructs a CombatSystem with default subsystems.
+     * The ProjectileSystem will not apply research-adjusted armor to splash damage
+     * unless {@link #setResearchSystem(ResearchSystem)} is called.
      *
      * @param gameState     the current game state
      * @param entityManager the entity manager
@@ -89,6 +96,17 @@ public class CombatSystem {
         this.entityManager = entityManager;
         this.projectileSystem = projectileSystem;
         this.armorCalculator = armorCalculator;
+    }
+
+    /**
+     * Set the research system on the projectile system so splash damage
+     * can use research-adjusted armor values.
+     * Call this after construction if using the default no-arg CombatSystem constructor.
+     *
+     * @param researchSystem the research system
+     */
+    public void setResearchSystem(ResearchSystem researchSystem) {
+        this.projectileSystem.setResearchSystem(armorCalculator, researchSystem);
     }
 
     /**
@@ -213,6 +231,8 @@ public class CombatSystem {
                 gameState.enqueueEvent(new UnitKilledEvent(
                     gameState.currentTick(), nearestEnemy.getId(),
                     nearestEnemy.getUnitType(), bunker.getId()));
+                ModEventBridge.fireUnitKilled(nearestEnemy.getId(), nearestEnemy.getUnitType(),
+                    nearestEnemy.getFaction(), EconomySystem.playerId(bunker.getFaction()));
             }
             garrison.addExperience(1);
         }
@@ -253,6 +273,8 @@ public class CombatSystem {
                 gameState.enqueueEvent(new UnitKilledEvent(
                     gameState.currentTick(), nearestEnemy.getId(),
                     nearestEnemy.getUnitType(), building.getId()));
+                ModEventBridge.fireUnitKilled(nearestEnemy.getId(), nearestEnemy.getUnitType(),
+                    nearestEnemy.getFaction(), EconomySystem.playerId(building.getFaction()));
             }
         }
     }
@@ -299,6 +321,8 @@ public class CombatSystem {
             DamageCalculator.calculateDeathAnimationFrame(target, 0);
             gameState.enqueueEvent(new UnitKilledEvent(
                 gameState.currentTick(), target.getId(), target.getUnitType(), attacker.getId()));
+            ModEventBridge.fireUnitKilled(target.getId(), target.getUnitType(),
+                target.getFaction(), EconomySystem.playerId(attacker.getFaction()));
         }
         attacker.addExperience(1);
     }
@@ -330,6 +354,8 @@ public class CombatSystem {
         if (!target.isAlive()) {
             gameState.enqueueEvent(new BuildingDestroyedEvent(
                 gameState.currentTick(), target.getId(), target.getBuildingType(), attacker.getId()));
+            ModEventBridge.fireBuildingDestroyed(target.getId(), target.getBuildingType(),
+                target.getFaction(), EconomySystem.playerId(attacker.getFaction()));
         }
         attacker.addExperience(2);
     }

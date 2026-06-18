@@ -30,7 +30,8 @@ public final class BuildingPlacementSystem {
 
     private static final Logger LOG = LoggerFactory.getLogger(BuildingPlacementSystem.class);
 
-    /** Maximum distance from a Command Centre for building placement. */
+    // ASSUMPTION: 20-tile placement radius from Command Centre — RE spec confirms CC constrains placement radius but doesn't specify exact value
+    // REF: MASTER_DOCUMENTATION.md Section 4 — Building placement rules
     public static final int CC_PLACEMENT_RADIUS = 20;
 
     /** Maximum number of buildings per player. REF: GameConstants.MAX_BUILDINGS_PER_PLAYER */

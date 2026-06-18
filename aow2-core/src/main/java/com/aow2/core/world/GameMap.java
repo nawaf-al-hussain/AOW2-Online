@@ -205,8 +205,8 @@ public class GameMap {
         map.setTile(5, 6, TerrainType.SAND);
         map.setTile(6, 5, TerrainType.SAND);
 
-        // Ruins
-        map.setTile(1, 6, TerrainType.RUINS);
+        // Hills (replaces former Ruins — not in RE spec)
+        map.setTile(1, 6, TerrainType.HILLS);
 
         return map;
     }

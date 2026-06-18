@@ -6,7 +6,7 @@ import org.slf4j.LoggerFactory;
 import com.aow2.common.config.GameConstants;
 
 /**
- * Fixed-timestep game loop running at 60 TPS.
+ * Fixed-timestep game loop running at 10 TPS.
  * REF: MASTER_DOCUMENTATION.md Section 3.3 - Game Loop
  * The original game used a single game thread with fixed timestep.
  */

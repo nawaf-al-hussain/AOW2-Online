@@ -160,7 +160,7 @@ class MapLoaderTest {
                   "height": 5,
                   "tiles": [
                     {"x": 0, "y": 0, "terrain": "SAND"},
-                    {"x": 4, "y": 4, "terrain": "RUINS"}
+                    {"x": 4, "y": 4, "terrain": "SNOW"}
                   ]
                 }
                 """;
@@ -172,7 +172,7 @@ class MapLoaderTest {
                 assertEquals(5, map.getWidth());
                 assertEquals(5, map.getHeight());
                 assertEquals(TerrainType.SAND, map.getTile(0, 0));
-                assertEquals(TerrainType.RUINS, map.getTile(4, 4));
+                assertEquals(TerrainType.SNOW, map.getTile(4, 4));
             } finally {
                 Files.deleteIfExists(tempFile);
             }

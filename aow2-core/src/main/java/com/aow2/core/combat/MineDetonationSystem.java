@@ -35,7 +35,8 @@ public final class MineDetonationSystem {
     /** Mine Lizard multi-charge count. REF: unit_stats.md — "Fragments and additional charges" */
     private static final int LIZARD_CHARGES = 2;
 
-    /** Delay in ticks before a mine becomes armed after placement. */
+    // ASSUMPTION: 10-tick arm delay — RE spec confirms mines have an arm delay but doesn't specify exact tick count
+    // REF: unit_stats.md lines 258-272 — mine trigger mechanics
     private static final int ARM_DELAY_TICKS = 10;
 
     private final CombatSystem combatSystem;
@@ -130,9 +131,11 @@ public final class MineDetonationSystem {
             applyAreaDamage(mine, damage, FROG_BLAST_RADIUS, entities, state, enemyFaction);
         } else if (mineType == UnitType.CONFED_MINE_LIZARD) {
             // REF: unit_stats.md — "Fragments and additional charges scatter"
-            // Multi-charge: apply damage LIZARD_CHARGES times to the closest enemy
-            // Simplified: single detonation with higher effective damage
-            applyAreaDamage(mine, damage, FROG_BLAST_RADIUS, entities, state, enemyFaction);
+            // Multi-charge: apply damage LIZARD_CHARGES times to simulate
+            // multiple detonation waves (jumps before detonation).
+            for (int wave = 0; wave < LIZARD_CHARGES; wave++) {
+                applyAreaDamage(mine, damage, FROG_BLAST_RADIUS, entities, state, enemyFaction);
+            }
         } else {
             // Mine Scorpio: single-target anti-tank
             // Damage is applied to the triggering unit directly

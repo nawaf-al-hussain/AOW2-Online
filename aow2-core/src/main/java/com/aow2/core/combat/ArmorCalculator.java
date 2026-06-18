@@ -23,29 +23,25 @@ public final class ArmorCalculator {
     /**
      * Research IDs that add infantry armor bonuses.
      * REF: combat_formulas.md - Z[player][4] infantry armor slot
-     * - ID 0: Confederation Energy Suit, +2 infantry armor
-     * - ID 8: Resistance Titanium Jacket, +1 infantry armor
-     * - ID 24: Additional infantry armor, +1 for infantry types
+     * - ID 0: Confederation Energy Suit, +2 infantry armour (all infantry types)
+     * - ID 9: Confederation Composite Armour, +2 infantry armour (heavy types 7,18,9,11,17,13,16)
+     * - ID 24: Rebel Titanium Jacket, +1 infantry armour (types 0,2,4,14)
+     * - ID 33: Rebel additional infantry armour, +1 (types 6,8,10,15,12)
      */
     private static final Map<Integer, Integer> INFANTRY_ARMOR_RESEARCH = Map.of(
         0, 2,
-        8, 1,
-        24, 1
+        9, 2,
+        24, 1,
+        33, 1
     );
 
     /**
      * Research IDs that add vehicle armor bonuses.
      * REF: combat_formulas.md - Z[player][5] vehicle armor slot
-     * REF: combat_formulas.md line 303 - ID 0 also adds "Light armour +2" (vehicle)
-     * - ID 0: Also adds +2 vehicle (Sniper/Light Armour) armor
-     * - ID 9: Resistance Composite Armour, +2 vehicle armor
-     * - ID 33: Additional vehicle armor, +1 for vehicle types
+     * No research IDs in the RE spec directly add vehicle armor through the Z[] array.
+     * Vehicle armor may come from other mechanisms (e.g., upgrade levels).
      */
-    private static final Map<Integer, Integer> VEHICLE_ARMOR_RESEARCH = Map.of(
-        0, 2,
-        9, 2,
-        33, 1
-    );
+    private static final Map<Integer, Integer> VEHICLE_ARMOR_RESEARCH = Map.of();
 
     /**
      * Research IDs that add building armor bonuses.
@@ -112,17 +108,20 @@ public final class ArmorCalculator {
     public int calculateEffectiveBuildingArmor(Building building, Set<Integer> completedResearch) {
         int armor = 0;
 
-        // Check for override research first (IDs 16, 40 set armor to 9)
-        for (Map.Entry<Integer, Integer> entry : BUILDING_ARMOR_RESEARCH_OVERRIDE.entrySet()) {
-            if (completedResearch.contains(entry.getKey())) {
-                armor = Math.max(armor, entry.getValue());
-            }
-        }
-
-        // Additive bonuses (ID 4: +4)
+        // Step 1: Apply additive bonuses first (e.g., ID 4: +4 building armor)
         for (Map.Entry<Integer, Integer> entry : BUILDING_ARMOR_RESEARCH_ADD.entrySet()) {
             if (completedResearch.contains(entry.getKey())) {
                 armor += entry.getValue();
+            }
+        }
+
+        // Step 2: Apply override bonuses (e.g., IDs 16, 40 SET armor to 9).
+        // REF: combat_formulas.md — "Player 0 building armour = 9" means SET, not ADD.
+        // The override replaces the final calculated value entirely.
+        for (Map.Entry<Integer, Integer> entry : BUILDING_ARMOR_RESEARCH_OVERRIDE.entrySet()) {
+            if (completedResearch.contains(entry.getKey())) {
+                armor = entry.getValue(); // SET, not add or max
+                break; // only one override can apply
             }
         }
 
@@ -132,10 +131,11 @@ public final class ArmorCalculator {
     /**
      * Calculate armor bonus from research for a unit.
      * <p>
-     * Confederation: Energy Suit research (ID 0) adds +2 infantry armor.
-     * Resistance: Titanium Jacket research (ID 8) adds +1 infantry armor.
-     * Resistance: Composite Armour research (ID 9) adds +2 vehicle armor.
-     * Additional researches (IDs 24, 33) add further bonuses.
+     * REF: combat_formulas.md research effects table:
+     * - ID 0: Confederation Energy Suit, +2 infantry armor (all infantry)
+     * - ID 9: Confederation Composite Armour, +2 infantry armor (heavy types)
+     * - ID 24: Rebel Titanium Jacket, +1 infantry armor
+     * - ID 33: Rebel additional infantry armor, +1
      * Bonuses stack additively within each category.
      * <p>
      * REF: combat_formulas.md - {@code baseArmour += Z[player][((isInfantry ? 0 : 1) + 4)]}
@@ -176,10 +176,9 @@ public final class ArmorCalculator {
      * <p>
      * REF: combat_formulas.md lines 64-68 - building armor from N[] per-player array
      * <p>
-     * Building armor comes from upgrade levels, not research.
-     * Confederation research ID 0 (Energy suit) gives +2 infantry armor but does NOT affect buildings.
-     * The full building armor calculation (with research overrides) is in
-     * {@link #calculateEffectiveBuildingArmor(Building, Set)}.
+     * Building armor comes from the N[] per-player array and research overrides.
+     * Research IDs 4 (+4 building armour), 16 (player 0 override = 9), and 40 (player 1 override = 9)
+     * affect building armor and are handled by {@link #calculateEffectiveBuildingArmor(Building, Set)}.
      *
      * @param faction the faction to get building armor for
      * @return building armor bonus

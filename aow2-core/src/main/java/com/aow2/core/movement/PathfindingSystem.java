@@ -190,8 +190,10 @@ public final class PathfindingSystem {
 
                 // Calculate movement cost
                 int terrainCost = getTerrainCost(terrain);
+                // REF: pathfinding.md — diagonal cost uses lookup table in original game;
+                // approximate with sqrt(2) ≈ 1.41 multiplier for 8-directional A*
                 double moveCost = isDiagonal
-                    ? terrainCost * GameConstants.DIAGONAL_COST_MULTIPLIER
+                    ? terrainCost * 1.41
                     : terrainCost;
                 double tentativeG = current.g() + moveCost;
 
@@ -244,7 +246,8 @@ public final class PathfindingSystem {
         int dy = Math.abs(a.y() - b.y());
         int maxD = Math.max(dx, dy);
         int minD = Math.min(dx, dy);
-        return maxD + (GameConstants.DIAGONAL_COST_MULTIPLIER - 1.0) * minD;
+        // REF: pathfinding.md — octile distance heuristic (sqrt(2) - 1) * min(dx,dy) + max(dx,dy)
+        return maxD + 0.41 * minD;
     }
 
     /**

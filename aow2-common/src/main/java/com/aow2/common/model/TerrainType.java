@@ -17,39 +17,40 @@ import java.util.stream.Stream;
  * - Removed duplicate WATER alias (use DEEP_WATER instead)
  * - Added id field mapping to original game's terrain IDs
  * - Added static fromId() lookup method
+ * - FIX: Corrected terrain IDs to match RE spec Section 3.1:
+ *        0=Deep Water, 1=Shallow Water, 2=Sand, 3=Plains/Grass, 4=Forest,
+ *        5=Hills, 6=Mountains, 7=Road, 8=Bridge, 9=Swamp, 10=Snow
+ * - FIX: Removed DIRT(2), ICE(9), RUINS(15) — not in RE spec, were fabricated
+ * - FIX: Updated movement costs: Deep Water=MAX, Shallow Water=MAX, Sand=2,
+ *        Grass=1, Forest=2, Hills=3, Mountain=MAX, Road=0, Bridge=1, Swamp=4, Snow=3
+ * - FIX: Updated passability: Deep Water=false, Shallow Water=false, Mountain=false, all others true
  */
 public enum TerrainType {
     // Water terrain types
-    /** Deep water: impassable for ground units. Original terrain ID 4 */
-    DEEP_WATER(4, false, 10),
-    /** Shallow water: passable by infantry only. Original terrain ID 3 */
-    SHALLOW_WATER(3, false, 8),
+    /** Deep water: impassable for all ground units. RE terrain ID 0 */
+    DEEP_WATER(0, false, Integer.MAX_VALUE),
+    /** Shallow water: passable by infantry only. RE terrain ID 1 */
+    SHALLOW_WATER(1, false, Integer.MAX_VALUE),
     // Land terrain types
-    /** Sand: slightly slower than grass. Original terrain ID 1 */
-    SAND(1, true, 2),
-    /** Plains/Grass: baseline terrain. Original terrain ID 0 */
-    GRASS(0, true, 1),
-    /** Road: fastest movement. Original terrain ID 7 */
+    /** Sand: slightly slower than grass. RE terrain ID 2 */
+    SAND(2, true, 2),
+    /** Plains/Grass: baseline terrain. RE terrain ID 3 */
+    GRASS(3, true, 1),
+    /** Forest: provides cover, slower movement. RE terrain ID 4 */
+    FOREST(4, true, 2),
+    /** Hills: slower for all units. RE terrain ID 5 */
+    HILLS(5, true, 3),
+    /** Mountain: impassable for all ground units. RE terrain ID 6 */
+    MOUNTAIN(6, false, Integer.MAX_VALUE),
+    /** Road: fastest movement. RE terrain ID 7 */
     ROAD(7, true, 0),
-    /** Dirt: similar to grass. Original terrain ID 2 */
-    DIRT(2, true, 1),
-    /** Hills: slower for all units. Original terrain ID 12 */
-    HILLS(12, true, 3),
-    /** Forest: provides cover, slower movement. Original terrain ID 6 */
-    FOREST(6, true, 2),
-    /** Bridge: connects land across water. Original terrain ID 8 */
+    /** Bridge: connects land across water. RE terrain ID 8 */
     BRIDGE(8, true, 1),
-    /** Mountain: impassable for all ground units. Original terrain ID 5 */
-    MOUNTAIN(5, false, 10),
-    /** Swamp: very slow for vehicles, slow for infantry. Original terrain ID 13 */
-    SWAMP(13, true, 4),
-    /** Snow: slow movement. Original terrain ID 14 */
-    SNOW(14, true, 3),
-    /** Ice: slippery terrain. Original terrain ID 9 */
-    ICE(9, true, 2),
-    /** Ruins: moderately slow. Original terrain ID 15 */
-    RUINS(15, true, 2),
-    /** Resource deposit: harvestable for credits. Original terrain ID 25 */
+    /** Swamp: very slow for vehicles, slow for infantry. RE terrain ID 9 */
+    SWAMP(9, true, 4),
+    /** Snow: slow movement. RE terrain ID 10 */
+    SNOW(10, true, 3),
+    /** Resource deposit: harvestable for credits. RE terrain ID 25 */
     RESOURCE_DEPOSIT(25, true, 1);
 
     private final int id;
@@ -106,6 +107,7 @@ public enum TerrainType {
      * Returns the movement cost for traversing this terrain.
      * REF: map_system.md Section 3.3 - movement costs from as[14]/as[15] arrays
      * Lower = faster. 0 = road (fastest), 1 = grass baseline, higher = slower.
+     * Integer.MAX_VALUE = impassable (except SHALLOW_WATER for infantry via isPassableBy).
      *
      * @return movement cost value
      */

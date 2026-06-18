@@ -33,8 +33,8 @@ public final class GameConstants {
     // Economy
     // REF: combat_formulas.md — base income = (baseIncome * 7) / 10
     public static final int CREDIT_GENERATION_BASE = 7;
-    // REF: combat_formulas.md — (aL.ah & 127) == 127
-    public static final int CREDIT_GENERATION_CYCLE = 127;
+    // REF: combat_formulas.md — (aL.ah & 127) == 127 means 128-tick cycle
+    public static final int CREDIT_GENERATION_CYCLE = 128;
     // REF: MASTER_DOCUMENTATION.md — credit cap
     public static final int MAX_CREDITS = 30000;
     // REF: MASTER_DOCUMENTATION.md — Q[i] = 100
@@ -82,28 +82,26 @@ public final class GameConstants {
     public static final int MAX_OBSTACLE_SEGMENTS = 10;
     // REF: pathfinding.md — 8x8 spatial hash grid per player
     public static final int SPATIAL_HASH_GRID_SIZE = 8;
-    // Diagonal movement cost multiplier (sqrt(2) ≈ 1.41)
-    public static final double DIAGONAL_COST_MULTIPLIER = 1.41;
+    // REF: pathfinding.md — diagonal costs use a lookup table, not a simple multiplier
+    // (REMOVED DIAGONAL_COST_MULTIPLIER — original game uses lookup table approach)
     // Terrain movement costs (indexed by TerrainType ordinal)
-    // REF: pathfinding.md — terrain costs affect pathfinding decisions
-    // REF: map_system.md Section 3.1 — 18+ terrain types with per-category passability
-    // FIX: Updated to match new TerrainType enum order (WATER alias removed, DIRT/ICE added)
+    // REF: map_system.md Section 3.1 — terrain IDs corrected to RE spec
+    // FIX: Updated to match new TerrainType enum order after removing DIRT/ICE/RUINS
+    // Ordinals: DEEP_WATER(0), SHALLOW_WATER(1), SAND(2), GRASS(3), FOREST(4),
+    //           HILLS(5), MOUNTAIN(6), ROAD(7), BRIDGE(8), SWAMP(9), SNOW(10), RESOURCE_DEPOSIT(11)
     public static final int[] TERRAIN_MOVEMENT_COSTS = {
         Integer.MAX_VALUE,  // DEEP_WATER (ordinal 0) — impassable
-        Integer.MAX_VALUE,  // SHALLOW_WATER (ordinal 1) — only infantry
+        Integer.MAX_VALUE,  // SHALLOW_WATER (ordinal 1) — impassable except infantry
         2,                  // SAND (ordinal 2)
         1,                  // GRASS (ordinal 3) — baseline
-        0,                  // ROAD (ordinal 4) — fastest
-        1,                  // DIRT (ordinal 5) — same as grass
-        3,                  // HILLS (ordinal 6) — slower
-        2,                  // FOREST (ordinal 7) — cover, slower
+        2,                  // FOREST (ordinal 4) — cover, slower
+        3,                  // HILLS (ordinal 5) — slower
+        Integer.MAX_VALUE,  // MOUNTAIN (ordinal 6) — impassable
+        0,                  // ROAD (ordinal 7) — fastest
         1,                  // BRIDGE (ordinal 8) — same as grass
-        Integer.MAX_VALUE,  // MOUNTAIN (ordinal 9) — impassable
-        4,                  // SWAMP (ordinal 10) — very slow for vehicles
-        3,                  // SNOW (ordinal 11) — slow
-        2,                  // ICE (ordinal 12) — slippery
-        2,                  // RUINS (ordinal 13) — moderately slow
-        1                   // RESOURCE_DEPOSIT (ordinal 14) — same as grass
+        4,                  // SWAMP (ordinal 9) — very slow for vehicles
+        3,                  // SNOW (ordinal 10) — slow
+        1                   // RESOURCE_DEPOSIT (ordinal 11) — same as grass
     };
 
     // Network

@@ -386,7 +386,7 @@ public final class StatsRegistry {
         // --- Resistance Buildings ---
         // REF: complete_building_stats.json — symmetrical to Confederation
 
-        // REBEL_HEADQUARTERS: Same as CONFED_COMMAND_CENTRE but type=REBEL
+        // ASSUMPTION: REBEL_HEADQUARTERS stats copied from CONFED_COMMAND_CENTRE — RE only provides upgrade_costs for rebel buildings
         buildingStats.put(BuildingType.REBEL_HEADQUARTERS, new BuildingStats(
             BuildingType.REBEL_HEADQUARTERS,
             120, 22, 7, 7, 4, 2, 20, 7, 8,
@@ -396,7 +396,7 @@ public final class StatsRegistry {
             List.of(300, 200, 200)
         ));
 
-        // REBEL_POWERPLANT: Same as CONFED_GENERATOR but type=REBEL
+        // ASSUMPTION: REBEL_POWERPLANT stats copied from CONFED_GENERATOR — RE only provides upgrade_costs for rebel buildings
         buildingStats.put(BuildingType.REBEL_POWERPLANT, new BuildingStats(
             BuildingType.REBEL_POWERPLANT,
             100, 14, 5, 7, 3, 6, 8, 7, 8,
@@ -406,7 +406,7 @@ public final class StatsRegistry {
             List.of(300, 350, 250)
         ));
 
-        // REBEL_BARRACKS: Same as CONFED_INFANTRY_CENTRE but type=REBEL
+        // ASSUMPTION: REBEL_BARRACKS stats copied from CONFED_INFANTRY_CENTRE — RE only provides upgrade_costs for rebel buildings
         buildingStats.put(BuildingType.REBEL_BARRACKS, new BuildingStats(
             BuildingType.REBEL_BARRACKS,
             100, 28, 6, 7, 3, 6, 18, 11, 12,
@@ -416,7 +416,7 @@ public final class StatsRegistry {
             List.of(300, 500, 500)
         ));
 
-        // REBEL_FACTORY: Same as CONFED_MACHINE_FACTORY but type=REBEL
+        // ASSUMPTION: REBEL_FACTORY stats copied from CONFED_MACHINE_FACTORY — RE only provides upgrade_costs for rebel buildings
         buildingStats.put(BuildingType.REBEL_FACTORY, new BuildingStats(
             BuildingType.REBEL_FACTORY,
             110, 36, 6, 8, 4, 6, 25, 3, 2,
@@ -426,7 +426,7 @@ public final class StatsRegistry {
             List.of(500, 400, 500)
         ));
 
-        // REBEL_LABORATORY: Same as CONFED_TECH_CENTRE but type=REBEL
+        // ASSUMPTION: REBEL_LABORATORY stats copied from CONFED_TECH_CENTRE — RE only provides upgrade_costs for rebel buildings
         buildingStats.put(BuildingType.REBEL_LABORATORY, new BuildingStats(
             BuildingType.REBEL_LABORATORY,
             120, 65, 8, 8, 4, 7, 30, 6, 16,
@@ -436,7 +436,7 @@ public final class StatsRegistry {
             List.of(600, 800, 700)
         ));
 
-        // REBEL_BUNKER: Same as CONFED_BUNKER but type=REBEL
+        // ASSUMPTION: REBEL_BUNKER stats copied from CONFED_BUNKER — RE only provides upgrade_costs for rebel buildings
         buildingStats.put(BuildingType.REBEL_BUNKER, new BuildingStats(
             BuildingType.REBEL_BUNKER,
             120, 50, 7, 8, 4, 7, 30, 6, 16,
@@ -447,16 +447,18 @@ public final class StatsRegistry {
         ));
 
         // REBEL_TOWER: Same as CONFED_ROCKET_LAUNCHER but type=REBEL, weaponType=MACHINE_GUN
+        // FIX: upgrade_costs corrected to [400, 300, 500] per RE spec (was incorrectly [1000, 700, 350] which is Wall's costs)
+        // ASSUMPTION: REBEL_TOWER stats copied from CONFED_ROCKET_LAUNCHER — RE only provides upgrade_costs for rebel buildings
         buildingStats.put(BuildingType.REBEL_TOWER, new BuildingStats(
             BuildingType.REBEL_TOWER,
             50, 4, 7, 12, 1, 9, 12, 8, 16,
             0, 0, 6, 1,
             40, 250, 0,
             WeaponType.MACHINE_GUN,
-            List.of(1000, 700, 350)
+            List.of(400, 300, 500)
         ));
 
-        // REBEL_WALL: Unique wall structure with no attack capability
+        // ASSUMPTION: REBEL_WALL stats fabricated — RE only provides upgrade_costs [1000, 700, 350]
         buildingStats.put(BuildingType.REBEL_WALL, new BuildingStats(
             BuildingType.REBEL_WALL,
             200, 10, 0, 15, 0, 0, 10, 0, 20,
@@ -473,23 +475,29 @@ public final class StatsRegistry {
     // =========================================================================
 
     private void initUnitTechRequirements() {
-        // CONFED_FLAME_ASSAULT -> 6 (Forced light missiles)
-        unitTechRequirements.put(UnitType.CONFED_FLAME_ASSAULT, 6);
+        // CONFED_FLAME_ASSAULT -> 5 (Forced light missiles = tech ID 5)
+        // FIX: Changed from 6 to 5 per RE spec
+        unitTechRequirements.put(UnitType.CONFED_FLAME_ASSAULT, 5);
 
-        // CONFED_HAMMER -> 10 (availability_flag = 10)
-        unitTechRequirements.put(UnitType.CONFED_HAMMER, 10);
+        // CONFED_HAMMER -> 0 (available from start)
+        // FIX: availability_flag=10 is in a different namespace than the 8-tech system.
+        // The Hammer requires Machine Factory (tech_requirement=3 on the building), not a specific research.
+        unitTechRequirements.put(UnitType.CONFED_HAMMER, 0);
 
-        // CONFED_TORRENT -> 14
-        unitTechRequirements.put(UnitType.CONFED_TORRENT, 14);
+        // CONFED_TORRENT: REMOVED — availability_flag=-1 means available from start, no research needed
 
         // REBEL_SNIPER -> 4 (Snipers tech)
+        // (correct — no change needed)
         unitTechRequirements.put(UnitType.REBEL_SNIPER, 4);
 
-        // REBEL_RHINO -> 12 (Reinforced engine)
-        unitTechRequirements.put(UnitType.REBEL_RHINO, 12);
+        // REBEL_RHINO -> 7 (Reinforced engine = tech ID 7)
+        // FIX: Changed from 12 to 7 per RE spec
+        unitTechRequirements.put(UnitType.REBEL_RHINO, 7);
 
-        // REBEL_PORCUPINE -> 38
-        unitTechRequirements.put(UnitType.REBEL_PORCUPINE, 38);
+        // REBEL_PORCUPINE -> 0 (available from start)
+        // ASSUMPTION: RE spec doesn't have a specific 8-tech ID that unlocks Porcupine.
+        // Set to 0 (available from start) pending further RE investigation.
+        unitTechRequirements.put(UnitType.REBEL_PORCUPINE, 0);
 
         // All other units have tech requirement 0 (available from start)
         // EnumMap defaults to 0 via getOrDefault in getUnitTechRequirement()

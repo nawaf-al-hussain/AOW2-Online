@@ -2,8 +2,10 @@ package com.aow2.core.combat;
 
 import com.aow2.common.model.GridPosition;
 import com.aow2.common.model.WeaponType;
+import com.aow2.core.economy.EconomySystem;
 import com.aow2.core.engine.GameState;
 import com.aow2.core.entity.Building;
+import com.aow2.core.research.ResearchSystem;
 import com.aow2.core.world.EntityManager;
 import com.aow2.core.entity.Entity;
 import com.aow2.core.entity.Projectile;
@@ -13,6 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Manages projectile creation, movement, and impact.
@@ -29,6 +32,13 @@ import java.util.List;
 public final class ProjectileSystem {
 
     private static final Logger log = LoggerFactory.getLogger(ProjectileSystem.class);
+
+    /**
+     * Fixed flight time for artillery projectiles.
+     * REF: combat_formulas.md — flightTime = (at[6][59] - at[5][59]) + 1 (fixed, not distance-based)
+     * ASSUMPTION: 15 ticks based on typical artillery delay in the original game.
+     */
+    private static final int ARTILLERY_FIXED_FLIGHT_TIME = 15;
 
     /** Maximum number of active projectiles allowed simultaneously. */
     public static final int MAX_PROJECTILES = 400;
@@ -65,8 +75,39 @@ public final class ProjectileSystem {
     /** Tracks the current number of active projectiles for limit enforcement. */
     private int activeProjectileCount;
 
+    /** Armor calculator for research-adjusted armor (may be null in tests). */
+    private ArmorCalculator armorCalculator;
+
+    /** Research system for querying completed research (may be null in tests). */
+    private ResearchSystem researchSystem;
+
     public ProjectileSystem() {
         this.activeProjectileCount = 0;
+    }
+
+    /**
+     * Construct a ProjectileSystem with armor and research support.
+     * Used by CombatSystem to enable research-adjusted armor in splash damage.
+     *
+     * @param armorCalculator the armor calculator
+     * @param researchSystem  the research system
+     */
+    public ProjectileSystem(ArmorCalculator armorCalculator, ResearchSystem researchSystem) {
+        this();
+        this.armorCalculator = armorCalculator;
+        this.researchSystem = researchSystem;
+    }
+
+    /**
+     * Set the armor calculator and research system for splash damage armor calculation.
+     * Allows late binding when these systems are not available at construction time.
+     *
+     * @param armorCalculator the armor calculator
+     * @param researchSystem  the research system
+     */
+    public void setResearchSystem(ArmorCalculator armorCalculator, ResearchSystem researchSystem) {
+        this.armorCalculator = armorCalculator;
+        this.researchSystem = researchSystem;
     }
 
     /**
@@ -141,9 +182,10 @@ public final class ProjectileSystem {
         int speed = SPEED_TABLE[Math.min(speedIndex, SPEED_TABLE.length - 1)];
         int flightTime = Math.max(1, (int) Math.ceil(distance / speed));
 
-        // REF: combat_formulas.md - artillery clamps velocity
-        if (weaponType == WeaponType.ARTILLERY) {
-            flightTime = Math.max(flightTime, 3);
+        // REF: combat_formulas.md — artillery uses fixed flight time, not distance-based
+        // flightTime = (at[6][59] - at[5][59]) + 1
+        if (weaponType == WeaponType.ARTILLERY || weaponType == WeaponType.ROCKET) {
+            flightTime = ARTILLERY_FIXED_FLIGHT_TIME;
         }
 
         int projectileId = entities.allocateEntityId();
@@ -219,6 +261,9 @@ public final class ProjectileSystem {
         GridPosition impactPos = projectile.getTargetPosition();
         int splashRadius = projectile.getSplashRadius();
 
+        // Splash targets use their OWN research for armor (armor is a defensive stat)
+        // The attacking faction's research does not affect target armor.
+
         // Splash damage to units
         for (Unit unit : entities.getAllUnits()) {
             if (!unit.isAlive()) continue;
@@ -226,8 +271,10 @@ public final class ProjectileSystem {
             double distanceToImpact = unit.getPosition().distanceTo(impactPos);
             if (distanceToImpact <= splashRadius) {
                 int distance = (int) distanceToImpact;
+                // Use research-adjusted armor for splash targets
+                int effectiveArmor = getEffectiveArmor(unit);
                 int damage = DamageCalculator.calculateSplashDamage(
-                    projectile.getDamage(), unit.getStats().armor(), distance);
+                    projectile.getDamage(), effectiveArmor, distance);
                 unit.takeDamage(damage);
 
                 state.enqueueEvent(new com.aow2.common.event.DamageAppliedEvent(
@@ -250,8 +297,10 @@ public final class ProjectileSystem {
             double distanceToImpact = building.getPosition().distanceTo(impactPos);
             if (distanceToImpact <= splashRadius) {
                 int distance = (int) distanceToImpact;
+                // Use research-adjusted building armor for splash targets
+                int effectiveBuildingArmor = getEffectiveBuildingArmor(building);
                 int damage = DamageCalculator.calculateSplashDamage(
-                    projectile.getDamage(), 0, distance);
+                    projectile.getDamage(), effectiveBuildingArmor, distance);
                 building.takeDamage(damage);
 
                 state.enqueueEvent(new com.aow2.common.event.DamageAppliedEvent(
@@ -323,6 +372,32 @@ public final class ProjectileSystem {
                 }
             }
         }
+    }
+
+    /**
+     * Get effective armor for a unit, using research-adjusted values when available.
+     * Falls back to base armor if no research system is configured.
+     */
+    private int getEffectiveArmor(Unit unit) {
+        if (armorCalculator != null && researchSystem != null) {
+            int playerId = EconomySystem.playerId(unit.getFaction());
+            Set<Integer> completedResearch = researchSystem.getCompletedResearch(playerId);
+            return armorCalculator.calculateEffectiveArmor(unit, completedResearch);
+        }
+        return unit.getStats().armor();
+    }
+
+    /**
+     * Get effective building armor, using research-adjusted values when available.
+     * Falls back to 0 (base building armor) if no research system is configured.
+     */
+    private int getEffectiveBuildingArmor(Building building) {
+        if (armorCalculator != null && researchSystem != null) {
+            int playerId = EconomySystem.playerId(building.getFaction());
+            Set<Integer> completedResearch = researchSystem.getCompletedResearch(playerId);
+            return armorCalculator.calculateEffectiveBuildingArmor(building, completedResearch);
+        }
+        return 0;
     }
 
     /**

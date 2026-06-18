@@ -92,6 +92,9 @@ public final class DamageCalculator {
         // Look up the distance class from the 31x31 table
         int distClass = NUCLEAR_DISTANCE_TABLE[(dy + 15) * 31 + (dx + 15)];
 
+        // ASSUMPTION: distance factor formula uses divisor 12 and linear falloff from 12 to 0 —
+        // RE spec confirms a 31x31 distance table is used but the exact formula deriving values from it is reconstructed.
+        // REF: combat_formulas.md lines 236-256
         // distanceFactor = weaponDamage * (12 - distClass) / 12
         // At distClass 0 (center): full weaponDamage; at distClass 12+: weaponDamage * 0 / 12 = 0
         int distanceFactor = weaponDamage * (12 - distClass) / 12;
@@ -201,14 +204,19 @@ public final class DamageCalculator {
      */
     public static double getTargetMultiplier(Unit attacker, boolean isTargetBuilding, boolean isTargetMachinery) {
         if (isTargetBuilding) {
-            // REF: combat_formulas.md - siege weapons bonus vs buildings
+            // ASSUMPTION: 50% damage reduction — RE spec confirms infantry deals reduced damage to buildings but doesn't specify exact multiplier
+            // REF: combat_formulas.md lines 456-459
             if (attacker.isInfantry()) return 0.5;
+            // ASSUMPTION: 50% bonus — RE spec confirms siege weapons deal bonus damage to buildings but doesn't specify exact multiplier
+            // REF: combat_formulas.md - siege weapons bonus vs buildings
             if (attacker.getUnitType().isSiegeCapable()) return 1.5;
             return 1.0;
         }
         // REF: combat_formulas.md lines 456-459 - infantry deals reduced damage to machinery
         if (isTargetMachinery && attacker.isInfantry()) {
-            return 0.7; // ASSUMPTION: 30% reduction (RE doc confirms reduction but not exact value)
+            // ASSUMPTION: 30% damage reduction — RE spec confirms reduction exists but doesn't specify exact multiplier
+            // REF: combat_formulas.md lines 456-459
+            return 0.7;
         }
         return 1.0;
     }

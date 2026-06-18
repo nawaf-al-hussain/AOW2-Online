@@ -1,0 +1,593 @@
+{
+  "_comment_cost_duration": "Cost and duration values in confederation_techs and rebel_techs are ASSUMPTIONS based on the original 8-tech-per-faction tree structure. The research_effects section reflects the full 48-effect RE spec from combat_formulas.md.",
+  "_comment_sources": "REF: combat_formulas.md 'Research/Upgrade Effects' (research IDs 0-47), tech_tree_confederation.md, tech_tree_rebels.md",
+  "research_effects": [
+    {
+      "id": 0,
+      "name": "Energy Suit",
+      "description": "Infantry armour +2, Sniper armour +2, Light armour +2",
+      "faction": "CONFEDERATION",
+      "category": "INFANTRY_ARMOR",
+      "prerequisite": -1,
+      "effects": {
+        "infantryArmorBonus": 2,
+        "vehicleArmorBonus": 2
+      }
+    },
+    {
+      "id": 1,
+      "name": "Advanced Targeting",
+      "description": "Player 0 attack range reduction /3",
+      "faction": "CONFEDERATION",
+      "category": "ENEMY_RANGE_REDUCTION",
+      "prerequisite": 0,
+      "effects": {
+        "player0RangeReductionDivisor": 3
+      }
+    },
+    {
+      "id": 2,
+      "name": "Rapid Fire",
+      "description": "Attack speed -2 (faster) for specific unit types",
+      "faction": "CONFEDERATION",
+      "category": "ATTACK_SPEED",
+      "prerequisite": 0,
+      "effects": {
+        "attackSpeedBonus": -2,
+        "affectedUnitTypes": [2]
+      }
+    },
+    {
+      "id": 3,
+      "name": "Enhanced Munitions",
+      "description": "Attack damage +2, Production damage +2",
+      "faction": "CONFEDERATION",
+      "category": "ATTACK_DAMAGE",
+      "prerequisite": 0,
+      "effects": {
+        "attackDamageBonus": 2,
+        "productionDamageBonus": 2
+      }
+    },
+    {
+      "id": 4,
+      "name": "Fortified Structures",
+      "description": "Building armour +4, Production armour +4",
+      "faction": "CONFEDERATION",
+      "category": "BUILDING_ARMOR",
+      "prerequisite": -1,
+      "effects": {
+        "buildingArmorBonus": 4
+      }
+    },
+    {
+      "id": 5,
+      "name": "Power Grid Expansion",
+      "description": "Building radius +1",
+      "faction": "CONFEDERATION",
+      "category": "BUILDING_RADIUS",
+      "prerequisite": -1,
+      "effects": {
+        "buildingRadiusBonus": 1
+      }
+    },
+    {
+      "id": 6,
+      "name": "Rhino Mk.II Upgrade",
+      "description": "Upgrades unit type 18 to type 7 (Rhino to Heavy Assault)",
+      "faction": "CONFEDERATION",
+      "category": "UNIT_UPGRADE",
+      "prerequisite": 2,
+      "effects": {
+        "upgradeUnitType": 18,
+        "upgradeToType": 7
+      }
+    },
+    {
+      "id": 7,
+      "name": "Vehicle Propulsion",
+      "description": "Attack speed +5 for type 11, +8 for type 13; Production bonuses",
+      "faction": "CONFEDERATION",
+      "category": "ATTACK_SPEED",
+      "prerequisite": 3,
+      "effects": {
+        "attackSpeedBonus": {"type11": 5, "type13": 8},
+        "productionBonuses": {"type7": 1}
+      }
+    },
+    {
+      "id": 8,
+      "name": "Heavy Artillery Upgrade",
+      "description": "Attack range -1 for heavy unit types; Building radius +1",
+      "faction": "CONFEDERATION",
+      "category": "ATTACK_RANGE",
+      "prerequisite": {"anyOf": [6, 7]},
+      "effects": {
+        "attackRangeBonus": -1,
+        "affectedUnitTypes": [7, 18, 9, 11, 17, 13, 16],
+        "buildingRadiusBonus": 1
+      }
+    },
+    {
+      "id": 9,
+      "name": "Composite Armour II",
+      "description": "Infantry armour +2 for heavy unit types",
+      "faction": "CONFEDERATION",
+      "category": "INFANTRY_ARMOR",
+      "prerequisite": 8,
+      "effects": {
+        "infantryArmorBonus": 2,
+        "affectedUnitTypes": [7, 18, 9, 11, 17, 13, 16]
+      }
+    },
+    {
+      "id": 10,
+      "name": "Signal Jamming",
+      "description": "Player 1 attack range reduction /3",
+      "faction": "CONFEDERATION",
+      "category": "ENEMY_RANGE_REDUCTION",
+      "prerequisite": 8,
+      "effects": {
+        "player1RangeReductionDivisor": 3
+      }
+    },
+    {
+      "id": 11,
+      "name": "Quick Reload",
+      "description": "Attack speed -2 (faster) for types 11, 13",
+      "faction": "CONFEDERATION",
+      "category": "ATTACK_SPEED",
+      "prerequisite": 9,
+      "effects": {
+        "attackSpeedBonus": -2,
+        "affectedUnitTypes": [11, 13]
+      }
+    },
+    {
+      "id": 12,
+      "name": "Hammer Mk.II Upgrade",
+      "description": "Upgrades unit type 17 to type 11 (Hammer to Mine Scorpio)",
+      "faction": "CONFEDERATION",
+      "category": "UNIT_UPGRADE",
+      "prerequisite": 9,
+      "effects": {
+        "upgradeUnitType": 17,
+        "upgradeToType": 11
+      }
+    },
+    {
+      "id": 13,
+      "name": "Power Network",
+      "description": "Building radius +1",
+      "faction": "CONFEDERATION",
+      "category": "BUILDING_RADIUS",
+      "prerequisite": {"anyOf": [11, 12]},
+      "effects": {
+        "buildingRadiusBonus": 1
+      }
+    },
+    {
+      "id": 14,
+      "name": "Siege Artillery",
+      "description": "Attack damage +10 for type 21, Range +2; Production +2 for type 16, +5 for type 13",
+      "faction": "CONFEDERATION",
+      "category": "ATTACK_DAMAGE",
+      "prerequisite": 13,
+      "effects": {
+        "attackDamageBonus": 10,
+        "affectedUnitTypes": [21],
+        "attackRangeBonus": 2,
+        "productionBonuses": {"type16": 2, "type13": 5}
+      }
+    },
+    {
+      "id": 15,
+      "name": "Supply Logistics",
+      "description": "Player 0 supply cap = 8",
+      "faction": "CONFEDERATION",
+      "category": "ECONOMY",
+      "prerequisite": -1,
+      "effects": {
+        "player0SupplyCap": 8
+      }
+    },
+    {
+      "id": 16,
+      "name": "Building Armour Override",
+      "description": "Player 0 building armour = 9 (OVERRIDE, not additive)",
+      "faction": "CONFEDERATION",
+      "category": "BUILDING_ARMOR_OVERRIDE",
+      "prerequisite": 4,
+      "effects": {
+        "buildingArmorOverride": 9,
+        "isOverride": true
+      }
+    },
+    {
+      "id": 17,
+      "name": "Enhanced Economy",
+      "description": "Unit limit +2; Production +1 for type 15; Production speed = 20",
+      "faction": "CONFEDERATION",
+      "category": "ECONOMY",
+      "prerequisite": {"anyOf": [5, 15]},
+      "effects": {
+        "unitLimitBonus": 2,
+        "productionBonuses": {"type15": 1},
+        "productionSpeedOverride": 20
+      }
+    },
+    {
+      "id": 18,
+      "name": "Advanced Building Radius",
+      "description": "Building radius +1",
+      "faction": "CONFEDERATION",
+      "category": "BUILDING_RADIUS",
+      "prerequisite": {"anyOf": [5, 16]},
+      "effects": {
+        "buildingRadiusBonus": 1
+      }
+    },
+    {
+      "id": 19,
+      "name": "Fast Infantry Training",
+      "description": "Player 1 production P[1] = 7 — Reduces infantry training time",
+      "faction": "CONFEDERATION",
+      "category": "PRODUCTION_SPEED",
+      "prerequisite": 15,
+      "effects": {
+        "productionSpeedOverride": {"slot": 1, "value": 7}
+      }
+    },
+    {
+      "id": 20,
+      "name": "Upgraded Assembly Line",
+      "description": "Player 1 production P[2] = 7 — Reduces machinery build time",
+      "faction": "CONFEDERATION",
+      "category": "PRODUCTION_SPEED",
+      "prerequisite": 15,
+      "effects": {
+        "productionSpeedOverride": {"slot": 2, "value": 7}
+      }
+    },
+    {
+      "id": 21,
+      "name": "Finance Department",
+      "description": "Player 0 credit limit Q[0] = 120",
+      "faction": "CONFEDERATION",
+      "category": "ECONOMY",
+      "prerequisite": -1,
+      "effects": {
+        "player0CreditLimit": 120
+      }
+    },
+    {
+      "id": 22,
+      "name": "Incentive System",
+      "description": "Player 0 score bonus S[0] = 30",
+      "faction": "CONFEDERATION",
+      "category": "SCORING",
+      "prerequisite": {"anyOf": [17, 21]},
+      "effects": {
+        "player0ScoreBonus": 30
+      }
+    },
+    {
+      "id": 23,
+      "name": "Communications System",
+      "description": "Player 0 display bonus = 25",
+      "faction": "CONFEDERATION",
+      "category": "SCORING",
+      "prerequisite": 22,
+      "effects": {
+        "player0DisplayBonus": 25
+      }
+    },
+    {
+      "id": 24,
+      "name": "Titanium Jacket",
+      "description": "Infantry armour +1 for types 0, 2, 4, 14",
+      "faction": "RESISTANCE",
+      "category": "INFANTRY_ARMOR",
+      "prerequisite": -1,
+      "effects": {
+        "infantryArmorBonus": 1,
+        "affectedUnitTypes": [0, 2, 4, 14]
+      }
+    },
+    {
+      "id": 25,
+      "name": "Signal Jamming",
+      "description": "Player 1 attack range reduction /3",
+      "faction": "RESISTANCE",
+      "category": "ENEMY_RANGE_REDUCTION",
+      "prerequisite": -1,
+      "effects": {
+        "player1RangeReductionDivisor": 3
+      }
+    },
+    {
+      "id": 26,
+      "name": "Infantry Combat Drill",
+      "description": "Attack speed +1 for types 0, 2, 3; Production +1 for types 0, 4",
+      "faction": "RESISTANCE",
+      "category": "ATTACK_SPEED",
+      "prerequisite": 24,
+      "effects": {
+        "attackSpeedBonus": 1,
+        "affectedUnitTypes": [0, 2, 3],
+        "productionBonuses": {"type0": 1, "type4": 1}
+      }
+    },
+    {
+      "id": 27,
+      "name": "Infantry Range Upgrade",
+      "description": "Attack range -1 for types 0, 2, 4, 14 (improves range)",
+      "faction": "RESISTANCE",
+      "category": "ATTACK_RANGE",
+      "prerequisite": 24,
+      "effects": {
+        "attackRangeBonus": -1,
+        "affectedUnitTypes": [0, 2, 4, 14]
+      }
+    },
+    {
+      "id": 28,
+      "name": "Coyote Range Upgrade",
+      "description": "Attack range +1 for type 15 (Coyote); Production +1 for types 2",
+      "faction": "RESISTANCE",
+      "category": "ATTACK_RANGE",
+      "prerequisite": 26,
+      "effects": {
+        "attackRangeBonus": 1,
+        "affectedUnitTypes": [15],
+        "productionBonuses": {"type2": 1}
+      }
+    },
+    {
+      "id": 29,
+      "name": "Building Radius Expansion",
+      "description": "Building radius +1",
+      "faction": "RESISTANCE",
+      "category": "BUILDING_RADIUS",
+      "prerequisite": {"anyOf": [27, 28]},
+      "effects": {
+        "buildingRadiusBonus": 1
+      }
+    },
+    {
+      "id": 30,
+      "name": "Sniper Upgrade",
+      "description": "Attack speed +2, Range +2 for Sniper (type 3); Production +2 for types 14, 4",
+      "faction": "RESISTANCE",
+      "category": "ATTACK_SPEED",
+      "prerequisite": 29,
+      "effects": {
+        "attackSpeedBonus": 2,
+        "affectedUnitTypes": [3],
+        "attackRangeBonus": 2,
+        "affectedRangeUnitTypes": [3],
+        "productionBonuses": {"type14": 2, "type4": 2}
+      }
+    },
+    {
+      "id": 31,
+      "name": "Light Vehicle Speed Upgrade",
+      "description": "Attack speed +1 for types 4, 5; Production +1 for types 6, 8",
+      "faction": "RESISTANCE",
+      "category": "ATTACK_SPEED",
+      "prerequisite": 29,
+      "effects": {
+        "attackSpeedBonus": 1,
+        "affectedUnitTypes": [4, 5],
+        "productionBonuses": {"type6": 1, "type8": 1}
+      }
+    },
+    {
+      "id": 32,
+      "name": "Heavy Machinery Range Adjust",
+      "description": "Attack range -1 for types 6, 8, 10, 15, 12; Building radius +1",
+      "faction": "RESISTANCE",
+      "category": "ATTACK_RANGE",
+      "prerequisite": {"anyOf": [30, 31]},
+      "effects": {
+        "attackRangeBonus": -1,
+        "affectedUnitTypes": [6, 8, 10, 15, 12],
+        "buildingRadiusBonus": 1
+      }
+    },
+    {
+      "id": 33,
+      "name": "Machinery Armour Upgrade",
+      "description": "Infantry armour +1 for types 6, 8, 10, 15, 12",
+      "faction": "RESISTANCE",
+      "category": "INFANTRY_ARMOR",
+      "prerequisite": 32,
+      "effects": {
+        "infantryArmorBonus": 1,
+        "affectedUnitTypes": [6, 8, 10, 15, 12]
+      }
+    },
+    {
+      "id": 34,
+      "name": "Advanced Signal Jamming",
+      "description": "Player 1 attack range reduction /3",
+      "faction": "RESISTANCE",
+      "category": "ENEMY_RANGE_REDUCTION",
+      "prerequisite": 32,
+      "effects": {
+        "player1RangeReductionDivisor": 3
+      }
+    },
+    {
+      "id": 35,
+      "name": "Rapid Reload",
+      "description": "Attack speed -2 (faster) for types 12, 14",
+      "faction": "RESISTANCE",
+      "category": "ATTACK_SPEED",
+      "prerequisite": 33,
+      "effects": {
+        "attackSpeedBonus": -2,
+        "affectedUnitTypes": [12, 14]
+      }
+    },
+    {
+      "id": 36,
+      "name": "Mine Lizard Siege Mode",
+      "description": "Unit type 10 siege upgrade = 15 (Mine Lizard siege mode)",
+      "faction": "RESISTANCE",
+      "category": "UNIT_UPGRADE",
+      "prerequisite": 33,
+      "effects": {
+        "upgradeUnitType": 10,
+        "upgradeToType": 15,
+        "siegeUpgrade": 15
+      }
+    },
+    {
+      "id": 37,
+      "name": "Advanced Building Radius",
+      "description": "Building radius +1",
+      "faction": "RESISTANCE",
+      "category": "BUILDING_RADIUS",
+      "prerequisite": {"anyOf": [35, 36]},
+      "effects": {
+        "buildingRadiusBonus": 1
+      }
+    },
+    {
+      "id": 38,
+      "name": "MLRS Torrent Upgrade",
+      "description": "Attack damage +2 for type 20, Range +2; Production +2 for type 12",
+      "faction": "RESISTANCE",
+      "category": "ATTACK_DAMAGE",
+      "prerequisite": 37,
+      "effects": {
+        "attackDamageBonus": 2,
+        "affectedUnitTypes": [20],
+        "attackRangeBonus": 2,
+        "affectedRangeUnitTypes": [20],
+        "productionBonuses": {"type12": 2}
+      }
+    },
+    {
+      "id": 39,
+      "name": "Supply Logistics",
+      "description": "Player 1 supply cap = 8",
+      "faction": "RESISTANCE",
+      "category": "ECONOMY",
+      "prerequisite": -1,
+      "effects": {
+        "player1SupplyCap": 8
+      }
+    },
+    {
+      "id": 40,
+      "name": "Building Armour Override",
+      "description": "Player 1 building armour = 9 (OVERRIDE, not additive)",
+      "faction": "RESISTANCE",
+      "category": "BUILDING_ARMOR_OVERRIDE",
+      "prerequisite": -1,
+      "effects": {
+        "buildingArmorOverride": 9,
+        "isOverride": true
+      }
+    },
+    {
+      "id": 41,
+      "name": "Enhanced Building Radius",
+      "description": "Building radius +1",
+      "faction": "RESISTANCE",
+      "category": "BUILDING_RADIUS",
+      "prerequisite": {"anyOf": [39, 40]},
+      "effects": {
+        "buildingRadiusBonus": 1
+      }
+    },
+    {
+      "id": 42,
+      "name": "Cumulative Building Radius",
+      "description": "Building radius +1 (cumulative)",
+      "faction": "RESISTANCE",
+      "category": "BUILDING_RADIUS",
+      "prerequisite": 41,
+      "effects": {
+        "buildingRadiusBonus": 1
+      }
+    },
+    {
+      "id": 43,
+      "name": "Advanced Credits",
+      "description": "Player 0 production P[4] = 7",
+      "faction": "CONFEDERATION",
+      "category": "PRODUCTION_SPEED",
+      "prerequisite": 21,
+      "effects": {
+        "productionSpeedOverride": {"slot": 4, "value": 7}
+      }
+    },
+    {
+      "id": 44,
+      "name": "Advanced Production",
+      "description": "Player 1 production P[5] = 7",
+      "faction": "RESISTANCE",
+      "category": "PRODUCTION_SPEED",
+      "prerequisite": 39,
+      "effects": {
+        "productionSpeedOverride": {"slot": 5, "value": 7}
+      }
+    },
+    {
+      "id": 45,
+      "name": "Finance Department",
+      "description": "Player 1 credit limit Q[1] = 120",
+      "faction": "RESISTANCE",
+      "category": "ECONOMY",
+      "prerequisite": 39,
+      "effects": {
+        "player1CreditLimit": 120
+      }
+    },
+    {
+      "id": 46,
+      "name": "Incentive System",
+      "description": "Player 1 score bonus S[1] = 30",
+      "faction": "RESISTANCE",
+      "category": "SCORING",
+      "prerequisite": 45,
+      "effects": {
+        "player1ScoreBonus": 30
+      }
+    },
+    {
+      "id": 47,
+      "name": "Communications System",
+      "description": "Player 1 display bonus = 25",
+      "faction": "RESISTANCE",
+      "category": "SCORING",
+      "prerequisite": 46,
+      "effects": {
+        "player1DisplayBonus": 25
+      }
+    }
+  ],
+  "confederation_techs": [
+    {"localId": 0, "name": "Energy suit", "effect": "Increases infantry armour by 2", "globalEffectId": 0, "prerequisiteLocalId": -1, "cost": 50, "duration": 300},
+    {"localId": 1, "name": "Bio suit", "effect": "Health recovery for infantry increases 3 times", "globalEffectId": 1, "prerequisiteLocalId": 0, "cost": 75, "duration": 400},
+    {"localId": 2, "name": "Enhanced firing rate", "effect": "Assault's fire rate increases by 50%", "globalEffectId": 2, "prerequisiteLocalId": -1, "cost": 60, "duration": 350},
+    {"localId": 3, "name": "Armour-piercing bullet", "effect": "Assault's damage increases by 40%", "globalEffectId": 3, "prerequisiteLocalId": -1, "cost": 80, "duration": 400},
+    {"localId": 4, "name": "Heavy shells", "effect": "Heavy Assault's damage increases by 40%", "globalEffectId": 4, "prerequisiteLocalId": -1, "cost": 100, "duration": 450},
+    {"localId": 5, "name": "Forced light missiles", "effect": "Allows you to train Flame Assaults", "globalEffectId": 5, "prerequisiteLocalId": -1, "cost": 60, "duration": 300},
+    {"localId": 6, "name": "Lava flame fuel", "effect": "Heavy flamethrower installs on AV-40", "globalEffectId": 6, "prerequisiteLocalId": 3, "cost": 120, "duration": 500},
+    {"localId": 7, "name": "Volcano flame gun", "effect": "Increases damage for Zeus and Hammer tanks by 25%", "globalEffectId": 7, "prerequisiteLocalId": -1, "cost": 100, "duration": 450}
+  ],
+  "rebel_techs": [
+    {"localId": 0, "name": "Titanium jacket", "effect": "Increases armour for all infantry by 1", "globalEffectId": 24, "prerequisiteLocalId": -1, "cost": 50, "duration": 300},
+    {"localId": 1, "name": "First-aid kit", "effect": "Triples health recovery for all infantry", "globalEffectId": 25, "prerequisiteLocalId": 0, "cost": 75, "duration": 400},
+    {"localId": 2, "name": "Enhanced fire rate", "effect": "Infantry firing rate increases by 50%", "globalEffectId": 26, "prerequisiteLocalId": -1, "cost": 60, "duration": 350},
+    {"localId": 3, "name": "Doping", "effect": "Infantry speed increases by 1", "globalEffectId": 27, "prerequisiteLocalId": -1, "cost": 60, "duration": 300},
+    {"localId": 4, "name": "Snipers", "effect": "Allows you to train snipers", "globalEffectId": 28, "prerequisiteLocalId": -1, "cost": 80, "duration": 400},
+    {"localId": 5, "name": "Rifle 'Hornet-10'", "effect": "Sniper's overview and fire range increases by 2, damage increases by 20%", "globalEffectId": 29, "prerequisiteLocalId": 4, "cost": 100, "duration": 450},
+    {"localId": 6, "name": "Heavy machine gun", "effect": "Increases damage for coyotes and armadillos by 15%", "globalEffectId": 30, "prerequisiteLocalId": -1, "cost": 80, "duration": 400},
+    {"localId": 7, "name": "Reinforced engine", "effect": "Increases speed for all machinery by 1. Allows Rhino tank", "globalEffectId": 31, "prerequisiteLocalId": -1, "cost": 100, "duration": 450}
+  ]
+}

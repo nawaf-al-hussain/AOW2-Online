@@ -1,5 +1,6 @@
 package com.aow2.client;
 
+import com.aow2.client.scene.CampaignScene;
 import com.aow2.client.scene.GameScene;
 import com.aow2.client.scene.MainMenuScene;
 import com.aow2.client.scene.MapEditorScene;
@@ -48,6 +49,9 @@ public class AOW2App extends GameApplication {
     /** Mod manager scene. */
     private ModManagerScene modManagerScene;
 
+    /** Campaign scene. */
+    private CampaignScene campaignScene;
+
     /** Current active scene state. */
     private ActiveScene activeScene;
 
@@ -55,7 +59,7 @@ public class AOW2App extends GameApplication {
      * Enum representing which scene is currently active.
      */
     private enum ActiveScene {
-        MAIN_MENU, GAME, MAP_EDITOR, MULTIPLAYER_LOBBY, MOD_MANAGER
+        MAIN_MENU, GAME, MAP_EDITOR, MULTIPLAYER_LOBBY, MOD_MANAGER, CAMPAIGN
     }
 
     @Override
@@ -157,6 +161,31 @@ public class AOW2App extends GameApplication {
     }
 
     /**
+     * Shows the campaign selection scene.
+     */
+    private void showCampaign() {
+        campaignScene = new CampaignScene();
+        campaignScene.setCallback(new CampaignScene.SceneCallback() {
+            @Override
+            public void onStartMission(int episodeIndex, int missionIndex) {
+                LOG.info("Starting campaign mission: episode={}, mission={}", episodeIndex, missionIndex);
+                showGame();
+            }
+
+            @Override
+            public void onBack() {
+                showMainMenu();
+            }
+        });
+
+        FXGL.getGameScene().clearUINodes();
+        FXGL.getGameScene().addUINode(campaignScene.getRoot());
+
+        activeScene = ActiveScene.CAMPAIGN;
+        LOG.info("Campaign scene displayed");
+    }
+
+    /**
      * Shows the mod manager scene.
      */
     private void showModManager() {
@@ -180,8 +209,8 @@ public class AOW2App extends GameApplication {
 
         switch (action) {
             case "campaign" -> {
-                LOG.info("Starting Campaign mode");
-                showGame();
+                LOG.info("Opening Campaign selection");
+                showCampaign();
             }
             case "skirmish" -> {
                 LOG.info("Starting Skirmish mode");

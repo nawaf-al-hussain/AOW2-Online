@@ -24,8 +24,8 @@ services:
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: 6379
       SPRING_DATA_REDIS_PASSWORD: ${REDIS_PASSWORD:-aow2_redis}
-      JWT_SECRET: ${JWT_SECRET:-aow2_jwt_dev_secret_change_in_production}
-      JWT_EXPIRATION_MS: 86400000
+      AOW2_JWT_SECRET: ${AOW2_JWT_SECRET:-aow2_jwt_dev_secret_change_in_production}
+      AOW2_JWT_EXPIRATION_MS: 86400000
       AOW2_GAME_TICK_RATE: 60
       AOW2_MAX_PLAYERS_PER_MATCH: 2
       JAVA_OPTS: "-XX:+UseG1GC -XX:MaxRAMPercentage=75.0 --enable-preview"

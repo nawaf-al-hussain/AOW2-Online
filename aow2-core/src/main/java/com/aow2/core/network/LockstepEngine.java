@@ -240,6 +240,8 @@ public final class LockstepEngine {
         this.productionSystem = production;
         this.researchSystem = research;
         this.buildingPlacementSystem = placement;
+        // Wire research system into combat for splash damage armor calculation
+        combat.setResearchSystem(research);
     }
 
     /**

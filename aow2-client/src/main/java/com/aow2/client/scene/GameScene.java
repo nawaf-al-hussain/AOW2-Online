@@ -4,8 +4,10 @@ import com.aow2.client.input.InputHandler;
 import com.aow2.client.input.SelectionManager;
 import com.aow2.client.render.CameraController;
 import com.aow2.client.render.EntityRenderer;
+import com.aow2.client.render.FogRenderer;
 import com.aow2.client.render.IsometricRenderer;
 import com.aow2.client.render.MinimapRenderer;
+import com.aow2.client.render.SpriteManager;
 import com.aow2.client.ui.HUD;
 import com.aow2.common.config.GameConstants;
 import com.aow2.common.config.StatsRegistry;
@@ -30,6 +32,7 @@ import com.aow2.core.movement.MovementSystem;
 import com.aow2.core.movement.PathfindingSystem;
 import com.aow2.core.research.ResearchSystem;
 import com.aow2.core.world.EntityManager;
+import com.aow2.core.world.FogOfWarSystem;
 import com.aow2.core.world.GameMap;
 
 import javafx.animation.AnimationTimer;
@@ -138,6 +141,12 @@ public class GameScene {
     /** The projectile system. */
     private ProjectileSystem projectiles;
 
+    /** The fog of war renderer. */
+    private FogRenderer fogRenderer;
+
+    /** The fog of war system. */
+    private FogOfWarSystem fogOfWarSystem;
+
     /** The power system. */
     private PowerSystem powerSystem;
 
@@ -146,6 +155,9 @@ public class GameScene {
 
     /** Current player credits (synced from EconomySystem each tick). */
     private int credits;
+
+    /** Whether the sprite manager has been initialized for this scene. */
+    private boolean spritesInitialized;
 
     /**
      * Constructs a new GameScene with all subsystems initialized.
@@ -159,6 +171,8 @@ public class GameScene {
         this.isoRenderer = new IsometricRenderer();
         this.cameraController = new CameraController();
         this.entityRenderer = new EntityRenderer(isoRenderer);
+        this.fogRenderer = new FogRenderer(isoRenderer);
+        this.fogOfWarSystem = new FogOfWarSystem();
         this.minimapRenderer = new MinimapRenderer();
         this.hud = new HUD();
         this.selectionManager = new SelectionManager();
@@ -311,6 +325,15 @@ public class GameScene {
      * Creates a test map with test entities for demonstration.
      */
     public void initializeGame() {
+        // Initialize SpriteManager singleton early (must run on JavaFX thread)
+        if (!SpriteManager.getInstance().isInitialized()) {
+            SpriteManager.getInstance().initialize();
+            isoRenderer.setSpriteManager(SpriteManager.getInstance());
+            entityRenderer.setSpriteManager(SpriteManager.getInstance());
+            spritesInitialized = true;
+            LOG.info("SpriteManager initialized and wired to renderers");
+        }
+
         // Create test map
         this.map = GameMap.createTestMap();
         this.entityManager = new EntityManager();
@@ -358,6 +381,11 @@ public class GameScene {
         selectionManager.setPlayerFaction(Faction.CONFEDERATION);
         hud.setEntityManager(entityManager);
         hud.setPlayerFaction(Faction.CONFEDERATION);
+
+        // Initialize fog of war system and connect to renderer
+        fogOfWarSystem.initialize(map);
+        fogRenderer.setFogOfWar(fogOfWarSystem);
+        fogRenderer.setPlayerId(LOCAL_PLAYER_ID);
 
         // Create test entities using StatsRegistry
         createTestEntities();
@@ -538,6 +566,10 @@ public class GameScene {
         // Render isometric map
         isoRenderer.render(gc, cameraController.getCameraX(), cameraController.getCameraY(),
             cameraController.getZoom());
+
+        // Render fog of war overlay (after terrain, before entities)
+        fogRenderer.render(gc, map, cameraController.getCameraX(),
+            cameraController.getCameraY(), cameraController.getZoom());
 
         // Render entities
         entityRenderer.render(gc, entityManager, cameraController.getCameraX(),

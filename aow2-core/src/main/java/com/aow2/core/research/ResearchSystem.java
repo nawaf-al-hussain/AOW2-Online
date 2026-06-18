@@ -209,8 +209,29 @@ public final class ResearchSystem {
             return false;
         }
 
-        // Check player can afford
+        // Determine cost and duration
+        // FIX: Try loading from ResearchRegistry (tech_tree.json) first, then fall back to TechTree node.
+        // The formula from RE spec: cost = (unitBuildCost * productionModifier) / 10 * 20 / (upgradeBonus + 20)
+        // ASSUMPTION: When ResearchRegistry provides data, use its cost/duration directly.
+        // When falling back, the existing TechTree node costs/durations already vary per tech ID.
+        // ASSUMPTION for scaling fallback: if node costs are all equal, apply scaling.
         int cost = node.cost();
+        int duration = node.duration();
+
+        // Try to get cost/duration from ResearchRegistry if available
+        ResearchRegistry.ResearchEffect registryEffect = ResearchRegistry.getInstance().getResearchEffect(researchId);
+        if (registryEffect != null && registryEffect.effects() != null) {
+            Object costObj = registryEffect.effects().get("cost");
+            Object durationObj = registryEffect.effects().get("duration");
+            if (costObj instanceof Number) {
+                cost = ((Number) costObj).intValue();
+            }
+            if (durationObj instanceof Number) {
+                duration = ((Number) durationObj).intValue();
+            }
+        }
+
+        // Check player can afford
         if (!economy.canAfford(playerId, cost)) {
             LOG.debug("Cannot start research: player {} cannot afford {} credits", playerId, cost);
             return false;
@@ -220,7 +241,6 @@ public final class ResearchSystem {
         economy.spendCredits(playerId, cost);
 
         // Start research
-        int duration = node.duration();
         ActiveResearch active = new ActiveResearch(researchId, techCentre.getId(), playerId, 0, duration);
         activeResearchMap.put(techCentre.getId(), active);
         techCentre.setResearchId(String.valueOf(researchId));

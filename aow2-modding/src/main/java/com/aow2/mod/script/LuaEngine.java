@@ -78,6 +78,13 @@ public final class LuaEngine {
         // Create Lua globals with standard libraries
         this.globals = JsePlatform.standardGlobals();
 
+        // Sandboxing: remove dangerous libraries that expose os/io/java/debug to scripts
+        globals.remove("os");       // Prevent os.execute(), os.exit(), os.remove(), etc.
+        globals.remove("io");       // Prevent file I/O operations
+        globals.remove("java");     // Prevent Java reflection/class access
+        globals.remove("debug");    // Prevent debug hooks and introspection
+        // Keep: base, math, string, table, coroutine (safe for game scripting)
+
         // Create and apply script bindings
         this.scriptBindings = new ScriptBindings(globals, state, entities, economySystem);
         scriptBindings.bindAll();
@@ -323,6 +330,11 @@ public final class LuaEngine {
         if (initialized && globals != null) {
             // Clear all Lua globals by re-creating the standard globals
             globals = JsePlatform.standardGlobals();
+            // Re-apply sandboxing on reset
+            globals.remove("os");
+            globals.remove("io");
+            globals.remove("java");
+            globals.remove("debug");
         }
         gameState = null;
         entityManager = null;

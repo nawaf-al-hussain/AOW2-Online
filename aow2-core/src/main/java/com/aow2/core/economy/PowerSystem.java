@@ -171,8 +171,9 @@ public final class PowerSystem {
      * @return the upgrade level (0-based)
      */
     private int getUpgradeLevel(Building building) {
-        // ASSUMPTION: upgrade level is 0 until the upgrade system is implemented.
-        // When implemented, it will track how many upgrade costs have been applied.
-        return 0;
+        // FIX: Return the actual upgrade level from the building entity.
+        // Building.upgradeLevel is 0 (base) to 3 (max upgraded).
+        // REF: Building.java — getUpgradeLevel() / setUpgradeLevel(int)
+        return building.getUpgradeLevel();
     }
 }

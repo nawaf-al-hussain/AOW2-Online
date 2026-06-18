@@ -1,14 +1,20 @@
 package com.aow2.server.service;
 
 import com.aow2.server.model.GameSession;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Business logic for game session lifecycle management and signaling.
@@ -32,6 +38,67 @@ public class SessionService {
 
     /** Player IDs mapped to their opponent's WebSocket session ID, for P2P relay */
     private final Map<Long, String> playerToOpponentWs = new ConcurrentHashMap<>();
+
+    /** Scheduled executor for periodic cleanup of expired sessions. */
+    private final ScheduledExecutorService cleanupExecutor =
+            Executors.newSingleThreadScheduledExecutor(r -> {
+                Thread t = new Thread(r, "session-cleanup");
+                t.setDaemon(true);
+                return t;
+            });
+
+    /**
+     * Starts the scheduled session cleanup task.
+     * Runs every 5 minutes and removes completed/disconnected sessions older than 10 minutes.
+     */
+    @PostConstruct
+    public void startCleanupScheduler() {
+        cleanupExecutor.scheduleAtFixedRate(this::cleanupExpiredSessions, 5, 5, TimeUnit.MINUTES);
+        log.info("Session cleanup scheduler started (interval=5min, expiry=10min)");
+    }
+
+    /**
+     * Shuts down the cleanup executor on application shutdown.
+     */
+    @PreDestroy
+    public void stopCleanupScheduler() {
+        cleanupExecutor.shutdownNow();
+        log.info("Session cleanup scheduler stopped");
+    }
+
+    /**
+     * Removes completed or disconnected sessions that have been inactive for more than 10 minutes.
+     */
+    private void cleanupExpiredSessions() {
+        long now = Instant.now().toEpochMilli();
+        long expiryMs = TimeUnit.MINUTES.toMillis(10);
+        int cleaned = 0;
+
+        Iterator<Map.Entry<String, GameSession>> it = activeSessions.entrySet().iterator();
+        while (it.hasNext()) {
+            var entry = it.next();
+            GameSession session = entry.getValue();
+            GameSession.SessionState state = session.getState();
+
+            if (state == GameSession.SessionState.COMPLETED || state == GameSession.SessionState.DISCONNECTED) {
+                Instant completedAt = session.getCompletedAt();
+                if (completedAt != null && (now - completedAt.toEpochMilli()) > expiryMs) {
+                    it.remove();
+                    playerSessions.values().remove(entry.getKey());
+                    playerToOpponentWs.remove(session.getPlayer1Id());
+                    playerToOpponentWs.remove(session.getPlayer2Id());
+                    cleaned++;
+                    log.info("Cleaned up expired session: {} (state={}, completedAt={})",
+                            entry.getKey(), state, completedAt);
+                }
+            }
+        }
+
+        if (cleaned > 0) {
+            log.info("Session cleanup: removed {} expired sessions, {} active remaining",
+                    cleaned, activeSessions.size());
+        }
+    }
 
     /**
      * Creates a new game session for two matched players.

@@ -32,7 +32,8 @@ public final class ProductionSystem {
 
     private static final Logger LOG = LoggerFactory.getLogger(ProductionSystem.class);
 
-    /** Refund percentage when cancelling production. ASSUMPTION: 50% refund. */
+    // ASSUMPTION: 50% refund on production cancel — RE spec doesn't document exact refund percentage
+    // REF: MASTER_DOCUMENTATION.md — production cancellation exists but no refund rate specified
     private static final double CANCEL_REFUND_PERCENT = 0.50;
 
     /**
@@ -200,9 +201,14 @@ public final class ProductionSystem {
     public int calculateProductionTime(UnitType unitType, Building producer) {
         int baseBuildTime = getUnitBuildTime(unitType);
         int productionModifier = 10; // ASSUMPTION: base modifier = 10
-        int upgradeBonus = 0;        // ASSUMPTION: no upgrade bonus initially
 
+        // FIX: Use actual building upgrade level instead of hardcoded 0.
+        // ASSUMPTION: each upgrade level adds +5 to the upgrade bonus.
+        // The upgradeLevel is tracked on the Building entity (0 = base, 1-3 = upgraded).
         // REF: combat_formulas.md — "(baseBuildTime * productionModifier) / 10 * 20 / (upgradeBonus + 20)"
+        int upgradeLevel = producer.getUpgradeLevel();
+        int upgradeBonus = upgradeLevel * 5; // ASSUMPTION: +5 per upgrade level
+
         int effectiveBuildTime = (baseBuildTime * productionModifier) / 10 * 20 / (upgradeBonus + 20);
 
         return Math.max(effectiveBuildTime, 1);

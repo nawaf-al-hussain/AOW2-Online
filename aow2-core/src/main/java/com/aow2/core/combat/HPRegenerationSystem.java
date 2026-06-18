@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
  * REF: combat_formulas.md lines 259-277 — HP recovery mechanics
  *
  * Infantry regenerate when powered (near a powered building).
- * Energy Suit (R0) / First-aid Kit (R9) triples recovery rate.
+ * Bio Suit (R1) / First-aid Kit (R9) triples recovery rate.
  * Machinery repair requires proximity to a production building.
  */
 public final class HPRegenerationSystem {
@@ -69,16 +69,20 @@ public final class HPRegenerationSystem {
 
         int recovery = INFANTRY_BASE_RECOVERY;
 
-        // Check for Energy Suit (Confed R0) or First-aid Kit (Rebel R9)
-        // REF: combat_formulas.md — "Energy Suit triples recovery rate"
+        // Check for Bio Suit (Confed R1) or First-aid Kit (Rebel R9)
+        // REF: combat_formulas.md research effects table:
+        //   Confederation tech 1 (global ID 1): "Bio suit" — health recovery triples
+        //   Rebel tech 1 (global ID 9): "First-aid kit" — health recovery triples
+        // The ResearchSystem uses combined global IDs: Confed 0-7, Rebel 8-15.
+        // NOTE: ID 0 is Energy Suit (armor), NOT Bio Suit (HP recovery).
         Faction faction = unit.getFaction();
         int playerId = EconomySystem.playerId(faction);
 
         boolean hasTripleRecovery = false;
-        if (faction == Faction.CONFEDERATION && researchSystem.hasResearch(playerId, 0)) {
-            hasTripleRecovery = true; // Energy Suit
+        if (faction == Faction.CONFEDERATION && researchSystem.hasResearch(playerId, 1)) {
+            hasTripleRecovery = true; // Bio Suit (ID 1)
         } else if (faction == Faction.RESISTANCE && researchSystem.hasResearch(playerId, 9)) {
-            hasTripleRecovery = true; // First-aid Kit
+            hasTripleRecovery = true; // First-aid Kit (ID 9)
         }
 
         if (hasTripleRecovery) {
@@ -102,8 +106,8 @@ public final class HPRegenerationSystem {
 
         int repair = MACHINERY_BASE_REPAIR;
         // REF: combat_formulas.md — repair research triples repair rate
-        // Confederation R1 (Bio suit) and Resistance R9 (First-aid kit)
-        // are the infantry HP research; machinery repair uses different IDs
+        // Confederation ID 1 (Bio suit) and Rebel ID 9 (First-aid kit)
+        // are the infantry HP research; machinery repair uses different IDs.
         // For now, use base repair rate. ASSUMPTION: exact repair research IDs not confirmed
 
         unit.heal(repair);
