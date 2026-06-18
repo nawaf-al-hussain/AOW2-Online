@@ -69,6 +69,7 @@ public class CombatSystem {
     private final EntityManager entityManager;
     private final ProjectileSystem projectileSystem;
     private final ArmorCalculator armorCalculator;
+    private ResearchSystem researchSystem;
 
     /**
      * Constructs a CombatSystem with default subsystems.
@@ -106,6 +107,7 @@ public class CombatSystem {
      * @param researchSystem the research system
      */
     public void setResearchSystem(ResearchSystem researchSystem) {
+        this.researchSystem = researchSystem;
         this.projectileSystem.setResearchSystem(armorCalculator, researchSystem);
     }
 
@@ -297,38 +299,56 @@ public class CombatSystem {
     /**
      * Perform an attack from one unit to another.
      * <p>
+     * Ranged units (non-BULLET weapons) spawn projectiles that travel to the target.
+     * Melee/BULLET units apply damage instantly.
+     * <p>
      * REF: combat_formulas.md - damage formula
+     * REF: combat_formulas.md "Projectile Spawn" - ranged attacks use projectile system
      *
      * @param attacker the attacking unit
      * @param target   the target unit
      */
     public void performAttack(Unit attacker, Unit target) {
         int weaponDamage = attacker.getStats().damage();
-        // Apply siege mode damage bonus
+        // Apply siege mode damage bonus only if player has research ID 36
+        // REF: combat_formulas.md line 356 - Research ID 36: "Unit type 10 siege upgrade = 15"
         if (attacker.isSiegeMode() && attacker.canSiege()) {
-            weaponDamage += SIEGE_DAMAGE_BONUS;
+            weaponDamage += getSiegDamageBonus(attacker);
         }
-        int targetArmor = target.getStats().armor();
-        int damage = DamageCalculator.calculateDamage(weaponDamage, targetArmor);
-
-        target.takeDamage(damage);
-        gameState.enqueueEvent(new DamageAppliedEvent(
-            gameState.currentTick(), target.getId(), damage, target.getHp(), attacker.getId()));
 
         attacker.setWeaponCooldown(attacker.getStats().speed());
 
-        if (!target.isAlive()) {
-            DamageCalculator.calculateDeathAnimationFrame(target, 0);
-            gameState.enqueueEvent(new UnitKilledEvent(
-                gameState.currentTick(), target.getId(), target.getUnitType(), attacker.getId()));
-            ModEventBridge.fireUnitKilled(target.getId(), target.getUnitType(),
-                target.getFaction(), EconomySystem.playerId(attacker.getFaction()));
+        WeaponType weaponType = attacker.getStats().weaponType();
+
+        // Ranged units (non-BULLET) use projectile system for damage delivery
+        if (weaponType != WeaponType.BULLET && weaponType != WeaponType.NONE) {
+            boolean splash = weaponType == WeaponType.ROCKET || weaponType == WeaponType.ARTILLERY;
+            int splashRadius = splash ? ProjectileSystem.getSplashRadiusForWeapon(weaponType) : 0;
+            spawnProjectile(attacker, target, weaponType, weaponDamage, splash, splashRadius);
+        } else {
+            // Instant damage for BULLET/MELEE weapons
+            int targetArmor = armorCalculator.calculateEffectiveArmor(target,
+                getCompletedResearch(attacker));
+            int damage = DamageCalculator.calculateDamage(weaponDamage, targetArmor);
+
+            target.takeDamage(damage);
+            gameState.enqueueEvent(new DamageAppliedEvent(
+                gameState.currentTick(), target.getId(), damage, target.getHp(), attacker.getId()));
+
+            if (!target.isAlive()) {
+                DamageCalculator.calculateDeathAnimationFrame(target, 0);
+                gameState.enqueueEvent(new UnitKilledEvent(
+                    gameState.currentTick(), target.getId(), target.getUnitType(), attacker.getId()));
+                ModEventBridge.fireUnitKilled(target.getId(), target.getUnitType(),
+                    target.getFaction(), EconomySystem.playerId(attacker.getFaction()));
+            }
         }
         attacker.addExperience(1);
     }
 
     /**
      * Perform an attack from a unit to a building.
+     * Ranged units (non-BULLET) spawn projectiles; melee units apply damage instantly.
      * <p>
      * REF: combat_formulas.md - buildings have 0 base armor
      *
@@ -337,25 +357,37 @@ public class CombatSystem {
      */
     public void performAttackOnBuilding(Unit attacker, Building target) {
         int weaponDamage = attacker.getStats().damage();
-        // Apply siege mode damage bonus
+        // Apply siege mode damage bonus only if player has research ID 36
         if (attacker.isSiegeMode() && attacker.canSiege()) {
-            weaponDamage += SIEGE_DAMAGE_BONUS;
+            weaponDamage += getSiegDamageBonus(attacker);
         }
-        // REF: combat_formulas.md lines 64-68 - building armor from research (IDs 4, 16, 40)
-        int buildingArmorBonus = armorCalculator.getBuildingArmorBonus(target.getFaction());
-        int targetArmor = DamageCalculator.calculateEffectiveArmor(target, buildingArmorBonus);
-        double targetMultiplier = DamageCalculator.getTargetMultiplier(attacker, true);
-        int damage = (int)(DamageCalculator.calculateDamage(weaponDamage, targetArmor) * targetMultiplier);
 
-        target.takeDamage(damage);
-        gameState.enqueueEvent(new DamageAppliedEvent(
-            gameState.currentTick(), target.getId(), damage, target.getHp(), attacker.getId()));
+        attacker.setWeaponCooldown(attacker.getStats().speed());
 
-        if (!target.isAlive()) {
-            gameState.enqueueEvent(new BuildingDestroyedEvent(
-                gameState.currentTick(), target.getId(), target.getBuildingType(), attacker.getId()));
-            ModEventBridge.fireBuildingDestroyed(target.getId(), target.getBuildingType(),
-                target.getFaction(), EconomySystem.playerId(attacker.getFaction()));
+        WeaponType weaponType = attacker.getStats().weaponType();
+
+        // Ranged units (non-BULLET) use projectile system for damage delivery
+        if (weaponType != WeaponType.BULLET && weaponType != WeaponType.NONE) {
+            boolean splash = weaponType == WeaponType.ROCKET || weaponType == WeaponType.ARTILLERY;
+            int splashRadius = splash ? ProjectileSystem.getSplashRadiusForWeapon(weaponType) : 0;
+            spawnProjectile(attacker, target, weaponType, weaponDamage, splash, splashRadius);
+        } else {
+            // Instant damage for BULLET weapons
+            int buildingArmorBonus = armorCalculator.getBuildingArmorBonus(target.getFaction());
+            int targetArmor = DamageCalculator.calculateEffectiveArmor(target, buildingArmorBonus);
+            double targetMultiplier = DamageCalculator.getTargetMultiplier(attacker, true);
+            int damage = (int)(DamageCalculator.calculateDamage(weaponDamage, targetArmor) * targetMultiplier);
+
+            target.takeDamage(damage);
+            gameState.enqueueEvent(new DamageAppliedEvent(
+                gameState.currentTick(), target.getId(), damage, target.getHp(), attacker.getId()));
+
+            if (!target.isAlive()) {
+                gameState.enqueueEvent(new BuildingDestroyedEvent(
+                    gameState.currentTick(), target.getId(), target.getBuildingType(), attacker.getId()));
+                ModEventBridge.fireBuildingDestroyed(target.getId(), target.getBuildingType(),
+                    target.getFaction(), EconomySystem.playerId(attacker.getFaction()));
+            }
         }
         attacker.addExperience(2);
     }
@@ -434,12 +466,43 @@ public class CombatSystem {
     // --- Helper methods ---
 
     /**
+     * Get siege damage bonus for a unit.
+     * REF: combat_formulas.md line 356 - Research ID 36: "Unit type 10 siege upgrade = 15"
+     * The +15 siege damage bonus only applies when the player has completed research ID 36.
+     *
+     * @param unit the unit in siege mode
+     * @return the siege damage bonus (0 or 15)
+     */
+    private int getSiegDamageBonus(Unit unit) {
+        if (researchSystem == null) return 0;
+        int playerId = EconomySystem.playerId(unit.getFaction());
+        if (researchSystem.hasResearch(playerId, 36)) {
+            return SIEGE_DAMAGE_BONUS;
+        }
+        return 0;
+    }
+
+    /**
+     * Get completed research set for a unit's owner.
+     * Returns empty set if no research system is available.
+     *
+     * @param unit the unit
+     * @return set of completed research IDs
+     */
+    private java.util.Set<Integer> getCompletedResearch(Unit unit) {
+        if (researchSystem == null) return java.util.Set.of();
+        return researchSystem.getCompletedResearch(EconomySystem.playerId(unit.getFaction()));
+    }
+
+    /**
      * Check if a unit is within attack range of another unit.
      * Accounts for siege mode range bonus.
      */
     private boolean isInAttackRange(Unit attacker, Unit target) {
         int range = getEffectiveAttackRange(attacker);
-        return attacker.getPosition().distanceTo(target.getPosition()) <= range;
+        int dx = target.getPosition().x() - attacker.getPosition().x();
+        int dy = target.getPosition().y() - attacker.getPosition().y();
+        return GridPosition.distanceClass(dx, dy) <= range;
     }
 
     /**
@@ -448,7 +511,9 @@ public class CombatSystem {
      */
     private boolean isInAttackRange(Unit attacker, Building target) {
         int range = getEffectiveAttackRange(attacker);
-        return attacker.getPosition().distanceTo(target.getPosition()) <= range;
+        int dx = target.getPosition().x() - attacker.getPosition().x();
+        int dy = target.getPosition().y() - attacker.getPosition().y();
+        return GridPosition.distanceClass(dx, dy) <= range;
     }
 
     /**
@@ -467,10 +532,14 @@ public class CombatSystem {
             if (!unit.isAlive()) continue;
             if (unit.getFaction() == ownerFaction) continue;
 
-            double distance = unit.getPosition().distanceTo(position);
-            if (distance <= range && distance < nearestDistance) {
+            double euclDist = unit.getPosition().distanceTo(position);
+            // REF: combat_formulas.md — range checks use distanceClass (Chebyshev), not Euclidean
+            int dx = unit.getPosition().x() - position.x();
+            int dy = unit.getPosition().y() - position.y();
+            int dist = GridPosition.distanceClass(dx, dy);
+            if (dist <= range && euclDist < nearestDistance) {
                 nearest = unit;
-                nearestDistance = distance;
+                nearestDistance = euclDist;
             }
         }
         return nearest;

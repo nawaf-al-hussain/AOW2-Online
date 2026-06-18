@@ -13,8 +13,8 @@ import org.slf4j.LoggerFactory;
  * Manages the game economy: credit generation, spending, and tracking.
  * <p>
  * Each player accumulates credits from Command Centres with diminishing returns
- * for each additional CC. Credits are generated every 127 ticks matching the
- * original game cycle period.
+ * for each additional CC. Credits are generated every 128 ticks matching the
+ * original game cycle period ((aL.ah & 127) == 127).
  * <p>
  * REF: combat_formulas.md "Credit Generation Formula"
  * REF: GameConstants.CC_DIMINISHING_RETURNS = 0.30
@@ -23,8 +23,8 @@ public final class EconomySystem {
 
     private static final Logger LOG = LoggerFactory.getLogger(EconomySystem.class);
 
-    /** Number of ticks between credit generation cycles. REF: original game uses 127-tick cycle. */
-    public static final int CREDIT_CYCLE_TICKS = 127;
+    /** Number of ticks between credit generation cycles. REF: combat_formulas.md — (aL.ah & 127) == 127 means 128-tick cycle. */
+    public static final int CREDIT_CYCLE_TICKS = GameConstants.CREDIT_GENERATION_CYCLE;
 
     /** Base income per Command Centre per cycle before diminishing returns. */
     public static final int BASE_CC_INCOME = 100;
@@ -68,17 +68,17 @@ public final class EconomySystem {
 
     /**
      * Process economy tick for all players.
-     * Credits are generated every 127 ticks (matching original game cycle).
+     * Credits are generated every 128 ticks (REF: combat_formulas.md — (aL.ah & 127) == 127).
      * <p>
      * REF: combat_formulas.md "Credit Generation Formula"
-     * REF: GameConstants.POWER_RADIUS uses 127 as max
+     * REF: GameConstants.CREDIT_GENERATION_CYCLE = 128
      *
      * @param entities the entity manager
      * @param state    the current game state
      */
     public void processTick(EntityManager entities, GameState state) {
         long tick = state.currentTick();
-        // Credit generation every 127 ticks
+        // Credit generation every 128 ticks
         if (tick > 0 && tick % CREDIT_CYCLE_TICKS == 0) {
             for (int playerId = 0; playerId < MAX_PLAYERS; playerId++) {
                 int income = calculateIncome(playerId, entities);

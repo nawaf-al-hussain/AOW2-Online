@@ -87,6 +87,11 @@ public class SessionService {
                     playerSessions.values().remove(entry.getKey());
                     playerToOpponentWs.remove(session.getPlayer1Id());
                     playerToOpponentWs.remove(session.getPlayer2Id());
+                    // FIX (H12): Also clean up stale wsSessionToPlayer entries for both players.
+                    // These accumulate when WebSocket disconnects bypass unregisterWebSocketSession().
+                    wsSessionToPlayer.entrySet().removeIf(e ->
+                        e.getValue().equals(session.getPlayer1Id()) ||
+                        e.getValue().equals(session.getPlayer2Id()));
                     cleaned++;
                     log.info("Cleaned up expired session: {} (state={}, completedAt={})",
                             entry.getKey(), state, completedAt);

@@ -204,6 +204,14 @@
 | 2026-06-14 | 11 | Two different wire formats for replay | Medium | **Fixed** |
 | 2026-06-14 | 1 | Tile.java orphaned (GameMap uses TerrainType[][]) | Low | **Fixed** |
 | 2026-06-14 | 3 | CollisionSystem O(n²), no spatial index | Low | **Fixed** |
+| 2026-06-19 | Audit | EconomySystem comments said 127 ticks (was already 128) | Low | **Fixed** |
+| 2026-06-19 | Audit | GridPosition DISTANCE_TABLE had center=7 (should be 0) | Critical | **Fixed** |
+| 2026-06-19 | Audit | CombatSystem range checks used Euclidean not Chebyshev | Critical | **Fixed** |
+| 2026-06-19 | Audit | CombatSystem.performAttack bypassed projectiles | Critical | **Fixed** |
+| 2026-06-19 | Audit | Siege damage bonus applied unconditionally (needs research 36) | High | **Fixed** |
+| 2026-06-19 | Audit | HPRegenerationSystem used wrong research IDs (1, 9) | High | **Fixed** |
+| 2026-06-19 | Audit | SessionService wsSessionToPlayer not cleaned up | High | **Fixed** |
+| 2026-06-19 | Audit | PowerSystem range checks used Euclidean not Chebyshev | Medium | **Fixed** |
 
 ## Session History
 
@@ -212,3 +220,4 @@
 | 2026-06-14 | ad56d9a | StatsRegistry, spec compliance fixes, wire client to engine |
 | 2026-06-14 | ce1c17c | HP Regen, Mine Detonation, Building Upgrades, 48-node TechTree, FoW 4-tick, nuclear 31x31 table, SPECIAL_MACHINERY |
 | 2026-06-14 | pending | Bug fixes (Trigger, SaveManager, SyncChecker, replay), AI fog-of-war, garrison movement, Chat, ELO, spatial hash, Tile integration |
+| 2026-06-19 | — | Analysis report fixes: DISTANCE_TABLE corrected to Chebyshev, CombatSystem range/projectile/siege fixes, HPRegen wrong research IDs removed, EconomySystem comment cleanup, SessionService memory leak, PowerSystem distanceClass |

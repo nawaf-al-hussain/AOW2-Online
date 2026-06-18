@@ -80,7 +80,10 @@ public final class PowerSystem {
             if (!building.isAlive() || building.isUnderConstruction()) {
                 continue;
             }
-            if (genPos.distanceTo(building.getPosition()) <= radius) {
+            // REF: combat_formulas.md — power radius uses distanceClass (Chebyshev), not Euclidean
+            int dx = building.getPosition().x() - genPos.x();
+            int dy = building.getPosition().y() - genPos.y();
+            if (GridPosition.distanceClass(dx, dy) <= radius) {
                 powered.add(building);
             }
         }
@@ -152,7 +155,10 @@ public final class PowerSystem {
                 continue;
             }
             int radius = getPowerRadius(building);
-            if (building.getPosition().distanceTo(pos) <= radius) {
+            // REF: combat_formulas.md — power radius uses distanceClass (Chebyshev), not Euclidean
+            int dx = pos.x() - building.getPosition().x();
+            int dy = pos.y() - building.getPosition().y();
+            if (GridPosition.distanceClass(dx, dy) <= radius) {
                 return true;
             }
         }

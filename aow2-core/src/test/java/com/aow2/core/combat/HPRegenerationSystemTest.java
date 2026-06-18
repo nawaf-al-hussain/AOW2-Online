@@ -77,7 +77,7 @@ class HPRegenerationSystemTest {
     void setUp() {
         entityManager = new EntityManager();
         researchSystem = new ResearchSystem();
-        hpRegenSystem = new HPRegenerationSystem(researchSystem);
+        hpRegenSystem = new HPRegenerationSystem();
     }
 
     @Nested
@@ -93,8 +93,8 @@ class HPRegenerationSystemTest {
             unit.takeDamage(10); // hp = 30
             entityManager.addUnit(unit);
 
-            // Tick 127 is a regen cycle tick
-            hpRegenSystem.processTick(entityManager, 127);
+            // Tick 128 is a regen cycle tick
+            hpRegenSystem.processTick(entityManager, 128);
 
             assertEquals(31, unit.getHp()); // 30 + 1 base recovery
         }
@@ -115,9 +115,11 @@ class HPRegenerationSystemTest {
         }
 
         @Test
-        @DisplayName("Infantry with Energy Suit (R0) recovers 3x HP")
-        void shouldTripleRecoveryWithEnergySuit() {
-            addCompletedResearch(researchSystem, 0, 0); // Confederation player 0, research ID 0
+        @DisplayName("Infantry recovers base HP on regen cycle tick (research IDs 0-47 have no HP recovery effect)")
+        void shouldRecoverBaseHPRegardlessOfResearch() {
+            // FIX (H7): RE spec IDs 0-47 have NO HP recovery research.
+            // Previously checked ID 0 ("Player 0 attack range /3") — wrong.
+            addCompletedResearch(researchSystem, 0, 0);
 
             UnitStats stats = createConfedInfantryStats();
             Unit unit = new Unit(1, Faction.CONFEDERATION, new GridPosition(10, 10),
@@ -125,15 +127,16 @@ class HPRegenerationSystemTest {
             unit.takeDamage(10); // hp = 30
             entityManager.addUnit(unit);
 
-            hpRegenSystem.processTick(entityManager, 127);
+            hpRegenSystem.processTick(entityManager, 128);
 
-            assertEquals(33, unit.getHp()); // 30 + (1 * 3) = 33
+            assertEquals(31, unit.getHp()); // 30 + 1 (base recovery, no triple)
         }
 
         @Test
-        @DisplayName("Infantry with First-aid Kit (R9) recovers 3x HP for Resistance")
-        void shouldTripleRecoveryWithFirstAidKit() {
-            addCompletedResearch(researchSystem, 1, 9); // Resistance player 1, research ID 9
+        @DisplayName("Resistance infantry recovers base HP (ID 9 is infantry armour, not HP recovery)")
+        void shouldRecoverBaseHPForResistance() {
+            // FIX (H7): RE spec ID 9 = "Infantry armour +2", NOT First-aid Kit.
+            addCompletedResearch(researchSystem, 1, 9);
 
             UnitStats stats = createRebelInfantryStats();
             Unit unit = new Unit(1, Faction.RESISTANCE, new GridPosition(10, 10),
@@ -141,9 +144,9 @@ class HPRegenerationSystemTest {
             unit.takeDamage(10); // hp = 30
             entityManager.addUnit(unit);
 
-            hpRegenSystem.processTick(entityManager, 127);
+            hpRegenSystem.processTick(entityManager, 128);
 
-            assertEquals(33, unit.getHp()); // 30 + (1 * 3) = 33
+            assertEquals(31, unit.getHp()); // 30 + 1 (base recovery, no triple)
         }
 
         @Test
@@ -155,7 +158,7 @@ class HPRegenerationSystemTest {
             // Unit starts at full HP (40)
             entityManager.addUnit(unit);
 
-            hpRegenSystem.processTick(entityManager, 127);
+            hpRegenSystem.processTick(entityManager, 128);
 
             assertEquals(40, unit.getHp()); // still at max, no overheal
         }
@@ -169,7 +172,7 @@ class HPRegenerationSystemTest {
             unit.takeDamage(100); // kills the unit, hp = -1
             entityManager.addUnit(unit);
 
-            hpRegenSystem.processTick(entityManager, 127);
+            hpRegenSystem.processTick(entityManager, 128);
 
             assertEquals(-1, unit.getHp()); // still dead
         }
@@ -183,7 +186,7 @@ class HPRegenerationSystemTest {
             unit.takeDamage(10); // hp = 30
             entityManager.addUnit(unit);
 
-            hpRegenSystem.processTick(entityManager, 127); // +1 → hp = 31
+            hpRegenSystem.processTick(entityManager, 128); // +1 → hp = 31
             hpRegenSystem.processTick(entityManager, 254); // +1 → hp = 32
 
             assertEquals(32, unit.getHp());
@@ -203,7 +206,7 @@ class HPRegenerationSystemTest {
             unit.takeDamage(20); // hp = 50
             entityManager.addUnit(unit);
 
-            hpRegenSystem.processTick(entityManager, 127);
+            hpRegenSystem.processTick(entityManager, 128);
 
             assertEquals(50, unit.getHp()); // unchanged — no auto-regen for machinery
         }

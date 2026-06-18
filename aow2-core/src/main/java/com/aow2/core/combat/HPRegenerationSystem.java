@@ -1,11 +1,7 @@
 package com.aow2.core.combat;
 
 import com.aow2.common.config.GameConstants;
-import com.aow2.common.model.Faction;
 import com.aow2.core.entity.Unit;
-import com.aow2.core.economy.EconomySystem;
-import com.aow2.core.research.ResearchSystem;
-import com.aow2.core.world.EntityManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,13 +23,10 @@ public final class HPRegenerationSystem {
     /** Base HP repair per regeneration cycle for machinery at a production building. ASSUMPTION: 2 HP per cycle */
     private static final int MACHINERY_BASE_REPAIR = 2;
 
-    /** Regeneration occurs every CREDIT_GENERATION_CYCLE ticks (127 ticks). */
+    /** Regeneration occurs every CREDIT_GENERATION_CYCLE ticks (128 ticks). */
     private static final int REGEN_CYCLE = GameConstants.CREDIT_GENERATION_CYCLE;
 
-    private final ResearchSystem researchSystem;
-
-    public HPRegenerationSystem(ResearchSystem researchSystem) {
-        this.researchSystem = researchSystem;
+    public HPRegenerationSystem() {
     }
 
     /**
@@ -61,6 +54,12 @@ public final class HPRegenerationSystem {
      * Process HP regeneration for an infantry unit.
      * Infantry regenerates when near a powered friendly building.
      * REF: MASTER_DOCUMENTATION.md — "isInfantry && powered"
+     * <p>
+     * NOTE: The original game's 48 research effects (combat_formulas.md IDs 0-47)
+     * do not include any HP recovery boost research. The previous implementation
+     * incorrectly referenced IDs 1 ("Player 0 attack range reduction /3") and
+     * 9 ("Infantry armour +2 for heavy types") as HP recovery boosts.
+     * Base recovery rate is used for all infantry until RE data confirms otherwise.
      *
      * @param unit the infantry unit
      */
@@ -69,25 +68,9 @@ public final class HPRegenerationSystem {
 
         int recovery = INFANTRY_BASE_RECOVERY;
 
-        // Check for Bio Suit (Confed R1) or First-aid Kit (Rebel R9)
-        // REF: combat_formulas.md research effects table:
-        //   Confederation tech 1 (global ID 1): "Bio suit" — health recovery triples
-        //   Rebel tech 1 (global ID 9): "First-aid kit" — health recovery triples
-        // The ResearchSystem uses combined global IDs: Confed 0-7, Rebel 8-15.
-        // NOTE: ID 0 is Energy Suit (armor), NOT Bio Suit (HP recovery).
-        Faction faction = unit.getFaction();
-        int playerId = EconomySystem.playerId(faction);
-
-        boolean hasTripleRecovery = false;
-        if (faction == Faction.CONFEDERATION && researchSystem.hasResearch(playerId, 1)) {
-            hasTripleRecovery = true; // Bio Suit (ID 1)
-        } else if (faction == Faction.RESISTANCE && researchSystem.hasResearch(playerId, 9)) {
-            hasTripleRecovery = true; // First-aid Kit (ID 9)
-        }
-
-        if (hasTripleRecovery) {
-            recovery *= 3;
-        }
+        // NOTE: No research in the RE spec (IDs 0-47) affects HP recovery rate.
+        // Previous code incorrectly used ID 1 (Confed) and ID 9 (Rebel) for this.
+        // If future RE analysis identifies HP recovery research, add it here.
 
         unit.heal(recovery);
     }
