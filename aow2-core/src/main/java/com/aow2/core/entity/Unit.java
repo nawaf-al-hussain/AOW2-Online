@@ -79,6 +79,9 @@ public class Unit extends Entity {
     /** Ticks remaining before siege mode is fully deployed or undeployed. */
     private int siegeDeployTimer;
 
+    /** Death animation frame calculated on kill. FIX (L6): stored for client rendering. */
+    private int deathAnimFrame;
+
     /**
      * Constructs a new unit.
      *
@@ -427,6 +430,12 @@ public class Unit extends Entity {
     public boolean canSiege() {
         return unitType.isSiegeCapable();
     }
+
+    /** FIX (L6): Get death animation frame for client rendering. */
+    public int getDeathAnimFrame() { return deathAnimFrame; }
+
+    /** FIX (L6): Set death animation frame when unit is killed. */
+    public void setDeathAnimFrame(int frame) { this.deathAnimFrame = frame; }
 
     @Override
     public String toString() {

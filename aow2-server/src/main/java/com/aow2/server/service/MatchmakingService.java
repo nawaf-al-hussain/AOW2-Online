@@ -2,8 +2,11 @@ package com.aow2.server.service;
 
 import com.aow2.server.model.Player;
 import com.aow2.server.repository.PlayerRepository;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -12,6 +15,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Business logic for matchmaking: queue management, match creation, ELO-based pairing.
@@ -25,17 +31,24 @@ public class MatchmakingService {
 
     private static final Logger log = LoggerFactory.getLogger(MatchmakingService.class);
 
-    /** Initial ELO range for matching (±100) */
-    private static final int INITIAL_ELO_RANGE = 100;
-    /** Maximum ELO range expansion per second waited (±50/second) */
+    /** Initial ELO range for matching */
+    @Value("${aow2.matchmaking.initial-elo-range:100}")
+    private int initialEloRange;
+
+    /** Maximum ELO range expansion per second waited */
     private static final int ELO_RANGE_EXPANSION_PER_SEC = 50;
+
     /** Maximum ELO range cap */
-    private static final int MAX_ELO_RANGE = 500;
+    @Value("${aow2.matchmaking.max-elo-range:500}")
+    private int maxEloRange;
 
     /** In-memory matchmaking queue: playerId → queue entry */
     private final Map<Long, QueueEntry> queue = new ConcurrentHashMap<>();
 
     private final PlayerRepository playerRepository;
+
+    /** Background scheduler for periodic matchmaking sweeps */
+    private ScheduledExecutorService matchmakingScheduler;
 
     /**
      * Constructs the MatchmakingService.
@@ -44,6 +57,79 @@ public class MatchmakingService {
      */
     public MatchmakingService(PlayerRepository playerRepository) {
         this.playerRepository = playerRepository;
+    }
+
+    /**
+     * Starts the background matchmaking thread after dependency injection.
+     * Every 3 seconds, scans the queue and tries to match any pending pairs.
+     * This handles cases where two players are already waiting and neither
+     * triggered a match on join (e.g., ELO ranges expanded enough).
+     */
+    @PostConstruct
+    public void startBackgroundMatchmaking() {
+        matchmakingScheduler = Executors.newSingleThreadScheduledExecutor(r -> {
+            Thread t = new Thread(r, "matchmaking-sweeper");
+            t.setDaemon(true);
+            return t;
+        });
+        matchmakingScheduler.scheduleAtFixedRate(
+                this::backgroundMatchSweep,
+                3, 3, TimeUnit.SECONDS
+        );
+        log.info("Background matchmaking sweeper started (interval=3s)");
+    }
+
+    /**
+     * Shuts down the background matchmaking executor on bean destruction.
+     */
+    @PreDestroy
+    public void shutdownBackgroundMatchmaking() {
+        if (matchmakingScheduler != null) {
+            matchmakingScheduler.shutdownNow();
+            log.info("Background matchmaking sweeper shut down");
+        }
+    }
+
+    /**
+     * Background sweep: iterate all queued players and attempt to pair them.
+     * This complements the immediate-match logic in {@link #joinQueue(Long)}.
+     */
+    private void backgroundMatchSweep() {
+        if (queue.size() < 2) {
+            return;
+        }
+
+        List<QueueEntry> entries = new ArrayList<>(queue.values());
+        List<Long> matched = new ArrayList<>();
+
+        for (int i = 0; i < entries.size(); i++) {
+            if (matched.contains(entries.get(i).playerId)) {
+                continue;
+            }
+            for (int j = i + 1; j < entries.size(); j++) {
+                if (matched.contains(entries.get(j).playerId)) {
+                    continue;
+                }
+                QueueEntry a = entries.get(i);
+                QueueEntry b = entries.get(j);
+                long waitA = Instant.now().getEpochSecond() - a.joinedAt.getEpochSecond();
+                long waitB = Instant.now().getEpochSecond() - b.joinedAt.getEpochSecond();
+                int rangeA = calculateEloRange(waitA);
+                int rangeB = calculateEloRange(waitB);
+                int range = Math.max(rangeA, rangeB);
+
+                if (Math.abs(a.eloRating - b.eloRating) <= range) {
+                    queue.remove(a.playerId);
+                    queue.remove(b.playerId);
+                    matched.add(a.playerId);
+                    matched.add(b.playerId);
+                    log.info("Background match found: player {} (ELO:{}) vs player {} (ELO:{})",
+                            a.playerId, a.eloRating, b.playerId, b.eloRating);
+                    // TODO: notify matched players via WebSocket
+                    break;
+                }
+            }
+        }
     }
 
     /**
@@ -134,7 +220,7 @@ public class MatchmakingService {
             if (!entry.playerId.equals(playerId)) {
                 long waitSeconds = Instant.now().getEpochSecond() - entry.joinedAt.getEpochSecond();
                 int entryRange = calculateEloRange(waitSeconds);
-                int range = Math.max(INITIAL_ELO_RANGE, entryRange);
+                int range = Math.max(initialEloRange, entryRange);
                 if (Math.abs(entry.eloRating - eloRating) <= range) {
                     candidates.add(entry.playerId);
                 }
@@ -160,15 +246,15 @@ public class MatchmakingService {
 
     /**
      * Calculates the ELO search range based on time spent in the queue.
-     * Range expands by ELO_RANGE_EXPANSION_PER_SEC per second, capped at MAX_ELO_RANGE.
+     * Range expands by ELO_RANGE_EXPANSION_PER_SEC per second, capped at maxEloRange.
      *
      * @param waitSeconds seconds the player has been in the queue
      * @return the current ELO search range
      */
     private int calculateEloRange(long waitSeconds) {
         return Math.min(
-                INITIAL_ELO_RANGE + (int) (waitSeconds * ELO_RANGE_EXPANSION_PER_SEC),
-                MAX_ELO_RANGE
+                initialEloRange + (int) (waitSeconds * ELO_RANGE_EXPANSION_PER_SEC),
+                maxEloRange
         );
     }
 

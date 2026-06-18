@@ -229,7 +229,9 @@ public class CombatSystem {
                 nearestEnemy.getHp(), bunker.getId()));
 
             if (!nearestEnemy.isAlive()) {
-                DamageCalculator.calculateDeathAnimationFrame(nearestEnemy, 0);
+                // FIX (L6): Store death anim frame on unit for client rendering
+                nearestEnemy.setDeathAnimFrame(
+                    DamageCalculator.calculateDeathAnimationFrame(nearestEnemy, 0));
                 gameState.enqueueEvent(new UnitKilledEvent(
                     gameState.currentTick(), nearestEnemy.getId(),
                     nearestEnemy.getUnitType(), bunker.getId()));
@@ -271,7 +273,9 @@ public class CombatSystem {
                 nearestEnemy.getHp(), building.getId()));
 
             if (!nearestEnemy.isAlive()) {
-                DamageCalculator.calculateDeathAnimationFrame(nearestEnemy, 0);
+                // FIX (L6): Store death anim frame on unit for client rendering
+                nearestEnemy.setDeathAnimFrame(
+                    DamageCalculator.calculateDeathAnimationFrame(nearestEnemy, 0));
                 gameState.enqueueEvent(new UnitKilledEvent(
                     gameState.currentTick(), nearestEnemy.getId(),
                     nearestEnemy.getUnitType(), building.getId()));
@@ -336,7 +340,9 @@ public class CombatSystem {
                 gameState.currentTick(), target.getId(), damage, target.getHp(), attacker.getId()));
 
             if (!target.isAlive()) {
-                DamageCalculator.calculateDeathAnimationFrame(target, 0);
+                // FIX (L6): Store death anim frame on unit for client rendering
+                target.setDeathAnimFrame(
+                    DamageCalculator.calculateDeathAnimationFrame(target, 0));
                 gameState.enqueueEvent(new UnitKilledEvent(
                     gameState.currentTick(), target.getId(), target.getUnitType(), attacker.getId()));
                 ModEventBridge.fireUnitKilled(target.getId(), target.getUnitType(),

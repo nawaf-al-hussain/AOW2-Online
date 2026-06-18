@@ -282,7 +282,9 @@ public final class ProjectileSystem {
                     projectile.getSourceUnitId()));
 
                 if (!unit.isAlive()) {
-                    DamageCalculator.calculateDeathAnimationFrame(unit, 0);
+                    // FIX (L6): Store death anim frame for client rendering
+                    unit.setDeathAnimFrame(
+                        DamageCalculator.calculateDeathAnimationFrame(unit, 0));
                     state.enqueueEvent(new com.aow2.common.event.UnitKilledEvent(
                         state.currentTick(), unit.getId(), unit.getUnitType(),
                         projectile.getSourceUnitId()));
@@ -347,7 +349,9 @@ public final class ProjectileSystem {
                     projectile.getSourceUnitId()));
 
                 if (!target.isAlive()) {
-                    DamageCalculator.calculateDeathAnimationFrame(target, 0);
+                    // FIX (L6): Store death anim frame for client rendering
+                    target.setDeathAnimFrame(
+                        DamageCalculator.calculateDeathAnimationFrame(target, 0));
                     state.enqueueEvent(new com.aow2.common.event.UnitKilledEvent(
                         state.currentTick(), target.getId(), target.getUnitType(),
                         projectile.getSourceUnitId()));

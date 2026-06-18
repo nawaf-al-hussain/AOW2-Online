@@ -170,7 +170,9 @@ public final class MineDetonationSystem {
                     state.currentTick(), enemy.getId(), actualDamage, enemy.getHp(), mine.getId()));
 
                 if (!enemy.isAlive()) {
-                    DamageCalculator.calculateDeathAnimationFrame(enemy, 0);
+                    // FIX (L6): Store death anim frame for client rendering
+                    enemy.setDeathAnimFrame(
+                        DamageCalculator.calculateDeathAnimationFrame(enemy, 0));
                     state.enqueueEvent(new UnitKilledEvent(
                         state.currentTick(), enemy.getId(), enemy.getUnitType(), mine.getId()));
                 }
@@ -229,7 +231,9 @@ public final class MineDetonationSystem {
                 state.currentTick(), closest.getId(), actualDamage, closest.getHp(), mine.getId()));
 
             if (!closest.isAlive()) {
-                DamageCalculator.calculateDeathAnimationFrame(closest, 0);
+                // FIX (L6): Store death anim frame for client rendering
+                closest.setDeathAnimFrame(
+                    DamageCalculator.calculateDeathAnimationFrame(closest, 0));
                 state.enqueueEvent(new UnitKilledEvent(
                     state.currentTick(), closest.getId(), closest.getUnitType(), mine.getId()));
             }

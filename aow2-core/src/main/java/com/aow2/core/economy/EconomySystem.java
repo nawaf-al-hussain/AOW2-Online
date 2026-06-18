@@ -87,7 +87,8 @@ public final class EconomySystem {
                     int oldCredits = playerCredits[playerId];
                     playerCredits[playerId] += income;
                     state.enqueueEvent(new ResourceChangedEvent(
-                        tick, playerId, oldCredits, playerCredits[playerId], "income"
+                        tick, playerId, oldCredits, playerCredits[playerId],
+                        com.aow2.common.event.ResourceChangedReason.INCOME
                     ));
                     LOG.debug("Player {} earned {} credits (total: {})", playerId, income, playerCredits[playerId]);
                 }

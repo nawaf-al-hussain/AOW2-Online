@@ -100,8 +100,8 @@ class ResearchAITest {
         }
 
         @Test
-        @DisplayName("Given tick 500, when getting game phase, then EARLY is returned")
-        void shouldReturnEarlyPhaseAtTick500() {
+        @DisplayName("Given tick 500, when getting game phase, then MID is returned")
+        void shouldReturnMidPhaseAtTick500() {
             // Given
             long tick = 500;
 
@@ -109,7 +109,8 @@ class ResearchAITest {
             GamePhase phase = researchAI.getGamePhase(entities, tick, 0);
 
             // Then
-            assertEquals(GamePhase.EARLY, phase);
+            // FIX (M6): At 10 TPS, EARLY ends at tick 300 (30 seconds). Tick 500 > 300, so MID.
+            assertEquals(GamePhase.MID, phase);
         }
 
         @Test
@@ -126,8 +127,8 @@ class ResearchAITest {
         }
 
         @Test
-        @DisplayName("Given tick 2000, when getting game phase, then MID is returned")
-        void shouldReturnMidPhaseAtTick2000() {
+        @DisplayName("Given tick 2000, when getting game phase, then LATE is returned")
+        void shouldReturnLatePhaseAtTick2000() {
             // Given
             long tick = 2000;
 
@@ -135,7 +136,8 @@ class ResearchAITest {
             GamePhase phase = researchAI.getGamePhase(entities, tick, 0);
 
             // Then
-            assertEquals(GamePhase.MID, phase);
+            // FIX (M6): At 10 TPS, MID ends at tick 1800 (3 minutes). Tick 2000 > 1800, so LATE.
+            assertEquals(GamePhase.LATE, phase);
         }
 
         @Test
@@ -320,15 +322,17 @@ class ResearchAITest {
     class GamePhaseProperties {
 
         @Test
-        @DisplayName("Given EARLY phase, then boundary is 600")
-        void earlyPhaseBoundaryShouldBe600() {
-            assertEquals(600, GamePhase.EARLY.tickBoundary);
+        @DisplayName("Given EARLY phase, then boundary is 300 (30 seconds at 10 TPS)")
+        void earlyPhaseBoundaryShouldBe300() {
+            // FIX (M6): At 10 TPS, EARLY phase lasts 30 seconds = 300 ticks
+            assertEquals(300, GamePhase.EARLY.tickBoundary);
         }
 
         @Test
-        @DisplayName("Given MID phase, then boundary is 3600")
-        void midPhaseBoundaryShouldBe3600() {
-            assertEquals(3600, GamePhase.MID.tickBoundary);
+        @DisplayName("Given MID phase, then boundary is 1800 (3 minutes at 10 TPS)")
+        void midPhaseBoundaryShouldBe1800() {
+            // FIX (M6): At 10 TPS, MID phase lasts until 3 minutes = 1800 ticks
+            assertEquals(1800, GamePhase.MID.tickBoundary);
         }
 
         @Test

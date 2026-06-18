@@ -12,8 +12,6 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      redis:
-        condition: service_healthy
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/aow2
       SPRING_DATASOURCE_USERNAME: aow2
@@ -21,9 +19,6 @@ services:
       SPRING_JPA_HIBERNATE_DDL_AUTO: validate
       SPRING_FLYWAY_ENABLED: "true"
       SPRING_FLYWAY_LOCATIONS: classpath:db/migration
-      SPRING_DATA_REDIS_HOST: redis
-      SPRING_DATA_REDIS_PORT: 6379
-      SPRING_DATA_REDIS_PASSWORD: ${REDIS_PASSWORD:-aow2_redis}
       AOW2_JWT_SECRET: ${AOW2_JWT_SECRET:-aow2_jwt_dev_secret_change_in_production}
       AOW2_JWT_EXPIRATION_MS: 86400000
       AOW2_GAME_TICK_RATE: 60
@@ -59,25 +54,8 @@ services:
       retries: 5
     restart: unless-stopped
 
-  redis:
-    image: redis:7-alpine
-    container_name: aow2-redis
-    ports:
-      - "6379:6379"
-    command: redis-server --requirepass ${REDIS_PASSWORD:-aow2_redis} --maxmemory 128mb --maxmemory-policy allkeys-lru
-    volumes:
-      - redis-data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-aow2_redis}", "ping"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    restart: unless-stopped
-
 volumes:
   pgdata:
-    driver: local
-  redis-data:
     driver: local
   replay-data:
     driver: local

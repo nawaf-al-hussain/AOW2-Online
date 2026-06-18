@@ -38,8 +38,11 @@ public final class LockstepEngine {
     /** Default buffer size in frames */
     private static final int DEFAULT_BUFFER_SIZE = 16;
 
-    /** Default sync check interval in ticks */
-    private static final int DEFAULT_SYNC_INTERVAL = 30;
+    /** Default sync check interval in ticks.
+     *  REF: protocol_specification.md - Sync interval: default 15s, range 2-60s
+     *  FIX (M8): Changed from 30 to 150 ticks (15 seconds at 10 TPS).
+     *  Previously 30 ticks = 3 seconds, which was 5x too frequent. */
+    private static final int DEFAULT_SYNC_INTERVAL = 150;
 
     /** Command buffer for managing frame-based command storage */
     private final CommandBuffer commandBuffer;

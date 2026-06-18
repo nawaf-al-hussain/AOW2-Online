@@ -21,9 +21,14 @@ spring:
     locations: classpath:db/migration
 
 aow2:
+  cors:
+    allowed-origins: ${AOW2_CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:8080}
   jwt:
     secret: ${AOW2_JWT_SECRET:aow2-dev-only-secret-key-that-is-at-least-32-bytes-long-for-hmac}
     expiration-ms: 86400000
+  matchmaking:
+    initial-elo-range: ${AOW2_MATCHMAKING_INITIAL_ELO_RANGE:100}
+    max-elo-range: ${AOW2_MATCHMAKING_MAX_ELO_RANGE:500}
 
 logging:
   level:

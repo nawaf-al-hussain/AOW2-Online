@@ -47,6 +47,10 @@ public class CampaignScene {
     ) {}
 
     /** Available campaign episodes. REF: campaign_guide.md */
+    // ASSUMPTION (L18): Episode 3 "Arctic Operations" is not in the RE spec's campaign guide.
+    // The RE spec has 29 missions: 7 Ep1 + 7 Ep2 + 15 custom missions.
+    // Episode 3 is a UI grouping for the 15 custom missions, not an original game episode.
+    // REF: campaign_guide.md — only Episode 1 (Global Confederation) and Episode 2 (Liberation of Peru) are documented.
     private static final List<Episode> EPISODES = List.of(
         new Episode(
             "Episode 1: Global Confederation",
