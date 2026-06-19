@@ -319,28 +319,60 @@ The original zip archive is stored at: `/home/z/my-project/upload/art-of-war-2-o
 
 ---
 
-## Skills
+## Skills (in `skills/` directory)
 
-Two specialized skills are available for this project:
+Two specialized skills are included in this repo for AI agents. Read their `SKILL.md` files first.
 
-### aow2-developer (Development Skill)
-- **Location**: `/home/z/my-project/skills/aow2-developer/`
-- **Purpose**: Spec-driven game development with anti-hallucination safeguards
-- **Key references**: Goal.md, phases.md, ProjectProgress.md, coding_standards.md, anti_hallucination.md
-- **Trigger**: Use when implementing game features, fixing bugs, or adding new systems
-- **Workflow**: Read RE docs → Plan → Implement → Test → Cross-reference → Update progress
+### `skills/aow2-developer/` — Development Skill
+**Use when**: implementing game features, fixing bugs, adding new systems, refactoring code.
 
-### aow2-analyzer (Analysis/QA Skill)
-- **Location**: `/home/z/my-project/skills/aow2-analyzer/`
-- **Purpose**: Critical project analysis, spec compliance checking, bug hunting
-- **Key references**: analysis_checklist.md, validation_methods.md
-- **Trigger**: Use when auditing code quality, verifying spec compliance, or finding bugs
-- **Workflow**: Read RE docs → Read code → Compare → Self-validate → Report with evidence
+**How to use**:
+1. Read `skills/aow2-developer/SKILL.md` — this is the entry point with full instructions
+2. Read `skills/aow2-developer/references/Goal.md` — understand what the final game should be
+3. Read `skills/aow2-developer/references/ProjectProgress.md` — check what's already implemented
+4. Read the relevant RE doc from `docs/RE/` (see table below)
+5. Plan your implementation, quoting the RE spec
+6. Implement, test (`./gradlew test`), cross-reference against RE data
+7. Update `ProjectProgress.md` with what you did
+
+**Key reference files inside the skill**:
+| File | What it covers |
+|------|---------------|
+| `SKILL.md` | Master instructions — read this first |
+| `references/Goal.md` | End goal and must-have features |
+| `references/phases.md` | 15-phase development plan (Phase 0–14) |
+| `references/ProjectProgress.md` | What's been done vs. what's left |
+| `references/coding_standards.md` | Java 21 style, testing, git conventions |
+| `references/project_structure.md` | Module layout and package naming |
+| `references/tech_stack.md` | Detailed tech decisions and versions |
+| `references/anti_hallucination.md` | Rules to prevent fabricating game data |
+
+### `skills/aow2-analyzer/` — Analysis/QA Skill
+**Use when**: auditing code quality, verifying spec compliance, hunting bugs, generating analysis reports.
+
+**How to use**:
+1. Read `skills/aow2-analyzer/SKILL.md` — master instructions
+2. Read the developer skill's `Goal.md` and `ProjectProgress.md` first
+3. For each system you analyze:
+   - Read the RE documentation for that system (e.g., `docs/RE/gameplay_analysis/combat_formulas.md`)
+   - Read the implementation code (e.g., `aow2-core/src/main/java/com/aow2/core/combat/`)
+   - Compare every constant, formula, and behavior
+   - Re-read both docs and code to double-check before reporting
+4. Rate confidence: HIGH / MEDIUM / LOW (mark LOW as UNVERIFIED)
+5. Generate report with: evidence, file paths, line numbers, fix plan
+
+**Key reference files inside the skill**:
+| File | What it covers |
+|------|---------------|
+| `SKILL.md` | Master instructions — read this first |
+| `references/analysis_checklist.md` | Per-system checklists (combat, economy, AI, network, etc.) |
+| `references/validation_methods.md` | How to validate specific types of claims |
 
 ### Before Starting Any Work:
-1. Read the developer skill's `Goal.md` to understand the end state
-2. Read `ProjectProgress.md` to see what's been done
-3. Consult the appropriate RE documentation before implementing or analyzing
+1. Read `skills/aow2-developer/references/Goal.md` to understand the end state
+2. Read `skills/aow2-developer/references/ProjectProgress.md` to see what's been done
+3. Choose the right skill: **developer** for implementing, **analyzer** for auditing
+4. Consult the appropriate RE documentation in `docs/RE/` before touching any code
 
 ---
 
