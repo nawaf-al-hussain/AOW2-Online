@@ -575,19 +575,19 @@
     {"localId": 1, "name": "Bio suit", "effect": "Health recovery for infantry increases 3 times", "globalEffectId": 1, "prerequisiteLocalId": 0, "cost": 75, "duration": 400},
     {"localId": 2, "name": "Enhanced firing rate", "effect": "Assault's fire rate increases by 50%", "globalEffectId": 2, "prerequisiteLocalId": -1, "cost": 60, "duration": 350},
     {"localId": 3, "name": "Armour-piercing bullet", "effect": "Assault's damage increases by 40%", "globalEffectId": 3, "prerequisiteLocalId": -1, "cost": 80, "duration": 400},
-    {"localId": 4, "name": "Heavy shells", "effect": "Heavy Assault's damage increases by 40%", "globalEffectId": 4, "prerequisiteLocalId": -1, "cost": 100, "duration": 450},
-    {"localId": 5, "name": "Forced light missiles", "effect": "Allows you to train Flame Assaults", "globalEffectId": 5, "prerequisiteLocalId": -1, "cost": 60, "duration": 300},
-    {"localId": 6, "name": "Lava flame fuel", "effect": "Heavy flamethrower installs on AV-40", "globalEffectId": 6, "prerequisiteLocalId": 3, "cost": 120, "duration": 500},
+    {"localId": 4, "name": "Heavy shells", "effect": "Heavy Assault's damage increases by 40%", "globalEffectId": 14, "prerequisiteLocalId": -1, "cost": 100, "duration": 450},
+    {"localId": 5, "name": "Forced light missiles", "effect": "Allows you to train Flame Assaults", "globalEffectId": 6, "prerequisiteLocalId": -1, "cost": 60, "duration": 300},
+    {"localId": 6, "name": "Lava flame fuel", "effect": "Heavy flamethrower installs on AV-40", "globalEffectId": 7, "prerequisiteLocalId": 3, "cost": 120, "duration": 500},
     {"localId": 7, "name": "Volcano flame gun", "effect": "Increases damage for Zeus and Hammer tanks by 25%", "globalEffectId": 7, "prerequisiteLocalId": -1, "cost": 100, "duration": 450}
   ],
   "rebel_techs": [
     {"localId": 0, "name": "Titanium jacket", "effect": "Increases armour for all infantry by 1", "globalEffectId": 24, "prerequisiteLocalId": -1, "cost": 50, "duration": 300},
-    {"localId": 1, "name": "First-aid kit", "effect": "Triples health recovery for all infantry", "globalEffectId": 25, "prerequisiteLocalId": 0, "cost": 75, "duration": 400},
+    {"localId": 1, "name": "First-aid kit", "effect": "Triples health recovery for all infantry", "globalEffectId": 24, "prerequisiteLocalId": 0, "cost": 75, "duration": 400},
     {"localId": 2, "name": "Enhanced fire rate", "effect": "Infantry firing rate increases by 50%", "globalEffectId": 26, "prerequisiteLocalId": -1, "cost": 60, "duration": 350},
     {"localId": 3, "name": "Doping", "effect": "Infantry speed increases by 1", "globalEffectId": 27, "prerequisiteLocalId": -1, "cost": 60, "duration": 300},
     {"localId": 4, "name": "Snipers", "effect": "Allows you to train snipers", "globalEffectId": 28, "prerequisiteLocalId": -1, "cost": 80, "duration": 400},
-    {"localId": 5, "name": "Rifle 'Hornet-10'", "effect": "Sniper's overview and fire range increases by 2, damage increases by 20%", "globalEffectId": 29, "prerequisiteLocalId": 4, "cost": 100, "duration": 450},
-    {"localId": 6, "name": "Heavy machine gun", "effect": "Increases damage for coyotes and armadillos by 15%", "globalEffectId": 30, "prerequisiteLocalId": -1, "cost": 80, "duration": 400},
+    {"localId": 5, "name": "Rifle 'Hornet-10'", "effect": "Sniper's overview and fire range increases by 2, damage increases by 20%", "globalEffectId": 30, "prerequisiteLocalId": 4, "cost": 100, "duration": 450},
+    {"localId": 6, "name": "Heavy machine gun", "effect": "Increases damage for coyotes and armadillos by 15%", "globalEffectId": 31, "prerequisiteLocalId": -1, "cost": 80, "duration": 400},
     {"localId": 7, "name": "Reinforced engine", "effect": "Increases speed for all machinery by 1. Allows Rhino tank", "globalEffectId": 31, "prerequisiteLocalId": -1, "cost": 100, "duration": 450}
   ]
 }
