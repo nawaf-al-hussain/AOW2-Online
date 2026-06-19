@@ -169,7 +169,7 @@ public final class DamageCalculator {
      * @return effective armor value
      */
     public static int calculateEffectiveArmor(Building building, int buildingArmorBonus) {
-        return buildingArmorBonus;
+        return building.getStats().armor() + buildingArmorBonus;
     }
 
     /**

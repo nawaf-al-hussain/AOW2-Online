@@ -15,12 +15,14 @@ public record UnitStats(
     String description,
     int hp,
     int damage,
+    /** Movement speed — how fast the unit traverses the map (tiles per tick). */
     int speed,
     int armor,
     int attackBonus,
     int sightRange,
     int attackRange,
     WeaponType weaponType,
+    /** Weapon cooldown / attack speed — ticks between successive attacks (rate of fire). */
     int attackSpeed,
     int buildTime,
     int costCredits,

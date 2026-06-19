@@ -155,10 +155,22 @@ public class IsometricRenderer {
         gc.translate(cameraOffsetX, cameraOffsetY);
         gc.scale(zoom, zoom);
 
+        // Viewport culling: only render tiles within the visible camera bounds
+        double viewportW = gc.getCanvas().getWidth();
+        double viewportH = gc.getCanvas().getHeight();
+        int[] gtl = screenToGrid((0 - cameraOffsetX) / zoom, (0 - cameraOffsetY) / zoom);
+        int[] gtr = screenToGrid((viewportW - cameraOffsetX) / zoom, (0 - cameraOffsetY) / zoom);
+        int[] gbl = screenToGrid((0 - cameraOffsetX) / zoom, (viewportH - cameraOffsetY) / zoom);
+        int[] gbr = screenToGrid((viewportW - cameraOffsetX) / zoom, (viewportH - cameraOffsetY) / zoom);
+        int minY = Math.max(0, Math.min(Math.min(gtl[1], gtr[1]), Math.min(gbl[1], gbr[1])) - 1);
+        int maxY = Math.min(map.getHeight() - 1, Math.max(Math.max(gtl[1], gtr[1]), Math.max(gbl[1], gbr[1])) + 1);
+        int minX = Math.max(0, Math.min(Math.min(gtl[0], gtr[0]), Math.min(gbl[0], gbr[0])) - 1);
+        int maxX = Math.min(map.getWidth() - 1, Math.max(Math.max(gtl[0], gtr[0]), Math.max(gbl[0], gbr[0])) + 1);
+
         boolean useSprites = spriteManager != null && spriteManager.isInitialized();
 
-        for (int y = 0; y < map.getHeight(); y++) {
-            for (int x = 0; x < map.getWidth(); x++) {
+        for (int y = minY; y <= maxY; y++) {
+            for (int x = minX; x <= maxX; x++) {
                 TerrainType terrain = map.getTile(x, y);
                 if (terrain != null) {
                     if (useSprites) {
@@ -171,7 +183,7 @@ public class IsometricRenderer {
         }
 
         // Draw grid lines for debugging (subtle)
-        renderGridOverlay(gc);
+        renderGridOverlay(gc, minX, maxX, minY, maxY);
 
         gc.restore();
     }
@@ -243,23 +255,23 @@ public class IsometricRenderer {
      *
      * @param gc graphics context
      */
-    private void renderGridOverlay(GraphicsContext gc) {
+    private void renderGridOverlay(GraphicsContext gc, int minX, int maxX, int minY, int maxY) {
         gc.setStroke(Color.rgb(0, 0, 0, 0.1));
         gc.setLineWidth(0.3);
 
-        for (int y = 0; y <= map.getHeight(); y++) {
-            double startX = gridToScreenX(0, y);
-            double startY = gridToScreenY(0, y);
-            double endX = gridToScreenX(map.getWidth(), y);
-            double endY = gridToScreenY(map.getWidth(), y);
+        for (int y = minY; y <= maxY + 1; y++) {
+            double startX = gridToScreenX(minX, y);
+            double startY = gridToScreenY(minX, y);
+            double endX = gridToScreenX(maxX + 1, y);
+            double endY = gridToScreenY(maxX + 1, y);
             gc.strokeLine(startX, startY, endX, endY);
         }
 
-        for (int x = 0; x <= map.getWidth(); x++) {
-            double startX = gridToScreenX(x, 0);
-            double startY = gridToScreenY(x, 0);
-            double endX = gridToScreenX(x, map.getHeight());
-            double endY = gridToScreenY(x, map.getHeight());
+        for (int x = minX; x <= maxX + 1; x++) {
+            double startX = gridToScreenX(x, minY);
+            double startY = gridToScreenY(x, minY);
+            double endX = gridToScreenX(x, maxY + 1);
+            double endY = gridToScreenY(x, maxY + 1);
             gc.strokeLine(startX, startY, endX, endY);
         }
     }

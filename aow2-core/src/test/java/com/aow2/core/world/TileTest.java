@@ -204,10 +204,11 @@ class TileTest {
         }
 
         @Test
-        @DisplayName("Should not be passable when occupied by entity")
-        void shouldNotBePassableWhenOccupied() {
+        @DisplayName("Should be passable when terrain is passable even if occupied (use isOccupied() for occupancy)")
+        void shouldBePassableEvenWhenOccupied() {
             Tile tile = Tile.of(TerrainType.GRASS, 0, 0, 5, false, false);
-            assertFalse(tile.isPassable());
+            assertTrue(tile.isPassable()); // terrain-only check
+            assertTrue(tile.isOccupied()); // occupancy is separate
         }
 
         @Test

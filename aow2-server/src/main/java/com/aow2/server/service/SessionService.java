@@ -36,6 +36,9 @@ public class SessionService {
     /** WebSocket session IDs mapped to player IDs, for signaling */
     private final Map<String, Long> wsSessionToPlayer = new ConcurrentHashMap<>();
 
+    /** Reverse lookup: player ID to WebSocket session ID, for O(1) player-to-session resolution */
+    private final Map<Long, String> playerToWsSession = new ConcurrentHashMap<>();
+
     /** Player IDs mapped to their opponent's WebSocket session ID, for P2P relay */
     private final Map<Long, String> playerToOpponentWs = new ConcurrentHashMap<>();
 
@@ -260,6 +263,7 @@ public class SessionService {
      */
     public void registerWebSocketSession(String wsSessionId, Long playerId) {
         wsSessionToPlayer.put(wsSessionId, playerId);
+        playerToWsSession.put(playerId, wsSessionId);
     }
 
     /**
@@ -268,7 +272,10 @@ public class SessionService {
      * @param wsSessionId the WebSocket session ID to remove
      */
     public void unregisterWebSocketSession(String wsSessionId) {
-        wsSessionToPlayer.remove(wsSessionId);
+        Long playerId = wsSessionToPlayer.remove(wsSessionId);
+        if (playerId != null) {
+            playerToWsSession.remove(playerId);
+        }
         playerToOpponentWs.values().remove(wsSessionId);
     }
 
@@ -280,6 +287,17 @@ public class SessionService {
      */
     public Long getPlayerForWsSession(String wsSessionId) {
         return wsSessionToPlayer.get(wsSessionId);
+    }
+
+    /**
+     * Gets the WebSocket session ID for a given player.
+     * Provides O(1) reverse lookup without scanning all sessions.
+     *
+     * @param playerId the player's ID
+     * @return the WebSocket session ID, or null if not registered
+     */
+    public String getWsSessionForPlayer(Long playerId) {
+        return playerToWsSession.get(playerId);
     }
 
     /**
@@ -317,6 +335,8 @@ public class SessionService {
             playerSessions.remove(session.getPlayer2Id());
             playerToOpponentWs.remove(session.getPlayer1Id());
             playerToOpponentWs.remove(session.getPlayer2Id());
+            playerToWsSession.remove(session.getPlayer1Id());
+            playerToWsSession.remove(session.getPlayer2Id());
         }
     }
 }

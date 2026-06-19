@@ -343,7 +343,7 @@ public class EntityManager {
         units.entrySet().removeIf(entry -> !entry.getValue().isAlive());
         buildings.entrySet().removeIf(entry -> !entry.getValue().isAlive());
         projectiles.entrySet().removeIf(entry -> entry.getValue().hasReachedTarget());
-        mines.removeIf(mine -> mine.getHp() <= 0);
+        mines.removeIf(mine -> !mine.isAlive());
     }
 
     // --- Visibility-filtered queries ---

@@ -89,11 +89,23 @@ public final class FogRenderer {
         gc.translate(cameraOffsetX, cameraOffsetY);
         gc.scale(zoom, zoom);
 
+        // Viewport culling: only render fog tiles within the visible camera bounds
+        double viewportW = gc.getCanvas().getWidth();
+        double viewportH = gc.getCanvas().getHeight();
+        int[] gtl = isoRenderer.screenToGrid((0 - cameraOffsetX) / zoom, (0 - cameraOffsetY) / zoom);
+        int[] gtr = isoRenderer.screenToGrid((viewportW - cameraOffsetX) / zoom, (0 - cameraOffsetY) / zoom);
+        int[] gbl = isoRenderer.screenToGrid((0 - cameraOffsetX) / zoom, (viewportH - cameraOffsetY) / zoom);
+        int[] gbr = isoRenderer.screenToGrid((viewportW - cameraOffsetX) / zoom, (viewportH - cameraOffsetY) / zoom);
+        int minY = Math.max(0, Math.min(Math.min(gtl[1], gtr[1]), Math.min(gbl[1], gbr[1])) - 1);
+        int maxY = Math.min(map.getHeight() - 1, Math.max(Math.max(gtl[1], gtr[1]), Math.max(gbl[1], gbr[1])) + 1);
+        int minX = Math.max(0, Math.min(Math.min(gtl[0], gtr[0]), Math.min(gbl[0], gbr[0])) - 1);
+        int maxX = Math.min(map.getWidth() - 1, Math.max(Math.max(gtl[0], gtr[0]), Math.max(gbl[0], gbr[0])) + 1);
+
         int tileHalfW = IsometricRenderer.TILE_HALF_WIDTH;
         int tileHalfH = IsometricRenderer.TILE_HALF_HEIGHT;
 
-        for (int y = 0; y < map.getHeight(); y++) {
-            for (int x = 0; x < map.getWidth(); x++) {
+        for (int y = minY; y <= maxY; y++) {
+            for (int x = minX; x <= maxX; x++) {
                 GridPosition pos = new GridPosition(x, y);
                 TileVisibility vis = fogOfWar.getVisibility(playerId, pos);
 

@@ -16,6 +16,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 /**
  * REST + WebSocket client for the AOW2 Spring Boot multiplayer server.
@@ -565,10 +566,20 @@ public final class MultiplayerService {
 
     /**
      * Shuts down the service, disconnecting and closing the executor.
+     * Waits up to 5 seconds for pending tasks to complete before forcing shutdown.
      */
     public void shutdown() {
         disconnect();
         executor.shutdown();
+        try {
+            if (!executor.awaitTermination(5, TimeUnit.SECONDS)) {
+                executor.shutdownNow();
+                LOG.warn("ExecutorService forced shutdown after timeout");
+            }
+        } catch (InterruptedException e) {
+            executor.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
         LOG.info("MultiplayerService shutdown");
     }
 

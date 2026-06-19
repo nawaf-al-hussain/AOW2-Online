@@ -76,9 +76,16 @@ public enum UnitType {
      * Whether this unit type occupies 2 cells (larger collision footprint).
      * REF: unit_stats.md - bitmask 65536 (0x10000) for 2-cell collision units
      *
+     * NOTE: Currently only CONFED_FORTRESS has the RE-confirmed 2-cell bitmask.
+     * REBEL_ARMADILLO is the Resistance's heaviest vehicle (armored transport)
+     * but RE analysis has not confirmed it as a large-unit. If future RE data
+     * reveals additional large units, add them here.
+     *
      * @return true if this unit occupies 2 cells
      */
     public boolean isLargeUnit() {
+        // Only CONFED_FORTRESS has RE-confirmed 2-cell collision bitmask (65536).
+        // REBEL_ARMADILLO is faction-specific heavy armor but not RE-confirmed as large.
         return this == CONFED_FORTRESS;
     }
 

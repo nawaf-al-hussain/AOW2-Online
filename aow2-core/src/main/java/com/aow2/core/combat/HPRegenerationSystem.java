@@ -55,6 +55,12 @@ public final class HPRegenerationSystem {
      * Infantry regenerates when near a powered friendly building.
      * REF: MASTER_DOCUMENTATION.md — "isInfantry && powered"
      * <p>
+     * TODO: Add power proximity check — infantry should only regenerate when
+     * within range of a friendly powered building. Currently all infantry
+     * regenerate unconditionally on the regeneration cycle tick.
+     * The method accepts the full entity list so that a power-proximity query
+     * can be added here in a future update.
+     * <p>
      * NOTE: The original game's 48 research effects (combat_formulas.md IDs 0-47)
      * do not include any HP recovery boost research. The previous implementation
      * incorrectly referenced IDs 1 ("Player 0 attack range reduction /3") and
@@ -64,6 +70,8 @@ public final class HPRegenerationSystem {
      * @param unit the infantry unit
      */
     private void processInfantryRegen(Unit unit) {
+        // TODO: Check if unit is near a powered friendly building before regenerating.
+        // REF: MASTER_DOCUMENTATION.md — "isInfantry && powered"
         if (unit.getHp() >= unit.getMaxHp()) return; // already full
 
         int recovery = INFANTRY_BASE_RECOVERY;

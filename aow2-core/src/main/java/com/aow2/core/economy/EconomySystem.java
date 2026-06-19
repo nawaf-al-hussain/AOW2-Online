@@ -79,7 +79,8 @@ public final class EconomySystem {
     public void processTick(EntityManager entities, GameState state) {
         long tick = state.currentTick();
         // Credit generation every 128 ticks
-        if (tick > 0 && tick % CREDIT_CYCLE_TICKS == 0) {
+        // REF: combat_formulas.md — (aL.ah & 127) == 127 means generate on last tick of cycle
+        if (tick > 0 && tick % CREDIT_CYCLE_TICKS == CREDIT_CYCLE_TICKS - 1) {
             for (int playerId = 0; playerId < MAX_PLAYERS; playerId++) {
                 int income = calculateIncome(playerId, entities);
                 playerIncomeRates[playerId] = income;

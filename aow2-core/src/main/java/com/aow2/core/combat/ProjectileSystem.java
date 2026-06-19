@@ -340,8 +340,10 @@ public final class ProjectileSystem {
             // Target is a unit
             Unit target = entities.getUnit(targetRef);
             if (target != null && target.isAlive()) {
+                // Use research-adjusted armor for direct-fire unit targets (same as splash)
+                int effectiveArmor = getEffectiveArmor(target);
                 int damage = DamageCalculator.calculateDamage(
-                    projectile.getDamage(), target.getStats().armor());
+                    projectile.getDamage(), effectiveArmor);
                 target.takeDamage(damage);
 
                 state.enqueueEvent(new com.aow2.common.event.DamageAppliedEvent(

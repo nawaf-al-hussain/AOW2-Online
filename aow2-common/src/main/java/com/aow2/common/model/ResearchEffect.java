@@ -56,12 +56,17 @@ public record ResearchEffect(
 
     /**
      * Checks whether the given unit type is affected by this research.
+     * <p>
+     * An empty {@code affectedUnitTypes} set means "affects all unit types"
+     * (i.e., the research is a global buff). This is the convention used by
+     * the data layer: omitting the set signals the effect applies universally.
      *
      * @param type the UnitType to check
      * @return true if this research affects the specified unit type
      */
     public boolean affectsUnitType(UnitType type) {
-        return affectedUnitTypes.contains(type);
+        // Empty set means "all unit types" — a universal research effect
+        return affectedUnitTypes.isEmpty() || affectedUnitTypes.contains(type);
     }
 
     @Override

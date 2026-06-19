@@ -236,18 +236,13 @@ public class LobbyWebSocketHandler extends TextWebSocketHandler {
 
     /**
      * Gets the WebSocket session ID for a specific player.
+     * Uses the O(1) reverse lookup in SessionService instead of scanning all sessions.
      *
      * @param playerId the player's ID
      * @return the WebSocket session ID, or null
      */
     private String getSessionForPlayer(Long playerId) {
-        for (var entry : sessions.entrySet()) {
-            Long pid = sessionService.getPlayerForWsSession(entry.getKey());
-            if (playerId.equals(pid)) {
-                return entry.getKey();
-            }
-        }
-        return null;
+        return sessionService.getWsSessionForPlayer(playerId);
     }
 
     /**

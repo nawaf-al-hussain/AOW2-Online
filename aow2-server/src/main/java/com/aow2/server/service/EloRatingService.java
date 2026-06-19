@@ -12,19 +12,12 @@ import org.springframework.transaction.annotation.Transactional;
  * Implements the standard ELO formula with variable K-factor based on player experience.
  * REF: multiplayer_architecture.md - ELO-based ranking for competitive play
  *
- * <p>ELO formula:
- * <pre>
- *   Expected score: E_A = 1 / (1 + 10^((R_B - R_A) / 400))
- *   New rating: R_A' = R_A + K * (S_A - E_A)
- *   where S_A is the actual score (1 for win, 0 for loss)
- * </pre>
- *
- * <p>K-factor:
- * <ul>
- *   <li>32 for new players (fewer than 30 games)</li>
- *   <li>24 for experienced players (30+ games)</li>
- * </ul>
+ * @deprecated This service duplicates functionality already provided by {@link RankingService},
+ *             which is the canonical ELO implementation. The K-factor for experienced players
+ *             was incorrectly set to 24 here (should be 16 per canonical source).
+ *             Prefer using {@link RankingService#recordMatchResult} instead.
  */
+@Deprecated
 @Service
 public class EloRatingService {
 
@@ -36,8 +29,8 @@ public class EloRatingService {
     /** K-factor for new players (fewer than 30 games) */
     static final int K_FACTOR_NEW = 32;
 
-    /** K-factor for experienced players (30+ games) */
-    static final int K_FACTOR_EXPERIENCED = 24;
+    /** K-factor for experienced players (30+ games) — must match RankingService canonical value */
+    static final int K_FACTOR_EXPERIENCED = 16;
 
     /** Game count threshold for K-factor transition */
     static final int EXPERIENCED_THRESHOLD = 30;

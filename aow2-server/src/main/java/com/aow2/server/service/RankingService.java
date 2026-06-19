@@ -21,6 +21,9 @@ import java.util.Map;
  * REF: protocol_specification.md - Type 70 RANK_DATA
  * REF: multiplayer_architecture.md - ELO-based pairing in matchmaking
  * ASSUMPTION: K-factor of 32 for new players (<30 games), 16 for experienced players
+ *
+ * <p><b>Canonical ELO source:</b> This service is the authoritative ELO implementation.
+ * See {@link EloRatingService} for the deprecated duplicate.
  */
 @Service
 public class RankingService {
@@ -29,7 +32,7 @@ public class RankingService {
 
     /** K-factor for players with fewer than 30 games */
     private static final int K_FACTOR_NEW = 32;
-    /** K-factor for experienced players (30+ games) */
+    /** K-factor for experienced players (30+ games) — canonical value */
     private static final int K_FACTOR_EXPERIENCED = 16;
     /** Game count threshold for K-factor transition */
     private static final int EXPERIENCED_THRESHOLD = 30;

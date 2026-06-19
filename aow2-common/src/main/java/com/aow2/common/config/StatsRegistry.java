@@ -306,7 +306,7 @@ public final class StatsRegistry {
         // REF: complete_building_stats.json — CONFED_COMMAND_CENTRE
         buildingStats.put(BuildingType.CONFED_COMMAND_CENTRE, new BuildingStats(
             BuildingType.CONFED_COMMAND_CENTRE,
-            120, 22, 7, 7, 4, 2, 20, 7, 8,
+            120, 22, 0, 7, 4, 2, 20, 7, 8,
             2, 6, 0, 0,
             100, 450, 0,
             WeaponType.NONE,
@@ -316,7 +316,7 @@ public final class StatsRegistry {
         // REF: complete_building_stats.json — CONFED_GENERATOR
         buildingStats.put(BuildingType.CONFED_GENERATOR, new BuildingStats(
             BuildingType.CONFED_GENERATOR,
-            100, 14, 5, 7, 3, 6, 8, 7, 8,
+            100, 14, 0, 7, 3, 6, 8, 7, 8,
             2, 6, 0, 0,
             80, 550, 0,
             WeaponType.NONE,
@@ -326,7 +326,7 @@ public final class StatsRegistry {
         // REF: complete_building_stats.json — CONFED_INFANTRY_CENTRE
         buildingStats.put(BuildingType.CONFED_INFANTRY_CENTRE, new BuildingStats(
             BuildingType.CONFED_INFANTRY_CENTRE,
-            100, 28, 6, 7, 3, 6, 18, 11, 12,
+            100, 28, 0, 7, 3, 6, 18, 11, 12,
             2, 2, 0, 0,
             110, 200, 0,
             WeaponType.NONE,
@@ -336,7 +336,7 @@ public final class StatsRegistry {
         // REF: complete_building_stats.json — CONFED_MACHINE_FACTORY
         buildingStats.put(BuildingType.CONFED_MACHINE_FACTORY, new BuildingStats(
             BuildingType.CONFED_MACHINE_FACTORY,
-            110, 36, 6, 8, 4, 6, 25, 3, 2,
+            110, 36, 0, 8, 4, 6, 25, 3, 2,
             0, 0, 0, 3,
             160, 250, 0,
             WeaponType.NONE,
@@ -346,7 +346,7 @@ public final class StatsRegistry {
         // REF: complete_building_stats.json — CONFED_TECH_CENTRE
         buildingStats.put(BuildingType.CONFED_TECH_CENTRE, new BuildingStats(
             BuildingType.CONFED_TECH_CENTRE,
-            120, 65, 8, 8, 4, 7, 30, 6, 16,
+            120, 65, 0, 8, 4, 7, 30, 6, 16,
             0, 0, 4, 1,
             250, 300, 0,
             WeaponType.NONE,
@@ -366,7 +366,7 @@ public final class StatsRegistry {
         // REF: complete_building_stats.json — CONFED_LOCATOR
         buildingStats.put(BuildingType.CONFED_LOCATOR, new BuildingStats(
             BuildingType.CONFED_LOCATOR,
-            100, 55, 9, 8, 4, 7, 50, 7, 16,
+            100, 55, 0, 8, 4, 7, 50, 7, 16,
             0, 0, 6, 1,
             300, 200, 0,
             WeaponType.NONE,
@@ -389,7 +389,7 @@ public final class StatsRegistry {
         // ASSUMPTION: REBEL_HEADQUARTERS stats copied from CONFED_COMMAND_CENTRE — RE only provides upgrade_costs for rebel buildings
         buildingStats.put(BuildingType.REBEL_HEADQUARTERS, new BuildingStats(
             BuildingType.REBEL_HEADQUARTERS,
-            120, 22, 7, 7, 4, 2, 20, 7, 8,
+            120, 22, 0, 7, 4, 2, 20, 7, 8,
             2, 6, 0, 0,
             100, 450, 0,
             WeaponType.NONE,
@@ -399,7 +399,7 @@ public final class StatsRegistry {
         // ASSUMPTION: REBEL_POWERPLANT stats copied from CONFED_GENERATOR — RE only provides upgrade_costs for rebel buildings
         buildingStats.put(BuildingType.REBEL_POWERPLANT, new BuildingStats(
             BuildingType.REBEL_POWERPLANT,
-            100, 14, 5, 7, 3, 6, 8, 7, 8,
+            100, 14, 0, 7, 3, 6, 8, 7, 8,
             2, 6, 0, 0,
             80, 550, 0,
             WeaponType.NONE,
@@ -409,7 +409,7 @@ public final class StatsRegistry {
         // ASSUMPTION: REBEL_BARRACKS stats copied from CONFED_INFANTRY_CENTRE — RE only provides upgrade_costs for rebel buildings
         buildingStats.put(BuildingType.REBEL_BARRACKS, new BuildingStats(
             BuildingType.REBEL_BARRACKS,
-            100, 28, 6, 7, 3, 6, 18, 11, 12,
+            100, 28, 0, 7, 3, 6, 18, 11, 12,
             2, 2, 0, 0,
             110, 200, 0,
             WeaponType.NONE,
@@ -419,7 +419,7 @@ public final class StatsRegistry {
         // ASSUMPTION: REBEL_FACTORY stats copied from CONFED_MACHINE_FACTORY — RE only provides upgrade_costs for rebel buildings
         buildingStats.put(BuildingType.REBEL_FACTORY, new BuildingStats(
             BuildingType.REBEL_FACTORY,
-            110, 36, 6, 8, 4, 6, 25, 3, 2,
+            110, 36, 0, 8, 4, 6, 25, 3, 2,
             0, 0, 0, 3,
             160, 250, 0,
             WeaponType.NONE,
@@ -429,7 +429,7 @@ public final class StatsRegistry {
         // ASSUMPTION: REBEL_LABORATORY stats copied from CONFED_TECH_CENTRE — RE only provides upgrade_costs for rebel buildings
         buildingStats.put(BuildingType.REBEL_LABORATORY, new BuildingStats(
             BuildingType.REBEL_LABORATORY,
-            120, 65, 8, 8, 4, 7, 30, 6, 16,
+            120, 65, 0, 8, 4, 7, 30, 6, 16,
             0, 0, 4, 1,
             250, 300, 0,
             WeaponType.NONE,

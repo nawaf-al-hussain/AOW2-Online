@@ -85,7 +85,8 @@ public final class AISystem {
         this.economyAI = new EconomyAI();
         this.militaryAI = new MilitaryAI();
         this.researchAI = new ResearchAI();
-        this.random = new Random();
+        // Seeded RNG for lockstep determinism — each AI player gets a deterministic seed
+        this.random = new Random(playerId * 31L + 42L);
         this.lastDecisionTick = -difficulty.tickInterval; // Allow immediate first decision
         this.activeTaskCount = 0;
     }

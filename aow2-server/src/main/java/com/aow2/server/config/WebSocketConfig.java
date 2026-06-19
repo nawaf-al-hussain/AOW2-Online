@@ -3,6 +3,7 @@ package com.aow2.server.config;
 import com.aow2.server.websocket.ChatWebSocketHandler;
 import com.aow2.server.websocket.GameWebSocketHandler;
 import com.aow2.server.websocket.LobbyWebSocketHandler;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
@@ -21,6 +22,9 @@ public class WebSocketConfig implements WebSocketConfigurer {
     private final LobbyWebSocketHandler lobbyWebSocketHandler;
     private final GameWebSocketHandler gameWebSocketHandler;
     private final ChatWebSocketHandler chatWebSocketHandler;
+
+    @Value("${aow2.cors.allowed-origins}")
+    private String allowedOrigins;
 
     /**
      * Constructs the WebSocket configuration with the required handlers.
@@ -41,14 +45,14 @@ public class WebSocketConfig implements WebSocketConfigurer {
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
         // REF: session_lifecycle.md - Lobby state (aO=14), matchmaking events
         registry.addHandler(lobbyWebSocketHandler, "/ws/lobby")
-                .setAllowedOrigins("*");
+                .setAllowedOrigins(allowedOrigins);
 
         // REF: multiplayer_architecture.md - Game signaling for P2P lockstep
         registry.addHandler(gameWebSocketHandler, "/ws/game")
-                .setAllowedOrigins("*");
+                .setAllowedOrigins(allowedOrigins);
 
         // REF: protocol_specification.md - Chat messages between players
         registry.addHandler(chatWebSocketHandler, "/ws/chat")
-                .setAllowedOrigins("*");
+                .setAllowedOrigins(allowedOrigins);
     }
 }

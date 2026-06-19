@@ -100,11 +100,14 @@ public record Tile(
     }
 
     /**
-     * Returns whether this tile is passable for ground units based on its terrain.
+     * Returns whether this tile is passable based on terrain only (no occupancy check).
+     * Consistent with {@link com.aow2.core.world.GameMap#isPassable(int, int)}
+     * which checks only terrain passability.
+     * For occupancy-aware checks, use {@link #isOccupied()} separately.
      *
-     * @return true if the terrain is passable and the tile is not occupied
+     * @return true if the terrain is passable
      */
     public boolean isPassable() {
-        return terrain.isPassable() && !isOccupied();
+        return terrain.isPassable();
     }
 }

@@ -264,7 +264,8 @@ public class AOW2App extends GameApplication {
      * Called when the application is about to exit.
      * Performs cleanup of scene resources.
      */
-    protected void cleanupOnExit() {
+    @Override
+    protected void onExit() {
         if (gameScene != null) {
             gameScene.stop();
         }
