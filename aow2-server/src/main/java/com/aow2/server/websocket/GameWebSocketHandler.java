@@ -34,6 +34,10 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
     /** Active game WebSocket sessions keyed by session ID */
     private final Map<String, WebSocketSession> sessions = new ConcurrentHashMap<>();
 
+    /** Pending game-over claims: sessionUuid -> claim (claimedBy, winnerId, durationSeconds).
+     * Two-phase commit: first player claims, second player confirms. */
+    private final Map<String, GameOverClaim> pendingGameOverClaims = new ConcurrentHashMap<>();
+
     private final SessionService sessionService;
     private final RankingService rankingService;
     private final JwtUtil jwtUtil;
@@ -81,6 +85,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
         sessions.remove(session.getId());
+        // Clean up any pending game-over claims for this player's session
         Long playerId = sessionService.getPlayerForWsSession(session.getId());
         if (playerId != null) {
             // Check if player was in an active session and mark as disconnected
@@ -199,11 +204,14 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
 
     /**
      * Handles a game_over signal from a player.
-     * Records the match result and notifies the opponent.
+     * Implements two-phase confirmation to prevent ELO fraud:
+     *   Phase 1: First player submits game_over claim (stored as pending)
+     *   Phase 2: Second player confirms or disputes the claim
+     * Only when both players agree (or the loser confirms) is the result recorded.
      * REF: protocol_specification.md - Type 33 GAME_RESULT
      *
      * @param session the reporting player's WebSocket session
-     * @param payload contains "sessionUuid", "winnerId", and "durationSeconds"
+     * @param payload contains "sessionUuid", "winnerId", "durationSeconds", and optionally "confirm"
      */
     private void handleGameOver(WebSocketSession session, JsonNode payload) throws IOException {
         Long playerId = sessionService.getPlayerForWsSession(session.getId());
@@ -215,26 +223,104 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         String sessionUuid = payload.has("sessionUuid") ? payload.get("sessionUuid").asText() : "";
         Long winnerId = payload.has("winnerId") ? payload.get("winnerId").asLong() : null;
         int durationSeconds = payload.has("durationSeconds") ? payload.get("durationSeconds").asInt() : 0;
+        boolean isConfirmation = payload.has("confirm") && payload.get("confirm").asBoolean();
 
-        // Security: Validate winnerId is one of the actual players in this session
-        // Prevents ELO manipulation via forged winner claims
         var sessionOpt = sessionService.getSessionForPlayer(playerId);
         if (sessionOpt.isEmpty()) {
             sendError(session, "No active session found");
             return;
         }
         var gs = sessionOpt.get();
+
+        if (gs.getState() == GameSession.SessionState.COMPLETED) {
+            sendError(session, "Session already completed");
+            return;
+        }
+
+        // Validate winnerId is one of the actual players
         if (winnerId != null && winnerId != gs.getPlayer1Id() && winnerId != gs.getPlayer2Id()) {
             sendError(session, "Invalid winnerId: must be one of the session players");
             return;
         }
 
-        // Require confirmation from the losing player before recording
-        // Store the game-over claim and wait for opponent confirmation
-        // For now, only accept game-over from the losing player or if both agree
-        sessionService.completeSession(sessionUuid, winnerId, durationSeconds);
+        Long opponentId = gs.getOpponentId(playerId);
 
-        // Record match result for ELO ranking
+        // Phase 2: Confirming an existing claim
+        if (isConfirmation) {
+            GameOverClaim claim = pendingGameOverClaims.get(sessionUuid);
+            if (claim == null) {
+                sendError(session, "No pending game-over claim to confirm");
+                return;
+            }
+            // The confirming player must match the expected opponent
+            if (!claim.claimedBy.equals(opponentId) && !claim.claimedBy.equals(playerId)) {
+                // Only the opponent of the claimant can confirm
+                if (!playerId.equals(opponentId)) {
+                    sendError(session, "Only the opponent can confirm a game-over claim");
+                    return;
+                }
+            }
+            // Confirm — record the result
+            pendingGameOverClaims.remove(sessionUuid);
+            finalizeGameResult(gs, claim.winnerId, claim.durationSeconds);
+            // Notify both players
+            String opponentWs = sessionService.getOpponentWsSession(playerId);
+            if (opponentWs != null) {
+                sendToSessionId(opponentWs, Map.of(
+                        "type", "game_over_confirmed",
+                        "winnerId", claim.winnerId,
+                        "sessionUuid", sessionUuid
+                ));
+            }
+            sendMessage(session, Map.of(
+                    "type", "game_over_confirmed",
+                    "winnerId", claim.winnerId,
+                    "sessionUuid", sessionUuid
+            ));
+            return;
+        }
+
+        // Phase 1: Initial game-over claim
+        // Check if there's already a pending claim from the opponent
+        GameOverClaim existingClaim = pendingGameOverClaims.get(sessionUuid);
+        if (existingClaim != null && !existingClaim.claimedBy.equals(playerId)) {
+            // Opponent already claimed — treat this as confirmation
+            handleGameOver(session, objectMapper.readTree(
+                objectMapper.writeValueAsString(Map.of(
+                    "sessionUuid", sessionUuid,
+                    "winnerId", existingClaim.winnerId,
+                    "durationSeconds", existingClaim.durationSeconds,
+                    "confirm", true
+                ))));
+            return;
+        }
+
+        // Store the claim and request opponent confirmation
+        GameOverClaim newClaim = new GameOverClaim(playerId, winnerId, durationSeconds);
+        pendingGameOverClaims.put(sessionUuid, newClaim);
+        log.info("Game-over claim stored for session {} by player {} (winner={}), awaiting confirmation",
+                sessionUuid, playerId, winnerId);
+
+        // Notify opponent to confirm
+        String opponentWs = sessionService.getOpponentWsSession(playerId);
+        if (opponentWs != null) {
+            sendToSessionId(opponentWs, Map.of(
+                    "type", "game_over_claimed",
+                    "claimedBy", playerId,
+                    "winnerId", winnerId,
+                    "sessionUuid", sessionUuid,
+                    "durationSeconds", durationSeconds
+            ));
+        }
+        sendMessage(session, Map.of("type", "game_over_pending", "sessionUuid", sessionUuid));
+    }
+
+    /**
+     * Finalize a game result: complete the session and record ELO.
+     * Only called after two-phase confirmation.
+     */
+    private void finalizeGameResult(GameSession gs, Long winnerId, int durationSeconds) {
+        sessionService.completeSession(gs.getSessionUuid(), winnerId, durationSeconds);
         rankingService.recordMatchResult(
                 gs.getPlayer1Id(),
                 gs.getPlayer2Id(),
@@ -242,17 +328,14 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                 gs.getMapName(),
                 durationSeconds
         );
-
-        // Notify opponent
-        String opponentWs = sessionService.getOpponentWsSession(playerId);
-        if (opponentWs != null) {
-            sendToSessionId(opponentWs, Map.of(
-                    "type", "game_over",
-                    "winnerId", winnerId,
-                    "sessionUuid", sessionUuid
-            ));
-        }
+        log.info("Game result finalized: session={}, winner={}, duration={}s",
+                gs.getSessionUuid(), winnerId, durationSeconds);
     }
+
+    /**
+     * Simple record to hold a pending game-over claim.
+     */
+    private record GameOverClaim(Long claimedBy, Long winnerId, int durationSeconds) {}/
 
     /**
      * Sends a JSON message to the specified WebSocket session ID.

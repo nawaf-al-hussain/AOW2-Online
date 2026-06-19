@@ -14,6 +14,9 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * REST client for uploading and downloading community maps from the Spring Boot server.
@@ -45,6 +48,9 @@ public class MapShareService {
     /** The server base URL. */
     private final String serverUrl;
 
+    /** Dedicated I/O thread for HTTP calls to avoid blocking the JavaFX thread. */
+    private final ExecutorService ioExecutor;
+
     /** JWT authentication token (nullable — required for upload/delete). */
     private String authToken;
 
@@ -66,6 +72,11 @@ public class MapShareService {
             .connectTimeout(Duration.ofSeconds(10))
             .version(HttpClient.Version.HTTP_2)
             .build();
+        this.ioExecutor = Executors.newSingleThreadExecutor(r -> {
+            Thread t = new Thread(r, "map-share-io");
+            t.setDaemon(true);
+            return t;
+        });
         this.authToken = null;
         LOG.info("MapShareService created with server URL: {}", this.serverUrl);
     }
@@ -293,5 +304,51 @@ public class MapShareService {
             LOG.debug("Server unreachable: {}", e.getMessage());
             return false;
         }
+    }
+
+    // =========================================================================
+    // Async variants — call these from JavaFX Application Thread to avoid freezing UI
+    // =========================================================================
+
+    /**
+     * Async upload: runs on a dedicated I/O thread, returns a CompletableFuture.
+     * Safe to call from the JavaFX Application Thread.
+     *
+     * @param name        the map name
+     * @param description the map description
+     * @param mapData     the JSON-serialized map data
+     * @return CompletableFuture with the upload result
+     */
+    public CompletableFuture<Map<String, Object>> uploadMapAsync(String name, String description, String mapData) {
+        return CompletableFuture.supplyAsync(() -> uploadMap(name, description, mapData), ioExecutor);
+    }
+
+    /**
+     * Async download: runs on a dedicated I/O thread, returns a CompletableFuture.
+     * Safe to call from the JavaFX Application Thread.
+     *
+     * @param mapId the map ID to download
+     * @return CompletableFuture with the download result
+     */
+    public CompletableFuture<Map<String, Object>> downloadMapAsync(long mapId) {
+        return CompletableFuture.supplyAsync(() -> downloadMap(mapId), ioExecutor);
+    }
+
+    /**
+     * Async list: runs on a dedicated I/O thread, returns a CompletableFuture.
+     * Safe to call from the JavaFX Application Thread.
+     *
+     * @return CompletableFuture with the list of community maps
+     */
+    public CompletableFuture<List<Map<String, Object>>> listCommunityMapsAsync() {
+        return CompletableFuture.supplyAsync(this::listCommunityMaps, ioExecutor);
+    }
+
+    /**
+     * Shuts down the I/O executor. Call this when the service is no longer needed.
+     */
+    public void shutdown() {
+        ioExecutor.shutdown();
+        LOG.info("MapShareService IO executor shut down");
     }
 }

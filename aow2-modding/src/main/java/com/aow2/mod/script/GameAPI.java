@@ -14,9 +14,9 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Lua-accessible game API for modding and campaign scripting.
@@ -48,14 +48,18 @@ public final class GameAPI {
     /** Economy system reference for credit queries. */
     private static EconomySystem economySystem;
 
-    /** Objective status map. Key = objective name, Value = status string. */
-    private static final Map<String, String> objectives = new HashMap<>();
+    /** Objective status map. Key = objective name, Value = status string.
+     *  FIX (P1-M1): Changed to ConcurrentHashMap for thread-safety between
+     *  game loop thread and Lua scripting thread. */
+    private static final Map<String, String> objectives = new ConcurrentHashMap<>();
 
-    /** Timer callbacks. Key = callback name, Value = remaining ticks. */
-    private static final Map<String, Integer> timers = new HashMap<>();
+    /** Timer callbacks. Key = callback name, Value = remaining ticks.
+     *  FIX (P1-M1): Changed to ConcurrentHashMap for thread-safety. */
+    private static final Map<String, Integer> timers = new ConcurrentHashMap<>();
 
-    /** Event hook callbacks. */
-    private static final Map<String, String> eventHooks = new HashMap<>();
+    /** Event hook callbacks.
+     *  FIX (P1-M1): Changed to ConcurrentHashMap for thread-safety. */
+    private static final Map<String, String> eventHooks = new ConcurrentHashMap<>();
 
     /** Message queue for script messages to be displayed by the client UI layer. */
     private static final List<String> messageQueue = Collections.synchronizedList(new ArrayList<>());

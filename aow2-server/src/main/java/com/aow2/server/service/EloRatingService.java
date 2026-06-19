@@ -16,9 +16,12 @@ import org.springframework.transaction.annotation.Transactional;
  *             which is the canonical ELO implementation. The K-factor for experienced players
  *             was incorrectly set to 24 here (should be 16 per canonical source).
  *             Prefer using {@link RankingService#recordMatchResult} instead.
+ *             <p>
+ *             FIX (P3-L1): Removed @Service annotation — this bean is no longer registered
+ *             in the Spring application context. All callers should use RankingService.
  */
 @Deprecated
-@Service
+// @Service — REMOVED (P3-L1): No longer a Spring bean; use RankingService instead.
 public class EloRatingService {
 
     private static final Logger log = LoggerFactory.getLogger(EloRatingService.class);

@@ -1,8 +1,5 @@
 // This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// Domain models for Art of War 2: Online companion web application.
 
 generator client {
   provider = "prisma-client-js"
@@ -15,18 +12,64 @@ datasource db {
 
 model User {
   id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
+  username  String   @unique
+  email     String?  @unique
+  password  String
+  elo       Int      @default(1000)
+  wins      Int      @default(0)
+  losses    Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  matchResultsAsP1 MatchResult[] @relation("Player1")
+  matchResultsAsP2 MatchResult[] @relation("Player2")
 }
 
-model Post {
+model MatchResult {
+  id               String   @id @default(cuid())
+  player1Id        String
+  player2Id        String
+  winnerId         String?
+  player1EloBefore  Int?
+  player1EloAfter   Int?
+  player2EloBefore  Int?
+  player2EloAfter   Int?
+  mapName           String?
+  durationSeconds   Int?
+  replayFilePath    String?
+  desyncDetected    Boolean  @default(false)
+  playedAt          DateTime @default(now())
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  player1 User @relation("Player1", fields: [player1Id], references: [id])
+  player2 User @relation("Player2", fields: [player2Id], references: [id])
+
+  @@index([player1Id])
+  @@index([player2Id])
+  @@index([playedAt])
+}
+
+model UploadedMap {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  mapData     String
+  authorId    String
+  downloads   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([authorId])
+}
+
+model ChatMessage {
   id        String   @id @default(cuid())
-  title     String
-  content   String?
-  published Boolean  @default(false)
-  authorId  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  matchId   String
+  playerId  Int
+  message   String
+  timestamp DateTime @default(now())
+
+  @@index([matchId])
+  @@index([matchId, timestamp])
 }

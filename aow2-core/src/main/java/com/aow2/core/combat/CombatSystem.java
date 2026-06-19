@@ -6,6 +6,7 @@ import com.aow2.common.event.UnitKilledEvent;
 import com.aow2.common.model.BuildingType;
 import com.aow2.common.model.Faction;
 import com.aow2.common.model.GridPosition;
+import com.aow2.common.model.MovementState;
 import com.aow2.common.model.WeaponType;
 import com.aow2.core.economy.EconomySystem;
 import com.aow2.core.engine.GameState;
@@ -113,9 +114,10 @@ public class CombatSystem {
 
     /**
      * Process all combat for the current tick.
-     * Order: unit attacks → building attacks → siege mode → projectiles.
+     * Order: unit targeting → unit attacks → building attacks → siege mode → projectiles.
      */
     public void processTick() {
+        processUnitTargetAcquisition();
         processUnitAttacks();
         processBuildingAttacks();
         processSiegeDeployments();
@@ -123,8 +125,79 @@ public class CombatSystem {
     }
 
     /**
+     * Auto-acquire targets for units that have a target reference but haven't
+     * transitioned to the attacking state yet (attackState 0 or 1).
+     * Also handles idle units with no target — they scan for nearby enemies.
+     * <p>
+     * Attack state machine:
+     *   0 = idle (no target)
+     *   1 = targeting/acquiring (has target ref, moving toward or waiting to fire)
+     *   2 = firing/wind-up (reserved for future ranged wind-up animation)
+     *   3 = attacking (can fire, cooldown permitting)
+     * <p>
+     * REF: combat_formulas.md - attack state transitions
+     */
+    private void processUnitTargetAcquisition() {
+        List<Unit> allUnits = entityManager.getAllUnits();
+        for (Unit unit : allUnits) {
+            if (!unit.isAlive()) continue;
+            if (unit.isMine() || unit.isGarrisoned()) continue;
+            int state = unit.getAttackState();
+
+            if (state == 0) {
+                // Idle — scan for nearby enemies to auto-acquire
+                Unit nearestEnemy = findNearestEnemyUnit(
+                    unit.getPosition(), unit.getFaction(), unit.getStats().sightRange());
+                if (nearestEnemy != null) {
+                    unit.setTargetUnitRef(nearestEnemy.getId());
+                    unit.setAttackState(1); // transition to targeting
+                }
+            } else if (state == 1) {
+                // Targeting — check if we can transition to attacking
+                Integer targetRef = unit.getTargetUnitRef();
+                if (targetRef == null) {
+                    unit.setAttackState(0); // lost target, go idle
+                    continue;
+                }
+                if (targetRef > 0) {
+                    Unit target = entityManager.getUnit(targetRef);
+                    if (target == null || !target.isAlive()) {
+                        unit.setTargetUnitRef(null);
+                        unit.setAttackState(0);
+                        continue;
+                    }
+                    if (isInAttackRange(unit, target)) {
+                        unit.setAttackState(3); // in range, ready to attack
+                        // Stop moving when entering attack state
+                        if (unit.getMovementState() != MovementState.IDLE) {
+                            unit.clearPath();
+                        }
+                    }
+                    // else: stay in state 1, keep moving toward target (handled by MovementSystem)
+                } else if (targetRef < 0) {
+                    Building target = entityManager.getBuilding(-targetRef);
+                    if (target == null || !target.isAlive()) {
+                        unit.setTargetUnitRef(null);
+                        unit.setAttackState(0);
+                        continue;
+                    }
+                    if (isInAttackRange(unit, target)) {
+                        unit.setAttackState(3);
+                        if (unit.getMovementState() != MovementState.IDLE) {
+                            unit.clearPath();
+                        }
+                    }
+                }
+            }
+            // States 2 and 3 are handled by processUnitAttacks()
+        }
+    }
+
+    /**
      * Process unit attacks for all alive units in attack state.
      * Units in attack state 3 with a valid target will perform attacks.
+     * After firing, ranged units transition to state 2 (cooldown/waiting for projectile),
+     * and melee units transition to state 3 (can attack again next cooldown cycle).
      * <p>
      * REF: combat_formulas.md - attack cycle and cooldown system
      */
@@ -143,9 +216,15 @@ public class CombatSystem {
                 if (target != null) {
                     if (target.isAlive() && isInAttackRange(attacker, target)) {
                         performAttack(attacker, target);
+                        // After firing, set cooldown state
+                        attacker.setAttackState(3); // stays in attacking state, cooldown gates next shot
                     } else {
+                        // Target out of range or dead — re-acquire
                         attacker.setAttackState(1);
                     }
+                } else {
+                    attacker.setTargetUnitRef(null);
+                    attacker.setAttackState(0);
                 }
             } else if (targetRef != null && targetRef < 0) {
                 int buildingId = -targetRef;
@@ -153,9 +232,13 @@ public class CombatSystem {
                 if (target != null) {
                     if (target.isAlive() && isInAttackRange(attacker, target)) {
                         performAttackOnBuilding(attacker, target);
+                        attacker.setAttackState(3);
                     } else {
                         attacker.setAttackState(1);
                     }
+                } else {
+                    attacker.setTargetUnitRef(null);
+                    attacker.setAttackState(0);
                 }
             }
         }
@@ -339,8 +422,10 @@ public class CombatSystem {
             spawnProjectile(attacker, target, weaponType, weaponDamage, splash, splashRadius);
         } else {
             // Instant damage for BULLET/MELEE weapons
+            // FIX (P1-H2): Use the TARGET's own faction research for armor calculation.
+            // Armor is a defensive stat — the target's research determines their armor, not the attacker's.
             int targetArmor = armorCalculator.calculateEffectiveArmor(target,
-                getCompletedResearch(attacker));
+                getCompletedResearch(target));
             int damage = DamageCalculator.calculateDamage(weaponDamage, targetArmor);
 
             target.takeDamage(damage);

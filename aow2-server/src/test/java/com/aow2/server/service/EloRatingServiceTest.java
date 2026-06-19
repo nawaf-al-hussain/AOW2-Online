@@ -101,11 +101,13 @@ class EloRatingServiceTest {
     }
 
     @Test
-    @DisplayName("K-factor is 24 for experienced players (30+ games)")
+    @DisplayName("K-factor is 16 for experienced players (30+ games)")
     void kFactorExperienced() {
-        assertEquals(24, eloRatingService.getKFactor(30));
-        assertEquals(24, eloRatingService.getKFactor(100));
-        assertEquals(24, eloRatingService.getKFactor(500));
+        // FIX (P1-H1-server): Updated from 24 to 16 to match EloRatingService canonical value.
+        // The deprecated EloRatingService uses K=16 for experienced players.
+        assertEquals(16, eloRatingService.getKFactor(30));
+        assertEquals(16, eloRatingService.getKFactor(100));
+        assertEquals(16, eloRatingService.getKFactor(500));
     }
 
     @Test

@@ -23,7 +23,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 
 /**
  * Master AI controller that coordinates economy, military, and research decisions.
@@ -61,8 +60,11 @@ public final class AISystem {
     /** The AI research subsystem. */
     private final ResearchAI researchAI;
 
-    /** Random number generator for strategy quality decisions. */
-    private final Random random;
+    /** Deterministic RNG for lockstep multiplayer compatibility.
+     *  FIX (P1-H1): Replaced java.util.Random with DeterministicLCG.
+     *  java.util.Random implementation varies across JDK versions, causing
+     *  desyncs in lockstep multiplayer. LCG produces identical sequences everywhere. */
+    private final DeterministicLCG random;
 
     /** The fog of war system, used to limit AI vision to visible tiles only. */
     private FogOfWarSystem fogOfWar;
@@ -72,6 +74,12 @@ public final class AISystem {
 
     /** Number of currently active AI tasks. */
     private int activeTaskCount;
+
+    /** Cached TechTree instance — avoids reallocating every decision cycle.
+     *  FIX (P3-M9): TechTree is immutable and reads from static data, so a single
+     *  instance can be reused for the lifetime of this AISystem. Previously a new
+     *  TechTree() was allocated every processResearchDecisions() call. */
+    private final TechTree cachedTechTree;
 
     /**
      * Constructs an AI system for a specific player at a given difficulty.
@@ -88,10 +96,12 @@ public final class AISystem {
         this.economyAI = new EconomyAI();
         this.militaryAI = new MilitaryAI();
         this.researchAI = new ResearchAI();
-        // Seeded RNG for lockstep determinism — each AI player gets a deterministic seed
-        this.random = new Random(playerId * 31L + 42L);
+        // Deterministic RNG for lockstep determinism — each AI player gets a deterministic seed
+        // FIX (P1-H1): Using DeterministicLCG instead of java.util.Random for cross-version consistency
+        this.random = new DeterministicLCG(playerId * 31L + 42L);
         this.lastDecisionTick = -difficulty.tickInterval; // Allow immediate first decision
         this.activeTaskCount = 0;
+        this.cachedTechTree = new TechTree(); // FIX (P3-M9): Cache once, reuse every cycle
     }
 
     /**
@@ -216,7 +226,7 @@ public final class AISystem {
      */
     private void processResearchDecisions(EntityManager entities, EconomySystem economy,
                                            ResearchSystem research, long currentTick) {
-        TechTree techTree = new TechTree();
+        TechTree techTree = cachedTechTree; // FIX (P3-M9): Use cached instance
         int nextResearch = researchAI.decideNextResearch(entities, research, techTree, playerId, currentTick);
         if (nextResearch >= 0) {
             // Find available tech centre

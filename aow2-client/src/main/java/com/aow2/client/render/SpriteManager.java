@@ -15,8 +15,8 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Manages sprite loading from PNG files and procedural sprite generation.
@@ -45,13 +45,17 @@ public class SpriteManager {
     /** Singleton instance. */
     private static volatile SpriteManager instance;
 
-    /** Cache for unit sprites: key = "UNITTYPE_DIRECTION". */
+    /** Cache for unit sprites: key = "UNITTYPE_DIRECTION".
+     *  FIX (P1-H3-client): Changed to ConcurrentHashMap for thread-safety between
+     *  render thread and game tick thread. */
     private final Map<String, Image> unitSpriteCache;
 
-    /** Cache for building sprites: key = "BUILDINGTYPE_FACTION". */
+    /** Cache for building sprites: key = "BUILDINGTYPE_FACTION".
+     *  FIX (P1-H3-client): Changed to ConcurrentHashMap. */
     private final Map<String, Image> buildingSpriteCache;
 
-    /** Cache for terrain sprites: key = "TERRAINTYPE". */
+    /** Cache for terrain sprites: key = "TERRAINTYPE".
+     *  FIX (P1-H3-client): Changed to ConcurrentHashMap. */
     private final Map<String, Image> terrainSpriteCache;
 
     /** The procedural sprite generator for fallback sprites. */
@@ -77,9 +81,9 @@ public class SpriteManager {
      * @param spriteBasePath the base directory path for sprite assets
      */
     private SpriteManager(String spriteBasePath) {
-        this.unitSpriteCache = new HashMap<>();
-        this.buildingSpriteCache = new HashMap<>();
-        this.terrainSpriteCache = new HashMap<>();
+        this.unitSpriteCache = new ConcurrentHashMap<>();
+        this.buildingSpriteCache = new ConcurrentHashMap<>();
+        this.terrainSpriteCache = new ConcurrentHashMap<>();
         this.generator = new ProceduralSpriteGenerator();
         this.spriteBasePath = spriteBasePath;
         this.initialized = false;

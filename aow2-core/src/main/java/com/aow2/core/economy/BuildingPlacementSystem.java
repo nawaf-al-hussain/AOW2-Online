@@ -7,6 +7,7 @@ import com.aow2.common.model.Faction;
 import com.aow2.common.model.GridPosition;
 import com.aow2.common.model.TerrainType;
 import com.aow2.core.entity.Building;
+import com.aow2.core.research.ResearchSystem;
 import com.aow2.core.world.EntityManager;
 import com.aow2.core.world.GameMap;
 
@@ -58,6 +59,31 @@ public final class BuildingPlacementSystem {
      */
     public boolean canPlace(BuildingType type, GridPosition pos, int playerId,
                             EntityManager entities, GameMap map, EconomySystem economy) {
+        return canPlace(type, pos, playerId, entities, map, economy, null);
+    }
+
+    /**
+     * Check if a building can be placed at the given position, with research system check.
+     * <p>
+     * Rules:
+     * 1. Must be within Command Centre radius
+     * 2. Must not overlap impassable terrain
+     * 3. Must not overlap existing buildings
+     * 4. Must have sufficient credits
+     * 5. Must meet tech requirements (checked against ResearchSystem if provided)
+     *
+     * @param type      the building type to place
+     * @param pos       the grid position for placement
+     * @param playerId  the player ID (0 or 1)
+     * @param entities  the entity manager
+     * @param map       the game map
+     * @param economy   the economy system
+     * @param research  the research system (nullable — if null, tech check is skipped)
+     * @return true if the building can be placed
+     */
+    public boolean canPlace(BuildingType type, GridPosition pos, int playerId,
+                            EntityManager entities, GameMap map, EconomySystem economy,
+                            ResearchSystem research) {
         Faction faction = EconomySystem.playerFaction(playerId);
 
         // Rule 1: Must be within Command Centre radius (unless placing a CC itself)
@@ -86,7 +112,7 @@ public final class BuildingPlacementSystem {
         }
 
         // Rule 5: Must meet tech requirements
-        if (!meetsTechRequirement(type, playerId, entities)) {
+        if (!meetsTechRequirement(type, playerId, entities, research)) {
             LOG.debug("Placement rejected: player {} doesn't meet tech requirement for {}", playerId, type);
             return false;
         }
@@ -245,9 +271,36 @@ public final class BuildingPlacementSystem {
      * @return true if the tech requirement is met
      */
     private boolean meetsTechRequirement(BuildingType type, int playerId, EntityManager entities) {
-        // ASSUMPTION: All basic buildings have no tech requirement.
-        // When ResearchSystem is integrated, this will check completed research.
-        return true;
+        // Delegate to the research-aware version with no research system (backward compat)
+        return meetsTechRequirement(type, playerId, entities, null);
+    }
+
+    /**
+     * Check if the player meets the tech requirement for a building.
+     * Checks against the building's techRequirement field in BuildingStats.
+     * A value of 0 means no tech requirement (available from start).
+     *
+     * @param type     the building type
+     * @param playerId the player ID
+     * @param entities the entity manager
+     * @param research the research system (nullable — if null, tech check is skipped)
+     * @return true if the tech requirement is met
+     */
+    private boolean meetsTechRequirement(BuildingType type, int playerId, EntityManager entities,
+                                           ResearchSystem research) {
+        if (research == null) {
+            // No research system available — allow placement (backward compatible)
+            return true;
+        }
+
+        BuildingStats stats = StatsRegistry.getInstance().getBuildingStats(type);
+        int techReq = stats.techRequirement();
+
+        if (techReq == 0) {
+            return true; // No tech requirement
+        }
+
+        return research.getCompletedResearch(playerId).contains(techReq);
     }
 
     /**

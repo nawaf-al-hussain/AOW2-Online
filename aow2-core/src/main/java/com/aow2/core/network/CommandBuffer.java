@@ -5,11 +5,17 @@ import com.aow2.core.engine.GameState;
 import com.aow2.core.world.EntityManager;
 
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Rolling buffer of commands per frame for deterministic lockstep multiplayer.
  * Each frame slot holds commands for a specific tick, allowing input delay
  * and ensuring both players' commands are available before processing.
+ * <p>
+ * Thread safety: Uses CopyOnWriteArrayList for frame slots to safely handle
+ * concurrent access from the network receive thread (submitOpponentCommand)
+ * and the game loop thread (drainFrame). The buffer pointers are guarded by
+ * synchronization to prevent torn reads/writes.
  * REF: multiplayer_architecture.md - Lockstep P2P model
  * REF: protocol_specification.md - Turn-based game advancement (y.Q[0])
  */
@@ -21,8 +27,9 @@ public class CommandBuffer {
     /** Total buffer size in frames */
     private final int bufferSize;
 
-    /** Ring buffer of command lists, one per frame */
-    private final List<CommandType>[] frames;
+    /** Ring buffer of command lists, one per frame. CopyOnWriteArrayList ensures
+     * thread-safe concurrent adds from network thread and reads from game loop. */
+    private final CopyOnWriteArrayList<CommandType>[] frames;
 
     /** The current write frame index */
     private int writeIndex;
@@ -49,9 +56,9 @@ public class CommandBuffer {
         }
         this.inputDelay = inputDelay;
         this.bufferSize = bufferSize;
-        this.frames = (List<CommandType>[]) new List[bufferSize];
+        this.frames = (CopyOnWriteArrayList<CommandType>[]) new CopyOnWriteArrayList[bufferSize];
         for (int i = 0; i < bufferSize; i++) {
-            frames[i] = new java.util.ArrayList<>();
+            frames[i] = new CopyOnWriteArrayList<>();
         }
         this.writeIndex = 0;
         this.readIndex = 0;
@@ -64,7 +71,7 @@ public class CommandBuffer {
      *
      * @param command the command to buffer
      */
-    public void submitCommand(CommandType command) {
+    public synchronized void submitCommand(CommandType command) {
         if (command == null) {
             throw new IllegalArgumentException("Command must not be null");
         }
@@ -84,12 +91,17 @@ public class CommandBuffer {
         if (command == null) {
             throw new IllegalArgumentException("Command must not be null");
         }
-        int frameOffset = (int) (tick - currentTick);
-        if (frameOffset < 0 || frameOffset >= bufferSize) {
-            throw new IllegalArgumentException(
-                    "Tick " + tick + " out of buffer range (current: " + currentTick + ")");
+        int frameOffset;
+        int targetFrame;
+        synchronized (this) {
+            frameOffset = (int) (tick - currentTick);
+            if (frameOffset < 0 || frameOffset >= bufferSize) {
+                throw new IllegalArgumentException(
+                        "Tick " + tick + " out of buffer range (current: " + currentTick + ")");
+            }
+            targetFrame = (readIndex + frameOffset) % bufferSize;
         }
-        int targetFrame = (readIndex + frameOffset) % bufferSize;
+        // CopyOnWriteArrayList.add is thread-safe — no outer lock needed
         frames[targetFrame].add(command);
     }
 
@@ -99,7 +111,7 @@ public class CommandBuffer {
      *
      * @return unmodifiable list of commands for the current frame
      */
-    public List<CommandType> drainFrame() {
+    public synchronized List<CommandType> drainFrame() {
         List<CommandType> commands = List.copyOf(frames[readIndex]);
         frames[readIndex].clear();
 

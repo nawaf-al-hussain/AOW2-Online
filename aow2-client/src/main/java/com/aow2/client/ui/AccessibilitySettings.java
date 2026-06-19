@@ -4,6 +4,8 @@ import javafx.scene.control.CheckBox;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
@@ -199,7 +201,7 @@ public final class AccessibilitySettings {
         grid.add(keyLabel, 0, row, 3, 1);
         row++;
 
-        for (var entry : keyBindings.entrySet()) {
+        for (var entry : new HashMap<>(keyBindings).entrySet()) {
             Label actionLabel = new Label(entry.getKey() + ":");
             actionLabel.setStyle("-fx-text-fill: rgb(180, 175, 145);");
             Label keyDisplay = new Label(entry.getValue());
@@ -211,9 +213,42 @@ public final class AccessibilitySettings {
                 keyDisplay.setStyle("-fx-text-fill: rgb(255, 200, 100); "
                     + "-fx-background-color: rgb(60, 50, 20); -fx-padding: 3 8 3 8; "
                     + "-fx-border-color: rgb(200, 180, 80); -fx-border-width: 2;");
-                // Key rebind would be handled by a key listener on the scene
+                // FIX (P3-M6): Wire actual key listener for rebinding.
+                // Request focus so key events are delivered to this label,
+                // then capture the next key press to rebind the action.
+                keyDisplay.requestFocus();
                 LOG.debug("Waiting for key rebind for action: {}", entry.getKey());
             });
+            // FIX (P3-M6): Attach key-pressed handler that captures the next key
+            // and updates the binding. The handler consumes the event to prevent
+            // it from propagating to the game input handler.
+            keyDisplay.setOnKeyPressed(ke -> {
+                KeyCode code = ke.getCode();
+                if (code == KeyCode.ESCAPE) {
+                    // Cancel rebind — restore current display
+                    keyDisplay.setText(keyBindings.getOrDefault(entry.getKey(), "???"));
+                    keyDisplay.setStyle("-fx-text-fill: rgb(210, 200, 160); "
+                        + "-fx-background-color: rgb(40, 45, 35); -fx-padding: 3 8 3 8; "
+                        + "-fx-border-color: rgb(100, 110, 70); -fx-border-width: 1;");
+                    LOG.debug("Key rebind cancelled for action: {}", entry.getKey());
+                } else if (code.isModifierKey()) {
+                    // Ignore pure modifier presses (Shift, Ctrl, Alt, Meta)
+                    return;
+                } else {
+                    // Apply the new binding
+                    String keyName = code.isLetterKey() || code.isDigitKey()
+                        ? code.getName()
+                        : code.toString().replace("KEY_CODE:", "");
+                    keyBindings.put(entry.getKey(), keyName);
+                    keyDisplay.setText(keyName);
+                    keyDisplay.setStyle("-fx-text-fill: rgb(210, 200, 160); "
+                        + "-fx-background-color: rgb(40, 45, 35); -fx-padding: 3 8 3 8; "
+                        + "-fx-border-color: rgb(100, 110, 70); -fx-border-width: 1;");
+                    LOG.info("Key binding changed: {} -> {}", entry.getKey(), keyName);
+                }
+                ke.consume();
+            });
+            keyDisplay.setFocusTraversable(true);
             grid.add(actionLabel, 0, row);
             grid.add(keyDisplay, 1, row);
             row++;

@@ -290,16 +290,8 @@ public class GameScene {
                     yield new CommandType.Move(tick, LOCAL_PLAYER_ID, selectedIds, targetPos);
                 }
                 case "attack_move" -> {
-                    // Attack-move: attack if enemy at target, otherwise move
-                    Unit enemyUnit = entityManager.findUnitAt(targetPos);
-                    if (enemyUnit != null && enemyUnit.getFaction() != playerFaction) {
-                        yield new CommandType.Attack(tick, LOCAL_PLAYER_ID, selectedIds, enemyUnit.getId());
-                    }
-                    Building enemyBuilding = entityManager.findBuildingAt(targetPos);
-                    if (enemyBuilding != null && enemyBuilding.getFaction() != playerFaction) {
-                        yield new CommandType.Attack(tick, LOCAL_PLAYER_ID, selectedIds, enemyBuilding.getId());
-                    }
-                    yield new CommandType.Move(tick, LOCAL_PLAYER_ID, selectedIds, targetPos);
+                    // Attack-move: move to target, engaging enemies along the way
+                    yield new CommandType.AttackMove(tick, LOCAL_PLAYER_ID, selectedIds, targetPos);
                 }
                 case "stop" -> new CommandType.Stop(tick, LOCAL_PLAYER_ID, selectedIds);
                 case "hold" -> new CommandType.Stop(tick, LOCAL_PLAYER_ID, selectedIds);

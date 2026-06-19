@@ -92,10 +92,22 @@ public class ChatController {
      * @return 200 with a list of chat messages in chronological order
      */
     @GetMapping("/history/{matchId}")
-    public ResponseEntity<List<ChatMessageRecord>> getChatHistory(@PathVariable String matchId) {
-        List<ChatMessage> messages = chatMessageRepository.findByMatchIdOrderByTimestampAsc(matchId);
+    public ResponseEntity<List<ChatMessageRecord>> getChatHistory(
+            Authentication authentication, @PathVariable String matchId) {
+        Long playerId = (Long) authentication.getPrincipal();
 
-        List<ChatMessageRecord> records = messages.stream()
+        // Authorization: Only return messages if the player has sent at least one message
+        // in this match (i.e., they are a participant). This prevents users from
+        // reading arbitrary match chat histories.
+        List<ChatMessage> allMessages = chatMessageRepository.findByMatchIdOrderByTimestampAsc(matchId);
+        boolean isParticipant = allMessages.stream().anyMatch(m -> m.getPlayerId() == playerId.intValue());
+
+        if (!isParticipant && !allMessages.isEmpty()) {
+            log.warn("Player {} attempted to access chat history for match {} without participation", playerId, matchId);
+            return ResponseEntity.status(403).body(List.of());
+        }
+
+        List<ChatMessageRecord> records = allMessages.stream()
                 .map(msg -> new ChatMessageRecord(
                         msg.getMatchId(),
                         msg.getPlayerId(),

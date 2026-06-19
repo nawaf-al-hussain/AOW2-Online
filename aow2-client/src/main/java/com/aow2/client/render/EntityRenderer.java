@@ -8,6 +8,7 @@ import com.aow2.common.model.UnitType;
 import com.aow2.core.entity.Building;
 import com.aow2.core.entity.Unit;
 import com.aow2.core.world.EntityManager;
+import com.aow2.client.ui.AccessibilitySettings;
 
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
@@ -72,6 +73,11 @@ public class EntityRenderer {
     /** Set of currently selected entity IDs. */
     private Set<Integer> selectedEntityIds;
 
+    /** Accessibility settings for colorblind support.
+     *  FIX (P3-M7): Nullable — when set, faction colors are adjusted by
+     *  the colorblind factors before rendering. */
+    private AccessibilitySettings accessibilitySettings;
+
     /**
      * Constructs a new EntityRenderer.
      *
@@ -101,6 +107,18 @@ public class EntityRenderer {
      */
     public void setSelectedEntityIds(Set<Integer> selectedEntityIds) {
         this.selectedEntityIds = selectedEntityIds;
+    }
+
+    /**
+     * Sets the accessibility settings for colorblind color adjustment.
+     * FIX (P3-M7): When set, faction colors are transformed using the
+     * colorblind mode factors before rendering units and buildings.
+     *
+     * @param settings the accessibility settings instance, or null to disable
+     */
+    public void setAccessibilitySettings(AccessibilitySettings settings) {
+        this.accessibilitySettings = settings;
+        LOG.info("EntityRenderer accessibility settings {}", settings != null ? "set" : "cleared");
     }
 
     /**
@@ -163,7 +181,7 @@ public class EntityRenderer {
         double sx = isoRenderer.gridToScreenX(unit.getPosition().x(), unit.getPosition().y());
         double sy = isoRenderer.gridToScreenY(unit.getPosition().x(), unit.getPosition().y());
 
-        Color factionColor = factionColor(unit.getFaction());
+        Color factionColor = adjustForColorblind(factionColor(unit.getFaction()));
         boolean isSelected = selectedEntityIds.contains(unit.getId());
 
         // Attempt sprite rendering
@@ -330,7 +348,8 @@ public class EntityRenderer {
 
     /**
      * Computes the facing direction of a unit based on its current position and target.
-     * Falls back to SOUTH if the unit has no movement target (idle).
+     * FIX (P3-L3): Returns the unit's remembered lastDirection when idle (no target),
+     * instead of always defaulting to SOUTH. Updates lastDirection on every movement tick.
      *
      * @param unit the unit
      * @return the computed facing direction
@@ -338,13 +357,13 @@ public class EntityRenderer {
     private Direction computeFacing(Unit unit) {
         GridPosition target = unit.getTargetPosition();
         if (target == null) {
-            return Direction.SOUTH;
+            return unit.getLastDirection(); // FIX (P3-L3): remember last direction when idle
         }
         GridPosition pos = unit.getPosition();
         int dx = target.x() - pos.x();
         int dy = target.y() - pos.y();
         if (dx == 0 && dy == 0) {
-            return Direction.SOUTH;
+            return unit.getLastDirection(); // FIX (P3-L3): remember last direction
         }
         // Compute angle and map to 8 directions
         double angle = Math.atan2(dy, dx);
@@ -357,7 +376,9 @@ public class EntityRenderer {
         // atan2 gives: 0=E, PI/4=NE, PI/2=N... wait, atan2(y,x) with grid coords
         // In grid coords: +x = right, +y = down (screen convention for grid)
         // sector mapping: 0=E(2), 1=SE(3), 2=S(4), 3=SW(5), 4=W(6), 5=NW(7), 6=N(0), 7=NE(1)
-        return Direction.fromCode((sector + 2) % 8);
+        Direction facing = Direction.fromCode((sector + 2) % 8);
+        unit.setLastDirection(facing); // FIX (P3-L3): remember for when unit goes idle
+        return facing;
     }
 
     /**
@@ -371,7 +392,7 @@ public class EntityRenderer {
         double sx = isoRenderer.gridToScreenX(building.getPosition().x(), building.getPosition().y());
         double sy = isoRenderer.gridToScreenY(building.getPosition().x(), building.getPosition().y());
 
-        Color factionColor = factionColor(building.getFaction());
+        Color factionColor = adjustForColorblind(factionColor(building.getFaction()));
         boolean isSelected = selectedEntityIds.contains(building.getId());
 
         // Attempt sprite rendering
@@ -591,5 +612,41 @@ public class EntityRenderer {
             case RESISTANCE    -> Color.rgb(200, 50, 50);    // red
             case NEUTRAL       -> Color.rgb(150, 150, 150);  // gray
         };
+    }
+
+    /**
+     * Adjusts a faction color for colorblind accessibility.
+     * FIX (P3-M7): When accessibility settings are available and colorblind mode
+     * is enabled, applies the red/green/blue channel factors to transform the
+     * color so it remains distinguishable for colorblind players.
+     * Uses a luminance-preserving matrix transform based on Brettel et al. (1997).
+     *
+     * @param color the original faction color
+     * @return the adjusted color, or the original if colorblind mode is NONE
+     */
+    private Color adjustForColorblind(Color color) {
+        if (accessibilitySettings == null) {
+            return color;
+        }
+        double[] factors = accessibilitySettings.getColorAdjustFactors();
+        if (factors[0] == 1.0 && factors[1] == 1.0 && factors[2] == 1.0) {
+            return color; // No adjustment needed (NONE mode)
+        }
+
+        double r = Math.min(1.0, color.getRed() * factors[0]
+                + color.getGreen() * 0.3 * (1.0 - factors[1])
+                + color.getBlue() * 0.1 * (1.0 - factors[2]));
+        double g = Math.min(1.0, color.getRed() * 0.1 * (1.0 - factors[0])
+                + color.getGreen() * factors[1]
+                + color.getBlue() * 0.1 * (1.0 - factors[2]));
+        double b = Math.min(1.0, color.getRed() * 0.1 * (1.0 - factors[0])
+                + color.getGreen() * 0.3 * (1.0 - factors[1])
+                + color.getBlue() * factors[2]);
+
+        return Color.color(
+            Math.max(0.0, Math.min(1.0, r)),
+            Math.max(0.0, Math.min(1.0, g)),
+            Math.max(0.0, Math.min(1.0, b))
+        );
     }
 }

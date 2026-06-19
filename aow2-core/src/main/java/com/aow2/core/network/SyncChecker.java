@@ -1,9 +1,15 @@
 package com.aow2.core.network;
 
+import com.aow2.core.entity.Building;
+import com.aow2.core.entity.Unit;
 import com.aow2.core.economy.EconomySystem;
 import com.aow2.core.engine.GameState;
 import com.aow2.core.research.ResearchSystem;
 import com.aow2.core.world.EntityManager;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 
 /**
  * Computes and compares state hashes for desync detection in lockstep multiplayer.
@@ -79,7 +85,12 @@ public class SyncChecker {
         hash = hash * 31 + state.currentTick();
 
         // Include all living unit positions and health
-        for (var unit : entities.getAllUnits()) {
+        // FIX (P1-H7): Sort entities by ID before hashing to ensure deterministic order
+        // across JVM instances. ConcurrentHashMap.values() iteration order is non-deterministic,
+        // which caused false desync reports in multiplayer.
+        List<Unit> sortedUnits = new ArrayList<>(entities.getAllUnits());
+        sortedUnits.sort(Comparator.comparingInt(Unit::getId));
+        for (var unit : sortedUnits) {
             if (!unit.isAlive()) continue;
             hash = hash * 31 + unit.getId();
             hash = hash * 31 + unit.getPosition().x();
@@ -89,7 +100,10 @@ public class SyncChecker {
         }
 
         // Include all living building positions and health
-        for (var building : entities.getAllBuildings()) {
+        // FIX (P1-H7): Sort buildings by ID for deterministic hash order.
+        List<Building> sortedBuildings = new ArrayList<>(entities.getAllBuildings());
+        sortedBuildings.sort(Comparator.comparingInt(Building::getId));
+        for (var building : sortedBuildings) {
             if (!building.isAlive()) continue;
             hash = hash * 31 + building.getId();
             hash = hash * 31 + building.getPosition().x();

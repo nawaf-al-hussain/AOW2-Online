@@ -1,5 +1,6 @@
 package com.aow2.core.entity;
 
+import com.aow2.common.model.Direction;
 import com.aow2.common.model.Faction;
 import com.aow2.common.model.GridPosition;
 import com.aow2.common.model.MovementState;
@@ -79,8 +80,20 @@ public class Unit extends Entity {
     /** Ticks remaining before siege mode is fully deployed or undeployed. */
     private int siegeDeployTimer;
 
+    /** Whether this unit should auto-engage enemies while moving (attack-move). */
+    private boolean autoEngage;
+
+    /** The final destination for an attack-move command (resume after combat). */
+    private GridPosition autoEngageTarget;
+
     /** Death animation frame calculated on kill. FIX (L6): stored for client rendering. */
     private int deathAnimFrame;
+
+    /** The last facing direction of this unit.
+     *  FIX (P3-L3): Previously idle units always rendered facing SOUTH because
+     *  computeFacing() returned SOUTH when targetPosition was null. Now we
+     *  remember the last computed direction so idle units keep their facing. */
+    private Direction lastDirection;
 
     /**
      * Constructs a new unit.
@@ -441,6 +454,54 @@ public class Unit extends Entity {
 
     /** FIX (L6): Set death animation frame when unit is killed. */
     public void setDeathAnimFrame(int frame) { this.deathAnimFrame = frame; }
+
+    /**
+     * Returns the last facing direction of this unit.
+     * Used by the renderer so idle units retain their previous orientation.
+     *
+     * @return the last known direction, or SOUTH if never set
+     */
+    public Direction getLastDirection() {
+        return lastDirection != null ? lastDirection : Direction.SOUTH;
+    }
+
+    /**
+     * Updates the last facing direction of this unit.
+     * Should be called whenever the unit's movement target changes direction.
+     *
+     * @param direction the new facing direction
+     */
+    public void setLastDirection(Direction direction) {
+        this.lastDirection = direction;
+    }
+
+    /**
+     * Returns whether this unit is in attack-move auto-engage mode.
+     *
+     * @return true if unit should auto-engage enemies while moving
+     */
+    public boolean isAutoEngage() { return autoEngage; }
+
+    /**
+     * Sets the auto-engage flag for attack-move behavior.
+     *
+     * @param autoEngage true to enable auto-engage during movement
+     */
+    public void setAutoEngage(boolean autoEngage) { this.autoEngage = autoEngage; }
+
+    /**
+     * Returns the final destination for an attack-move command.
+     *
+     * @return the target position to resume moving toward after combat
+     */
+    public GridPosition getAutoEngageTarget() { return autoEngageTarget; }
+
+    /**
+     * Sets the attack-move final destination.
+     *
+     * @param target the target position to resume toward after combat
+     */
+    public void setAutoEngageTarget(GridPosition target) { this.autoEngageTarget = target; }
 
     @Override
     public String toString() {

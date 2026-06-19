@@ -16,7 +16,7 @@ import java.util.Objects;
  * - Overrode hashCode() to use Arrays.hashCode() for unitIds field
  */
 public sealed interface CommandType permits
-    CommandType.Move, CommandType.Attack, CommandType.Build,
+    CommandType.Move, CommandType.Attack, CommandType.AttackMove, CommandType.Build,
     CommandType.Produce, CommandType.Research, CommandType.Garrison,
     CommandType.Ungarrison, CommandType.Cancel, CommandType.SiegeMode,
     CommandType.Stop, CommandType.Patrol {
@@ -113,6 +113,49 @@ public sealed interface CommandType permits
             result = 31 * result + playerId;
             result = 31 * result + Arrays.hashCode(unitIds);
             result = 31 * result + targetId;
+            return result;
+        }
+    }
+
+    /**
+     * Order one or more units to move to a position, engaging any enemies encountered along the way.
+     * Units will pursue and attack enemies within their sight range during the move,
+     * then resume moving to the target position once no enemies remain.
+     *
+     * @param tick     game tick
+     * @param playerId issuing player
+     * @param unitIds  entity IDs of units to attack-move
+     * @param target   target grid position to move toward
+     */
+    record AttackMove(long tick, int playerId, int[] unitIds, GridPosition target) implements CommandType {
+        public AttackMove {
+            if (tick < 0) {
+                throw new IllegalArgumentException("tick must not be negative, got: " + tick);
+            }
+            if (unitIds == null || unitIds.length == 0) {
+                throw new IllegalArgumentException("unitIds must not be null or empty");
+            }
+            if (target == null) {
+                throw new IllegalArgumentException("target must not be null");
+            }
+            unitIds = unitIds.clone();
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof AttackMove that)) return false;
+            return tick == that.tick && playerId == that.playerId
+                && Arrays.equals(unitIds, that.unitIds)
+                && Objects.equals(target, that.target);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = Long.hashCode(tick);
+            result = 31 * result + playerId;
+            result = 31 * result + Arrays.hashCode(unitIds);
+            result = 31 * result + Objects.hashCode(target);
             return result;
         }
     }

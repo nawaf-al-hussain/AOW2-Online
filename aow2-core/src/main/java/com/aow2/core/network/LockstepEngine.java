@@ -265,7 +265,7 @@ public final class LockstepEngine {
                     if (unit != null && unit.getFaction().ordinal() == m.playerId()) {
                         // REF: pathfinding.md — compute path via MovementSystem instead of just setting target
                         if (movementSystem != null && gameMap != null) {
-                            movementSystem.issueMoveCommand(unit, m.target(), gameMap);
+                            movementSystem.issueMoveCommand(unit, m.target(), gameMap, entities);
                         } else {
                             // Fallback: set target directly if MovementSystem not available
                             unit.setTargetPosition(m.target());
@@ -280,6 +280,24 @@ public final class LockstepEngine {
                     var unit = entities.getUnit(unitId);
                     if (unit != null) {
                         unit.setTargetUnitRef(a.targetId());
+                    }
+                }
+            }
+            case CommandType.AttackMove am -> {
+                // Attack-move: move units toward target, auto-engaging enemies along the way
+                for (int unitId : am.unitIds()) {
+                    var unit = entities.getUnit(unitId);
+                    if (unit != null && unit.isAlive() && unit.getFaction().ordinal() == am.playerId()) {
+                        if (movementSystem != null && gameMap != null) {
+                            movementSystem.issueMoveCommand(unit, am.target(), gameMap, entities);
+                        } else {
+                            unit.setTargetPosition(am.target());
+                            unit.setMovementState(
+                                    com.aow2.common.model.MovementState.MOVING);
+                        }
+                        // Mark unit for auto-engage behavior during movement
+                        unit.setAutoEngage(true);
+                        unit.setAutoEngageTarget(am.target());
                     }
                 }
             }
@@ -355,7 +373,7 @@ public final class LockstepEngine {
                     var unit = entities.getUnit(unitId);
                     if (unit != null && unit.isAlive()) {
                         if (movementSystem != null && gameMap != null) {
-                            movementSystem.issueMoveCommand(unit, pt.waypoint(), gameMap);
+                            movementSystem.issueMoveCommand(unit, pt.waypoint(), gameMap, entities);
                         } else {
                             unit.setTargetPosition(pt.waypoint());
                             unit.setMovementState(

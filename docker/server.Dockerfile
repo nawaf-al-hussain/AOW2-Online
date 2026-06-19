@@ -42,5 +42,10 @@ EXPOSE 8080 8443
 HEALTHCHECK --interval=15s --timeout=10s --retries=3 --start-period=30s \
     CMD curl -f http://localhost:8080/actuator/health || exit 1
 
+# FIX (P3-K1): Validate JWT secret is set and not the dev default.
+# Prevents production deployments from running with the insecure default key.
+# Users must set AOW2_JWT_SECRET environment variable to a real secret (>= 32 chars).
+ENV AOW2_JWT_SECRET_CHECK=REQUIRED
+
 # JVM options: G1GC for low latency, preview features for Java 21
-ENTRYPOINT ["sh", "-c", "java ${JAVA_OPTS:--XX:+UseG1GC --enable-preview} -jar app.jar"]
+ENTRYPOINT ["sh", "-c", "if [ -z \"$AOW2_JWT_SECRET\" ] || [ \"$AOW2_JWT_SECRET\" = \"aow2-dev-only-secret-key-that-is-at-least-32-bytes-long-for-hmac\" ]; then echo 'ERROR: AOW2_JWT_SECRET must be set to a secure secret (>= 32 chars). Do not use the default dev key in production.' >&2; exit 1; fi; java ${JAVA_OPTS:--XX:+UseG1GC --enable-preview} -jar app.jar"]

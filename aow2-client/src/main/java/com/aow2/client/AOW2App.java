@@ -106,7 +106,11 @@ public class AOW2App extends GameApplication {
     private void showGame() {
         if (gameScene != null) {
             gameScene.stop();
+            // Clear references to allow GC before allocating a new scene
+            gameScene = null;
         }
+
+        FXGL.getGameScene().clearUINodes();
 
         gameScene = new GameScene();
         gameScene.initializeGame();
@@ -164,6 +168,11 @@ public class AOW2App extends GameApplication {
      * Shows the campaign selection scene.
      */
     private void showCampaign() {
+        if (campaignScene != null) {
+            FXGL.getGameScene().clearUINodes();
+            campaignScene = null;
+        }
+
         campaignScene = new CampaignScene();
         campaignScene.setCallback(new CampaignScene.SceneCallback() {
             @Override
@@ -189,6 +198,11 @@ public class AOW2App extends GameApplication {
      * Shows the mod manager scene.
      */
     private void showModManager() {
+        if (modManagerScene != null) {
+            FXGL.getGameScene().clearUINodes();
+            modManagerScene = null;
+        }
+
         modManagerScene = new ModManagerScene();
         modManagerScene.setOnBackCallback(this::showMainMenu);
 
