@@ -78,8 +78,9 @@ public class SyncChecker {
         // Include tick count
         hash = hash * 31 + state.currentTick();
 
-        // Include all unit positions and health
+        // Include all living unit positions and health
         for (var unit : entities.getAllUnits()) {
+            if (!unit.isAlive()) continue;
             hash = hash * 31 + unit.getId();
             hash = hash * 31 + unit.getPosition().x();
             hash = hash * 31 + unit.getPosition().y();
@@ -87,8 +88,9 @@ public class SyncChecker {
             hash = hash * 31 + unit.getFaction().ordinal();
         }
 
-        // Include all building positions and health
+        // Include all living building positions and health
         for (var building : entities.getAllBuildings()) {
+            if (!building.isAlive()) continue;
             hash = hash * 31 + building.getId();
             hash = hash * 31 + building.getPosition().x();
             hash = hash * 31 + building.getPosition().y();

@@ -45,6 +45,9 @@ public sealed interface CommandType permits
      */
     record Move(long tick, int playerId, int[] unitIds, GridPosition target) implements CommandType {
         public Move {
+            if (tick < 0) {
+                throw new IllegalArgumentException("tick must not be negative, got: " + tick);
+            }
             if (unitIds == null || unitIds.length == 0) {
                 throw new IllegalArgumentException("unitIds must not be null or empty");
             }
@@ -83,6 +86,9 @@ public sealed interface CommandType permits
      */
     record Attack(long tick, int playerId, int[] unitIds, int targetId) implements CommandType {
         public Attack {
+            if (tick < 0) {
+                throw new IllegalArgumentException("tick must not be negative, got: " + tick);
+            }
             if (unitIds == null || unitIds.length == 0) {
                 throw new IllegalArgumentException("unitIds must not be null or empty");
             }
@@ -121,6 +127,9 @@ public sealed interface CommandType permits
      */
     record Build(long tick, int playerId, BuildingType buildingType, GridPosition position) implements CommandType {
         public Build {
+            if (tick < 0) {
+                throw new IllegalArgumentException("tick must not be negative, got: " + tick);
+            }
             if (buildingType == null) {
                 throw new IllegalArgumentException("buildingType must not be null");
             }
@@ -140,6 +149,9 @@ public sealed interface CommandType permits
      */
     record Produce(long tick, int playerId, int producerId, UnitType unitType) implements CommandType {
         public Produce {
+            if (tick < 0) {
+                throw new IllegalArgumentException("tick must not be negative, got: " + tick);
+            }
             if (producerId < 0) {
                 throw new IllegalArgumentException("producerId must not be negative, got: " + producerId);
             }
@@ -159,6 +171,9 @@ public sealed interface CommandType permits
      */
     record Research(long tick, int playerId, int techCentreId, int researchId) implements CommandType {
         public Research {
+            if (tick < 0) {
+                throw new IllegalArgumentException("tick must not be negative, got: " + tick);
+            }
             if (techCentreId < 0) {
                 throw new IllegalArgumentException("techCentreId must not be negative, got: " + techCentreId);
             }
@@ -178,6 +193,9 @@ public sealed interface CommandType permits
      */
     record Garrison(long tick, int playerId, int[] unitIds, int buildingId) implements CommandType {
         public Garrison {
+            if (tick < 0) {
+                throw new IllegalArgumentException("tick must not be negative, got: " + tick);
+            }
             if (unitIds == null || unitIds.length == 0) {
                 throw new IllegalArgumentException("unitIds must not be null or empty");
             }
@@ -215,6 +233,9 @@ public sealed interface CommandType permits
      */
     record Ungarrison(long tick, int playerId, int buildingId) implements CommandType {
         public Ungarrison {
+            if (tick < 0) {
+                throw new IllegalArgumentException("tick must not be negative, got: " + tick);
+            }
             if (buildingId < 0) {
                 throw new IllegalArgumentException("buildingId must not be negative, got: " + buildingId);
             }
@@ -230,6 +251,9 @@ public sealed interface CommandType permits
      */
     record Cancel(long tick, int playerId, int entityId) implements CommandType {
         public Cancel {
+            if (tick < 0) {
+                throw new IllegalArgumentException("tick must not be negative, got: " + tick);
+            }
             if (entityId < 0) {
                 throw new IllegalArgumentException("entityId must not be negative, got: " + entityId);
             }
@@ -247,6 +271,9 @@ public sealed interface CommandType permits
      */
     record SiegeMode(long tick, int playerId, int unitId, boolean enabled) implements CommandType {
         public SiegeMode {
+            if (tick < 0) {
+                throw new IllegalArgumentException("tick must not be negative, got: " + tick);
+            }
             if (unitId < 0) {
                 throw new IllegalArgumentException("unitId must not be negative, got: " + unitId);
             }
@@ -262,6 +289,9 @@ public sealed interface CommandType permits
      */
     record Stop(long tick, int playerId, int[] unitIds) implements CommandType {
         public Stop {
+            if (tick < 0) {
+                throw new IllegalArgumentException("tick must not be negative, got: " + tick);
+            }
             if (unitIds == null || unitIds.length == 0) {
                 throw new IllegalArgumentException("unitIds must not be null or empty");
             }
@@ -295,6 +325,9 @@ public sealed interface CommandType permits
      */
     record Patrol(long tick, int playerId, int[] unitIds, GridPosition waypoint) implements CommandType {
         public Patrol {
+            if (tick < 0) {
+                throw new IllegalArgumentException("tick must not be negative, got: " + tick);
+            }
             if (unitIds == null || unitIds.length == 0) {
                 throw new IllegalArgumentException("unitIds must not be null or empty");
             }

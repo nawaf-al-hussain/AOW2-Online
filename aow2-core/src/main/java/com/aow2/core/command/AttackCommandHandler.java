@@ -69,6 +69,12 @@ public final class AttackCommandHandler {
      */
     private boolean isInAttackRange(Unit attacker, Unit target, CombatSystem combat) {
         int range = combat.getEffectiveAttackRange(attacker);
-        return attacker.getPosition().distanceTo(target.getPosition()) <= range;
+        // Use Chebyshev distance (max of axis distances) for grid-based range checks,
+        // consistent with the original game's distance class system.
+        var aPos = attacker.getPosition();
+        var tPos = target.getPosition();
+        int dx = Math.abs(aPos.x() - tPos.x());
+        int dy = Math.abs(aPos.y() - tPos.y());
+        return Math.max(dx, dy) <= range;
     }
 }

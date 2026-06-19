@@ -52,8 +52,8 @@ public class AuthService {
      */
     @Transactional
     public Map<String, Object> register(String username, String password) {
-        if (username == null || username.length() < 3 || username.length() > 32) {
-            throw new IllegalArgumentException("Username must be 3-32 characters");
+        if (username == null || !username.matches("[a-zA-Z0-9_-]{3,32}")) {
+            throw new IllegalArgumentException("Username must be 3-32 alphanumeric characters, underscores, or hyphens");
         }
         if (password == null || password.length() < 6) {
             throw new IllegalArgumentException("Password must be at least 6 characters");

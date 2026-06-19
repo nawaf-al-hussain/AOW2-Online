@@ -67,6 +67,9 @@ public class MainMenuScene {
     /** Background animation timeline. */
     private Timeline bgAnimation;
 
+    /** Shared application version string. */
+    private static final String VERSION = "v0.2.0-ALPHA";
+
     /**
      * Callback interface for menu button actions.
      */
@@ -116,7 +119,7 @@ public class MainMenuScene {
         subtitle.setFill(Color.rgb(140, 150, 90));
         subtitle.setEffect(new DropShadow(5, Color.rgb(0, 0, 0, 0.5)));
 
-        Text version = new Text("v0.2.0-ALPHA");
+        Text version = new Text(VERSION);
         version.setFont(Font.font("Consolas", 12));
         version.setFill(Color.rgb(100, 100, 100));
 

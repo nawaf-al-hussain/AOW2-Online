@@ -254,14 +254,14 @@ public final class GameConfig {
 
         private Builder() {}
 
-        public Builder turnTimeSettings(int[] val) { this.turnTimeSettings = val; return this; }
-        public Builder buildingFootprintWidths(int[] val) { this.buildingFootprintWidths = val; return this; }
-        public Builder buildingFootprintHeights(int[] val) { this.buildingFootprintHeights = val; return this; }
-        public Builder buildingPowerRadius(int[] val) { this.buildingPowerRadius = val; return this; }
-        public Builder rankExpThresholds(int[] val) { this.rankExpThresholds = val; return this; }
-        public Builder rankCreditRewards(int[] val) { this.rankCreditRewards = val; return this; }
-        public Builder rankBonusPoints(int[] val) { this.rankBonusPoints = val; return this; }
-        public Builder battleTimeLimits(int[] val) { this.battleTimeLimits = val; return this; }
+        public Builder turnTimeSettings(int[] val) { this.turnTimeSettings = val != null ? val.clone() : null; return this; }
+        public Builder buildingFootprintWidths(int[] val) { this.buildingFootprintWidths = val != null ? val.clone() : null; return this; }
+        public Builder buildingFootprintHeights(int[] val) { this.buildingFootprintHeights = val != null ? val.clone() : null; return this; }
+        public Builder buildingPowerRadius(int[] val) { this.buildingPowerRadius = val != null ? val.clone() : null; return this; }
+        public Builder rankExpThresholds(int[] val) { this.rankExpThresholds = val != null ? val.clone() : null; return this; }
+        public Builder rankCreditRewards(int[] val) { this.rankCreditRewards = val != null ? val.clone() : null; return this; }
+        public Builder rankBonusPoints(int[] val) { this.rankBonusPoints = val != null ? val.clone() : null; return this; }
+        public Builder battleTimeLimits(int[] val) { this.battleTimeLimits = val != null ? val.clone() : null; return this; }
 
         /**
          * Builds a new GameConfig from the builder's state.

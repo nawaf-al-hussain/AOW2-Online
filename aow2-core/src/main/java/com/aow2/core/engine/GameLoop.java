@@ -45,10 +45,17 @@ public class GameLoop {
         LOG.info("Game loop stopped at tick {}", gameState.currentTick());
     }
 
+    /** Counter for periodic drift mitigation resets. */
+    private long tickCount;
+
+    /** Reset lastTime every N ticks to prevent floating-point accumulator drift. */
+    private static final long DRIFT_RESET_INTERVAL = 1000;
+
     private void loop() {
         final double tickDuration = GameConstants.TICK_DURATION_MS;
         long lastTime = System.nanoTime();
         double accumulator = 0.0;
+        tickCount = 0;
 
         while (running) {
             long now = System.nanoTime();
@@ -62,6 +69,14 @@ public class GameLoop {
                 // TickManager.processTick() already calls advanceTick(), so we must not
                 // advance again here or the game state will advance by 2 ticks per frame.
                 accumulator -= tickDuration;
+                tickCount++;
+
+                // NOTE: Floating-point accumulator can drift over very long sessions.
+                // Periodically reset to prevent accumulated rounding errors.
+                if (tickCount % DRIFT_RESET_INTERVAL == 0) {
+                    lastTime = System.nanoTime();
+                    accumulator = 0.0;
+                }
             }
 
             // Sleep to prevent busy-waiting

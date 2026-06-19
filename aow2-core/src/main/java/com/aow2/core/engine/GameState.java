@@ -19,13 +19,13 @@ public class GameState {
 
     private long currentTick;
     private final CopyOnWriteArrayList<GameEvent> eventQueue;
-    private final List<GameEvent> processedEvents;
+    private final CopyOnWriteArrayList<GameEvent> processedEvents;
     private boolean running;
 
     public GameState() {
         this.currentTick = 0;
         this.eventQueue = new CopyOnWriteArrayList<>();
-        this.processedEvents = new ArrayList<>();
+        this.processedEvents = new CopyOnWriteArrayList<>();
         this.running = false;
     }
 

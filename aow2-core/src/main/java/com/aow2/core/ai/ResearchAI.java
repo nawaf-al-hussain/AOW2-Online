@@ -64,9 +64,9 @@ public final class ResearchAI {
      * @return the research ID to start, or -1 if none available
      */
     public int decideNextResearch(EntityManager entities, ResearchSystem research,
-                                  TechTree techTree, int playerId) {
+                                  TechTree techTree, int playerId, long currentTick) {
         Faction faction = EconomySystem.playerFaction(playerId);
-        GamePhase phase = getGamePhase(entities, -1, playerId);
+        GamePhase phase = getGamePhase(entities, currentTick, playerId);
 
         // Check if the player has a Technology Centre
         Building techCentre = findAvailableTechCentre(entities, playerId);

@@ -161,7 +161,7 @@ public final class AISystem {
         // Execute AI decision pipeline, passing fogOfWar for visibility-filtered decisions
         processEconomyDecisions(entities, map, economy, research, production, placement);
         taskCompleted();
-        processResearchDecisions(entities, economy, research);
+        processResearchDecisions(entities, economy, research, currentTick);
         taskCompleted();
         processMilitaryDecisions(entities, map, movement);
         taskCompleted();
@@ -215,9 +215,9 @@ public final class AISystem {
      * REF: ai_analysis.md — AI uses Technology Centre to research upgrades.
      */
     private void processResearchDecisions(EntityManager entities, EconomySystem economy,
-                                           ResearchSystem research) {
+                                           ResearchSystem research, long currentTick) {
         TechTree techTree = new TechTree();
-        int nextResearch = researchAI.decideNextResearch(entities, research, techTree, playerId);
+        int nextResearch = researchAI.decideNextResearch(entities, research, techTree, playerId, currentTick);
         if (nextResearch >= 0) {
             // Find available tech centre
             Faction faction = EconomySystem.playerFaction(playerId);

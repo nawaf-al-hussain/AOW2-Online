@@ -69,8 +69,11 @@ public class GameScene {
     /** Default canvas height. */
     private static final int CANVAS_HEIGHT = 720;
 
-    /** Player ID for the local player (always 0 = CONFEDERATION in local play). */
+    /** Player ID for the local player (always 0 in local play). */
     private static final int LOCAL_PLAYER_ID = 0;
+
+    /** The local player's faction (defaults to CONFEDERATION for local play). */
+    private Faction playerFaction = Faction.CONFEDERATION;
 
     /** The root pane for this scene. */
     private final StackPane root;
@@ -277,11 +280,11 @@ public class GameScene {
                 case "move" -> {
                     // Check if there's an enemy entity at the target position
                     Unit enemyUnit = entityManager.findUnitAt(targetPos);
-                    if (enemyUnit != null && enemyUnit.getFaction() != Faction.CONFEDERATION) {
+                    if (enemyUnit != null && enemyUnit.getFaction() != playerFaction) {
                         yield new CommandType.Attack(tick, LOCAL_PLAYER_ID, selectedIds, enemyUnit.getId());
                     }
                     Building enemyBuilding = entityManager.findBuildingAt(targetPos);
-                    if (enemyBuilding != null && enemyBuilding.getFaction() != Faction.CONFEDERATION) {
+                    if (enemyBuilding != null && enemyBuilding.getFaction() != playerFaction) {
                         yield new CommandType.Attack(tick, LOCAL_PLAYER_ID, selectedIds, enemyBuilding.getId());
                     }
                     yield new CommandType.Move(tick, LOCAL_PLAYER_ID, selectedIds, targetPos);
@@ -289,11 +292,11 @@ public class GameScene {
                 case "attack_move" -> {
                     // Attack-move: attack if enemy at target, otherwise move
                     Unit enemyUnit = entityManager.findUnitAt(targetPos);
-                    if (enemyUnit != null && enemyUnit.getFaction() != Faction.CONFEDERATION) {
+                    if (enemyUnit != null && enemyUnit.getFaction() != playerFaction) {
                         yield new CommandType.Attack(tick, LOCAL_PLAYER_ID, selectedIds, enemyUnit.getId());
                     }
                     Building enemyBuilding = entityManager.findBuildingAt(targetPos);
-                    if (enemyBuilding != null && enemyBuilding.getFaction() != Faction.CONFEDERATION) {
+                    if (enemyBuilding != null && enemyBuilding.getFaction() != playerFaction) {
                         yield new CommandType.Attack(tick, LOCAL_PLAYER_ID, selectedIds, enemyBuilding.getId());
                     }
                     yield new CommandType.Move(tick, LOCAL_PLAYER_ID, selectedIds, targetPos);
@@ -382,9 +385,9 @@ public class GameScene {
         minimapRenderer.setEntityManager(entityManager);
         entityRenderer.setSelectedEntityIds(selectionManager.getSelectedIds());
         selectionManager.setEntityManager(entityManager);
-        selectionManager.setPlayerFaction(Faction.CONFEDERATION);
+        selectionManager.setPlayerFaction(playerFaction);
         hud.setEntityManager(entityManager);
-        hud.setPlayerFaction(Faction.CONFEDERATION);
+        hud.setPlayerFaction(playerFaction);
 
         // Initialize fog of war system and connect to renderer and tick manager
         fogOfWarSystem.initialize(map);
@@ -522,6 +525,9 @@ public class GameScene {
             gameLoop.start();
         }
 
+        if (renderTimer != null) {
+            renderTimer.stop();
+        }
         renderTimer = new AnimationTimer() {
             @Override
             public void handle(long now) {

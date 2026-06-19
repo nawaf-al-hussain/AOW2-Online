@@ -18,4 +18,4 @@ spring:
 aow2:
   jwt:
     secret: test-secret-key-that-is-at-least-32-bytes-long-for-testing
-    expiration: 86400000
+    expiration-ms: 86400000

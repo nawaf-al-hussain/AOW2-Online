@@ -233,7 +233,7 @@ class ResearchAITest {
                 createCCStats(BuildingType.CONFED_COMMAND_CENTRE), new GridPosition(10, 10));
 
             // When
-            int researchId = researchAI.decideNextResearch(entities, research, techTree, 0);
+            int researchId = researchAI.decideNextResearch(entities, research, techTree, 0, -1);
 
             // Then
             assertEquals(-1, researchId, "Should return -1 when no Tech Centre available");
@@ -249,7 +249,7 @@ class ResearchAITest {
                 createTechCentreStats(BuildingType.CONFED_TECH_CENTRE), new GridPosition(11, 10));
 
             // When: early game (tick 100)
-            int researchId = researchAI.decideNextResearch(entities, research, techTree, 0);
+            int researchId = researchAI.decideNextResearch(entities, research, techTree, 0, -1);
 
             // Then: should choose research 0 (Energy Suit) — first available with no prerequisites
             assertTrue(researchId == 0 || researchId == 4 || researchId == 5,
@@ -272,7 +272,7 @@ class ResearchAITest {
             // When: research 0 is completed
             // The ResearchSystem doesn't expose a way to force-complete research,
             // so we test the default behavior
-            int researchId = researchAI.decideNextResearch(entities, research, techTree, 0);
+            int researchId = researchAI.decideNextResearch(entities, research, techTree, 0, -1);
 
             // Then: should return a first available research (0, 4, or 5 have no prerequisites)
             assertTrue(researchId == 0 || researchId == 4 || researchId == 5,
@@ -289,7 +289,7 @@ class ResearchAITest {
                 createTechCentreStats(BuildingType.REBEL_LABORATORY), new GridPosition(51, 50));
 
             // When
-            int researchId = researchAI.decideNextResearch(entities, research, techTree, 1);
+            int researchId = researchAI.decideNextResearch(entities, research, techTree, 1, -1);
 
             // Then: should choose research 24 (Titanium Jacket) or 25 (Signal Jamming) — first available
             assertTrue(researchId == 24 || researchId == 25,
@@ -309,7 +309,7 @@ class ResearchAITest {
             techCentre.setResearchId("0");
 
             // When
-            int researchId = researchAI.decideNextResearch(entities, research, techTree, 0);
+            int researchId = researchAI.decideNextResearch(entities, research, techTree, 0, -1);
 
             // Then: should return -1 (no available tech centre)
             assertEquals(-1, researchId,
