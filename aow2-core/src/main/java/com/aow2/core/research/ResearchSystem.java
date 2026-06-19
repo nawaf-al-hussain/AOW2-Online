@@ -132,7 +132,7 @@ public final class ResearchSystem {
 
                 // Fire event
                 Faction faction = EconomySystem.playerFaction(playerId);
-                TechTree.ResearchNode node = techTree.getTechNode(faction, researchId);
+                TechTree.TechTreeNode node = techTree.getTechNode(faction, researchId);
                 String techName = node != null ? node.name() : "Research-" + researchId;
                 state.enqueueEvent(new ResearchCompletedEvent(
                     state.currentTick(), playerId, faction, researchId, techName
@@ -189,6 +189,12 @@ public final class ResearchSystem {
             return false;
         }
 
+        // Guard against multiple researches on the same TechCentre (race condition)
+        if (activeResearchMap.containsKey(techCentre.getId())) {
+            LOG.debug("Cannot start research: Tech Centre {} already has an active research entry", techCentre.getId());
+            return false;
+        }
+
         // Check research not already completed
         if (hasResearch(playerId, researchId)) {
             LOG.debug("Cannot start research: already completed");
@@ -203,7 +209,7 @@ public final class ResearchSystem {
 
         // Check faction match
         Faction faction = EconomySystem.playerFaction(playerId);
-        TechTree.ResearchNode node = techTree.getTechNode(faction, researchId);
+        TechTree.TechTreeNode node = techTree.getTechNode(faction, researchId);
         if (node == null) {
             LOG.debug("Cannot start research: research {} not available for faction {}", researchId, faction);
             return false;
@@ -348,7 +354,7 @@ public final class ResearchSystem {
     public void applyResearchEffect(int researchId, int playerId, EntityManager entities) {
         Faction faction = EconomySystem.playerFaction(playerId);
 
-        TechTree.ResearchNode node = techTree.getTechNode(faction, researchId);
+        TechTree.TechTreeNode node = techTree.getTechNode(faction, researchId);
         String techName = node != null ? node.name() : "Research-" + researchId;
 
         // Research is already stored in completedResearch[playerId] by processTick().

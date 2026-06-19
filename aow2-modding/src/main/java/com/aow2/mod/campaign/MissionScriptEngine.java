@@ -153,6 +153,15 @@ public final class MissionScriptEngine implements ScriptEngine {
             luaEngine.setGlobalInt("unitCount", entities.unitCount());
             luaEngine.setGlobalInt("buildingCount", entities.buildingCount());
 
+            // Process script timers (decrement tick counts, fire expired callbacks)
+            for (String expiredCallback : GameAPI.processTimers()) {
+                try {
+                    luaEngine.callFunction(expiredCallback, LuaValue.NIL);
+                } catch (Exception e) {
+                    LOG.error("Error invoking expired timer callback: {}", expiredCallback, e);
+                }
+            }
+
             // Call Lua onTick function if defined
             luaEngine.callFunction("onTick", LuaValue.valueOf(state.currentTick()));
         } catch (Exception e) {

@@ -583,13 +583,19 @@ public class CombatSystem {
 
     /**
      * Get the weapon type for a defensive building.
-     * Rocket launchers fire rockets; towers fire bullets.
+     * Uses the building's stats.weaponType() when available (not NONE),
+     * falling back to the hardcoded switch for legacy compatibility.
      *
-     * @param type the building type
+     * @param building the building entity
      * @return the weapon type
      */
-    private WeaponType getBuildingWeaponType(BuildingType type) {
-        return switch (type) {
+    private WeaponType getBuildingWeaponType(Building building) {
+        WeaponType statsWeapon = building.getStats().weaponType();
+        if (statsWeapon != WeaponType.NONE) {
+            return statsWeapon;
+        }
+        // Fallback: hardcoded defaults based on building type
+        return switch (building.getBuildingType()) {
             case CONFED_ROCKET_LAUNCHER -> WeaponType.ROCKET;
             case REBEL_TOWER -> WeaponType.BULLET;
             default -> WeaponType.NONE;

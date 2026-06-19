@@ -169,9 +169,10 @@ public final class ProductionSystem {
         java.util.List<UnitType> remaining = new java.util.ArrayList<>(queue);
         remaining.remove(queueIndex);
 
-        // If the cancelled item is the currently producing item (index 0),
-        // clear current production and reset progress
-        if (queueIndex == 0 && producer.isProducing()) {
+        // Only clear active production if the cancelled item is the one currently being produced.
+        // The production queue contains only pending items; the currently producing item is
+        // stored separately in currentProduction. However, we check by value to handle edge cases.
+        if (producer.getCurrentProduction() != null && producer.getCurrentProduction() == cancelledType) {
             producer.setCurrentProduction(null);
             producer.setProductionProgress(0);
         }

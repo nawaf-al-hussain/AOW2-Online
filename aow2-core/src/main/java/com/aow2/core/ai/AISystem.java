@@ -80,6 +80,9 @@ public final class AISystem {
      * @param playerId   the player ID this AI controls (0 or 1)
      */
     public AISystem(AIDifficulty difficulty, int playerId) {
+        if (playerId < 0 || playerId > 1) {
+            throw new IllegalArgumentException("playerId must be 0 or 1, got: " + playerId);
+        }
         this.difficulty = difficulty;
         this.playerId = playerId;
         this.economyAI = new EconomyAI();
@@ -151,8 +154,9 @@ public final class AISystem {
 
         LOG.debug("AI player {} processing decision at tick {}", playerId, currentTick);
 
-        // Reset task count at the start of each decision cycle
-        resetTaskCount();
+        // Increment task count at the start of each decision cycle
+        // instead of resetting, so that tasks from previous cycles are preserved
+        // until explicitly completed via taskCompleted().
 
         // Execute AI decision pipeline, passing fogOfWar for visibility-filtered decisions
         processEconomyDecisions(entities, map, economy, research, production, placement);

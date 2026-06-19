@@ -126,6 +126,12 @@ public class CameraController {
 
     /**
      * Centers the camera on a specific grid position.
+     * <p>
+     * TODO (H-22): This method does not account for IsometricRenderer's offsetX/offsetY
+     * when computing the target position. If the renderer has non-zero offsets (e.g., to
+     * center the map on screen), the camera will be misaligned. To fix, either:
+     * (a) pass the IsometricRenderer offset values into this method and subtract them, or
+     * (b) have CameraController hold a reference to IsometricRenderer and read its offsets.
      *
      * @param gx grid x coordinate
      * @param gy grid y coordinate

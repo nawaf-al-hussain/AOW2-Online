@@ -16,6 +16,9 @@ import javafx.scene.paint.Color;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -101,7 +104,9 @@ public class EntityRenderer {
     }
 
     /**
-     * Renders all entities (buildings then units, for correct z-ordering).
+     * Renders all entities (buildings and units) sorted by isometric z-order.
+     * In isometric view, entities with higher (gridX + gridY) should be drawn later
+     * so they appear in front of entities closer to the camera.
      *
      * @param gc            the graphics context
      * @param entityManager the entity manager containing all entities
@@ -115,16 +120,31 @@ public class EntityRenderer {
         gc.translate(cameraOffsetX, cameraOffsetY);
         gc.scale(zoom, zoom);
 
-        // Render buildings first (they are behind units in isometric view)
+        // Collect all alive entities into a single list for correct z-ordering
+        List<Object> entities = new ArrayList<>();
         for (Building building : entityManager.getAllBuildings()) {
             if (building.isAlive()) {
-                renderBuilding(gc, building);
+                entities.add(building);
+            }
+        }
+        for (Unit unit : entityManager.getAllUnits()) {
+            if (unit.isAlive()) {
+                entities.add(unit);
             }
         }
 
-        // Render units on top
-        for (Unit unit : entityManager.getAllUnits()) {
-            if (unit.isAlive()) {
+        // Sort by isometric depth: gridX + gridY (lower = further from camera, drawn first)
+        entities.sort(Comparator.comparingInt(e -> {
+            if (e instanceof Building b) return b.getPosition().x() + b.getPosition().y();
+            if (e instanceof Unit u) return u.getPosition().x() + u.getPosition().y();
+            return Integer.MAX_VALUE;
+        }));
+
+        // Render in z-order
+        for (Object entity : entities) {
+            if (entity instanceof Building building) {
+                renderBuilding(gc, building);
+            } else if (entity instanceof Unit unit) {
                 renderUnit(gc, unit);
             }
         }

@@ -32,21 +32,21 @@ class TechTreeTest {
         @Test
         @DisplayName("Confederation should have 25 tech nodes")
         void confederationShouldHave25TechNodes() {
-            List<TechTree.ResearchNode> nodes = techTree.getTechNodes(Faction.CONFEDERATION);
+            List<TechTree.TechTreeNode> nodes = techTree.getTechNodes(Faction.CONFEDERATION);
             assertEquals(25, nodes.size(), "Confederation should have 25 tech nodes (IDs 0-23 + 43)");
         }
 
         @Test
         @DisplayName("Resistance should have 23 tech nodes")
         void resistanceShouldHave23TechNodes() {
-            List<TechTree.ResearchNode> nodes = techTree.getTechNodes(Faction.RESISTANCE);
+            List<TechTree.TechTreeNode> nodes = techTree.getTechNodes(Faction.RESISTANCE);
             assertEquals(23, nodes.size(), "Resistance should have 23 tech nodes (IDs 24-47 excluding 43)");
         }
 
         @Test
         @DisplayName("Should return empty list for Neutral faction")
         void shouldReturnEmptyListForNeutral() {
-            List<TechTree.ResearchNode> nodes = techTree.getTechNodes(Faction.NEUTRAL);
+            List<TechTree.TechTreeNode> nodes = techTree.getTechNodes(Faction.NEUTRAL);
             assertTrue(nodes.isEmpty(), "Neutral faction should have no tech nodes");
         }
 
@@ -66,9 +66,9 @@ class TechTreeTest {
         @Test
         @DisplayName("All Confederation research IDs 0-23 and 43 should exist")
         void allConfederationResearchIdsShouldExist() {
-            List<TechTree.ResearchNode> nodes = techTree.getTechNodes(Faction.CONFEDERATION);
+            List<TechTree.TechTreeNode> nodes = techTree.getTechNodes(Faction.CONFEDERATION);
             Set<Integer> ids = new HashSet<>();
-            for (TechTree.ResearchNode node : nodes) {
+            for (TechTree.TechTreeNode node : nodes) {
                 ids.add(node.id());
             }
 
@@ -85,9 +85,9 @@ class TechTreeTest {
         @Test
         @DisplayName("All Resistance research IDs 24-47 excluding 43 should exist")
         void allResistanceResearchIdsShouldExist() {
-            List<TechTree.ResearchNode> nodes = techTree.getTechNodes(Faction.RESISTANCE);
+            List<TechTree.TechTreeNode> nodes = techTree.getTechNodes(Faction.RESISTANCE);
             Set<Integer> ids = new HashSet<>();
-            for (TechTree.ResearchNode node : nodes) {
+            for (TechTree.TechTreeNode node : nodes) {
                 ids.add(node.id());
             }
 
@@ -106,17 +106,17 @@ class TechTreeTest {
         @DisplayName("No duplicate research IDs within a faction")
         void noDuplicateResearchIdsWithinFaction() {
             // Confederation
-            List<TechTree.ResearchNode> confedNodes = techTree.getTechNodes(Faction.CONFEDERATION);
+            List<TechTree.TechTreeNode> confedNodes = techTree.getTechNodes(Faction.CONFEDERATION);
             Set<Integer> confedIds = new HashSet<>();
-            for (TechTree.ResearchNode node : confedNodes) {
+            for (TechTree.TechTreeNode node : confedNodes) {
                 assertTrue(confedIds.add(node.id()),
                     "Duplicate research ID " + node.id() + " in Confederation");
             }
 
             // Resistance
-            List<TechTree.ResearchNode> resistanceNodes = techTree.getTechNodes(Faction.RESISTANCE);
+            List<TechTree.TechTreeNode> resistanceNodes = techTree.getTechNodes(Faction.RESISTANCE);
             Set<Integer> resistanceIds = new HashSet<>();
-            for (TechTree.ResearchNode node : resistanceNodes) {
+            for (TechTree.TechTreeNode node : resistanceNodes) {
                 assertTrue(resistanceIds.add(node.id()),
                     "Duplicate research ID " + node.id() + " in Resistance");
             }
@@ -139,7 +139,7 @@ class TechTreeTest {
         @Test
         @DisplayName("Should return Confederation tech node R0 by ID")
         void shouldReturnConfederationTechNodeR0() {
-            TechTree.ResearchNode node = techTree.getTechNode(Faction.CONFEDERATION, 0);
+            TechTree.TechTreeNode node = techTree.getTechNode(Faction.CONFEDERATION, 0);
             assertNotNull(node);
             assertEquals(0, node.id());
             assertEquals("Energy Suit", node.name());
@@ -149,7 +149,7 @@ class TechTreeTest {
         @Test
         @DisplayName("Should return Resistance tech node R24 by ID")
         void shouldReturnResistanceTechNodeR24() {
-            TechTree.ResearchNode node = techTree.getTechNode(Faction.RESISTANCE, 24);
+            TechTree.TechTreeNode node = techTree.getTechNode(Faction.RESISTANCE, 24);
             assertNotNull(node);
             assertEquals(24, node.id());
             assertEquals("Titanium Jacket", node.name());
@@ -176,7 +176,7 @@ class TechTreeTest {
         @Test
         @DisplayName("All Confederation nodes should have CONFEDERATION faction")
         void allConfederationNodesShouldHaveConfederationFaction() {
-            for (TechTree.ResearchNode node : techTree.getTechNodes(Faction.CONFEDERATION)) {
+            for (TechTree.TechTreeNode node : techTree.getTechNodes(Faction.CONFEDERATION)) {
                 assertEquals(Faction.CONFEDERATION, node.faction(),
                     "Node " + node.id() + " should have CONFEDERATION faction");
             }
@@ -185,7 +185,7 @@ class TechTreeTest {
         @Test
         @DisplayName("All Resistance nodes should have RESISTANCE faction")
         void allResistanceNodesShouldHaveResistanceFaction() {
-            for (TechTree.ResearchNode node : techTree.getTechNodes(Faction.RESISTANCE)) {
+            for (TechTree.TechTreeNode node : techTree.getTechNodes(Faction.RESISTANCE)) {
                 assertEquals(Faction.RESISTANCE, node.faction(),
                     "Node " + node.id() + " should have RESISTANCE faction");
             }
@@ -239,12 +239,12 @@ class TechTreeTest {
         @DisplayName("Every prerequisite references a valid research ID within the same faction")
         void everyPrerequisiteReferencesValidIdInSameFaction() {
             // Check Confederation
-            List<TechTree.ResearchNode> confedNodes = techTree.getTechNodes(Faction.CONFEDERATION);
+            List<TechTree.TechTreeNode> confedNodes = techTree.getTechNodes(Faction.CONFEDERATION);
             Set<Integer> confedIds = new HashSet<>();
-            for (TechTree.ResearchNode node : confedNodes) {
+            for (TechTree.TechTreeNode node : confedNodes) {
                 confedIds.add(node.id());
             }
-            for (TechTree.ResearchNode node : confedNodes) {
+            for (TechTree.TechTreeNode node : confedNodes) {
                 for (int prereq : node.prerequisites()) {
                     assertTrue(confedIds.contains(prereq),
                         "Confederation node " + node.id() + " prereq " + prereq
@@ -253,12 +253,12 @@ class TechTreeTest {
             }
 
             // Check Resistance
-            List<TechTree.ResearchNode> resistNodes = techTree.getTechNodes(Faction.RESISTANCE);
+            List<TechTree.TechTreeNode> resistNodes = techTree.getTechNodes(Faction.RESISTANCE);
             Set<Integer> resistIds = new HashSet<>();
-            for (TechTree.ResearchNode node : resistNodes) {
+            for (TechTree.TechTreeNode node : resistNodes) {
                 resistIds.add(node.id());
             }
-            for (TechTree.ResearchNode node : resistNodes) {
+            for (TechTree.TechTreeNode node : resistNodes) {
                 for (int prereq : node.prerequisites()) {
                     assertTrue(resistIds.contains(prereq),
                         "Resistance node " + node.id() + " prereq " + prereq
@@ -318,11 +318,11 @@ class TechTreeTest {
         }
 
         private void assertNoCycles(Faction faction) {
-            List<TechTree.ResearchNode> nodes = techTree.getTechNodes(faction);
+            List<TechTree.TechTreeNode> nodes = techTree.getTechNodes(faction);
             Map<Integer, List<Integer>> adjacency = new HashMap<>();
             Set<Integer> allIds = new HashSet<>();
 
-            for (TechTree.ResearchNode node : nodes) {
+            for (TechTree.TechTreeNode node : nodes) {
                 allIds.add(node.id());
                 adjacency.put(node.id(), node.prerequisites());
             }
@@ -376,9 +376,9 @@ class TechTreeTest {
         }
 
         private void assertConsistentUnlockChains(Faction faction) {
-            List<TechTree.ResearchNode> nodes = techTree.getTechNodes(faction);
+            List<TechTree.TechTreeNode> nodes = techTree.getTechNodes(faction);
 
-            for (TechTree.ResearchNode node : nodes) {
+            for (TechTree.TechTreeNode node : nodes) {
                 for (int unlockedId : node.unlocks()) {
                     List<Integer> prereqs = techTree.getPrerequisites(faction, unlockedId);
                     assertFalse(prereqs.isEmpty(),
@@ -392,14 +392,14 @@ class TechTreeTest {
         @Test
         @DisplayName("Every unlock target should exist in the same faction")
         void everyUnlockTargetShouldExistInSameFaction() {
-            for (TechTree.ResearchNode node : techTree.getTechNodes(Faction.CONFEDERATION)) {
+            for (TechTree.TechTreeNode node : techTree.getTechNodes(Faction.CONFEDERATION)) {
                 for (int unlockedId : node.unlocks()) {
                     assertNotNull(techTree.getTechNode(Faction.CONFEDERATION, unlockedId),
                         "Confederation node " + node.id() + " unlocks " + unlockedId
                             + " but that ID doesn't exist in Confederation");
                 }
             }
-            for (TechTree.ResearchNode node : techTree.getTechNodes(Faction.RESISTANCE)) {
+            for (TechTree.TechTreeNode node : techTree.getTechNodes(Faction.RESISTANCE)) {
                 for (int unlockedId : node.unlocks()) {
                     assertNotNull(techTree.getTechNode(Faction.RESISTANCE, unlockedId),
                         "Resistance node " + node.id() + " unlocks " + unlockedId
@@ -416,11 +416,11 @@ class TechTreeTest {
         @Test
         @DisplayName("Should have valid costs for all techs")
         void shouldHaveValidCostsForAllTechs() {
-            for (TechTree.ResearchNode node : techTree.getTechNodes(Faction.CONFEDERATION)) {
+            for (TechTree.TechTreeNode node : techTree.getTechNodes(Faction.CONFEDERATION)) {
                 assertTrue(node.cost() > 0,
                     "Tech " + node.id() + " should have positive cost, got " + node.cost());
             }
-            for (TechTree.ResearchNode node : techTree.getTechNodes(Faction.RESISTANCE)) {
+            for (TechTree.TechTreeNode node : techTree.getTechNodes(Faction.RESISTANCE)) {
                 assertTrue(node.cost() > 0,
                     "Tech " + node.id() + " should have positive cost, got " + node.cost());
             }
@@ -429,11 +429,11 @@ class TechTreeTest {
         @Test
         @DisplayName("Should have valid durations for all techs")
         void shouldHaveValidDurationsForAllTechs() {
-            for (TechTree.ResearchNode node : techTree.getTechNodes(Faction.CONFEDERATION)) {
+            for (TechTree.TechTreeNode node : techTree.getTechNodes(Faction.CONFEDERATION)) {
                 assertTrue(node.duration() > 0,
                     "Tech " + node.id() + " should have positive duration, got " + node.duration());
             }
-            for (TechTree.ResearchNode node : techTree.getTechNodes(Faction.RESISTANCE)) {
+            for (TechTree.TechTreeNode node : techTree.getTechNodes(Faction.RESISTANCE)) {
                 assertTrue(node.duration() > 0,
                     "Tech " + node.id() + " should have positive duration, got " + node.duration());
             }
@@ -442,12 +442,12 @@ class TechTreeTest {
         @Test
         @DisplayName("Should have non-null names and descriptions")
         void shouldHaveNonNullNamesAndDescriptions() {
-            for (TechTree.ResearchNode node : techTree.getTechNodes(Faction.CONFEDERATION)) {
+            for (TechTree.TechTreeNode node : techTree.getTechNodes(Faction.CONFEDERATION)) {
                 assertNotNull(node.name(), "Node " + node.id() + " should have a name");
                 assertNotNull(node.description(), "Node " + node.id() + " should have a description");
                 assertFalse(node.name().isBlank(), "Node " + node.id() + " name should not be blank");
             }
-            for (TechTree.ResearchNode node : techTree.getTechNodes(Faction.RESISTANCE)) {
+            for (TechTree.TechTreeNode node : techTree.getTechNodes(Faction.RESISTANCE)) {
                 assertNotNull(node.name(), "Node " + node.id() + " should have a name");
                 assertNotNull(node.description(), "Node " + node.id() + " should have a description");
                 assertFalse(node.name().isBlank(), "Node " + node.id() + " name should not be blank");
@@ -457,11 +457,11 @@ class TechTreeTest {
         @Test
         @DisplayName("Costs should be within reasonable range (50-120)")
         void costsShouldBeWithinReasonableRange() {
-            for (TechTree.ResearchNode node : techTree.getTechNodes(Faction.CONFEDERATION)) {
+            for (TechTree.TechTreeNode node : techTree.getTechNodes(Faction.CONFEDERATION)) {
                 assertTrue(node.cost() >= 50 && node.cost() <= 120,
                     "Tech " + node.id() + " cost " + node.cost() + " outside range 50-120");
             }
-            for (TechTree.ResearchNode node : techTree.getTechNodes(Faction.RESISTANCE)) {
+            for (TechTree.TechTreeNode node : techTree.getTechNodes(Faction.RESISTANCE)) {
                 assertTrue(node.cost() >= 50 && node.cost() <= 120,
                     "Tech " + node.id() + " cost " + node.cost() + " outside range 50-120");
             }
@@ -470,11 +470,11 @@ class TechTreeTest {
         @Test
         @DisplayName("Durations should be within reasonable range (300-600)")
         void durationsShouldBeWithinReasonableRange() {
-            for (TechTree.ResearchNode node : techTree.getTechNodes(Faction.CONFEDERATION)) {
+            for (TechTree.TechTreeNode node : techTree.getTechNodes(Faction.CONFEDERATION)) {
                 assertTrue(node.duration() >= 300 && node.duration() <= 600,
                     "Tech " + node.id() + " duration " + node.duration() + " outside range 300-600");
             }
-            for (TechTree.ResearchNode node : techTree.getTechNodes(Faction.RESISTANCE)) {
+            for (TechTree.TechTreeNode node : techTree.getTechNodes(Faction.RESISTANCE)) {
                 assertTrue(node.duration() >= 300 && node.duration() <= 600,
                     "Tech " + node.id() + " duration " + node.duration() + " outside range 300-600");
             }
@@ -488,9 +488,9 @@ class TechTreeTest {
         @Test
         @DisplayName("Confederation base techs (no prerequisites) should be R0, R4, R5, R15, R21")
         void confederationBaseTechsShouldBeCorrect() {
-            List<TechTree.ResearchNode> nodes = techTree.getTechNodes(Faction.CONFEDERATION);
+            List<TechTree.TechTreeNode> nodes = techTree.getTechNodes(Faction.CONFEDERATION);
             List<Integer> baseIds = new ArrayList<>();
-            for (TechTree.ResearchNode node : nodes) {
+            for (TechTree.TechTreeNode node : nodes) {
                 if (node.prerequisites().isEmpty()) {
                     baseIds.add(node.id());
                 }
@@ -515,7 +515,7 @@ class TechTreeTest {
         @Test
         @DisplayName("R43 should exist and require R21")
         void r43ShouldExistAndRequireR21() {
-            TechTree.ResearchNode node = techTree.getTechNode(Faction.CONFEDERATION, 43);
+            TechTree.TechTreeNode node = techTree.getTechNode(Faction.CONFEDERATION, 43);
             assertNotNull(node, "R43 should exist in Confederation tree");
             assertEquals(List.of(21), node.prerequisites(), "R43 should require R21");
         }
@@ -528,9 +528,9 @@ class TechTreeTest {
         @Test
         @DisplayName("Resistance base techs (no prerequisites) should be R24, R25, R39, R40")
         void resistanceBaseTechsShouldBeCorrect() {
-            List<TechTree.ResearchNode> nodes = techTree.getTechNodes(Faction.RESISTANCE);
+            List<TechTree.TechTreeNode> nodes = techTree.getTechNodes(Faction.RESISTANCE);
             List<Integer> baseIds = new ArrayList<>();
-            for (TechTree.ResearchNode node : nodes) {
+            for (TechTree.TechTreeNode node : nodes) {
                 if (node.prerequisites().isEmpty()) {
                     baseIds.add(node.id());
                 }
@@ -561,7 +561,7 @@ class TechTreeTest {
         @Test
         @DisplayName("R38 should be the final artillery research with no unlocks")
         void r38ShouldBeFinalArtillery() {
-            TechTree.ResearchNode node = techTree.getTechNode(Faction.RESISTANCE, 38);
+            TechTree.TechTreeNode node = techTree.getTechNode(Faction.RESISTANCE, 38);
             assertNotNull(node, "R38 should exist");
             assertTrue(node.unlocks().isEmpty(), "R38 should not unlock further techs");
         }

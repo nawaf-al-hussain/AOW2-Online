@@ -12,6 +12,15 @@ import org.slf4j.LoggerFactory;
  * Mines are immobile units that detonate when enemy units enter their trigger radius.
  * Three mine types exist: Scorpio, Frog, and Lizard.
  * <p>
+ * TODO (H-10): Mine is not properly integrated into the unit system. Currently Mine extends
+ * Entity directly but is not tracked by EntityManager alongside units/buildings, so:
+ * - Mine detonation logic is never invoked by the game loop
+ * - Mines are not rendered by EntityRenderer (which only iterates units + buildings)
+ * - Mine placement/arming from ProductionSystem or Unit actions is not wired up
+ * To fix: Either (a) make Mine extend Unit and register via EntityManager.addUnit(), or
+ * (b) add a dedicated mine list to EntityManager and a MineSystem that processes detonation
+ * each tick, and update EntityRenderer to render mines in z-order with other entities.
+ * <p>
  * REF: complete_unit_stats.json mines section - 3 mine types (Scorpio, Frog, Lizard)
  * REF: unit_stats.md - mine trigger radius and detonation damage
  */

@@ -76,7 +76,7 @@ public final class ResearchAI {
         }
 
         // Get all tech nodes for this faction
-        List<TechTree.ResearchNode> nodes = techTree.getTechNodes(faction);
+        List<TechTree.TechTreeNode> nodes = techTree.getTechNodes(faction);
 
         // Phase-based priority research IDs
         int[] priorityResearchIds = getPhasePriorityResearch(faction, phase);
@@ -90,7 +90,7 @@ public final class ResearchAI {
         }
 
         // Fall back to any available research not yet completed
-        for (TechTree.ResearchNode node : nodes) {
+        for (TechTree.TechTreeNode node : nodes) {
             if (canStartResearch(node.id(), playerId, research, techTree, entities)) {
                 LOG.debug("Player {} fallback research {} (phase={})", playerId, node.id(), phase);
                 return node.id();
@@ -210,7 +210,7 @@ public final class ResearchAI {
         }
         // Faction has this tech
         Faction faction = EconomySystem.playerFaction(playerId);
-        TechTree.ResearchNode node = techTree.getTechNode(faction, researchId);
+        TechTree.TechTreeNode node = techTree.getTechNode(faction, researchId);
         if (node == null) {
             return false;
         }

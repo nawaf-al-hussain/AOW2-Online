@@ -363,8 +363,8 @@ public final class CollisionSystem {
          */
         List<Unit> getNearby(GridPosition pos) {
             List<Unit> result = new ArrayList<>();
-            int cellX = pos.x() / CELL_SIZE;
-            int cellY = pos.y() / CELL_SIZE;
+            int cellX = Math.floorDiv(pos.x(), CELL_SIZE);
+            int cellY = Math.floorDiv(pos.y(), CELL_SIZE);
 
             // Check same cell + 8 adjacent cells
             for (int dx = -1; dx <= 1; dx++) {
@@ -397,7 +397,7 @@ public final class CollisionSystem {
          * @return packed cell key
          */
         private static long cellKey(int x, int y) {
-            return packKey(x / CELL_SIZE, y / CELL_SIZE);
+            return packKey(Math.floorDiv(x, CELL_SIZE), Math.floorDiv(y, CELL_SIZE));
         }
 
         /**

@@ -38,7 +38,7 @@ public final class ResearchRegistry {
      * @param description  human-readable description of the effect
      * @param faction      owning faction (CONFEDERATION or RESISTANCE)
      * @param category     effect category (INFANTRY_ARMOR, BUILDING_RADIUS, etc.)
-     * @param prerequisite prerequisite global ID (-1 = none)
+     * @param prerequisites list of prerequisite global IDs (anyOf semantics; empty if none)
      * @param effects      raw effect data as key-value pairs
      */
     public record ResearchEffect(
@@ -47,7 +47,7 @@ public final class ResearchRegistry {
         String description,
         Faction faction,
         String category,
-        int prerequisite,
+        List<Integer> prerequisites,
         Map<String, Object> effects
     ) {}
 
@@ -114,17 +114,18 @@ public final class ResearchRegistry {
     }
 
     /**
-     * Get the prerequisite global ID for a research effect.
+     * Get the prerequisite global IDs for a research effect.
+     * When the original data uses anyOf semantics, all alternatives are returned.
      *
      * @param globalId the research ID
-     * @return the prerequisite global ID, or -1 if none
+     * @return list of prerequisite global IDs, or empty list if none
      */
-    public int getPrerequisite(int globalId) {
+    public List<Integer> getPrerequisites(int globalId) {
         ResearchEffect effect = researchEffects.get(globalId);
         if (effect == null) {
-            return -1;
+            return List.of();
         }
-        return effect.prerequisite();
+        return effect.prerequisites();
     }
 
     /**
@@ -163,11 +164,11 @@ public final class ResearchRegistry {
                     String factionStr = (String) map.get("faction");
                     Faction faction = Faction.valueOf(factionStr);
                     String category = (String) map.get("category");
-                    int prerequisite = parsePrerequisite(map.get("prerequisite"));
+                    List<Integer> prerequisites = parsePrerequisite(map.get("prerequisite"));
                     Map<String, Object> effects = (Map<String, Object>) map.get("effects");
 
                     researchEffects.put(id, new ResearchEffect(
-                        id, name, description, faction, category, prerequisite, effects
+                        id, name, description, faction, category, prerequisites, effects
                     ));
                 }
             }
@@ -191,20 +192,32 @@ public final class ResearchRegistry {
     }
 
     /**
-     * Parse prerequisite which can be -1 (no prereq) or an object with "anyOf" key.
+     * Parse prerequisite which can be -1 (no prereq), a single integer,
+     * or an object with "anyOf" key containing a list of alternatives.
+     *
+     * @return list of prerequisite IDs (anyOf semantics); empty if none
      */
-    private int parsePrerequisite(Object prereqObj) {
-        if (prereqObj == null) return -1;
-        if (prereqObj instanceof Number) return ((Number) prereqObj).intValue();
-        // If it's a map with "anyOf", use the first element as representative prerequisite
+    @SuppressWarnings("unchecked")
+    private List<Integer> parsePrerequisite(Object prereqObj) {
+        if (prereqObj == null) return List.of();
+        if (prereqObj instanceof Number num) {
+            int val = num.intValue();
+            return val < 0 ? List.of() : List.of(val);
+        }
+        // If it's a map with "anyOf", store ALL alternatives to preserve anyOf semantics
         if (prereqObj instanceof Map) {
             Map<String, Object> map = (Map<String, Object>) prereqObj;
             List<Object> anyOf = (List<Object>) map.get("anyOf");
             if (anyOf != null && !anyOf.isEmpty()) {
-                return toInt(anyOf.get(0));
+                List<Integer> result = new java.util.ArrayList<>();
+                for (Object item : anyOf) {
+                    int val = toInt(item);
+                    if (val >= 0) result.add(val);
+                }
+                return result.isEmpty() ? List.of() : result;
             }
         }
-        return -1;
+        return List.of();
     }
 
     private List<FactionTech> parseFactionTechs(List<Object> array) {

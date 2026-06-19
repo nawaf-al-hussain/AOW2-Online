@@ -139,7 +139,8 @@ public final class BuildingPlacementSystem {
             for (int x = minX; x <= maxX; x++) {
                 for (int y = minY; y <= maxY; y++) {
                     GridPosition pos = new GridPosition(x, y);
-                    if (ccPos.distanceTo(pos) <= radius &&
+                    // Use Chebyshev distance (max of |dx|, |dy|) for grid-based radius check
+                    if (Math.max(Math.abs(ccPos.x() - x), Math.abs(ccPos.y() - y)) <= radius &&
                         isTerrainBuildable(pos, map) &&
                         entities.findBuildingAt(pos) == null) {
                         valid.add(pos);
@@ -201,7 +202,9 @@ public final class BuildingPlacementSystem {
 
         for (Building building : buildings) {
             if (building.isAlive() && building.getBuildingType().isHQ()) {
-                if (building.getPosition().distanceTo(pos) <= CC_PLACEMENT_RADIUS) {
+                int dx = Math.abs(building.getPosition().x() - pos.x());
+                int dy = Math.abs(building.getPosition().y() - pos.y());
+                if (Math.max(dx, dy) <= CC_PLACEMENT_RADIUS) {
                     return true;
                 }
             }

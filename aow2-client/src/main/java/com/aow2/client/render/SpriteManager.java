@@ -48,7 +48,7 @@ public class SpriteManager {
     /** Cache for unit sprites: key = "UNITTYPE_DIRECTION". */
     private final Map<String, Image> unitSpriteCache;
 
-    /** Cache for building sprites: key = "BUILDINGTYPE". */
+    /** Cache for building sprites: key = "BUILDINGTYPE_FACTION". */
     private final Map<String, Image> buildingSpriteCache;
 
     /** Cache for terrain sprites: key = "TERRAINTYPE". */
@@ -138,12 +138,13 @@ public class SpriteManager {
             }
         }
 
-        // Pre-generate all building sprites
+        // Pre-generate all building sprites (per faction)
         for (BuildingType buildingType : BuildingType.values()) {
-            String cacheKey = buildingSpriteKey(buildingType);
-            Image sprite = loadBuildingSpriteFromDisk(buildingType);
+            Faction faction = buildingType.faction();
+            String cacheKey = buildingSpriteKey(buildingType, faction);
+            Image sprite = loadBuildingSpriteFromDisk(buildingType, faction);
             if (sprite == null) {
-                sprite = generator.generateBuildingSprite(buildingType, buildingType.faction());
+                sprite = generator.generateBuildingSprite(buildingType, faction);
             }
             buildingSpriteCache.put(cacheKey, sprite);
         }
@@ -193,7 +194,7 @@ public class SpriteManager {
      */
     public Image getBuildingSprite(BuildingType buildingType, Faction faction) {
         ensureInitialized();
-        String key = buildingSpriteKey(buildingType);
+        String key = buildingSpriteKey(buildingType, faction);
         Image sprite = buildingSpriteCache.get(key);
         if (sprite == null) {
             LOG.warn("Building sprite not found in cache: {}", key);
@@ -237,14 +238,18 @@ public class SpriteManager {
 
     /**
      * Attempts to load a building sprite from disk.
-     * File path: {spriteBasePath}/buildings/{buildingType.name()}.png
+     * File path: {spriteBasePath}/buildings/{buildingType.name()}_{faction.name()}.png
      *
      * @param buildingType the building type
+     * @param faction      the faction for this building
      * @return the loaded image, or null if the file does not exist
      */
-    private Image loadBuildingSpriteFromDisk(BuildingType buildingType) {
-        String path = spriteBasePath + "/buildings/" + buildingType.name() + ".png";
-        return loadSpriteFromPath(path);
+    private Image loadBuildingSpriteFromDisk(BuildingType buildingType, Faction faction) {
+        // Try faction-specific path first, then fallback to type-only path
+        String factionPath = spriteBasePath + "/buildings/" + buildingType.name() + "_" + faction.name() + ".png";
+        Image sprite = loadSpriteFromPath(factionPath);
+        if (sprite != null) return sprite;
+        return loadSpriteFromPath(spriteBasePath + "/buildings/" + buildingType.name() + ".png");
     }
 
     /**
@@ -320,13 +325,14 @@ public class SpriteManager {
     }
 
     /**
-     * Generates the cache key for a building sprite.
+     * Generates the cache key for a building sprite, including faction.
      *
      * @param buildingType the building type
+     * @param faction      the faction
      * @return the cache key string
      */
-    private static String buildingSpriteKey(BuildingType buildingType) {
-        return buildingType.name();
+    private static String buildingSpriteKey(BuildingType buildingType, Faction faction) {
+        return buildingType.name() + "_" + faction.name();
     }
 
     /**

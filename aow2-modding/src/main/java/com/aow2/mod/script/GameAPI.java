@@ -19,6 +19,13 @@ import java.util.Map;
  * Lua-accessible game API for modding and campaign scripting.
  * Available in Lua as: aow2.spawnUnit(...), aow2.destroyUnit(...), etc.
  * <p>
+ * THREAD-SAFETY WARNING (H-23): All fields (gameState, entityManager, economySystem,
+ * objectives, timers, eventHooks) are static mutable shared state accessed from both the
+ * game loop thread and the Lua scripting thread. This is NOT thread-safe. A proper fix
+ * would require either: (a) synchronizing all access with locks, (b) using thread-local
+ * state, or (c) using a message-passing queue between threads. This is an architectural
+ * issue that cannot be fixed without significant refactoring.
+ * <p>
  * REF: tech_stack.md - exposed API for modding and campaign scripting
  * REF: phases.md Phase 10 - GameAPI for Lua scripts
  * <p>
@@ -87,9 +94,15 @@ public final class GameAPI {
                 Math.clamp(y, 0, 127)
             );
 
-            // ASSUMPTION: default stats for scripting-spawned units
-            UnitStats stats = new UnitStats(type, "Script spawned", 100, 10,
-                4, 2, 0, 5, 4, WeaponType.NONE, 0, 60, 100, 5, 2, 0, 0, 0);
+            // Look up unit stats from StatsRegistry instead of hardcoded dummy values
+            UnitStats stats;
+            try {
+                stats = com.aow2.common.config.StatsRegistry.getInstance().getUnitStats(type);
+            } catch (IllegalArgumentException e) {
+                LOG.warn("No stats registered for unit type {}, falling back to defaults", type);
+                stats = new UnitStats(type, "Script spawned", 100, 10,
+                    4, 2, 0, 5, 4, WeaponType.NONE, 0, 60, 100, 5, 2, 0, 0, 0);
+            }
 
             int id = entityManager.allocateEntityId();
             Unit unit = new Unit(id, f, pos, type, stats);
@@ -168,7 +181,38 @@ public final class GameAPI {
         LOG.debug("Script set timer: {}s -> {}", seconds, callbackName);
     }
 
+    /**
+     * Processes all active timers, decrementing tick counts and collecting
+     * expired timer callbacks to be fired. Must be called each game tick.
+     * <p>
+     * Returns the list of callback names whose timers have expired, so the
+     * caller (e.g., MissionScriptEngine) can invoke the corresponding Lua functions.
+     *
+     * @return list of expired timer callback names
+     */
+    public static java.util.List<String> processTimers() {
+        java.util.List<String> expired = new java.util.ArrayList<>();
+        var iterator = timers.entrySet().iterator();
+        while (iterator.hasNext()) {
+            var entry = iterator.next();
+            int remaining = entry.getValue() - 1;
+            if (remaining <= 0) {
+                expired.add(entry.getKey());
+                iterator.remove();
+                LOG.debug("Script timer expired: {}", entry.getKey());
+            } else {
+                entry.setValue(remaining);
+            }
+        }
+        return expired;
+    }
+
     // --- Event Hooks ---
+    // NOTE (H-26): Event hooks are registered here but never actually fired. The
+    // core event system (e.g., ModEventBridge, GameState events) does not call back
+    // into GameAPI.getEventHooks() to dispatch to Lua. To fix, integrate with the
+    // event pipeline so that when events like UnitKilled or BuildingDestroyed occur,
+    // the corresponding Lua callbacks registered here are invoked via LuaEngine.
 
     /**
      * Registers a callback for the unit killed event.

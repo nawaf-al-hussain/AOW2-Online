@@ -110,6 +110,16 @@ public abstract class Entity {
         return maxHp;
     }
 
+    /**
+     * Sets the current HP directly. Used when the effective max HP cap
+     * differs from the base maxHp (e.g., after building upgrades).
+     *
+     * @param hp the new HP value
+     */
+    public void setHp(int hp) {
+        this.hp = hp;
+    }
+
     @Override
     public String toString() {
         return getClass().getSimpleName() + "{id=" + id + ", faction=" + faction + ", hp=" + hp + "/" + maxHp + "}";

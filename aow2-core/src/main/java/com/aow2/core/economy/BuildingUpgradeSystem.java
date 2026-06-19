@@ -85,7 +85,8 @@ public final class BuildingUpgradeSystem {
         // Increase HP by 20% per level (applied to base maxHp), accumulated across levels
         int hpIncrease = (int)(building.getStats().maxHp() * 0.20);
         building.setUpgradeMaxHpBonus(building.getUpgradeMaxHpBonus() + hpIncrease);
-        building.heal(hpIncrease); // Also heal the HP increase
+        // Cap HP at effective max (base maxHp + upgrade bonus), not base maxHp
+        building.setHp(Math.min(building.getHp() + hpIncrease, building.getEffectiveMaxHp()));
 
         LOG.info("Building {} upgraded to level {} for {} credits (HP+{})",
             building.getId(), currentLevel + 1, upgradeCost, hpIncrease);

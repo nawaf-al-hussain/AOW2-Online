@@ -350,6 +350,9 @@ public final class MovementSystem {
             return preferred;
         }
 
+        int maxX = map.getWidth() - 1;
+        int maxY = map.getHeight() - 1;
+
         // Search in expanding Chebyshev distance rings
         for (int r = 1; r <= maxRadius; r++) {
             for (int dx = -r; dx <= r; dx++) {
@@ -359,7 +362,7 @@ public final class MovementSystem {
                     }
                     int nx = preferred.x() + dx;
                     int ny = preferred.y() + dy;
-                    if (nx < 0 || ny < 0 || nx > 127 || ny > 127) {
+                    if (nx < 0 || ny < 0 || nx > maxX || ny > maxY) {
                         continue;
                     }
                     GridPosition candidate = new GridPosition(nx, ny);

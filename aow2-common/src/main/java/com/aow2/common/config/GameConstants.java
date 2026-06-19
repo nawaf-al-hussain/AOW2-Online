@@ -49,6 +49,7 @@ public final class GameConstants {
 
     // Building placement
     // REF: complete_building_stats.json building_power_radius values
+    // DUPLICATE: Source of truth is GameConfig.getBuildingPowerRadius()
     public static final int[] BUILDING_POWER_RADIUS = {10, 20, 30, 40, 60, 127};
 
     // Unit type bitmasks
@@ -60,6 +61,7 @@ public final class GameConstants {
 
     // Rank system
     // REF: complete_building_stats.json rank_exp_thresholds and rank_credit_rewards
+    // DUPLICATE: Source of truth is GameConfig (getRankExpThresholds, getRankCreditRewards, getRankBonusPoints)
     public static final int[] RANK_EXP_THRESHOLDS = {20, 35, 50};
     public static final int[] RANK_CREDIT_REWARDS = {10, 25, 51};
     public static final int[] RANK_BONUS_POINTS = {0, 3, 6};
@@ -85,6 +87,9 @@ public final class GameConstants {
     // REF: pathfinding.md — diagonal costs use a lookup table, not a simple multiplier
     // (REMOVED DIAGONAL_COST_MULTIPLIER — original game uses lookup table approach)
     // Terrain movement costs (indexed by TerrainType ordinal)
+    // WARNING: This array is indexed by TerrainType.ordinal(). Any reordering of the
+    // TerrainType enum will silently break movement cost mapping. Consider migrating
+    // to an EnumMap<TerrainType, Integer> for type-safe lookups.
     // REF: map_system.md Section 3.1 — terrain IDs corrected to RE spec
     // FIX: Updated to match new TerrainType enum order after removing DIRT/ICE/RUINS
     // Ordinals: DEEP_WATER(0), SHALLOW_WATER(1), SAND(2), GRASS(3), FOREST(4),
