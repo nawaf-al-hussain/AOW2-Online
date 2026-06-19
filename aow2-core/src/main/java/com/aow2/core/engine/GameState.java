@@ -14,6 +14,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public class GameState {
 
+    /** Maximum number of processed events retained before evicting oldest. */
+    private static final int MAX_PROCESSED_EVENTS = 10_000;
+
     private long currentTick;
     private final CopyOnWriteArrayList<GameEvent> eventQueue;
     private final List<GameEvent> processedEvents;
@@ -42,6 +45,11 @@ public class GameState {
         List<GameEvent> events = new ArrayList<>(eventQueue);
         eventQueue.clear();
         processedEvents.addAll(events);
+        // FIX(M-15): Cap processed events list to prevent unbounded memory growth.
+        // Remove oldest events when the cap is exceeded.
+        while (processedEvents.size() > MAX_PROCESSED_EVENTS) {
+            processedEvents.remove(0);
+        }
         return events;
     }
 

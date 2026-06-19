@@ -95,10 +95,10 @@ class SessionServiceTest {
     @DisplayName("Desync detection when hashes differ")
     void desyncDetection() {
         GameSession session = sessionService.createSession(1L, 2L, "test_map");
-        boolean desync = sessionService.reportSyncHash(session.getSessionUuid(), 1L, 111L);
+        boolean desync = sessionService.reportSyncHash(session.getSessionUuid(), 1L, 10, 111L);
         assertFalse(desync, "No desync when only one hash reported");
 
-        desync = sessionService.reportSyncHash(session.getSessionUuid(), 2L, 222L);
+        desync = sessionService.reportSyncHash(session.getSessionUuid(), 2L, 10, 222L);
         assertTrue(desync, "Desync when hashes differ");
         assertTrue(session.isDesyncDetected());
     }
@@ -107,8 +107,8 @@ class SessionServiceTest {
     @DisplayName("No desync when hashes match")
     void noDesyncWhenMatch() {
         GameSession session = sessionService.createSession(1L, 2L, "test_map");
-        sessionService.reportSyncHash(session.getSessionUuid(), 1L, 555L);
-        boolean desync = sessionService.reportSyncHash(session.getSessionUuid(), 2L, 555L);
+        sessionService.reportSyncHash(session.getSessionUuid(), 1L, 20, 555L);
+        boolean desync = sessionService.reportSyncHash(session.getSessionUuid(), 2L, 20, 555L);
         assertFalse(desync);
         assertFalse(session.isDesyncDetected());
     }

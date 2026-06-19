@@ -11,7 +11,7 @@ import com.almasb.fxgl.app.GameApplication;
 import com.almasb.fxgl.app.GameSettings;
 import com.almasb.fxgl.dsl.FXGL;
 
-import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 
@@ -229,7 +229,13 @@ public class AOW2App extends GameApplication {
                 showModManager();
             }
             case "settings" -> {
-                LOG.info("Settings not yet implemented");
+                LOG.info("Settings scene requested — under construction");
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setTitle("Settings");
+                alert.setHeaderText("Settings Scene Under Construction");
+                alert.setContentText("The settings menu is not yet implemented. "
+                    + "You will be able to adjust graphics, audio, controls, and gameplay options here.");
+                alert.showAndWait();
             }
             case "quit" -> {
                 LOG.info("Quit requested");

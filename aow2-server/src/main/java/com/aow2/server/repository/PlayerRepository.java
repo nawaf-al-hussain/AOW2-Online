@@ -48,4 +48,13 @@ public interface PlayerRepository extends JpaRepository<Player, Long> {
      * @return a page of players sorted by ELO descending
      */
     Page<Player> findAllByOrderByEloRatingDesc(Pageable pageable);
+
+    /**
+     * Counts the number of players with a strictly higher ELO rating.
+     * Used for efficient rank calculation without loading all players into memory.
+     *
+     * @param eloRating the ELO rating to compare against
+     * @return count of players with a higher ELO rating
+     */
+    long countByEloRatingGreaterThan(int eloRating);
 }

@@ -261,19 +261,25 @@ public class CampaignScene {
         briefingText.getChildren().add(text);
         briefingText.setMaxWidth(700);
 
-        // Start mission button
-        Button startButton = new Button("Start Mission 1");
-        startButton.setStyle("-fx-background-color: rgb(60, 70, 45); "
-            + "-fx-text-fill: rgb(240, 230, 180); -fx-border-color: rgb(140, 150, 90); "
-            + "-fx-font-size: 14px; -fx-font-weight: bold; "
-            + "-fx-padding: 10 30 10 30; -fx-cursor: hand;");
-        startButton.setOnAction(e -> {
-            if (callback != null) {
-                callback.onStartMission(selectedEpisode, 0);
-            }
-        });
+        // Mission buttons generated dynamically based on episode mission count
+        HBox missionButtons = new HBox(10);
+        missionButtons.setAlignment(Pos.CENTER_LEFT);
+        for (int m = 0; m < episode.missionCount(); m++) {
+            final int missionIndex = m;
+            Button missionBtn = new Button("Start Mission " + (missionIndex + 1));
+            missionBtn.setStyle("-fx-background-color: rgb(60, 70, 45); "
+                + "-fx-text-fill: rgb(240, 230, 180); -fx-border-color: rgb(140, 150, 90); "
+                + "-fx-font-size: 14px; -fx-font-weight: bold; "
+                + "-fx-padding: 10 30 10 30; -fx-cursor: hand;");
+            missionBtn.setOnAction(e -> {
+                if (callback != null) {
+                    callback.onStartMission(selectedEpisode, missionIndex);
+                }
+            });
+            missionButtons.getChildren().add(missionBtn);
+        }
 
-        panel.getChildren().addAll(briefingTitle, briefingSub, briefingText, startButton);
+        panel.getChildren().addAll(briefingTitle, briefingSub, briefingText, missionButtons);
     }
 
     /**

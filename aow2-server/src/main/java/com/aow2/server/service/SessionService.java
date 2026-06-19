@@ -208,19 +208,30 @@ public class SessionService {
     }
 
     /**
-     * Records a desync detection event.
+     * Records a desync detection event for a specific game tick.
+     * Only compares hashes submitted for the same tick number, preventing
+     * false positives from comparing state at different points in time.
      * REF: multiplayer_architecture.md - Data integrity: turn sequence validation
      *
      * @param sessionUuid the session UUID
      * @param playerId    the reporting player's ID
-     * @param syncHash    the player's state hash
-     * @return true if a desync was detected between players
+     * @param tick        the game tick number this hash corresponds to
+     * @param syncHash    the player's state hash at the given tick
+     * @return true if a desync was detected between players at the same tick
      */
-    public boolean reportSyncHash(String sessionUuid, Long playerId, long syncHash) {
+    public boolean reportSyncHash(String sessionUuid, Long playerId, long tick, long syncHash) {
         GameSession session = activeSessions.get(sessionUuid);
         if (session == null) {
             return false;
         }
+
+        // Only accept hashes for the current tracked tick to avoid cross-tick false comparisons
+        if (session.getLastSyncTick() != null && session.getLastSyncTick() != tick) {
+            // New tick — reset both hashes to compare fresh
+            session.setPlayer1SyncHash(null);
+            session.setPlayer2SyncHash(null);
+        }
+        session.setLastSyncTick(tick);
 
         if (playerId.equals(session.getPlayer1Id())) {
             session.setPlayer1SyncHash(syncHash);
@@ -228,13 +239,13 @@ public class SessionService {
             session.setPlayer2SyncHash(syncHash);
         }
 
-        // Check for desync if both hashes are present
+        // Check for desync if both hashes are present for the same tick
         if (session.getPlayer1SyncHash() != null && session.getPlayer2SyncHash() != null) {
             boolean desync = !session.getPlayer1SyncHash().equals(session.getPlayer2SyncHash());
             if (desync) {
                 session.setDesyncDetected(true);
-                log.warn("Desync detected in session {} (p1: {}, p2: {})",
-                        sessionUuid, session.getPlayer1SyncHash(), session.getPlayer2SyncHash());
+                log.warn("Desync detected in session {} at tick {} (p1: {}, p2: {})",
+                        sessionUuid, tick, session.getPlayer1SyncHash(), session.getPlayer2SyncHash());
             }
             return desync;
         }

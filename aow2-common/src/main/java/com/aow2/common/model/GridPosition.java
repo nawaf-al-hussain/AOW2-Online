@@ -37,6 +37,13 @@ public record GridPosition(int x, int y) {
      * Chebyshev distance (max of |dx|, |dy|) which is the distance class
      * used for combat range checks, fog of war, etc.</p>
      *
+     * <p><b>NOTE:</b> The original RE formula {@code (lookupTable[dy+15][dx+15] & 255) >> 3}
+     * discards the lower 3 bits of each table entry. Those bits may encode additional
+     * information (e.g., fractional distance or secondary classification) in the
+     * original binary. Our implementation pre-computes Chebyshev distance directly,
+     * so this information loss is irrelevant here. If the original table ever needs
+     * to be used byte-for-byte, the lower 3 bits must be preserved.</p>
+     *
      * @param dx x-axis offset (range -15 to 15)
      * @param dy y-axis offset (range -15 to 15)
      * @return distance class (0-15)

@@ -76,6 +76,10 @@ public class GameSession {
     @Column(name = "desync_detected")
     private boolean desyncDetected = false;
 
+    /** The last game tick for which sync hashes were reported. */
+    @Column(name = "last_sync_tick")
+    private Long lastSyncTick;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
@@ -142,6 +146,9 @@ public class GameSession {
 
     public boolean isDesyncDetected() { return desyncDetected; }
     public void setDesyncDetected(boolean desyncDetected) { this.desyncDetected = desyncDetected; }
+
+    public Long getLastSyncTick() { return lastSyncTick; }
+    public void setLastSyncTick(Long lastSyncTick) { this.lastSyncTick = lastSyncTick; }
 
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }

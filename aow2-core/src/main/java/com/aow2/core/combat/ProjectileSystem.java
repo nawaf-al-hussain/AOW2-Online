@@ -177,10 +177,14 @@ public final class ProjectileSystem {
         }
 
         // Calculate flight time based on distance and projectile speed
-        double distance = startPos.distanceTo(targetPos);
+        // FIX(M-26): Use Chebyshev distance (distanceClass) for consistency with
+        // all other gameplay distance calculations (range checks, splash, etc.).
+        int dx = Math.abs(targetPos.x() - startPos.x());
+        int dy = Math.abs(targetPos.y() - startPos.y());
+        int chebyshevDist = Math.max(dx, dy);
         int speedIndex = weaponType.ordinal();
         int speed = SPEED_TABLE[Math.min(speedIndex, SPEED_TABLE.length - 1)];
-        int flightTime = Math.max(1, (int) Math.ceil(distance / speed));
+        int flightTime = Math.max(1, (int) Math.ceil((double) chebyshevDist / speed));
 
         // REF: combat_formulas.md — artillery uses fixed flight time, not distance-based
         // flightTime = (at[6][59] - at[5][59]) + 1
@@ -268,9 +272,13 @@ public final class ProjectileSystem {
         for (Unit unit : entities.getAllUnits()) {
             if (!unit.isAlive()) continue;
 
-            double distanceToImpact = unit.getPosition().distanceTo(impactPos);
-            if (distanceToImpact <= splashRadius) {
-                int distance = (int) distanceToImpact;
+            // FIX(M-27): Use Chebyshev distance for splash hit detection, consistent
+            // with all other gameplay distance calculations.
+            int sdx = Math.abs(unit.getPosition().x() - impactPos.x());
+            int sdy = Math.abs(unit.getPosition().y() - impactPos.y());
+            int distToImpact = Math.max(sdx, sdy);
+            if (distToImpact <= splashRadius) {
+                int distance = distToImpact;
                 // Use research-adjusted armor for splash targets
                 int effectiveArmor = getEffectiveArmor(unit);
                 int damage = DamageCalculator.calculateSplashDamage(
@@ -296,9 +304,12 @@ public final class ProjectileSystem {
         for (Building building : entities.getAllBuildings()) {
             if (!building.isAlive()) continue;
 
-            double distanceToImpact = building.getPosition().distanceTo(impactPos);
-            if (distanceToImpact <= splashRadius) {
-                int distance = (int) distanceToImpact;
+            // FIX(M-27): Use Chebyshev distance for splash hit detection.
+            int bdx = Math.abs(building.getPosition().x() - impactPos.x());
+            int bdy = Math.abs(building.getPosition().y() - impactPos.y());
+            int bDistToImpact = Math.max(bdx, bdy);
+            if (bDistToImpact <= splashRadius) {
+                int distance = bDistToImpact;
                 // Use research-adjusted building armor for splash targets
                 int effectiveBuildingArmor = getEffectiveBuildingArmor(building);
                 int damage = DamageCalculator.calculateSplashDamage(

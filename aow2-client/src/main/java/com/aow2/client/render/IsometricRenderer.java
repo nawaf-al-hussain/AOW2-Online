@@ -41,6 +41,9 @@ public class IsometricRenderer {
     /** Default vertical offset to center the map on screen. */
     private double offsetY;
 
+    /** Whether the debug grid overlay is enabled. Default false. */
+    private boolean debugGridEnabled = false;
+
     /** The game map to render. */
     private GameMap map;
 
@@ -182,8 +185,10 @@ public class IsometricRenderer {
             }
         }
 
-        // Draw grid lines for debugging (subtle)
-        renderGridOverlay(gc, minX, maxX, minY, maxY);
+        // Draw grid lines for debugging (subtle) — only when enabled
+        if (debugGridEnabled) {
+            renderGridOverlay(gc, minX, maxX, minY, maxY);
+        }
 
         gc.restore();
     }
@@ -301,6 +306,24 @@ public class IsometricRenderer {
             case RUINS         -> Color.rgb(90, 90, 90);        // dark gray
             case RESOURCE_DEPOSIT -> Color.rgb(200, 170, 50);   // gold
         };
+    }
+
+    /**
+     * Gets whether the debug grid overlay is enabled.
+     *
+     * @return true if debug grid overlay is rendered
+     */
+    public boolean isDebugGridEnabled() {
+        return debugGridEnabled;
+    }
+
+    /**
+     * Enables or disables the debug grid overlay.
+     *
+     * @param enabled true to render the grid overlay
+     */
+    public void setDebugGridEnabled(boolean enabled) {
+        this.debugGridEnabled = enabled;
     }
 
     /**

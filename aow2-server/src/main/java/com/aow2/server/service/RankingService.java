@@ -177,14 +177,8 @@ public class RankingService {
         Player player = playerRepository.findById(playerId)
                 .orElseThrow(() -> new IllegalArgumentException("Player not found: " + playerId));
 
-        // Calculate rank using pagination — count players with higher ELO
-        Pageable topPage = PageRequest.of(0, Integer.MAX_VALUE);
-        List<Player> allPlayers = playerRepository.findAllByOrderByEloRatingDesc(topPage).getContent();
-        int rank = 1;
-        for (Player p : allPlayers) {
-            if (p.getId().equals(playerId)) break;
-            rank++;
-        }
+        // Calculate rank using COUNT query — efficient, does not load all players into memory
+        int rank = (int) playerRepository.countByEloRatingGreaterThan(player.getEloRating()) + 1;
 
         return Map.of(
                 "rank", rank,

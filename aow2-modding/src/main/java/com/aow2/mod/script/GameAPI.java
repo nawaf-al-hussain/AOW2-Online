@@ -12,7 +12,10 @@ import com.aow2.core.world.EntityManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -53,6 +56,9 @@ public final class GameAPI {
 
     /** Event hook callbacks. */
     private static final Map<String, String> eventHooks = new HashMap<>();
+
+    /** Message queue for script messages to be displayed by the client UI layer. */
+    private static final List<String> messageQueue = Collections.synchronizedList(new ArrayList<>());
 
     /**
      * Private constructor — all methods are static for Lua access.
@@ -157,13 +163,26 @@ public final class GameAPI {
     // --- Messages ---
 
     /**
-     * Shows a message to the player.
-     * ASSUMPTION: message display handled by the client UI layer.
+     * Shows a message to the player by adding it to the message queue.
+     * The client UI layer can poll this queue via {@link #getAndClearMessages()}.
      *
      * @param text message text
      */
     public static void showMessage(String text) {
         LOG.info("[SCRIPT MESSAGE] {}", text);
+        messageQueue.add(text);
+    }
+
+    /**
+     * Returns and clears all pending script messages from the queue.
+     * The client UI layer should call this each frame to display messages.
+     *
+     * @return list of pending messages, cleared from the queue
+     */
+    public static List<String> getAndClearMessages() {
+        List<String> messages = new ArrayList<>(messageQueue);
+        messageQueue.clear();
+        return messages;
     }
 
     // --- Timers ---
@@ -335,5 +354,6 @@ public final class GameAPI {
         objectives.clear();
         timers.clear();
         eventHooks.clear();
+        messageQueue.clear();
     }
 }

@@ -340,15 +340,20 @@ public final class LuaEngine {
             globals.remove("io");
             globals.remove("java");
             globals.remove("debug");
+            globals.set("load", new org.luaj.vm2.LuaNil());
+            globals.set("loadstring", new org.luaj.vm2.LuaNil());
+            globals.set("dofile", new org.luaj.vm2.LuaNil());
+            globals.set("require", new org.luaj.vm2.LuaNil());
+
+            // FIX (M-51): Re-bind game API after reset so the aow2 table is available
+            // for new scripts without requiring a full re-initialization.
+            if (scriptBindings != null) {
+                scriptBindings.bindAll();
+            }
         }
-        gameState = null;
-        entityManager = null;
-        economySystem = null;
-        scriptBindings = null;
-        initialized = false;
-        // Also reset the static GameAPI state to prevent stale references
+        // Reset the static GameAPI state to prevent stale references
         GameAPI.reset();
-        LOG.debug("LuaEngine reset");
+        LOG.debug("LuaEngine reset — globals cleared, game API re-bound");
     }
 
     /**

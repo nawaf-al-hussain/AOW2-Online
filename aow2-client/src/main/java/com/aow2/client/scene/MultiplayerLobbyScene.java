@@ -917,9 +917,13 @@ public class MultiplayerLobbyScene {
 
     /**
      * Disposes of resources when the scene is no longer displayed.
+     * Cancels any active matchmaking search, disconnects WebSocket connections,
+     * and shuts down the service executor.
      */
     public void dispose() {
         cancelSearch();
         service.disconnect();
+        service.shutdown();
+        LOG.info("MultiplayerLobbyScene disposed — WebSockets closed and executor shut down");
     }
 }

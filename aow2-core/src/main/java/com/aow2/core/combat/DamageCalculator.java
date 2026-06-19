@@ -21,7 +21,12 @@ import com.aow2.core.entity.Unit;
  */
 public final class DamageCalculator {
 
-    // Seeded RNG for lockstep determinism
+    // Seeded RNG for lockstep determinism.
+    // NOTE(M-10): The original game uses a single global RNG for determinism, but
+    // java.util.Random is NOT thread-safe. If combat processing ever moves to
+    // multiple threads (e.g., parallel tick processing), this must be changed to
+    // ThreadLocal<Random> or synchronized access to avoid race conditions.
+    // For now this is acceptable because the game loop is single-threaded.
     private static final long SEED = 42L;
     private static final java.util.Random RNG = new java.util.Random(SEED);
 
@@ -98,6 +103,10 @@ public final class DamageCalculator {
         // distanceFactor = weaponDamage * (12 - distClass) / 12
         // At distClass 0 (center): full weaponDamage; at distClass 12+: weaponDamage * 0 / 12 = 0
         int distanceFactor = weaponDamage * (12 - distClass) / 12;
+        // FIX(M-09): Clamp distanceFactor to non-negative before applying armor formula.
+        // When distClass > 12, integer division can produce a negative distanceFactor,
+        // which would cause the min-clamp to produce negative damage.
+        distanceFactor = Math.max(0, distanceFactor);
 
         // Apply the same two-step clamp as normal damage:
         // damage = max(min(distanceFactor * (10 - armor) / 10, distanceFactor - armor), 1)

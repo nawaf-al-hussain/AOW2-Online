@@ -306,6 +306,14 @@ public class CombatSystem {
      * REF: combat_formulas.md - damage formula
      * REF: combat_formulas.md "Projectile Spawn" - ranged attacks use projectile system
      *
+     * TODO(M-25): The unit attack state machine is incomplete for ranged units. The original
+     * game has distinct states for wind-up, firing, and cooldown phases of ranged attacks.
+     * Currently we only use attackState 3 (attacking) and fall back to 1 (idle/moving) when
+     * the target is out of range. Missing transitions include: entering ranged attack wind-up
+     * state when a ranged unit acquires a target, tracking the projectile-in-flight state
+     * before resetting cooldown, and state transitions for units that need to stop moving
+     * before firing (e.g., artillery must deploy). See combat_formulas.md attack state table.
+     *
      * @param attacker the attacking unit
      * @param target   the target unit
      */
@@ -547,20 +555,19 @@ public class CombatSystem {
      */
     private Unit findNearestEnemyUnit(GridPosition position, Faction ownerFaction, int range) {
         Unit nearest = null;
-        double nearestDistance = Double.MAX_VALUE;
+        int nearestDistClass = Integer.MAX_VALUE;
 
         for (Unit unit : entityManager.getAllUnits()) {
             if (!unit.isAlive()) continue;
             if (unit.getFaction() == ownerFaction) continue;
 
-            double euclDist = unit.getPosition().distanceTo(position);
-            // REF: combat_formulas.md — range checks use distanceClass (Chebyshev), not Euclidean
             int dx = unit.getPosition().x() - position.x();
             int dy = unit.getPosition().y() - position.y();
             int dist = GridPosition.distanceClass(dx, dy);
-            if (dist <= range && euclDist < nearestDistance) {
+            // REF: combat_formulas.md — range checks and nearest selection both use distanceClass (Chebyshev)
+            if (dist <= range && dist < nearestDistClass) {
                 nearest = unit;
-                nearestDistance = euclDist;
+                nearestDistClass = dist;
             }
         }
         return nearest;

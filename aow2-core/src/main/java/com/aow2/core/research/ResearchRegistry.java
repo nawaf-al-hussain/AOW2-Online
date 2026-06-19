@@ -247,6 +247,13 @@ public final class ResearchRegistry {
     // Minimal JSON parser for the known tech_tree.json structure
     // Avoids external library dependencies. Handles: objects, arrays, strings,
     // numbers, booleans, null.
+    //
+    // TODO(M-12): This hand-rolled JSON parser is fragile and hard to maintain.
+    // It lacks proper error reporting (throws on malformed JSON), doesn't handle
+    // Unicode escapes, and silently accepts invalid input in edge cases.
+    // Should be replaced with Jackson (ObjectMapper) which is already available
+    // as a project dependency. The data classes (ResearchEffect, FactionTech)
+    // can be annotated with @JsonProperty for deserialization.
     // =========================================================================
 
     private static Map<String, Object> parseJson(String json) {

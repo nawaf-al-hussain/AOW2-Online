@@ -66,7 +66,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/matchmaking/**").authenticated()
                         .requestMatchers("/api/maps/**").authenticated()
                         .requestMatchers("/api/replays/**").authenticated()
-                        .requestMatchers("/api/leaderboard/**").authenticated()
+                        .requestMatchers("/api/leaderboard/**").permitAll()
                         .requestMatchers("/api/chat/**").authenticated()
                         .anyRequest().authenticated()
                 )

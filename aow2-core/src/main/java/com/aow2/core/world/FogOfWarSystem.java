@@ -167,6 +167,14 @@ public final class FogOfWarSystem {
      * Reveal tiles within sight range of a position using Chebyshev distance.
      * This matches the original game's circular reveal pattern.
      *
+     * TODO(M-30): The current implementation reveals all tiles within Chebyshev distance
+     * without any line-of-sight (LOS) blocking. The original game uses ray-casting to
+     * block visibility behind terrain obstacles (mountains, buildings, etc.). This should
+     * be implemented using a Bresenham or DDA ray-cast from the observer to each tile
+     * on the perimeter of the sight range, marking tiles along each ray as VISIBLE
+     * until an opaque terrain type (MOUNTAIN, BUILDING) blocks further visibility.
+     * Without this, players can see through mountains and buildings.
+     *
      * @param grid       the visibility grid for a player
      * @param center     the center position of the revealer
      * @param sightRange the sight range in tiles

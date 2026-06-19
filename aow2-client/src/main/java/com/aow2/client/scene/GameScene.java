@@ -325,6 +325,10 @@ public class GameScene {
      * Creates a test map with test entities for demonstration.
      */
     public void initializeGame() {
+        // TODO (M-33): Create and wire AudioManager here for background music and SFX playback.
+        // AudioManager needs to be initialized with the game scene's audio context and bound to
+        // game events (unit spawn, combat, building placement, UI interactions).
+
         // Initialize SpriteManager singleton early (must run on JavaFX thread)
         if (!SpriteManager.getInstance().isInitialized()) {
             SpriteManager.getInstance().initialize();

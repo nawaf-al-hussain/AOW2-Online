@@ -177,7 +177,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         long hash = payload.has("hash") ? payload.get("hash").asLong() : 0;
         long tick = payload.has("tick") ? payload.get("tick").asLong() : 0;
 
-        boolean desync = sessionService.reportSyncHash(sessionUuid, playerId, hash);
+        boolean desync = sessionService.reportSyncHash(sessionUuid, playerId, tick, hash);
         if (desync) {
             // Notify both players of the desync
             var gameSession = sessionService.getSessionForPlayer(playerId);
