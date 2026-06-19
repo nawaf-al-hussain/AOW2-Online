@@ -23,3 +23,10 @@ logs/
 
 # Runtime
 *.h2.db
+
+# RE assets (large binary files — keep the JSON/MD docs, exclude sprites/pngs/binaries)
+docs/RE/assets_processed/
+docs/RE/assets_raw/
+docs/RE/decompiled/raw/
+docs/RE/original_apk/
+docs/RE/source_original/

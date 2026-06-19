@@ -1,0 +1,370 @@
+{
+  "metadata": {
+    "game": "Art of War 2 Online",
+    "description": "Building statistics from /a file and d0 faction files",
+    "cost_levels": "3 upgrade levels per building"
+  },
+  "confederation_buildings": [
+    {
+      "name": "Command Centre",
+      "faction": "Confederation",
+      "hp": 120,
+      "base_cost": 22,
+      "speed": 7,
+      "armor": 7,
+      "attack_bonus": 4,
+      "sight_range": 2,
+      "build_time": 20,
+      "attack_range": 7,
+      "extended_armor": 8,
+      "power_consume": 2,
+      "power_produce": 6,
+      "queue_slots": 0,
+      "tech_requirement": 0,
+      "cost_credits": 100,
+      "reward_credits": 450,
+      "upgrade_costs": [
+        300,
+        200,
+        200
+      ]
+    },
+    {
+      "name": "Generator",
+      "faction": "Confederation",
+      "hp": 100,
+      "base_cost": 14,
+      "speed": 5,
+      "armor": 7,
+      "attack_bonus": 3,
+      "sight_range": 6,
+      "build_time": 8,
+      "attack_range": 7,
+      "extended_armor": 8,
+      "power_consume": 2,
+      "power_produce": 6,
+      "queue_slots": 0,
+      "tech_requirement": 0,
+      "cost_credits": 80,
+      "reward_credits": 550,
+      "upgrade_costs": [
+        300,
+        350,
+        250
+      ]
+    },
+    {
+      "name": "Infantry Centre",
+      "faction": "Confederation",
+      "hp": 100,
+      "base_cost": 28,
+      "speed": 6,
+      "armor": 7,
+      "attack_bonus": 3,
+      "sight_range": 6,
+      "build_time": 18,
+      "attack_range": 11,
+      "extended_armor": 12,
+      "power_consume": 2,
+      "power_produce": 2,
+      "queue_slots": 0,
+      "tech_requirement": 0,
+      "cost_credits": 110,
+      "reward_credits": 200,
+      "upgrade_costs": [
+        300,
+        500,
+        500
+      ]
+    },
+    {
+      "name": "Machine Factory",
+      "faction": "Confederation",
+      "hp": 110,
+      "base_cost": 36,
+      "speed": 6,
+      "armor": 8,
+      "attack_bonus": 4,
+      "sight_range": 6,
+      "build_time": 25,
+      "attack_range": 3,
+      "extended_armor": 2,
+      "power_consume": 0,
+      "power_produce": 0,
+      "queue_slots": 0,
+      "tech_requirement": 3,
+      "cost_credits": 160,
+      "reward_credits": 250,
+      "upgrade_costs": [
+        500,
+        400,
+        500
+      ]
+    },
+    {
+      "name": "Technology Centre",
+      "faction": "Confederation",
+      "hp": 120,
+      "base_cost": 65,
+      "speed": 8,
+      "armor": 8,
+      "attack_bonus": 4,
+      "sight_range": 7,
+      "build_time": 30,
+      "attack_range": 6,
+      "extended_armor": 16,
+      "power_consume": 0,
+      "power_produce": 0,
+      "queue_slots": 4,
+      "tech_requirement": 1,
+      "cost_credits": 250,
+      "reward_credits": 300,
+      "upgrade_costs": [
+        600,
+        800,
+        700
+      ]
+    },
+    {
+      "name": "Bunker",
+      "faction": "Confederation",
+      "hp": 120,
+      "base_cost": 50,
+      "speed": 7,
+      "armor": 8,
+      "attack_bonus": 4,
+      "sight_range": 7,
+      "build_time": 30,
+      "attack_range": 6,
+      "extended_armor": 16,
+      "power_consume": 0,
+      "power_produce": 0,
+      "queue_slots": 4,
+      "tech_requirement": 1,
+      "cost_credits": 220,
+      "reward_credits": 250,
+      "upgrade_costs": [
+        300,
+        500,
+        250
+      ]
+    },
+    {
+      "name": "Locator",
+      "faction": "Confederation",
+      "hp": 100,
+      "base_cost": 55,
+      "speed": 9,
+      "armor": 8,
+      "attack_bonus": 4,
+      "sight_range": 7,
+      "build_time": 50,
+      "attack_range": 7,
+      "extended_armor": 16,
+      "power_consume": 0,
+      "power_produce": 0,
+      "queue_slots": 6,
+      "tech_requirement": 1,
+      "cost_credits": 300,
+      "reward_credits": 200,
+      "upgrade_costs": [
+        400,
+        300,
+        500
+      ]
+    },
+    {
+      "name": "Rocket Launcher",
+      "faction": "Confederation",
+      "hp": 50,
+      "base_cost": 4,
+      "speed": 7,
+      "armor": 12,
+      "attack_bonus": 1,
+      "sight_range": 9,
+      "build_time": 12,
+      "attack_range": 8,
+      "extended_armor": 16,
+      "power_consume": 0,
+      "power_produce": 0,
+      "queue_slots": 6,
+      "tech_requirement": 1,
+      "cost_credits": 40,
+      "reward_credits": 250,
+      "upgrade_costs": [
+        1000,
+        700,
+        350
+      ]
+    }
+  ],
+  "rebels_buildings": [
+    {
+      "name": "Headquarters",
+      "faction": "Rebels",
+      "upgrade_costs": [
+        300,
+        200,
+        200
+      ]
+    },
+    {
+      "name": "Powerplant",
+      "faction": "Rebels",
+      "upgrade_costs": [
+        300,
+        350,
+        250
+      ]
+    },
+    {
+      "name": "Barracks",
+      "faction": "Rebels",
+      "upgrade_costs": [
+        300,
+        500,
+        500
+      ]
+    },
+    {
+      "name": "Factory",
+      "faction": "Rebels",
+      "upgrade_costs": [
+        500,
+        400,
+        500
+      ]
+    },
+    {
+      "name": "Laboratory",
+      "faction": "Rebels",
+      "upgrade_costs": [
+        600,
+        800,
+        700
+      ]
+    },
+    {
+      "name": "Bunker",
+      "faction": "Rebels",
+      "upgrade_costs": [
+        300,
+        500,
+        250
+      ]
+    },
+    {
+      "name": "Tower",
+      "faction": "Rebels",
+      "upgrade_costs": [
+        400,
+        300,
+        500
+      ]
+    },
+    {
+      "name": "Wall",
+      "faction": "Rebels",
+      "upgrade_costs": [
+        1000,
+        700,
+        350
+      ]
+    }
+  ],
+  "game_config": {
+    "turn_time_settings": [
+      30,
+      20,
+      30,
+      20
+    ],
+    "building_footprint_widths": [
+      20,
+      20,
+      20,
+      30,
+      30,
+      30,
+      40,
+      40,
+      40
+    ],
+    "building_footprint_heights": [
+      20,
+      30,
+      40,
+      20,
+      30,
+      40,
+      20,
+      30,
+      40
+    ],
+    "building_power_radius": [
+      10,
+      20,
+      30,
+      40,
+      60,
+      127
+    ],
+    "rank_exp_thresholds": [
+      20,
+      35,
+      50
+    ],
+    "rank_credit_rewards": [
+      10,
+      25,
+      51
+    ],
+    "rank_bonus_points": [
+      0,
+      3,
+      6
+    ],
+    "battle_time_limits": [
+      1001,
+      1100,
+      1101,
+      1200
+    ],
+    "game_config_values": {
+      "raw": [
+        65435,
+        65485,
+        65535,
+        0,
+        50,
+        100,
+        123,
+        124,
+        125,
+        126,
+        127,
+        1000,
+        1000,
+        1100,
+        1200
+      ],
+      "interpreted": {
+        "unknown_neg_101": -101,
+        "unknown_neg_51": -51,
+        "unknown_neg_1": -1,
+        "min_map_size": 0,
+        "small_map_size": 50,
+        "medium_map_size": 100,
+        "map_size_123": 123,
+        "map_size_124": 124,
+        "map_size_125": 125,
+        "map_size_126": 126,
+        "max_map_size": 127,
+        "timeout_short": 1000,
+        "timeout_medium": 1000,
+        "timeout_long": 1100,
+        "timeout_max": 1200
+      }
+    }
+  }
+}

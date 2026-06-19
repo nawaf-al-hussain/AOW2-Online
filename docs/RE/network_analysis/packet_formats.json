@@ -1,0 +1,564 @@
+{
+  "protocol": {
+    "name": "Art of War 2 Online",
+    "version": "1.0.0",
+    "transport": {
+      "primary": {
+        "type": "TCP",
+        "host": "artofwaronline.herocraft.com",
+        "alt_host": "aow2.ru",
+        "base_port": 47584,
+        "port_range": [47584, 47585, 47586, 47587, 47588],
+        "port_selection": "base + random(0-4)",
+        "encoding": "big-endian",
+        "keep_alive": true,
+        "receive_buffer_size": 1
+      },
+      "fallback": {
+        "type": "HTTP/1.1",
+        "connection_header": "close",
+        "content_type_post": "application/x-www-form-urlencoded",
+        "expected_status": 200,
+        "phases": [
+          {"name": "handshake", "timeout_ms": 10000, "mode": 0},
+          {"name": "authentication", "timeout_ms": 5000, "mode": 1},
+          {"name": "data_exchange", "timeout_ms": 30000, "mode": 2}
+        ],
+        "max_retries": 5
+      }
+    }
+  },
+  "wire_format": {
+    "outbound_packet": {
+      "description": "TCP packet sent from client to server",
+      "fields": [
+        {"offset": 0, "size": 1, "type": "byte", "name": "message_type", "description": "0 if payload empty, else type parameter"},
+        {"offset": 1, "size": 2, "type": "short_be", "name": "total_payload_length", "description": "string_data_length + 2"},
+        {"offset": 3, "size": 2, "type": "short_be", "name": "string_data_length", "description": "Length of the string payload"},
+        {"offset": 5, "size": "N", "type": "byte[]", "name": "string_data", "description": "Each char cast to byte (low 8 bits)"}
+      ]
+    },
+    "inbound_packet": {
+      "description": "TCP packet received from server",
+      "fields": [
+        {"offset": 0, "size": 1, "type": "byte", "name": "message_type"},
+        {"offset": 1, "size": 2, "type": "short_be", "name": "remaining_payload_length"},
+        {"offset": 3, "size": 2, "type": "short_be", "name": "data_length"},
+        {"offset": 5, "size": "N", "type": "byte[]", "name": "message_data"}
+      ]
+    },
+    "game_record": {
+      "description": "Parsed record within a message payload",
+      "fields": [
+        {"offset": 0, "size": 4, "type": "int32_be", "name": "record_size", "description": "Includes the 5-byte header"},
+        {"offset": 4, "size": 1, "type": "byte", "name": "record_type", "description": "Command ID (see message_types)"},
+        {"offset": 5, "size": "varies", "type": "byte[]", "name": "record_body", "description": "record_size - 5 bytes"}
+      ]
+    }
+  },
+  "message_types": {
+    "inbound_server_to_client": {
+      "1": {
+        "name": "ACK",
+        "handler": "internal",
+        "description": "Acknowledgment; triggers re-read if cB flag not set",
+        "payload": "none"
+      },
+      "2": {
+        "name": "PLAYER_INFO_SHORT",
+        "handler": "f(6)",
+        "description": "Player info update with 6-byte payload",
+        "payload": {"size": 6, "fields": [{"offset": 0, "size": 6, "type": "byte[]", "name": "player_data"}]}
+      },
+      "3": {
+        "name": "PLAYER_COUNT",
+        "handler": "C()",
+        "description": "Player count and team assignment update",
+        "payload": {
+          "fields": [
+            {"offset": 0, "size": 1, "type": "byte", "name": "player_count", "condition": "value >= 1"},
+            {"offset": 1, "size": 1, "type": "byte", "name": "team_assignment"}
+          ]
+        }
+      },
+      "4": {
+        "name": "SESSION_INIT",
+        "handler": "y()",
+        "description": "Full session initialization - the most important init message",
+        "payload": {
+          "fields": [
+            {"offset": 0, "size": 4, "type": "int32_be", "name": "game_id"},
+            {"offset": 4, "size": 1, "type": "byte", "name": "status_flags"},
+            {"offset": 5, "size": 1, "type": "byte", "name": "turn_counter"},
+            {"offset": 6, "size": 1, "type": "byte", "name": "player_count_ag"},
+            {"offset": 7, "size": "ag", "type": "byte[]", "name": "player_ids"},
+            {"offset": "7+ag", "size": 4, "type": "int32_be", "name": "turn_income"},
+            {"offset": "11+ag", "size": 4, "type": "int32_be", "name": "turn_expenses"},
+            {"offset": "15+ag", "size": 4, "type": "int32_be", "name": "turn_delta"},
+            {"offset": "19+ag", "size": 6, "type": "byte[]", "name": "production_levels"},
+            {"offset": "25+ag", "size": 6, "type": "short_be[]", "name": "production_caps", "count": 3},
+            {"offset": "31+ag", "size": 4, "type": "int32_be", "name": "current_player_id"},
+            {"offset": "35+ag", "size": 1, "type": "byte", "name": "alliance_count"},
+            {"offset": "36+ag", "size": "at", "type": "byte[]", "name": "alliance_data"},
+            {"offset": "varies", "size": 1, "type": "byte", "name": "feature_count"},
+            {"offset": "varies", "size": "ai", "type": "byte[]", "name": "feature_data"},
+            {"offset": "varies", "size": 2, "type": "short_be", "name": "server_string_length"},
+            {"offset": "varies", "size": "N", "type": "byte[]", "name": "server_string"},
+            {"offset": "varies", "size": 1, "type": "byte", "name": "feature_flags_T"},
+            {"offset": "varies", "size": 1, "type": "byte", "name": "sub_features_U"},
+            {"offset": "varies", "size": 1, "type": "byte", "name": "alliance_flags_al"},
+            {"offset": "varies", "size": 1, "type": "byte", "name": "name_count_an"},
+            {"offset": "varies", "size": "an", "type": "byte[]", "name": "names_am"},
+            {"offset": "varies", "size": 4, "type": "int32_be", "name": "rank_score"},
+            {"offset": "varies", "size": 1, "type": "byte", "name": "sync_interval_sec"},
+            {"offset": "varies", "size": 1, "type": "byte", "name": "disconnect_timeout_sec"},
+            {"offset": "varies", "size": 1, "type": "byte", "name": "matchmaking_timeout_sec"},
+            {"offset": "varies", "size": 1, "type": "byte", "name": "game_mode_flags_V"},
+            {"offset": "varies", "size": 1, "type": "byte", "name": "padding"},
+            {"offset": "varies", "size": 2, "type": "short_be", "name": "unknown_co"},
+            {"offset": "varies", "size": 3, "type": "byte[]", "name": "map_size"},
+            {"offset": "varies", "size": 1, "type": "byte", "name": "server_name_length"},
+            {"offset": "varies", "size": "N", "type": "byte[]", "name": "server_name"}
+          ]
+        }
+      },
+      "5": {
+        "name": "SERVER_MESSAGE",
+        "handler": "z()",
+        "description": "Server text message (chat/system notification)",
+        "payload": {
+          "fields": [
+            {"offset": 0, "size": 2, "type": "short_be", "name": "message_length"},
+            {"offset": 2, "size": "N", "type": "byte[]", "name": "message_text", "encoding": "latin-1"}
+          ]
+        }
+      },
+      "10": {
+        "name": "PLAYER_INFO_FULL_A",
+        "handler": "f(1)",
+        "description": "Full player info for team A",
+        "payload": {"handler_arg": 1}
+      },
+      "11": {
+        "name": "PLAYER_INFO_FULL_B",
+        "handler": "f(0)",
+        "description": "Full player info for team B",
+        "payload": {"handler_arg": 0}
+      },
+      "12": {
+        "name": "MATCH_START",
+        "handler": "B()",
+        "description": "Match starting with map and game configuration",
+        "payload": {
+          "fields": [
+            {"offset": 0, "size": 1, "type": "byte", "name": "game_mode"},
+            {"offset": 1, "size": 4, "type": "int32_be", "name": "game_id"},
+            {"offset": 5, "size": 1, "type": "byte", "name": "server_string_length"},
+            {"offset": 6, "size": "N", "type": "byte[]", "name": "server_string"},
+            {"offset": "6+N", "size": 2, "type": "short_be", "name": "map_data_length"},
+            {"offset": "8+N", "size": "M", "type": "byte[]", "name": "map_data"}
+          ]
+        },
+        "state_transition": {"to": 31, "name": "match_wait"}
+      },
+      "13": {
+        "name": "PLAYER_INFO_3",
+        "handler": "f(3)",
+        "description": "Player info variant with 3-byte payload",
+        "payload": {"handler_arg": 3}
+      },
+      "14": {
+        "name": "PLAYER_INFO_4",
+        "handler": "f(4)",
+        "description": "Player info variant with 4-byte payload",
+        "payload": {"handler_arg": 4}
+      },
+      "15": {
+        "name": "PLAYER_INFO_7",
+        "handler": "f(7)",
+        "description": "Player info variant with 7-byte payload",
+        "payload": {"handler_arg": 7}
+      },
+      "20": {
+        "name": "LOBBY_LIST",
+        "handler": "w()",
+        "description": "Lobby/room list for matchmaking",
+        "payload": {
+          "fields": [
+            {"offset": 0, "size": 1, "type": "byte", "name": "entry_count"},
+            {"offset": 1, "size": "varies", "type": "struct[]", "name": "entries", "struct": [
+              {"size": 2, "type": "short_be", "name": "room_id"},
+              {"size": 3, "type": "byte[]", "name": "room_name_lengths"},
+              {"size": "varies", "type": "byte[]", "name": "room_names"}
+            ]}
+          ]
+        },
+        "state_transition": {"to": "22_or_120", "condition": "bi_flag"}
+      },
+      "21": {
+        "name": "MAP_DATA",
+        "handler": "x()",
+        "description": "Full map data blob",
+        "payload": {
+          "fields": [
+            {"offset": 0, "size": 4, "type": "int32_be", "name": "map_data_size"},
+            {"offset": 4, "size": "N", "type": "byte[]", "name": "map_data"}
+          ]
+        }
+      },
+      "22": {
+        "name": "UNIT_LIST_INIT",
+        "handler": "j(0)",
+        "description": "Unit list initialization (sets cE=0 then 1)",
+        "payload": {"handler_arg": 0, "side_effect": "cE=0,cE=1"}
+      },
+      "23": {
+        "name": "VICTORY_VALUES",
+        "handler": "H()",
+        "description": "Victory condition configuration",
+        "payload": {
+          "fields": [
+            {"offset": 0, "size": 4, "type": "int32_be", "name": "victory_id"},
+            {"offset": 4, "size": 2, "type": "short_be", "name": "condition_count"},
+            {"offset": 6, "size": "varies", "type": "struct[]", "name": "conditions"}
+          ]
+        }
+      },
+      "25": {
+        "name": "GAME_PARAMETERS",
+        "handler": "I()",
+        "description": "Game configuration parameters",
+        "payload": {
+          "fields": [
+            {"offset": 0, "size": 14, "type": "short_be[]", "name": "parameters", "count": 7}
+          ]
+        }
+      },
+      "26": {
+        "name": "MAP_VALIDATION",
+        "handler": "J()",
+        "description": "Map validation/verification data",
+        "payload": {
+          "fields": [
+            {"offset": 0, "size": 2, "type": "short_be", "name": "expected_checksum"},
+            {"offset": 2, "size": "varies", "type": "byte[]", "name": "validation_data"}
+          ]
+        }
+      },
+      "30": {
+        "name": "GAME_STATE",
+        "handler": "D()",
+        "description": "Full game state synchronization - most frequent message",
+        "payload": {
+          "fields": [
+            {"offset": 0, "size": 2, "type": "short_be", "name": "turn_number", "validation": "must_match_y.Q[0]"},
+            {"offset": 2, "size": 1, "type": "byte", "name": "separator"},
+            {"offset": 3, "size": "2+N", "type": "length_prefixed", "name": "tile_data"},
+            {"offset": "varies", "size": "2+M", "type": "length_prefixed", "name": "unit_data"}
+          ]
+        }
+      },
+      "32": {
+        "name": "PLAYER_INFO_2",
+        "handler": "f(2)",
+        "description": "Player info variant with 2-byte payload",
+        "payload": {"handler_arg": 2}
+      },
+      "33": {
+        "name": "GAME_RESULT",
+        "handler": "G()",
+        "description": "End-of-game scores",
+        "payload": {
+          "fields": [
+            {"offset": 0, "size": 4, "type": "int32_be", "name": "player_0_score"},
+            {"offset": 4, "size": 4, "type": "int32_be", "name": "player_1_score"}
+          ]
+        },
+        "state_transition": {"to": 41, "name": "game_result"}
+      },
+      "34": {
+        "name": "PLAYER_INFO_8",
+        "handler": "f(8)",
+        "description": "Player info variant with 8-byte payload",
+        "payload": {"handler_arg": 8}
+      },
+      "40": {
+        "name": "ARMY_LIST_INIT",
+        "handler": "k(0)",
+        "description": "Army list initialization",
+        "payload": {"handler_arg": 0, "side_effect": "cE=0,cE=1"}
+      },
+      "41": {
+        "name": "MAP_LIST",
+        "handler": "K()",
+        "description": "Map selection list",
+        "payload": {
+          "fields": [
+            {"offset": 0, "size": 4, "type": "int32_be", "name": "list_id"},
+            {"offset": 4, "size": 2, "type": "short_be", "name": "map_count"},
+            {"offset": 6, "size": "varies", "type": "struct[]", "name": "maps"}
+          ]
+        }
+      },
+      "42": {
+        "name": "UPGRADE_DATA",
+        "handler": "L()",
+        "description": "Technology/upgrade tree data",
+        "payload": {
+          "fields": [
+            {"offset": 0, "size": 4, "type": "int32_be", "name": "player_id"},
+            {"offset": 4, "size": 1, "type": "byte", "name": "team_flag"},
+            {"offset": 5, "size": 12, "type": "byte[]", "name": "upgrade_params"},
+            {"offset": 17, "size": 6, "type": "byte[]", "name": "upgrade_values"}
+          ]
+        }
+      },
+      "50": {
+        "name": "TOWN_DATA_SINGLE",
+        "handler": "N()",
+        "description": "Single town data update",
+        "payload": {"side_effect": "cE=0,cE=1", "state_transition": {"to": "44_or_45"}}
+      },
+      "51": {
+        "name": "TOWN_DATA_FULL",
+        "handler": "M()",
+        "description": "Full batch of town data",
+        "payload": {
+          "fields": [
+            {"offset": 0, "size": 4, "type": "int32_be", "name": "batch_id"},
+            {"offset": 4, "size": 2, "type": "short_be", "name": "town_count"},
+            {"offset": 6, "size": "varies", "type": "struct[]", "name": "towns"}
+          ]
+        }
+      },
+      "60": {
+        "name": "PLAYER_BRIEF",
+        "handler": "m(0)",
+        "description": "Brief player summary data",
+        "payload": {"handler_arg": 0}
+      },
+      "61": {
+        "name": "CHAT_HISTORY",
+        "handler": "P()",
+        "description": "Chat message history batch",
+        "payload": {
+          "fields": [
+            {"offset": 4, "size": 2, "type": "short_be", "name": "message_count"},
+            {"offset": 6, "size": "varies", "type": "struct[]", "name": "messages"}
+          ]
+        }
+      },
+      "62": {
+        "name": "CHAT_ENABLE",
+        "handler": "flag",
+        "description": "Enable chat functionality (sets k=1)",
+        "payload": "none"
+      },
+      "70": {
+        "name": "RANK_DATA",
+        "handler": "A()",
+        "description": "Player ranking/leaderboard data",
+        "payload": {
+          "fields": [
+            {"offset": 0, "size": 2, "type": "short_be", "name": "rank_id"}
+          ]
+        }
+      },
+      "71": {
+        "name": "PLAYER_DETAILED",
+        "handler": "l(0)",
+        "description": "Detailed player profile data",
+        "payload": {"handler_arg": 0}
+      },
+      "72": {
+        "name": "ARMY_LIST_FULL",
+        "handler": "O()",
+        "description": "Complete army list with unit details",
+        "payload": {
+          "fields": [
+            {"offset": 0, "size": 4, "type": "int32_be", "name": "army_id"},
+            {"offset": 4, "size": 2, "type": "short_be", "name": "unit_count"},
+            {"offset": 6, "size": "varies", "type": "struct[]", "name": "units"}
+          ]
+        }
+      },
+      "90": {
+        "name": "ALLY_LIST",
+        "handler": "Q()",
+        "description": "Ally/coalition member list",
+        "payload": {
+          "fields": [
+            {"offset": 0, "size": 1, "type": "byte", "name": "ally_count"},
+            {"offset": 1, "size": "varies", "type": "struct[]", "name": "allies"}
+          ]
+        },
+        "state_transition": {"to": 88}
+      },
+      "91": {
+        "name": "PLAYER_INFO_5",
+        "handler": "f(5)",
+        "description": "Player info variant with 5-byte payload",
+        "payload": {"handler_arg": 5}
+      },
+      "100": {
+        "name": "TOWN_LIST",
+        "handler": "R()",
+        "description": "Large batch town list",
+        "payload": {
+          "fields": [
+            {"offset": 0, "size": 4, "type": "int32_be", "name": "batch_id"},
+            {"offset": 4, "size": 2, "type": "short_be", "name": "town_count"},
+            {"offset": 6, "size": "varies", "type": "struct[]", "name": "towns"}
+          ]
+        }
+      },
+      "101": {
+        "name": "GAME_TICK",
+        "handler": "flag",
+        "description": "Game tick marker (sets l=1)",
+        "payload": "none"
+      },
+      "102": {
+        "name": "LOBBY_LIST_ALT",
+        "handler": "w()",
+        "description": "Alternative lobby list format",
+        "payload": "same as type 20"
+      }
+    },
+    "error_types": {
+      "-2": {"name": "ERR_MATCHMAKING", "description": "Matchmaking error"},
+      "-5": {"name": "ERR_CONNECTION", "description": "Connection error"},
+      "-8": {"name": "ERR_TIMEOUT", "description": "Timeout error"}
+    }
+  },
+  "encryption": {
+    "custom_base64": {
+      "alphabet": "Hd2_bcGrVEDRfuzPIWB8NY-qQ6mxLKZj4lOn5yJiMAtsaUXCT9powF1hgS0e3kv7",
+      "description": "Non-standard Base64 alphabet used for game data encoding"
+    },
+    "xor_stream_cipher": {
+      "type": "stream",
+      "key_source": "game_data_table[y.bO.K] at offset L[161]",
+      "key_rotation": "15-byte cycle (cN = (cN+1) % 15)",
+      "session_key": "random 32-bit per request (t field)",
+      "session_rotation": "4-byte cycle (cO = (cO+1) & 3)",
+      "checksum": "XOR-based accumulator (cP/cQ)"
+    },
+    "data_at_rest": {
+      "type": "xor_with_appended_seed",
+      "seed_size": 4,
+      "seed_source": "random() & 0x7FFFFFFF",
+      "method": "data[i] ^ (seed >> ((i & 3) << 3)), seed appended as last 4 bytes"
+    },
+    "http_xor": {
+      "key_size": 15,
+      "default_key": "0xFF repeated",
+      "method": "decrypted[i] = key[i] ^ encrypted[i]; i = (i+1) % 15"
+    }
+  },
+  "screen_states": {
+    "0": "Main Menu",
+    "1": "Game Over",
+    "7": "Main Menu (alternate)",
+    "8": "Login",
+    "9": "Chat Lobby",
+    "10": "Chat Room",
+    "11": "Chat Private",
+    "14": "Online Game Lobby",
+    "16": "Game Room",
+    "17": "Game Screen",
+    "18": "Unit Selection",
+    "19": "Battle",
+    "20": "Map View",
+    "22": "Battle View",
+    "29": "Settings",
+    "30": "Game Session",
+    "31": "Matchmaking Wait",
+    "32": "Unknown 32",
+    "33": "Unknown 33",
+    "39": "Matchmaking",
+    "40": "Unknown 40",
+    "41": "Game Result",
+    "42": "Unknown 42",
+    "43": "Building",
+    "44": "Town View",
+    "45": "World Map",
+    "47": "Shop",
+    "48": "Profile",
+    "53": "Unknown 53",
+    "54": "Rankings",
+    "55": "Search Game",
+    "56": "Search Game Alt",
+    "57": "Clan",
+    "60": "Map Editor",
+    "63": "Error/Connection Lost",
+    "69": "Replay",
+    "72": "Unknown 72",
+    "78": "Tutorial",
+    "85": "Unknown 85",
+    "87": "Unknown 87",
+    "88": "Alliance",
+    "89": "Unknown 89",
+    "90": "Allies",
+    "91": "Login Wait",
+    "92": "Unknown 92",
+    "94": "Unknown 94",
+    "95": "Unknown 95",
+    "102": "Unknown 102",
+    "107": "Unknown 107",
+    "111": "Unknown 111",
+    "112": "Unknown 112",
+    "115": "Unknown 115",
+    "116": "Unknown 116",
+    "120": "Unknown 120",
+    "121": "Unknown 121",
+    "122": "Unknown 122",
+    "125": "Dialog/Menu Transition"
+  },
+  "http_endpoints": {
+    "login_info": {
+      "url": "http://wap.herocraft.com/login/?show_info=1",
+      "method": "GET"
+    },
+    "payment_donate": {
+      "url": "http://content.herocraft.com/cds/servlet/payment/gmarket/donate",
+      "method": "GET",
+      "params": ["oid", "uid", "sid"]
+    },
+    "payment_info": {
+      "url": "http://content.herocraft.com/cds/servlet/payments/inpinfo",
+      "method": "GET",
+      "params": ["gid", "system", "mcc", "cc", "uid", "pl", "t", "ch", "l"]
+    },
+    "update_check": {
+      "url": "http://update.herocraft.com/jad/",
+      "method": "GET"
+    },
+    "inneractive_ad": {
+      "url": "http://m2m1.inner-active.com/simpleM2M/clientRequestAd",
+      "method": "GET",
+      "params": {
+        "aid": "application_id",
+        "v": "Sm2m-1.5.1",
+        "po": "port_number",
+        "w": "screen_width",
+        "h": "screen_height",
+        "cid": "client_id",
+        "ua": "user_agent"
+      }
+    }
+  },
+  "timing": {
+    "sync_interval_ms": "sync_interval_sec * 1000 (default 15000)",
+    "disconnect_timeout_ms": "disconnect_timeout_sec * 1000 (default 14000)",
+    "matchmaking_timeout_ms": "matchmaking_timeout_sec * 1000 (default 5000)",
+    "sender_idle_ms": 500,
+    "sender_rate_limit_ms": 100,
+    "receiver_error_threshold": 3,
+    "sender_error_threshold": 3,
+    "connection_retry_max": 10,
+    "http_retry_max": 10,
+    "http_retry_delay_ms": 2500,
+    "network_manager_poll_ms": 100
+  }
+}

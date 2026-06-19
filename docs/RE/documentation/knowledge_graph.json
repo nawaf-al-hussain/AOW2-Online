@@ -1,0 +1,3680 @@
+{
+  "metadata": {
+    "title": "Art of War 2 Online - Knowledge Graph",
+    "version": "1.0.0",
+    "generated": "2024-01-20",
+    "source_files": [
+      "documentation/class_mapping.json",
+      "gameplay_analysis/complete_unit_stats.json",
+      "gameplay_analysis/complete_building_stats.json",
+      "gameplay_analysis/combat_formulas.md",
+      "gameplay_analysis/game_data.json",
+      "network_analysis/packet_formats.json"
+    ],
+    "node_count": 215,
+    "edge_count": 191
+  },
+  "node_types": {
+    "Class": "A decompiled Java class from the game APK",
+    "System": "A functional subsystem of the game engine",
+    "Asset": "A game resource file (image, font, map, etc.)",
+    "Unit": "A trainable military unit in the game",
+    "Building": "A constructible building in the game",
+    "Technology": "A researchable upgrade or technology",
+    "NetworkMessage": "A message type in the multiplayer protocol",
+    "Map": "A game map or map configuration",
+    "Campaign": "A campaign or scenario progression",
+    "Faction": "A playable faction in the game",
+    "ScreenState": "A UI screen state in the game flow",
+    "Encryption": "An encryption/obfuscation mechanism",
+    "GameConstant": "A key game constant or configuration value"
+  },
+  "edge_types": {
+    "Uses": "A uses B as a dependency or tool",
+    "Loads": "A loads B from storage or network",
+    "Creates": "A creates/instantiates B",
+    "References": "A references B (data access, pointer)",
+    "Updates": "A modifies the state of B",
+    "Sends": "A transmits B over the network",
+    "Receives": "A receives B from the network",
+    "Produces": "A produces/manufactures B",
+    "Upgrades": "A upgrades B to a better version",
+    "Attacks": "A can attack B",
+    "Depends_On": "A requires B to function or unlock",
+    "Owns": "A owns/contains B"
+  },
+  "nodes": {
+    "classes": [
+      {
+        "id": "cls_application",
+        "name": "Application",
+        "type": "Class",
+        "file": "Application.java",
+        "purpose": "Android Activity entry point",
+        "extends": "Activity",
+        "key_methods": [
+          "onCreate",
+          "onPause",
+          "onResume",
+          "onDestroy"
+        ],
+        "delegates_to": "AppCtrl"
+      },
+      {
+        "id": "cls_appctrl",
+        "name": "AppCtrl",
+        "type": "Class",
+        "file": "AppCtrl.java",
+        "purpose": "Main game controller and thread",
+        "implements": "Runnable",
+        "key_fields": [
+          "appcontrol",
+          "bStatePause",
+          "bStateReady",
+          "currentCanvas",
+          "currentDisplayable",
+          "midlet",
+          "midletview"
+        ],
+        "dynamic_loading": "Class.forName(package + '.' + variant + 'aow2ol')"
+      },
+      {
+        "id": "cls_bh",
+        "name": "bh",
+        "type": "Class",
+        "file": "bh.java",
+        "purpose": "Abstract MIDlet base class",
+        "vendor_check": "MIDlet-Vendor must equal 'HeroCraft'"
+      },
+      {
+        "id": "cls_an",
+        "name": "an",
+        "type": "Class",
+        "file": "an.java",
+        "purpose": "Abstract SurfaceView (MIDlet View)",
+        "extends": "SurfaceView implements SurfaceHolder.Callback",
+        "handles": [
+          "Touch events",
+          "Key events",
+          "Surface lifecycle"
+        ]
+      },
+      {
+        "id": "cls_h",
+        "name": "h",
+        "type": "Class",
+        "file": "h.java",
+        "purpose": "Concrete SurfaceView renderer",
+        "extends": "an",
+        "rendering": "SurfaceHolder.lockCanvas()/unlockCanvasAndPost()"
+      },
+      {
+        "id": "cls_z",
+        "name": "z",
+        "type": "Class",
+        "file": "z.java",
+        "purpose": "Abstract game Canvas/Screen",
+        "extends": "bv",
+        "key_methods": [
+          "pointerPressed",
+          "pointerReleased",
+          "pointerDragged",
+          "keyPressed",
+          "keyReleased",
+          "paint"
+        ],
+        "fields": {
+          "bb": "width",
+          "bc": "height",
+          "bd": "visible flag"
+        }
+      },
+      {
+        "id": "cls_bv",
+        "name": "bv",
+        "type": "Class",
+        "file": "bv.java",
+        "purpose": "Abstract Displayable base",
+        "key_fields": {
+          "aZ": "title",
+          "ba": "command listener",
+          "bb": "width",
+          "bc": "height"
+        }
+      },
+      {
+        "id": "cls_bu",
+        "name": "bu",
+        "type": "Class",
+        "file": "bu.java",
+        "purpose": "Canvas + Resource/Asset loader",
+        "extends": "z",
+        "asset_decryption": "XOR cipher with rotating 8-byte key [-96,-95,-94,-93,-92,-91,-90,-89]",
+        "key_rotates_after_use": "Elements 3-5 shifted left"
+      },
+      {
+        "id": "cls_aq",
+        "name": "aq",
+        "type": "Class",
+        "file": "aq.java",
+        "purpose": "Android Graphics adapter (Canvas wrapper)",
+        "extends": "v",
+        "drawing_methods": [
+          "drawBitmap",
+          "drawLine",
+          "drawRect",
+          "drawText",
+          "clipRect"
+        ]
+      },
+      {
+        "id": "cls_v",
+        "name": "v",
+        "type": "Class",
+        "file": "v.java",
+        "purpose": "Abstract Graphics interface",
+        "drawing_primitives": [
+          "drawImage",
+          "drawString",
+          "drawRect",
+          "drawLine",
+          "clipRect",
+          "setClip",
+          "fillRect"
+        ]
+      },
+      {
+        "id": "cls_q",
+        "name": "q",
+        "type": "Class",
+        "file": "q.java",
+        "purpose": "Image/Bitmap wrapper",
+        "wraps": "android.graphics.Bitmap",
+        "config": "RGB_565 default, ARGB_8888 for specific files"
+      },
+      {
+        "id": "cls_by",
+        "name": "by",
+        "type": "Class",
+        "file": "by.java",
+        "purpose": "Font manager",
+        "caches_fonts": "Hashtable by style key",
+        "string_decoder": "by.a(byte[], boolean) decodes UTF-8 byte arrays"
+      },
+      {
+        "id": "cls_bd",
+        "name": "bd",
+        "type": "Class",
+        "file": "bd.java",
+        "purpose": "Display Manager",
+        "manages": "currentDisplayable / currentCanvas switching",
+        "services": "Vibrator"
+      },
+      {
+        "id": "cls_bb",
+        "name": "bb",
+        "type": "Class",
+        "file": "bb.java",
+        "purpose": "Screen Configuration",
+        "asset_paths": [
+          "s0/",
+          "s1/",
+          "s2/"
+        ],
+        "orientations": [
+          1,
+          0,
+          1
+        ]
+      },
+      {
+        "id": "cls_ad",
+        "name": "ad",
+        "type": "Class",
+        "file": "ad.java",
+        "purpose": "Command/Button",
+        "types": "1-8 (BACK, CANCEL, EXIT, HELP, ITEM, OK, SCREEN, STOP)"
+      },
+      {
+        "id": "cls_bz",
+        "name": "bz",
+        "type": "Class",
+        "file": "bz.java",
+        "purpose": "Abstract Dialog/Form",
+        "extends": "bv",
+        "managed_on_ui_thread": true
+      },
+      {
+        "id": "cls_af",
+        "name": "af",
+        "type": "Class",
+        "file": "af.java",
+        "purpose": "Dialog (Form with items)",
+        "extends": "bz",
+        "payment_ui": true
+      },
+      {
+        "id": "cls_be",
+        "name": "be",
+        "type": "Class",
+        "file": "be.java",
+        "purpose": "Dialog UI Controller",
+        "implements": [
+          "Runnable",
+          "OnClickListener",
+          "OnKeyListener"
+        ]
+      },
+      {
+        "id": "cls_i",
+        "name": "i",
+        "type": "Class",
+        "file": "i.java",
+        "purpose": "Record Store (Persistence)",
+        "file_suffix": ".datrms",
+        "thread_safe": true,
+        "operations": [
+          "addRecord",
+          "getRecord",
+          "setRecord",
+          "deleteRecord"
+        ]
+      },
+      {
+        "id": "cls_ae",
+        "name": "ae",
+        "type": "Class",
+        "file": "ae.java",
+        "purpose": "Billing Manager (Google Play)",
+        "manages": "In-app billing lifecycle"
+      },
+      {
+        "id": "cls_BillingService",
+        "name": "BillingService",
+        "type": "Class",
+        "file": "BillingService.java",
+        "purpose": "Android Billing Service",
+        "extends": "Service implements ServiceConnection",
+        "binds_to": "com.android.vending.billing.MarketBillingService"
+      },
+      {
+        "id": "cls_c",
+        "name": "c",
+        "type": "Class",
+        "file": "c.java",
+        "purpose": "Connection Factory",
+        "creates": [
+          "HTTP (ba)",
+          "Socket (au)",
+          "Generic (w)"
+        ]
+      },
+      {
+        "id": "cls_au",
+        "name": "au",
+        "type": "Class",
+        "file": "au.java",
+        "purpose": "Socket Connection",
+        "implements": "bl",
+        "wraps": "java.net.Socket",
+        "url_format": "socket://host:port"
+      },
+      {
+        "id": "cls_ba",
+        "name": "ba",
+        "type": "Class",
+        "file": "ba.java",
+        "purpose": "HTTP Connection",
+        "extends": "bt implements e",
+        "wraps": "HttpURLConnection"
+      },
+      {
+        "id": "cls_ar",
+        "name": "ar",
+        "type": "Class",
+        "file": "ar.java",
+        "purpose": "Security/Signature Verifier",
+        "uses": "RSA SHA1withRSA"
+      },
+      {
+        "id": "cls_bg",
+        "name": "bg",
+        "type": "Class",
+        "file": "bg.java",
+        "purpose": "CRC Hash Helper"
+      },
+      {
+        "id": "cls_g",
+        "name": "g",
+        "type": "Class",
+        "file": "g.java",
+        "purpose": "CRC32 Utility",
+        "extends": "CRC32"
+      },
+      {
+        "id": "cls_bn",
+        "name": "bn",
+        "type": "Class",
+        "file": "bn.java",
+        "purpose": "APK ZipFile Verifier",
+        "extends": "ZipFile"
+      },
+      {
+        "id": "s0_k",
+        "name": "s0.k (Main Game Class)",
+        "type": "Class",
+        "file": "s0/k.java",
+        "purpose": "MAIN GAME CLASS - Game loop, rendering, input",
+        "extends": "x (s0)",
+        "implements": "Runnable",
+        "equivalent_s1": "s1.c",
+        "equivalent_s2": "s2.q"
+      },
+      {
+        "id": "s0_x",
+        "name": "s0.x (Base Game Canvas)",
+        "type": "Class",
+        "file": "s0/x.java",
+        "purpose": "Base Game Canvas",
+        "extends": "bu",
+        "equivalent_s1": "s1.i",
+        "equivalent_s2": "s2.p"
+      },
+      {
+        "id": "s0_c",
+        "name": "s0.c (Config Manager)",
+        "type": "Class",
+        "file": "s0/c.java",
+        "purpose": "Game Config/Resource Manager",
+        "server_url": "http://wap.herocraft.com/login/",
+        "equivalent_s1": "s1.u",
+        "equivalent_s2": "s2.o"
+      },
+      {
+        "id": "s0_a",
+        "name": "s0.a (Game State Manager)",
+        "type": "Class",
+        "file": "s0/a.java",
+        "purpose": "Game State/Screen Manager",
+        "extends": "p (s0)",
+        "equivalent_s1": "s1.a",
+        "equivalent_s2": "s2.a"
+      },
+      {
+        "id": "s0_y",
+        "name": "s0.y (Global Game Data)",
+        "type": "Class",
+        "file": "s0/y.java",
+        "purpose": "Global Game Data Constants",
+        "server_host": "artofwaronline.herocraft.com",
+        "alt_host": "aow2.ru",
+        "equivalent_s1": "s1.y",
+        "equivalent_s2": "s2.y"
+      },
+      {
+        "id": "s0_w",
+        "name": "s0.w (Game Logic/Map Handler)",
+        "type": "Class",
+        "file": "s0/w.java",
+        "purpose": "CORE GAME LOGIC - Map rendering, Unit AI, Pathfinding, Combat",
+        "features": [
+          "Map rendering",
+          "Unit AI",
+          "Pathfinding",
+          "Combat resolution",
+          "Projectile system",
+          "Damage calculation"
+        ],
+        "equivalent_s1": "s1.w",
+        "equivalent_s2": "s2.z",
+        "key_arrays": {
+          "ca": "Unit/building data array (7272 bytes)",
+          "cb": "Player statistics array",
+          "cf": "Unit type data tables",
+          "cg": "Damage tables",
+          "bS": "Game data lookup table",
+          "bT": "Game data offset table"
+        }
+      },
+      {
+        "id": "s0_e",
+        "name": "s0.e (Network Manager)",
+        "type": "Class",
+        "file": "s0/e.java",
+        "purpose": "Network Manager (TCP Socket)",
+        "extends": "Thread",
+        "server": "artofwaronline.herocraft.com:47584-47588",
+        "equivalent_s1": "s1.n",
+        "equivalent_s2": "s2.h"
+      },
+      {
+        "id": "s0_z",
+        "name": "s0.z (Network Request Queue)",
+        "type": "Class",
+        "file": "s0/z.java",
+        "purpose": "Network Request Queue",
+        "implements": "Runnable",
+        "triple_buffered": true,
+        "equivalent_s1": "s1.r",
+        "equivalent_s2": "s2.y_network"
+      },
+      {
+        "id": "s0_aa",
+        "name": "s0.aa (HTTP Handler)",
+        "type": "Class",
+        "file": "s0/aa.java",
+        "purpose": "HTTP Connection Handler",
+        "implements": "Runnable",
+        "xor_encrypted": true
+      },
+      {
+        "id": "s0_f",
+        "name": "s0.f (Font Manager)",
+        "type": "Class",
+        "file": "s0/f.java",
+        "purpose": "Text/Font Manager",
+        "font_files": [
+          "/f0",
+          "/f1",
+          "/f2",
+          "/f3"
+        ]
+      },
+      {
+        "id": "s0_d",
+        "name": "s0.d (Bitmap Font Renderer)",
+        "type": "Class",
+        "file": "s0/d.java",
+        "purpose": "Custom Bitmap Font Renderer"
+      },
+      {
+        "id": "s0_i",
+        "name": "s0.i (Audio Manager)",
+        "type": "Class",
+        "file": "s0/i.java",
+        "purpose": "Audio Manager",
+        "implements": "bs",
+        "formats": [
+          ".o",
+          ".3",
+          ".m"
+        ]
+      },
+      {
+        "id": "s0_m",
+        "name": "s0.m (Network Sender)",
+        "type": "Class",
+        "file": "s0/m.java",
+        "purpose": "Network Sender Thread",
+        "extends": "Thread"
+      },
+      {
+        "id": "s0_o",
+        "name": "s0.o (Network Receiver)",
+        "type": "Class",
+        "file": "s0/o.java",
+        "purpose": "Network Receiver Thread",
+        "extends": "Thread"
+      },
+      {
+        "id": "s0_u",
+        "name": "s0.u (Ad Handler)",
+        "type": "Class",
+        "file": "s0/u.java",
+        "purpose": "Ad/Interstitial Handler",
+        "sdk": "Inner-Active M2M"
+      },
+      {
+        "id": "s0_q",
+        "name": "s0.q (Payment Handler)",
+        "type": "Class",
+        "file": "s0/q.java",
+        "purpose": "Payment Handler",
+        "sms_code": 1161
+      },
+      {
+        "id": "s0_h",
+        "name": "s0.h (Bit Hash)",
+        "type": "Class",
+        "file": "s0/h.java",
+        "purpose": "Bit Reversal/Hash",
+        "xor_key": -128255633
+      },
+      {
+        "id": "s0_n",
+        "name": "s0.n (CRC32 Hash)",
+        "type": "Class",
+        "file": "s0/n.java",
+        "purpose": "CRC32 Hash",
+        "polynomial": "0xEDB88320"
+      }
+    ],
+    "systems": [
+      {
+        "id": "sys_game_loop",
+        "name": "Game Loop",
+        "type": "System",
+        "description": "Main game loop running in s0.k (Runnable), handles update/render cycle at ~100ms tick rate",
+        "tick_rate_ms": 100,
+        "components": [
+          "Input handling",
+          "State update",
+          "AI processing",
+          "Rendering"
+        ]
+      },
+      {
+        "id": "sys_rendering",
+        "name": "Rendering System",
+        "type": "System",
+        "description": "Canvas-based rendering using Android Graphics adapter, supports 3 screen resolution variants",
+        "components": [
+          "SurfaceView rendering",
+          "Bitmap blitting",
+          "Font rendering",
+          "Effect animations"
+        ]
+      },
+      {
+        "id": "sys_input",
+        "name": "Input System",
+        "type": "System",
+        "description": "Touch and key event handling with deadzone filtering",
+        "touch_deadzone_px": 5,
+        "handles": [
+          "pointerPressed",
+          "pointerReleased",
+          "pointerDragged",
+          "keyPressed",
+          "keyReleased"
+        ]
+      },
+      {
+        "id": "sys_combat",
+        "name": "Combat System",
+        "type": "System",
+        "description": "Full combat resolution including damage calculation, armour reduction, projectile tracking, splash damage, death animations",
+        "max_projectiles": 400,
+        "key_formulas": [
+          "damage = max(min(baseDamage * (10 - armour) / 10, baseDamage - armour), 1)",
+          "splash_damage uses distance factor from lookup table"
+        ]
+      },
+      {
+        "id": "sys_pathfinding",
+        "name": "Pathfinding System",
+        "type": "System",
+        "description": "Unit movement and pathfinding with terrain cost calculation, stuck detection (threshold: 5)",
+        "grid_cell_size": "30x20 pixels",
+        "directions": 8
+      },
+      {
+        "id": "sys_ai",
+        "name": "Unit AI System",
+        "type": "System",
+        "description": "Unit autonomous behavior including target acquisition, attack priority, siege mode, guard behavior",
+        "target_types": [
+          "infantry",
+          "machinery",
+          "buildings"
+        ]
+      },
+      {
+        "id": "sys_resource",
+        "name": "Resource System",
+        "type": "System",
+        "description": "Credit generation from buildings, power supply/demand, production capacity management",
+        "max_credits": 30000,
+        "income_formula": "(baseIncome * 7) / 10 per 127 ticks"
+      },
+      {
+        "id": "sys_production",
+        "name": "Production System",
+        "type": "System",
+        "description": "Unit and building production with queue management, build time calculation",
+        "max_queue": 60,
+        "build_time_formula": "(baseBuildTime * productionModifier) / 10 * 20 / (upgradeBonus + 20)"
+      },
+      {
+        "id": "sys_research",
+        "name": "Research System",
+        "type": "System",
+        "description": "Technology tree with 48 research IDs affecting unit stats, building stats, and player capabilities",
+        "research_count": 48,
+        "cost_formula": "(unitBuildCost * productionModifier) / 10 * 20 / (upgradeBonus + 20)"
+      },
+      {
+        "id": "sys_network",
+        "name": "Network System",
+        "type": "System",
+        "description": "TCP-based multiplayer networking with triple-buffered request queue, sender/receiver threads",
+        "transport": "TCP",
+        "port_range": "47584-47588",
+        "error_recovery": {
+          "max_errors": 3,
+          "max_reconnect": 10,
+          "reconnect_delay_ms": 2500
+        }
+      },
+      {
+        "id": "sys_persistence",
+        "name": "Persistence System",
+        "type": "System",
+        "description": "J2ME RMS-like file storage using .datrms files for game state persistence",
+        "file_suffix": ".datrms",
+        "thread_safe": true
+      },
+      {
+        "id": "sys_encryption",
+        "name": "Encryption System",
+        "type": "System",
+        "description": "Multiple encryption/obfuscation layers: XOR asset cipher, custom Base64, XOR stream cipher, data-at-rest encryption",
+        "methods": [
+          "XOR rotating 8-byte key (assets)",
+          "Custom Base64 alphabet",
+          "XOR stream cipher (15-byte cycle)",
+          "Data-at-rest XOR with appended seed"
+        ]
+      },
+      {
+        "id": "sys_ui",
+        "name": "UI System",
+        "type": "System",
+        "description": "Screen state management with 40+ states, dialog system, form-based UI, touch/key input",
+        "state_count": 40
+      },
+      {
+        "id": "sys_audio",
+        "name": "Audio System",
+        "type": "System",
+        "description": "Audio playback via MediaPlayer wrapper, supports .o, .3, .m formats"
+      },
+      {
+        "id": "sys_fog_of_war",
+        "name": "Fog of War System",
+        "type": "System",
+        "description": "Vision range calculation and visibility tracking per unit using distance lookup tables",
+        "distance_calc": "(distanceTable[(dy+15)*31+dx+15] & 255) >> 3"
+      },
+      {
+        "id": "sys_billing",
+        "name": "Billing System",
+        "type": "System",
+        "description": "In-app purchase system with Google Play billing, SMS payments, and ad monetization",
+        "payment_methods": [
+          "Google Play IAP",
+          "SMS (code 1161)",
+          "Inner-Active M2M ads"
+        ]
+      }
+    ],
+    "factions": [
+      {
+        "id": "fac_confederation",
+        "name": "Confederation",
+        "type": "Faction",
+        "index": 0,
+        "fireproof_armour": true,
+        "buildings": [
+          "Command Centre",
+          "Generator",
+          "Infantry Centre",
+          "Machine Factory",
+          "Technology Centre",
+          "Bunker",
+          "Locator",
+          "Rocket Launcher"
+        ],
+        "units": [
+          "Infantry",
+          "Grenadier",
+          "Flame Assault",
+          "AV-40 Fortress",
+          "T-21 Hammer",
+          "T-22 Zeus",
+          "MLRS Torrent"
+        ],
+        "mines": [
+          "Mine Scorpio",
+          "Mine Frog",
+          "Mine Lizard"
+        ],
+        "technologies": [
+          "Energy suit",
+          "Bio suit",
+          "Enhanced firing rate",
+          "Armour-piercing bullet",
+          "Heavy shells",
+          "Forced light missiles",
+          "Lava flame fuel",
+          "Volcano flame gun"
+        ]
+      },
+      {
+        "id": "fac_rebels",
+        "name": "Rebels",
+        "type": "Faction",
+        "index": 1,
+        "fireproof_armour": false,
+        "buildings": [
+          "Headquarters",
+          "Powerplant",
+          "Barracks",
+          "Factory",
+          "Laboratory",
+          "Bunker",
+          "Tower",
+          "Wall"
+        ],
+        "units": [
+          "Infantry",
+          "Grenadier",
+          "Sniper",
+          "Coyote",
+          "Armadillo",
+          "Rhino",
+          "MMC Porcupine"
+        ],
+        "technologies": [
+          "Titanium jacket",
+          "First-aid kit",
+          "Enhanced fire rate",
+          "Doping",
+          "Snipers",
+          "Rifle 'Hornet-10'",
+          "Heavy machine gun",
+          "Reinforced engine"
+        ]
+      }
+    ],
+    "units": [
+      {
+        "id": "unit_conf_infantry",
+        "name": "Confederation Infantry",
+        "type": "Unit",
+        "faction": "Confederation",
+        "unit_type_id": 1,
+        "category": "infantry",
+        "hp": 40,
+        "damage": 2,
+        "base_cost": 1,
+        "speed": 5,
+        "armor": 5,
+        "attack_bonus": 0,
+        "sight_range": 4,
+        "build_time": 4,
+        "rank": 3,
+        "cost_credits": 10,
+        "reward_credits": 650,
+        "attack_range": 4,
+        "extended_armor": 6,
+        "siege_targets": 255,
+        "description": "Armed with an automatic rifle. Light equipment allows fast movement. Effective against infantry"
+      },
+      {
+        "id": "unit_conf_grenadier",
+        "name": "Confederation Grenadier",
+        "type": "Unit",
+        "faction": "Confederation",
+        "unit_type_id": 2,
+        "category": "infantry",
+        "hp": 40,
+        "damage": 2,
+        "base_cost": 1,
+        "speed": 6,
+        "armor": 5,
+        "attack_bonus": 0,
+        "sight_range": 4,
+        "build_time": 5,
+        "rank": 3,
+        "cost_credits": 10,
+        "reward_credits": 200,
+        "attack_range": 4,
+        "extended_armor": 6,
+        "siege_targets": 255,
+        "description": "Armed with a rocket launcher. Effective against light and medium machinery"
+      },
+      {
+        "id": "unit_conf_flame_assault",
+        "name": "Confederation Flame Assault",
+        "type": "Unit",
+        "faction": "Confederation",
+        "unit_type_id": 8,
+        "category": "machinery",
+        "hp": 50,
+        "damage": 4,
+        "base_cost": 2,
+        "speed": 6,
+        "armor": 5,
+        "attack_bonus": 0,
+        "sight_range": 5,
+        "build_time": 9,
+        "rank": 3,
+        "cost_credits": 20,
+        "reward_credits": 300,
+        "attack_range": 6,
+        "extended_armor": 12,
+        "siege_targets": 255,
+        "description": "Armed with a hand flamer. Very effective against infantry. Heavy equipment reduces movement speed",
+        "requires_tech": "Forced light missiles"
+      },
+      {
+        "id": "unit_conf_av40",
+        "name": "AV-40 Fortress",
+        "type": "Unit",
+        "faction": "Confederation",
+        "unit_type_id": 19,
+        "category": "artillery",
+        "hp": 50,
+        "damage": 4,
+        "base_cost": 2,
+        "speed": 7,
+        "armor": 5,
+        "attack_bonus": 1,
+        "sight_range": 5,
+        "build_time": 10,
+        "rank": 3,
+        "cost_credits": 20,
+        "reward_credits": 350,
+        "attack_range": 9,
+        "extended_armor": 12,
+        "siege_targets": 255,
+        "description": "Heavy-armoured assault machine. Armed with a heavy machine gun"
+      },
+      {
+        "id": "unit_conf_hammer",
+        "name": "T-21 Hammer",
+        "type": "Unit",
+        "faction": "Confederation",
+        "unit_type_id": 17,
+        "category": "tank_medium",
+        "hp": 50,
+        "damage": 8,
+        "base_cost": 4,
+        "speed": 7,
+        "armor": 9,
+        "attack_bonus": 0,
+        "sight_range": 6,
+        "build_time": 11,
+        "rank": 3,
+        "upgrade_level": 1,
+        "cost_credits": 40,
+        "reward_credits": 350,
+        "availability_flag": 10,
+        "attack_range": 6,
+        "extended_armor": 8,
+        "siege_targets": 14,
+        "description": "Light tank with high speed rotating gun"
+      },
+      {
+        "id": "unit_conf_zeus",
+        "name": "T-22 Zeus",
+        "type": "Unit",
+        "faction": "Confederation",
+        "unit_type_id": 16,
+        "category": "tank_heavy",
+        "hp": 70,
+        "damage": 6,
+        "base_cost": 3,
+        "speed": 7,
+        "armor": 5,
+        "attack_bonus": 0,
+        "sight_range": 2,
+        "build_time": 14,
+        "rank": 3,
+        "cost_credits": 30,
+        "reward_credits": 300,
+        "attack_range": 6,
+        "extended_armor": 8,
+        "siege_targets": 255,
+        "description": "Heavy tank. Low speed, very powerful damage and wide attack range"
+      },
+      {
+        "id": "unit_conf_mlrs",
+        "name": "MLRS Torrent",
+        "type": "Unit",
+        "faction": "Confederation",
+        "unit_type_id": 20,
+        "category": "artillery",
+        "hp": 80,
+        "damage": 15,
+        "base_cost": 8,
+        "speed": 4,
+        "armor": 7,
+        "attack_bonus": 2,
+        "sight_range": 6,
+        "build_time": 7,
+        "rank": 2,
+        "cost_credits": 50,
+        "reward_credits": 250,
+        "attack_range": 6,
+        "extended_armor": 8,
+        "siege_targets": 255,
+        "description": "Multiple rocket launcher system with extra-wide attack range. Needs siege mode"
+      },
+      {
+        "id": "unit_reb_infantry",
+        "name": "Rebels Infantry",
+        "type": "Unit",
+        "faction": "Rebels",
+        "unit_type_id": 1,
+        "category": "infantry",
+        "sight_range": 9,
+        "attack_range": 5,
+        "armor": 4,
+        "description": "Armed with an automatic rifle. Light equipment allows fast movement. Effective against infantry"
+      },
+      {
+        "id": "unit_reb_grenadier",
+        "name": "Rebels Grenadier",
+        "type": "Unit",
+        "faction": "Rebels",
+        "unit_type_id": 2,
+        "category": "infantry",
+        "sight_range": 10,
+        "attack_range": 5,
+        "armor": 4,
+        "description": "Armed with a rocket launcher. Effective against light and medium machinery"
+      },
+      {
+        "id": "unit_reb_sniper",
+        "name": "Rebels Sniper",
+        "type": "Unit",
+        "faction": "Rebels",
+        "unit_type_id": 3,
+        "category": "infantry",
+        "sight_range": 15,
+        "attack_range": 7,
+        "armor": 6,
+        "type_class": 4,
+        "description": "Armed with a long-range sniper rifle. In siege mode overview and attack radius extends",
+        "requires_tech": "Snipers"
+      },
+      {
+        "id": "unit_reb_coyote",
+        "name": "Coyote",
+        "type": "Unit",
+        "faction": "Rebels",
+        "unit_type_id": 15,
+        "category": "tank_light",
+        "sight_range": 25,
+        "attack_range": 7,
+        "armor": 6,
+        "description": "Light assault car with light armour and medium machine gun. High speed for quick attacks and scouting"
+      },
+      {
+        "id": "unit_reb_armadillo",
+        "name": "Armadillo",
+        "type": "Unit",
+        "faction": "Rebels",
+        "unit_type_id": 21,
+        "category": "machinery_light",
+        "sight_range": 18,
+        "attack_range": 10,
+        "armor": 6,
+        "type_class": 4,
+        "description": "Heavy-armoured assault machine. Armed with a heavy machine gun"
+      },
+      {
+        "id": "unit_reb_rhino",
+        "name": "Rhino",
+        "type": "Unit",
+        "faction": "Rebels",
+        "unit_type_id": 18,
+        "category": "tank_medium",
+        "sight_range": 11,
+        "attack_range": 7,
+        "armor": 4,
+        "type_class": 1,
+        "description": "Medium tank. High speed. Upgrade allows siege mode which increases damage and firing rate",
+        "requires_tech": "Reinforced engine"
+      },
+      {
+        "id": "unit_reb_porcupine",
+        "name": "MMC Porcupine",
+        "type": "Unit",
+        "faction": "Rebels",
+        "unit_type_id": 22,
+        "category": "missile_system",
+        "sight_range": 35,
+        "attack_range": 12,
+        "armor": 6,
+        "type_class": 1,
+        "description": "Mobile missile system. Armed with heavy machine gun and rocket launcher with fast reloading"
+      },
+      {
+        "id": "unit_mine_scorpio",
+        "name": "Mine Scorpio",
+        "type": "Unit",
+        "faction": "Confederation",
+        "unit_type_id": 11,
+        "category": "mine",
+        "hp": 110,
+        "damage": 60,
+        "base_cost": 36,
+        "speed": 6,
+        "armor": 9,
+        "sight_range": 8,
+        "cost_credits": 150,
+        "description": "A personnel mine. Deals light damage to machinery"
+      },
+      {
+        "id": "unit_mine_frog",
+        "name": "Mine Frog",
+        "type": "Unit",
+        "faction": "Confederation",
+        "unit_type_id": 9,
+        "category": "mine",
+        "hp": 100,
+        "damage": 80,
+        "base_cost": 55,
+        "speed": 9,
+        "armor": 12,
+        "sight_range": 13,
+        "cost_credits": 250,
+        "description": "A multi-charged mine. Jumps before detonation. Fragments and additional charges scatter"
+      },
+      {
+        "id": "unit_mine_lizard",
+        "name": "Mine Lizard",
+        "type": "Unit",
+        "faction": "Confederation",
+        "unit_type_id": 10,
+        "category": "mine",
+        "hp": 120,
+        "damage": 90,
+        "base_cost": 60,
+        "speed": 8,
+        "armor": 8,
+        "sight_range": 7,
+        "cost_credits": 220,
+        "description": "Anti-tank mine. Detonates only when enemy machines are nearby"
+      }
+    ],
+    "buildings": [
+      {
+        "id": "bld_conf_command_centre",
+        "name": "Command Centre",
+        "type": "Building",
+        "faction": "Confederation",
+        "building_type_id": 1,
+        "category": "hq",
+        "hp": 120,
+        "base_cost": 22,
+        "speed": 7,
+        "armor": 7,
+        "attack_bonus": 4,
+        "sight_range": 2,
+        "build_time": 20,
+        "attack_range": 7,
+        "extended_armor": 8,
+        "power_consume": 2,
+        "power_produce": 6,
+        "queue_slots": 0,
+        "tech_requirement": 0,
+        "cost_credits": 100,
+        "reward_credits": 450,
+        "upgrade_costs": [
+          300,
+          200,
+          200
+        ],
+        "description_key": "T1_130"
+      },
+      {
+        "id": "bld_conf_generator",
+        "name": "Generator",
+        "type": "Building",
+        "faction": "Confederation",
+        "building_type_id": 4,
+        "category": "power",
+        "hp": 100,
+        "base_cost": 14,
+        "speed": 5,
+        "armor": 7,
+        "attack_bonus": 3,
+        "sight_range": 6,
+        "build_time": 8,
+        "attack_range": 7,
+        "extended_armor": 8,
+        "power_consume": 2,
+        "power_produce": 6,
+        "queue_slots": 0,
+        "tech_requirement": 0,
+        "cost_credits": 80,
+        "reward_credits": 550,
+        "upgrade_costs": [
+          300,
+          350,
+          250
+        ],
+        "description_key": "T1_131"
+      },
+      {
+        "id": "bld_conf_infantry_centre",
+        "name": "Infantry Centre",
+        "type": "Building",
+        "faction": "Confederation",
+        "building_type_id": 2,
+        "category": "training",
+        "hp": 100,
+        "base_cost": 28,
+        "speed": 6,
+        "armor": 7,
+        "attack_bonus": 3,
+        "sight_range": 6,
+        "build_time": 18,
+        "attack_range": 11,
+        "extended_armor": 12,
+        "power_consume": 2,
+        "power_produce": 2,
+        "queue_slots": 0,
+        "tech_requirement": 0,
+        "cost_credits": 110,
+        "reward_credits": 200,
+        "upgrade_costs": [
+          300,
+          500,
+          500
+        ],
+        "description_key": "T1_132",
+        "produces": [
+          "Infantry",
+          "Grenadier",
+          "Flame Assault"
+        ]
+      },
+      {
+        "id": "bld_conf_machine_factory",
+        "name": "Machine Factory",
+        "type": "Building",
+        "faction": "Confederation",
+        "building_type_id": 3,
+        "category": "production",
+        "hp": 110,
+        "base_cost": 36,
+        "speed": 6,
+        "armor": 8,
+        "attack_bonus": 4,
+        "sight_range": 6,
+        "build_time": 25,
+        "attack_range": 3,
+        "extended_armor": 2,
+        "power_consume": 0,
+        "power_produce": 0,
+        "queue_slots": 0,
+        "tech_requirement": 3,
+        "cost_credits": 160,
+        "reward_credits": 250,
+        "upgrade_costs": [
+          500,
+          400,
+          500
+        ],
+        "description_key": "T1_133",
+        "produces": [
+          "AV-40 Fortress",
+          "T-21 Hammer",
+          "T-22 Zeus",
+          "MLRS Torrent"
+        ]
+      },
+      {
+        "id": "bld_conf_tech_centre",
+        "name": "Technology Centre",
+        "type": "Building",
+        "faction": "Confederation",
+        "building_type_id": 5,
+        "category": "research",
+        "hp": 120,
+        "base_cost": 65,
+        "speed": 8,
+        "armor": 8,
+        "attack_bonus": 4,
+        "sight_range": 7,
+        "build_time": 30,
+        "attack_range": 6,
+        "extended_armor": 16,
+        "power_consume": 0,
+        "power_produce": 0,
+        "queue_slots": 4,
+        "tech_requirement": 1,
+        "cost_credits": 250,
+        "reward_credits": 300,
+        "upgrade_costs": [
+          600,
+          800,
+          700
+        ],
+        "description_key": "T1_134"
+      },
+      {
+        "id": "bld_conf_bunker",
+        "name": "Confederation Bunker",
+        "type": "Building",
+        "faction": "Confederation",
+        "building_type_id": 7,
+        "category": "defense",
+        "hp": 120,
+        "base_cost": 50,
+        "speed": 7,
+        "armor": 8,
+        "attack_bonus": 4,
+        "sight_range": 7,
+        "build_time": 30,
+        "attack_range": 6,
+        "extended_armor": 16,
+        "power_consume": 0,
+        "power_produce": 0,
+        "queue_slots": 4,
+        "tech_requirement": 1,
+        "cost_credits": 220,
+        "reward_credits": 250,
+        "upgrade_costs": [
+          300,
+          500,
+          250
+        ],
+        "description_key": "T1_135"
+      },
+      {
+        "id": "bld_conf_locator",
+        "name": "Locator",
+        "type": "Building",
+        "faction": "Confederation",
+        "building_type_id": 10,
+        "category": "intelligence",
+        "hp": 100,
+        "base_cost": 55,
+        "speed": 9,
+        "armor": 8,
+        "attack_bonus": 4,
+        "sight_range": 7,
+        "build_time": 50,
+        "attack_range": 7,
+        "extended_armor": 16,
+        "power_consume": 0,
+        "power_produce": 0,
+        "queue_slots": 6,
+        "tech_requirement": 1,
+        "cost_credits": 300,
+        "reward_credits": 200,
+        "upgrade_costs": [
+          400,
+          300,
+          500
+        ],
+        "description_key": "T1_136"
+      },
+      {
+        "id": "bld_conf_rocket_launcher",
+        "name": "Rocket Launcher",
+        "type": "Building",
+        "faction": "Confederation",
+        "building_type_id": 8,
+        "category": "defense",
+        "hp": 50,
+        "base_cost": 4,
+        "speed": 7,
+        "armor": 12,
+        "attack_bonus": 1,
+        "sight_range": 9,
+        "build_time": 12,
+        "attack_range": 8,
+        "extended_armor": 16,
+        "power_consume": 0,
+        "power_produce": 0,
+        "queue_slots": 6,
+        "tech_requirement": 1,
+        "cost_credits": 40,
+        "reward_credits": 250,
+        "upgrade_costs": [
+          1000,
+          700,
+          350
+        ],
+        "description_key": "T1_144"
+      },
+      {
+        "id": "bld_reb_headquarters",
+        "name": "Headquarters",
+        "type": "Building",
+        "faction": "Rebels",
+        "building_type_id": 1,
+        "category": "hq",
+        "upgrade_costs": [
+          300,
+          200,
+          200
+        ]
+      },
+      {
+        "id": "bld_reb_powerplant",
+        "name": "Powerplant",
+        "type": "Building",
+        "faction": "Rebels",
+        "building_type_id": 4,
+        "category": "power",
+        "upgrade_costs": [
+          300,
+          350,
+          250
+        ]
+      },
+      {
+        "id": "bld_reb_barracks",
+        "name": "Barracks",
+        "type": "Building",
+        "faction": "Rebels",
+        "building_type_id": 2,
+        "category": "training",
+        "upgrade_costs": [
+          300,
+          500,
+          500
+        ],
+        "produces": [
+          "Infantry",
+          "Grenadier",
+          "Sniper"
+        ]
+      },
+      {
+        "id": "bld_reb_factory",
+        "name": "Factory",
+        "type": "Building",
+        "faction": "Rebels",
+        "building_type_id": 3,
+        "category": "production",
+        "upgrade_costs": [
+          500,
+          400,
+          500
+        ],
+        "produces": [
+          "Coyote",
+          "Armadillo",
+          "Rhino",
+          "MMC Porcupine"
+        ]
+      },
+      {
+        "id": "bld_reb_laboratory",
+        "name": "Laboratory",
+        "type": "Building",
+        "faction": "Rebels",
+        "building_type_id": 5,
+        "category": "research",
+        "upgrade_costs": [
+          600,
+          800,
+          700
+        ]
+      },
+      {
+        "id": "bld_reb_bunker",
+        "name": "Rebels Bunker",
+        "type": "Building",
+        "faction": "Rebels",
+        "building_type_id": 7,
+        "category": "defense",
+        "upgrade_costs": [
+          300,
+          500,
+          250
+        ]
+      },
+      {
+        "id": "bld_reb_tower",
+        "name": "Tower",
+        "type": "Building",
+        "faction": "Rebels",
+        "building_type_id": 8,
+        "category": "defense",
+        "upgrade_costs": [
+          400,
+          300,
+          500
+        ]
+      },
+      {
+        "id": "bld_reb_wall",
+        "name": "Wall",
+        "type": "Building",
+        "faction": "Rebels",
+        "building_type_id": 9,
+        "category": "defense",
+        "upgrade_costs": [
+          1000,
+          700,
+          350
+        ]
+      }
+    ],
+    "technologies": [
+      {
+        "id": "tech_conf_energy_suit",
+        "name": "Energy suit",
+        "type": "Technology",
+        "faction": "Confederation",
+        "research_id": 0,
+        "effect": "Increases infantry armour by 2",
+        "effect_type": "armour_infantry",
+        "value": 2,
+        "targets": [
+          1,
+          3,
+          5
+        ]
+      },
+      {
+        "id": "tech_conf_bio_suit",
+        "name": "Bio suit",
+        "type": "Technology",
+        "faction": "Confederation",
+        "research_id": 1,
+        "effect": "Health recovery for infantry increases 3 times",
+        "depends_on": [
+          "tech_conf_energy_suit"
+        ]
+      },
+      {
+        "id": "tech_conf_enhanced_firing",
+        "name": "Enhanced firing rate",
+        "type": "Technology",
+        "faction": "Confederation",
+        "research_id": 2,
+        "effect": "Assault's fire rate increases by 50%",
+        "effect_type": "attack_speed",
+        "value": -2
+      },
+      {
+        "id": "tech_conf_ap_bullet",
+        "name": "Armour-piercing bullet",
+        "type": "Technology",
+        "faction": "Confederation",
+        "research_id": 3,
+        "effect": "Assault's damage increases by 40%",
+        "effect_type": "attack_damage",
+        "value": 2
+      },
+      {
+        "id": "tech_conf_heavy_shells",
+        "name": "Heavy shells",
+        "type": "Technology",
+        "faction": "Confederation",
+        "research_id": 4,
+        "effect": "Heavy Assault's damage increases by 40%",
+        "effect_type": "building_armour",
+        "value": 4
+      },
+      {
+        "id": "tech_conf_forced_missiles",
+        "name": "Forced light missiles",
+        "type": "Technology",
+        "faction": "Confederation",
+        "research_id": 5,
+        "effect": "Allows you to train Flame Assaults",
+        "effect_type": "building_radius",
+        "unlocks_unit": "unit_conf_flame_assault"
+      },
+      {
+        "id": "tech_conf_lava_flame",
+        "name": "Lava flame fuel",
+        "type": "Technology",
+        "faction": "Confederation",
+        "research_id": 6,
+        "effect": "Heavy flamethrower installs on AV-40",
+        "depends_on": [
+          "tech_reb_reinforced_engine"
+        ]
+      },
+      {
+        "id": "tech_conf_volcano_gun",
+        "name": "Volcano flame gun",
+        "type": "Technology",
+        "faction": "Confederation",
+        "research_id": 7,
+        "effect": "Increases damage for Zeus and Hammer tanks by 25%",
+        "effect_type": "multi_stat"
+      },
+      {
+        "id": "tech_reb_titanium_jacket",
+        "name": "Titanium jacket",
+        "type": "Technology",
+        "faction": "Rebels",
+        "research_id": 24,
+        "effect": "Increases armour for all infantry by 1",
+        "effect_type": "armour_infantry",
+        "value": 1,
+        "targets": [
+          0,
+          2,
+          4,
+          14
+        ]
+      },
+      {
+        "id": "tech_reb_first_aid",
+        "name": "First-aid kit",
+        "type": "Technology",
+        "faction": "Rebels",
+        "research_id": 25,
+        "effect": "Triples health recovery for all infantry"
+      },
+      {
+        "id": "tech_reb_enhanced_fire",
+        "name": "Enhanced fire rate",
+        "type": "Technology",
+        "faction": "Rebels",
+        "research_id": 26,
+        "effect": "Infantry firing rate increases by 50%",
+        "effect_type": "attack_speed",
+        "value": -2
+      },
+      {
+        "id": "tech_reb_doping",
+        "name": "Doping",
+        "type": "Technology",
+        "faction": "Rebels",
+        "research_id": 27,
+        "effect": "Infantry speed increases by 1",
+        "effect_type": "range_reduce"
+      },
+      {
+        "id": "tech_reb_snipers",
+        "name": "Snipers",
+        "type": "Technology",
+        "faction": "Rebels",
+        "research_id": 28,
+        "effect": "Allows you to train snipers",
+        "unlocks_unit": "unit_reb_sniper"
+      },
+      {
+        "id": "tech_reb_hornet",
+        "name": "Rifle 'Hornet-10'",
+        "type": "Technology",
+        "faction": "Rebels",
+        "research_id": 29,
+        "effect": "Sniper's overview radius and fire range increases by 2, damage increases by 20%",
+        "effect_type": "building_radius"
+      },
+      {
+        "id": "tech_reb_heavy_mg",
+        "name": "Heavy machine gun",
+        "type": "Technology",
+        "faction": "Rebels",
+        "research_id": 30,
+        "effect": "Increases damage for coyotes and armadillos by 15%",
+        "effect_type": "multi_stat"
+      },
+      {
+        "id": "tech_reb_reinforced_engine",
+        "name": "Reinforced engine",
+        "type": "Technology",
+        "faction": "Rebels",
+        "research_id": 31,
+        "effect": "Increases speed for all machinery by 1. Allows Rhino tank",
+        "unlocks_unit": "unit_reb_rhino",
+        "effect_type": "multi_stat"
+      }
+    ],
+    "network_messages": [
+      {
+        "id": "net_ack",
+        "name": "ACK",
+        "type": "NetworkMessage",
+        "direction": "server_to_client",
+        "message_id": 1,
+        "handler": "internal",
+        "description": "Acknowledgment; triggers re-read if cB flag not set",
+        "payload": "none"
+      },
+      {
+        "id": "net_player_info_short",
+        "name": "PLAYER_INFO_SHORT",
+        "type": "NetworkMessage",
+        "direction": "server_to_client",
+        "message_id": 2,
+        "handler": "f(6)",
+        "description": "Player info update with 6-byte payload",
+        "payload_size": 6
+      },
+      {
+        "id": "net_player_count",
+        "name": "PLAYER_COUNT",
+        "type": "NetworkMessage",
+        "direction": "server_to_client",
+        "message_id": 3,
+        "handler": "C()",
+        "description": "Player count and team assignment update"
+      },
+      {
+        "id": "net_session_init",
+        "name": "SESSION_INIT",
+        "type": "NetworkMessage",
+        "direction": "server_to_client",
+        "message_id": 4,
+        "handler": "y()",
+        "description": "Full session initialization - the most important init message",
+        "critical": true,
+        "fields": [
+          "game_id",
+          "status_flags",
+          "turn_counter",
+          "player_count",
+          "player_ids",
+          "turn_income",
+          "turn_expenses",
+          "production_levels",
+          "current_player_id",
+          "alliance_data",
+          "feature_data",
+          "server_string",
+          "rank_score",
+          "sync_interval",
+          "disconnect_timeout",
+          "matchmaking_timeout",
+          "game_mode_flags",
+          "map_size",
+          "server_name"
+        ]
+      },
+      {
+        "id": "net_server_message",
+        "name": "SERVER_MESSAGE",
+        "type": "NetworkMessage",
+        "direction": "server_to_client",
+        "message_id": 5,
+        "handler": "z()",
+        "description": "Server text message (chat/system notification)"
+      },
+      {
+        "id": "net_player_info_full_a",
+        "name": "PLAYER_INFO_FULL_A",
+        "type": "NetworkMessage",
+        "direction": "server_to_client",
+        "message_id": 10,
+        "handler": "f(1)",
+        "description": "Full player info for team A"
+      },
+      {
+        "id": "net_player_info_full_b",
+        "name": "PLAYER_INFO_FULL_B",
+        "type": "NetworkMessage",
+        "direction": "server_to_client",
+        "message_id": 11,
+        "handler": "f(0)",
+        "description": "Full player info for team B"
+      },
+      {
+        "id": "net_match_start",
+        "name": "MATCH_START",
+        "type": "NetworkMessage",
+        "direction": "server_to_client",
+        "message_id": 12,
+        "handler": "B()",
+        "description": "Match starting with map and game configuration",
+        "critical": true,
+        "state_transition": {
+          "to": 31,
+          "name": "match_wait"
+        },
+        "fields": [
+          "game_mode",
+          "game_id",
+          "server_string",
+          "map_data"
+        ]
+      },
+      {
+        "id": "net_lobby_list",
+        "name": "LOBBY_LIST",
+        "type": "NetworkMessage",
+        "direction": "server_to_client",
+        "message_id": 20,
+        "handler": "w()",
+        "description": "Lobby/room list for matchmaking",
+        "state_transition": {
+          "to": "22_or_120"
+        }
+      },
+      {
+        "id": "net_map_data",
+        "name": "MAP_DATA",
+        "type": "NetworkMessage",
+        "direction": "server_to_client",
+        "message_id": 21,
+        "handler": "x()",
+        "description": "Full map data blob"
+      },
+      {
+        "id": "net_unit_list_init",
+        "name": "UNIT_LIST_INIT",
+        "type": "NetworkMessage",
+        "direction": "server_to_client",
+        "message_id": 22,
+        "handler": "j(0)",
+        "description": "Unit list initialization"
+      },
+      {
+        "id": "net_victory_values",
+        "name": "VICTORY_VALUES",
+        "type": "NetworkMessage",
+        "direction": "server_to_client",
+        "message_id": 23,
+        "handler": "H()",
+        "description": "Victory condition configuration"
+      },
+      {
+        "id": "net_game_parameters",
+        "name": "GAME_PARAMETERS",
+        "type": "NetworkMessage",
+        "direction": "server_to_client",
+        "message_id": 25,
+        "handler": "I()",
+        "description": "Game configuration parameters"
+      },
+      {
+        "id": "net_map_validation",
+        "name": "MAP_VALIDATION",
+        "type": "NetworkMessage",
+        "direction": "server_to_client",
+        "message_id": 26,
+        "handler": "J()",
+        "description": "Map validation/verification data"
+      },
+      {
+        "id": "net_game_state",
+        "name": "GAME_STATE",
+        "type": "NetworkMessage",
+        "direction": "server_to_client",
+        "message_id": 30,
+        "handler": "D()",
+        "description": "Full game state synchronization - most frequent message",
+        "critical": true,
+        "fields": [
+          "turn_number",
+          "tile_data",
+          "unit_data"
+        ]
+      },
+      {
+        "id": "net_game_result",
+        "name": "GAME_RESULT",
+        "type": "NetworkMessage",
+        "direction": "server_to_client",
+        "message_id": 33,
+        "handler": "G()",
+        "description": "End-of-game scores",
+        "state_transition": {
+          "to": 41,
+          "name": "game_result"
+        },
+        "fields": [
+          "player_0_score",
+          "player_1_score"
+        ]
+      },
+      {
+        "id": "net_army_list_init",
+        "name": "ARMY_LIST_INIT",
+        "type": "NetworkMessage",
+        "direction": "server_to_client",
+        "message_id": 40,
+        "handler": "k(0)",
+        "description": "Army list initialization"
+      },
+      {
+        "id": "net_map_list",
+        "name": "MAP_LIST",
+        "type": "NetworkMessage",
+        "direction": "server_to_client",
+        "message_id": 41,
+        "handler": "K()",
+        "description": "Map selection list"
+      },
+      {
+        "id": "net_upgrade_data",
+        "name": "UPGRADE_DATA",
+        "type": "NetworkMessage",
+        "direction": "server_to_client",
+        "message_id": 42,
+        "handler": "L()",
+        "description": "Technology/upgrade tree data",
+        "fields": [
+          "player_id",
+          "team_flag",
+          "upgrade_params",
+          "upgrade_values"
+        ]
+      },
+      {
+        "id": "net_town_data_single",
+        "name": "TOWN_DATA_SINGLE",
+        "type": "NetworkMessage",
+        "direction": "server_to_client",
+        "message_id": 50,
+        "handler": "N()",
+        "description": "Single town data update",
+        "state_transition": {
+          "to": "44_or_45"
+        }
+      },
+      {
+        "id": "net_town_data_full",
+        "name": "TOWN_DATA_FULL",
+        "type": "NetworkMessage",
+        "direction": "server_to_client",
+        "message_id": 51,
+        "handler": "M()",
+        "description": "Full batch of town data"
+      },
+      {
+        "id": "net_chat_history",
+        "name": "CHAT_HISTORY",
+        "type": "NetworkMessage",
+        "direction": "server_to_client",
+        "message_id": 61,
+        "handler": "P()",
+        "description": "Chat message history batch"
+      },
+      {
+        "id": "net_chat_enable",
+        "name": "CHAT_ENABLE",
+        "type": "NetworkMessage",
+        "direction": "server_to_client",
+        "message_id": 62,
+        "handler": "flag",
+        "description": "Enable chat functionality"
+      },
+      {
+        "id": "net_rank_data",
+        "name": "RANK_DATA",
+        "type": "NetworkMessage",
+        "direction": "server_to_client",
+        "message_id": 70,
+        "handler": "A()",
+        "description": "Player ranking/leaderboard data"
+      },
+      {
+        "id": "net_army_list_full",
+        "name": "ARMY_LIST_FULL",
+        "type": "NetworkMessage",
+        "direction": "server_to_client",
+        "message_id": 72,
+        "handler": "O()",
+        "description": "Complete army list with unit details"
+      },
+      {
+        "id": "net_ally_list",
+        "name": "ALLY_LIST",
+        "type": "NetworkMessage",
+        "direction": "server_to_client",
+        "message_id": 90,
+        "handler": "Q()",
+        "description": "Ally/coalition member list",
+        "state_transition": {
+          "to": 88
+        }
+      },
+      {
+        "id": "net_town_list",
+        "name": "TOWN_LIST",
+        "type": "NetworkMessage",
+        "direction": "server_to_client",
+        "message_id": 100,
+        "handler": "R()",
+        "description": "Large batch town list"
+      },
+      {
+        "id": "net_game_tick",
+        "name": "GAME_TICK",
+        "type": "NetworkMessage",
+        "direction": "server_to_client",
+        "message_id": 101,
+        "handler": "flag",
+        "description": "Game tick marker"
+      },
+      {
+        "id": "net_err_matchmaking",
+        "name": "ERR_MATCHMAKING",
+        "type": "NetworkMessage",
+        "direction": "server_to_client",
+        "message_id": -2,
+        "description": "Matchmaking error"
+      },
+      {
+        "id": "net_err_connection",
+        "name": "ERR_CONNECTION",
+        "type": "NetworkMessage",
+        "direction": "server_to_client",
+        "message_id": -5,
+        "description": "Connection error"
+      },
+      {
+        "id": "net_err_timeout",
+        "name": "ERR_TIMEOUT",
+        "type": "NetworkMessage",
+        "direction": "server_to_client",
+        "message_id": -8,
+        "description": "Timeout error"
+      }
+    ],
+    "screen_states": [
+      {
+        "id": "ss_0",
+        "name": "Main Menu",
+        "type": "ScreenState",
+        "state_id": 0
+      },
+      {
+        "id": "ss_1",
+        "name": "Game Over",
+        "type": "ScreenState",
+        "state_id": 1
+      },
+      {
+        "id": "ss_8",
+        "name": "Login",
+        "type": "ScreenState",
+        "state_id": 8
+      },
+      {
+        "id": "ss_9",
+        "name": "Chat Lobby",
+        "type": "ScreenState",
+        "state_id": 9
+      },
+      {
+        "id": "ss_10",
+        "name": "Chat Room",
+        "type": "ScreenState",
+        "state_id": 10
+      },
+      {
+        "id": "ss_11",
+        "name": "Chat Private",
+        "type": "ScreenState",
+        "state_id": 11
+      },
+      {
+        "id": "ss_14",
+        "name": "Online Game Lobby",
+        "type": "ScreenState",
+        "state_id": 14
+      },
+      {
+        "id": "ss_16",
+        "name": "Game Room",
+        "type": "ScreenState",
+        "state_id": 16
+      },
+      {
+        "id": "ss_17",
+        "name": "Game Screen",
+        "type": "ScreenState",
+        "state_id": 17
+      },
+      {
+        "id": "ss_18",
+        "name": "Unit Selection",
+        "type": "ScreenState",
+        "state_id": 18
+      },
+      {
+        "id": "ss_19",
+        "name": "Battle",
+        "type": "ScreenState",
+        "state_id": 19
+      },
+      {
+        "id": "ss_20",
+        "name": "Map View",
+        "type": "ScreenState",
+        "state_id": 20
+      },
+      {
+        "id": "ss_22",
+        "name": "Battle View",
+        "type": "ScreenState",
+        "state_id": 22
+      },
+      {
+        "id": "ss_29",
+        "name": "Settings",
+        "type": "ScreenState",
+        "state_id": 29
+      },
+      {
+        "id": "ss_30",
+        "name": "Game Session",
+        "type": "ScreenState",
+        "state_id": 30
+      },
+      {
+        "id": "ss_31",
+        "name": "Matchmaking Wait",
+        "type": "ScreenState",
+        "state_id": 31
+      },
+      {
+        "id": "ss_39",
+        "name": "Matchmaking",
+        "type": "ScreenState",
+        "state_id": 39
+      },
+      {
+        "id": "ss_41",
+        "name": "Game Result",
+        "type": "ScreenState",
+        "state_id": 41
+      },
+      {
+        "id": "ss_43",
+        "name": "Building",
+        "type": "ScreenState",
+        "state_id": 43
+      },
+      {
+        "id": "ss_44",
+        "name": "Town View",
+        "type": "ScreenState",
+        "state_id": 44
+      },
+      {
+        "id": "ss_45",
+        "name": "World Map",
+        "type": "ScreenState",
+        "state_id": 45
+      },
+      {
+        "id": "ss_47",
+        "name": "Shop",
+        "type": "ScreenState",
+        "state_id": 47
+      },
+      {
+        "id": "ss_48",
+        "name": "Profile",
+        "type": "ScreenState",
+        "state_id": 48
+      },
+      {
+        "id": "ss_54",
+        "name": "Rankings",
+        "type": "ScreenState",
+        "state_id": 54
+      },
+      {
+        "id": "ss_55",
+        "name": "Search Game",
+        "type": "ScreenState",
+        "state_id": 55
+      },
+      {
+        "id": "ss_57",
+        "name": "Clan",
+        "type": "ScreenState",
+        "state_id": 57
+      },
+      {
+        "id": "ss_60",
+        "name": "Map Editor",
+        "type": "ScreenState",
+        "state_id": 60
+      },
+      {
+        "id": "ss_63",
+        "name": "Error/Connection Lost",
+        "type": "ScreenState",
+        "state_id": 63
+      },
+      {
+        "id": "ss_69",
+        "name": "Replay",
+        "type": "ScreenState",
+        "state_id": 69
+      },
+      {
+        "id": "ss_78",
+        "name": "Tutorial",
+        "type": "ScreenState",
+        "state_id": 78
+      },
+      {
+        "id": "ss_88",
+        "name": "Alliance",
+        "type": "ScreenState",
+        "state_id": 88
+      },
+      {
+        "id": "ss_91",
+        "name": "Login Wait",
+        "type": "ScreenState",
+        "state_id": 91
+      },
+      {
+        "id": "ss_125",
+        "name": "Dialog/Menu Transition",
+        "type": "ScreenState",
+        "state_id": 125
+      }
+    ],
+    "assets": [
+      {
+        "id": "asset_s0",
+        "name": "s0/ Asset Directory",
+        "type": "Asset",
+        "description": "Small screen assets (<=320px width, portrait)"
+      },
+      {
+        "id": "asset_s1",
+        "name": "s1/ Asset Directory",
+        "type": "Asset",
+        "description": "Medium screen assets (~320px width, landscape)"
+      },
+      {
+        "id": "asset_s2",
+        "name": "s2/ Asset Directory",
+        "type": "Asset",
+        "description": "Large screen assets (>320px width, portrait)"
+      },
+      {
+        "id": "asset_font0",
+        "name": "/f0 Font File",
+        "type": "Asset",
+        "description": "Font resource 0"
+      },
+      {
+        "id": "asset_font1",
+        "name": "/f1 Font File",
+        "type": "Asset",
+        "description": "Font resource 1"
+      },
+      {
+        "id": "asset_font2",
+        "name": "/f2 Font File",
+        "type": "Asset",
+        "description": "Font resource 2"
+      },
+      {
+        "id": "asset_font3",
+        "name": "/f3 Font File",
+        "type": "Asset",
+        "description": "Font resource 3"
+      },
+      {
+        "id": "asset_bg",
+        "name": "/bg.png Background",
+        "type": "Asset",
+        "description": "Background image (forced RGB565)"
+      },
+      {
+        "id": "asset_audio_o",
+        "name": "Audio .o Format",
+        "type": "Asset",
+        "description": "Audio format type 1"
+      },
+      {
+        "id": "asset_audio_3",
+        "name": "Audio .3 Format",
+        "type": "Asset",
+        "description": "Audio format type 2"
+      },
+      {
+        "id": "asset_audio_m",
+        "name": "Audio .m Format",
+        "type": "Asset",
+        "description": "Audio format type 3"
+      }
+    ],
+    "maps": [
+      {
+        "id": "map_config",
+        "name": "Map System",
+        "type": "Map",
+        "description": "Map data stored in ca[] byte array with grid cells 30x20 pixels each",
+        "max_size": 128,
+        "size_values": [
+          0,
+          50,
+          100,
+          123,
+          124,
+          125,
+          126,
+          127
+        ],
+        "cell_width_px": 30,
+        "cell_height_px": 20,
+        "building_footprint_widths": [
+          20,
+          20,
+          20,
+          30,
+          30,
+          30,
+          40,
+          40,
+          40
+        ],
+        "building_footprint_heights": [
+          20,
+          30,
+          40,
+          20,
+          30,
+          40,
+          20,
+          30,
+          40
+        ],
+        "building_power_radii": [
+          10,
+          20,
+          30,
+          40,
+          60,
+          127
+        ]
+      }
+    ],
+    "campaigns": [
+      {
+        "id": "campaign_online",
+        "name": "Online Multiplayer Campaign",
+        "type": "Campaign",
+        "description": "Persistent online campaign with towns, alliances, and territory control",
+        "features": [
+          "Town management",
+          "Alliance system",
+          "Territory conquest",
+          "Rank progression",
+          "Credit economy"
+        ]
+      },
+      {
+        "id": "campaign_skirmish",
+        "name": "Skirmish Battle",
+        "type": "Campaign",
+        "description": "Single match battle mode",
+        "game_modes": [
+          "1v1",
+          "Team battle"
+        ],
+        "battle_time_limits": [
+          1001,
+          1100,
+          1101,
+          1200
+        ],
+        "turn_time_settings": [
+          30,
+          20,
+          30,
+          20
+        ]
+      },
+      {
+        "id": "campaign_tutorial",
+        "name": "Tutorial",
+        "type": "Campaign",
+        "description": "Tutorial mode (screen state 78)",
+        "screen_state": 78
+      }
+    ],
+    "encryptions": [
+      {
+        "id": "enc_xor_asset",
+        "name": "XOR Asset Cipher",
+        "type": "Encryption",
+        "description": "Rotating 8-byte XOR key for asset decryption",
+        "key": [
+          -96,
+          -95,
+          -94,
+          -93,
+          -92,
+          -91,
+          -90,
+          -89
+        ],
+        "key_rotation": "Elements 3-5 shifted left after use",
+        "implemented_in": "cls_bu"
+      },
+      {
+        "id": "enc_custom_base64",
+        "name": "Custom Base64",
+        "type": "Encryption",
+        "description": "Non-standard Base64 alphabet used for game data encoding",
+        "alphabet": "Hd2_bcGrVEDRfuzPIWB8NY-qQ6mxLKZj4lOn5yJiMAtsaUXCT9powF1hgS0e3kv7"
+      },
+      {
+        "id": "enc_xor_stream",
+        "name": "XOR Stream Cipher",
+        "type": "Encryption",
+        "description": "XOR stream cipher for network data with 15-byte key cycle",
+        "key_rotation": "15-byte cycle",
+        "session_key": "random 32-bit per request",
+        "session_rotation": "4-byte cycle",
+        "checksum": "XOR-based accumulator"
+      },
+      {
+        "id": "enc_data_at_rest",
+        "name": "Data-At-Rest Encryption",
+        "type": "Encryption",
+        "description": "XOR with appended seed for persistent data",
+        "method": "data[i] ^ (seed >> ((i & 3) << 3)), seed appended as last 4 bytes"
+      },
+      {
+        "id": "enc_http_xor",
+        "name": "HTTP XOR Cipher",
+        "type": "Encryption",
+        "description": "15-byte XOR cipher for HTTP fallback communication",
+        "key_size": 15,
+        "default_key": "0xFF repeated"
+      },
+      {
+        "id": "enc_string_obfuscation",
+        "name": "String Obfuscation",
+        "type": "Encryption",
+        "description": "UTF-encoded byte arrays decoded via by.a(byte[], true)",
+        "implemented_in": "cls_by"
+      },
+      {
+        "id": "enc_apk_verification",
+        "name": "APK Verification",
+        "type": "Encryption",
+        "description": "CRC32 of ZIP entries via bn/av classes for APK integrity",
+        "polynomial": "0xEDB88320",
+        "implemented_in": [
+          "cls_bn",
+          "cls_g"
+        ]
+      },
+      {
+        "id": "enc_billing_signature",
+        "name": "Billing Signature Verification",
+        "type": "Encryption",
+        "description": "RSA SHA1withRSA for billing purchase verification",
+        "implemented_in": "cls_ar"
+      }
+    ],
+    "game_constants": [
+      {
+        "id": "gc_max_credits",
+        "name": "MAX_CREDITS",
+        "type": "GameConstant",
+        "value": 30000
+      },
+      {
+        "id": "gc_grid_cell",
+        "name": "GRID_CELL_SIZE",
+        "type": "GameConstant",
+        "value": "30x20 pixels"
+      },
+      {
+        "id": "gc_max_units",
+        "name": "MAX_UNITS_PER_PLAYER",
+        "type": "GameConstant",
+        "value": 50
+      },
+      {
+        "id": "gc_max_projectiles",
+        "name": "MAX_PROJECTILES",
+        "type": "GameConstant",
+        "value": 400
+      },
+      {
+        "id": "gc_max_animations",
+        "name": "MAX_ANIMATIONS",
+        "type": "GameConstant",
+        "value": 90
+      },
+      {
+        "id": "gc_max_production_queue",
+        "name": "MAX_PRODUCTION_QUEUE",
+        "type": "GameConstant",
+        "value": 60
+      },
+      {
+        "id": "gc_tick_rate",
+        "name": "TICK_RATE_MS",
+        "type": "GameConstant",
+        "value": 100
+      },
+      {
+        "id": "gc_directions",
+        "name": "DIRECTIONS",
+        "type": "GameConstant",
+        "value": 8
+      },
+      {
+        "id": "gc_map_size",
+        "name": "MAP_SIZE_MAX",
+        "type": "GameConstant",
+        "value": 128
+      },
+      {
+        "id": "gc_stuck_threshold",
+        "name": "STUCK_THRESHOLD",
+        "type": "GameConstant",
+        "value": 5
+      },
+      {
+        "id": "gc_capture_credits",
+        "name": "CAPTURE_CREDITS",
+        "type": "GameConstant",
+        "value": 200
+      },
+      {
+        "id": "gc_capture_score",
+        "name": "CAPTURE_SCORE",
+        "type": "GameConstant",
+        "value": 100
+      },
+      {
+        "id": "gc_score_multiplier",
+        "name": "SCORE_MULTIPLIER",
+        "type": "GameConstant",
+        "value": 2
+      },
+      {
+        "id": "gc_idle_disconnect",
+        "name": "IDLE_DISCONNECT_MS",
+        "type": "GameConstant",
+        "value": 120000
+      },
+      {
+        "id": "gc_battle_phase",
+        "name": "BATTLE_PHASE_MS",
+        "type": "GameConstant",
+        "value": 300000
+      }
+    ]
+  },
+  "edges": [
+    {
+      "source": "cls_application",
+      "target": "cls_appctrl",
+      "type": "Creates",
+      "description": "Application creates AppCtrl as main controller"
+    },
+    {
+      "source": "cls_appctrl",
+      "target": "cls_bh",
+      "type": "Creates",
+      "description": "AppCtrl creates MIDlet instance (bh)"
+    },
+    {
+      "source": "cls_appctrl",
+      "target": "cls_an",
+      "type": "Creates",
+      "description": "AppCtrl creates SurfaceView (an/midletview)"
+    },
+    {
+      "source": "cls_appctrl",
+      "target": "s0_k",
+      "type": "Loads",
+      "description": "AppCtrl dynamically loads game class via Class.forName()"
+    },
+    {
+      "source": "cls_appctrl",
+      "target": "cls_bd",
+      "type": "Uses",
+      "description": "AppCtrl uses Display Manager for screen switching"
+    },
+    {
+      "source": "s0_k",
+      "target": "s0_w",
+      "type": "Uses",
+      "description": "Main game class uses Game Logic/Map Handler for all game logic"
+    },
+    {
+      "source": "s0_k",
+      "target": "s0_a",
+      "type": "Uses",
+      "description": "Main game class uses Game State Manager for screen transitions"
+    },
+    {
+      "source": "s0_k",
+      "target": "s0_c",
+      "type": "Uses",
+      "description": "Main game class uses Config Manager for resource loading"
+    },
+    {
+      "source": "s0_k",
+      "target": "s0_e",
+      "type": "Uses",
+      "description": "Main game class uses Network Manager for multiplayer"
+    },
+    {
+      "source": "s0_k",
+      "target": "s0_f",
+      "type": "Uses",
+      "description": "Main game class uses Font Manager for text rendering"
+    },
+    {
+      "source": "s0_k",
+      "target": "s0_i",
+      "type": "Uses",
+      "description": "Main game class uses Audio Manager for sound"
+    },
+    {
+      "source": "s0_k",
+      "target": "s0_x",
+      "type": "References",
+      "description": "Main game class extends Base Game Canvas"
+    },
+    {
+      "source": "s0_k",
+      "target": "sys_game_loop",
+      "type": "Implements",
+      "description": "Main game class implements the game loop (Runnable)"
+    },
+    {
+      "source": "s0_w",
+      "target": "sys_combat",
+      "type": "Implements",
+      "description": "Game Logic Handler implements combat resolution"
+    },
+    {
+      "source": "s0_w",
+      "target": "sys_pathfinding",
+      "type": "Implements",
+      "description": "Game Logic Handler implements pathfinding"
+    },
+    {
+      "source": "s0_w",
+      "target": "sys_ai",
+      "type": "Implements",
+      "description": "Game Logic Handler implements unit AI"
+    },
+    {
+      "source": "s0_w",
+      "target": "sys_fog_of_war",
+      "type": "Implements",
+      "description": "Game Logic Handler implements fog of war"
+    },
+    {
+      "source": "s0_w",
+      "target": "sys_resource",
+      "type": "Implements",
+      "description": "Game Logic Handler implements resource management"
+    },
+    {
+      "source": "s0_w",
+      "target": "sys_production",
+      "type": "Implements",
+      "description": "Game Logic Handler implements production system"
+    },
+    {
+      "source": "s0_w",
+      "target": "sys_research",
+      "type": "Implements",
+      "description": "Game Logic Handler implements research system"
+    },
+    {
+      "source": "s0_e",
+      "target": "s0_z",
+      "type": "Uses",
+      "description": "Network Manager uses Request Queue"
+    },
+    {
+      "source": "s0_e",
+      "target": "s0_m",
+      "type": "Creates",
+      "description": "Network Manager creates Sender Thread"
+    },
+    {
+      "source": "s0_e",
+      "target": "s0_o",
+      "type": "Creates",
+      "description": "Network Manager creates Receiver Thread"
+    },
+    {
+      "source": "s0_e",
+      "target": "cls_au",
+      "type": "Uses",
+      "description": "Network Manager uses Socket Connection"
+    },
+    {
+      "source": "s0_e",
+      "target": "net_game_state",
+      "type": "Receives",
+      "description": "Network Manager receives GAME_STATE messages"
+    },
+    {
+      "source": "s0_e",
+      "target": "net_session_init",
+      "type": "Receives",
+      "description": "Network Manager receives SESSION_INIT messages"
+    },
+    {
+      "source": "s0_e",
+      "target": "net_match_start",
+      "type": "Receives",
+      "description": "Network Manager receives MATCH_START messages"
+    },
+    {
+      "source": "s0_m",
+      "target": "net_game_state",
+      "type": "Sends",
+      "description": "Sender Thread sends player commands as game state updates"
+    },
+    {
+      "source": "s0_z",
+      "target": "enc_xor_stream",
+      "type": "Uses",
+      "description": "Request Queue uses XOR stream cipher for data encoding"
+    },
+    {
+      "source": "s0_c",
+      "target": "asset_s0",
+      "type": "Loads",
+      "description": "Config Manager loads s0/ assets for small screens"
+    },
+    {
+      "source": "s0_c",
+      "target": "asset_s1",
+      "type": "Loads",
+      "description": "Config Manager loads s1/ assets for medium screens"
+    },
+    {
+      "source": "s0_c",
+      "target": "asset_s2",
+      "type": "Loads",
+      "description": "Config Manager loads s2/ assets for large screens"
+    },
+    {
+      "source": "s0_c",
+      "target": "cls_bu",
+      "type": "Uses",
+      "description": "Config Manager uses asset loader with XOR decryption"
+    },
+    {
+      "source": "s0_f",
+      "target": "asset_font0",
+      "type": "Loads",
+      "description": "Font Manager loads font file /f0"
+    },
+    {
+      "source": "s0_f",
+      "target": "asset_font1",
+      "type": "Loads",
+      "description": "Font Manager loads font file /f1"
+    },
+    {
+      "source": "s0_f",
+      "target": "asset_font2",
+      "type": "Loads",
+      "description": "Font Manager loads font file /f2"
+    },
+    {
+      "source": "s0_f",
+      "target": "asset_font3",
+      "type": "Loads",
+      "description": "Font Manager loads font file /f3"
+    },
+    {
+      "source": "s0_f",
+      "target": "s0_d",
+      "type": "Uses",
+      "description": "Font Manager uses Bitmap Font Renderer"
+    },
+    {
+      "source": "cls_bu",
+      "target": "enc_xor_asset",
+      "type": "Uses",
+      "description": "Asset loader uses XOR cipher for decryption"
+    },
+    {
+      "source": "cls_bu",
+      "target": "cls_q",
+      "type": "Creates",
+      "description": "Asset loader creates Image/Bitmap wrappers"
+    },
+    {
+      "source": "cls_bu",
+      "target": "cls_by",
+      "type": "Uses",
+      "description": "Asset loader uses Font manager for string decoding"
+    },
+    {
+      "source": "cls_aq",
+      "target": "cls_v",
+      "type": "References",
+      "description": "Graphics adapter implements abstract Graphics interface"
+    },
+    {
+      "source": "sys_rendering",
+      "target": "cls_aq",
+      "type": "Uses",
+      "description": "Rendering System uses Graphics adapter for drawing"
+    },
+    {
+      "source": "sys_rendering",
+      "target": "cls_q",
+      "type": "Uses",
+      "description": "Rendering System uses Image wrappers for bitmaps"
+    },
+    {
+      "source": "sys_input",
+      "target": "cls_an",
+      "type": "Uses",
+      "description": "Input System processes events from SurfaceView"
+    },
+    {
+      "source": "sys_persistence",
+      "target": "cls_i",
+      "type": "Uses",
+      "description": "Persistence System uses Record Store for data storage"
+    },
+    {
+      "source": "sys_billing",
+      "target": "cls_ae",
+      "type": "Uses",
+      "description": "Billing System uses Billing Manager"
+    },
+    {
+      "source": "sys_billing",
+      "target": "cls_BillingService",
+      "type": "Uses",
+      "description": "Billing System uses Android Billing Service"
+    },
+    {
+      "source": "sys_billing",
+      "target": "cls_ar",
+      "type": "Uses",
+      "description": "Billing System uses Security/Signature Verifier"
+    },
+    {
+      "source": "sys_billing",
+      "target": "s0_q",
+      "type": "Uses",
+      "description": "Billing System uses Payment Handler"
+    },
+    {
+      "source": "sys_billing",
+      "target": "s0_u",
+      "type": "Uses",
+      "description": "Billing System uses Ad Handler"
+    },
+    {
+      "source": "sys_audio",
+      "target": "s0_i",
+      "type": "Uses",
+      "description": "Audio System uses Audio Manager"
+    },
+    {
+      "source": "fac_confederation",
+      "target": "unit_conf_infantry",
+      "type": "Owns",
+      "description": "Confederation faction owns Infantry unit"
+    },
+    {
+      "source": "fac_confederation",
+      "target": "unit_conf_grenadier",
+      "type": "Owns",
+      "description": "Confederation faction owns Grenadier unit"
+    },
+    {
+      "source": "fac_confederation",
+      "target": "unit_conf_flame_assault",
+      "type": "Owns",
+      "description": "Confederation faction owns Flame Assault unit"
+    },
+    {
+      "source": "fac_confederation",
+      "target": "unit_conf_av40",
+      "type": "Owns",
+      "description": "Confederation faction owns AV-40 Fortress unit"
+    },
+    {
+      "source": "fac_confederation",
+      "target": "unit_conf_hammer",
+      "type": "Owns",
+      "description": "Confederation faction owns T-21 Hammer unit"
+    },
+    {
+      "source": "fac_confederation",
+      "target": "unit_conf_zeus",
+      "type": "Owns",
+      "description": "Confederation faction owns T-22 Zeus unit"
+    },
+    {
+      "source": "fac_confederation",
+      "target": "unit_conf_mlrs",
+      "type": "Owns",
+      "description": "Confederation faction owns MLRS Torrent unit"
+    },
+    {
+      "source": "fac_confederation",
+      "target": "unit_mine_scorpio",
+      "type": "Owns",
+      "description": "Confederation faction owns Mine Scorpio"
+    },
+    {
+      "source": "fac_confederation",
+      "target": "unit_mine_frog",
+      "type": "Owns",
+      "description": "Confederation faction owns Mine Frog"
+    },
+    {
+      "source": "fac_confederation",
+      "target": "unit_mine_lizard",
+      "type": "Owns",
+      "description": "Confederation faction owns Mine Lizard"
+    },
+    {
+      "source": "fac_confederation",
+      "target": "bld_conf_command_centre",
+      "type": "Owns",
+      "description": "Confederation faction owns Command Centre"
+    },
+    {
+      "source": "fac_confederation",
+      "target": "bld_conf_generator",
+      "type": "Owns",
+      "description": "Confederation faction owns Generator"
+    },
+    {
+      "source": "fac_confederation",
+      "target": "bld_conf_infantry_centre",
+      "type": "Owns",
+      "description": "Confederation faction owns Infantry Centre"
+    },
+    {
+      "source": "fac_confederation",
+      "target": "bld_conf_machine_factory",
+      "type": "Owns",
+      "description": "Confederation faction owns Machine Factory"
+    },
+    {
+      "source": "fac_confederation",
+      "target": "bld_conf_tech_centre",
+      "type": "Owns",
+      "description": "Confederation faction owns Technology Centre"
+    },
+    {
+      "source": "fac_confederation",
+      "target": "bld_conf_bunker",
+      "type": "Owns",
+      "description": "Confederation faction owns Bunker"
+    },
+    {
+      "source": "fac_confederation",
+      "target": "bld_conf_locator",
+      "type": "Owns",
+      "description": "Confederation faction owns Locator"
+    },
+    {
+      "source": "fac_confederation",
+      "target": "bld_conf_rocket_launcher",
+      "type": "Owns",
+      "description": "Confederation faction owns Rocket Launcher"
+    },
+    {
+      "source": "fac_rebels",
+      "target": "unit_reb_infantry",
+      "type": "Owns",
+      "description": "Rebels faction owns Infantry unit"
+    },
+    {
+      "source": "fac_rebels",
+      "target": "unit_reb_grenadier",
+      "type": "Owns",
+      "description": "Rebels faction owns Grenadier unit"
+    },
+    {
+      "source": "fac_rebels",
+      "target": "unit_reb_sniper",
+      "type": "Owns",
+      "description": "Rebels faction owns Sniper unit"
+    },
+    {
+      "source": "fac_rebels",
+      "target": "unit_reb_coyote",
+      "type": "Owns",
+      "description": "Rebels faction owns Coyote unit"
+    },
+    {
+      "source": "fac_rebels",
+      "target": "unit_reb_armadillo",
+      "type": "Owns",
+      "description": "Rebels faction owns Armadillo unit"
+    },
+    {
+      "source": "fac_rebels",
+      "target": "unit_reb_rhino",
+      "type": "Owns",
+      "description": "Rebels faction owns Rhino unit"
+    },
+    {
+      "source": "fac_rebels",
+      "target": "unit_reb_porcupine",
+      "type": "Owns",
+      "description": "Rebels faction owns MMC Porcupine unit"
+    },
+    {
+      "source": "fac_rebels",
+      "target": "bld_reb_headquarters",
+      "type": "Owns",
+      "description": "Rebels faction owns Headquarters"
+    },
+    {
+      "source": "fac_rebels",
+      "target": "bld_reb_powerplant",
+      "type": "Owns",
+      "description": "Rebels faction owns Powerplant"
+    },
+    {
+      "source": "fac_rebels",
+      "target": "bld_reb_barracks",
+      "type": "Owns",
+      "description": "Rebels faction owns Barracks"
+    },
+    {
+      "source": "fac_rebels",
+      "target": "bld_reb_factory",
+      "type": "Owns",
+      "description": "Rebels faction owns Factory"
+    },
+    {
+      "source": "fac_rebels",
+      "target": "bld_reb_laboratory",
+      "type": "Owns",
+      "description": "Rebels faction owns Laboratory"
+    },
+    {
+      "source": "fac_rebels",
+      "target": "bld_reb_bunker",
+      "type": "Owns",
+      "description": "Rebels faction owns Bunker"
+    },
+    {
+      "source": "fac_rebels",
+      "target": "bld_reb_tower",
+      "type": "Owns",
+      "description": "Rebels faction owns Tower"
+    },
+    {
+      "source": "fac_rebels",
+      "target": "bld_reb_wall",
+      "type": "Owns",
+      "description": "Rebels faction owns Wall"
+    },
+    {
+      "source": "bld_conf_infantry_centre",
+      "target": "unit_conf_infantry",
+      "type": "Produces",
+      "description": "Infantry Centre produces Infantry"
+    },
+    {
+      "source": "bld_conf_infantry_centre",
+      "target": "unit_conf_grenadier",
+      "type": "Produces",
+      "description": "Infantry Centre produces Grenadiers"
+    },
+    {
+      "source": "bld_conf_infantry_centre",
+      "target": "unit_conf_flame_assault",
+      "type": "Produces",
+      "description": "Infantry Centre produces Flame Assaults (requires tech)"
+    },
+    {
+      "source": "bld_conf_machine_factory",
+      "target": "unit_conf_av40",
+      "type": "Produces",
+      "description": "Machine Factory produces AV-40 Fortress"
+    },
+    {
+      "source": "bld_conf_machine_factory",
+      "target": "unit_conf_hammer",
+      "type": "Produces",
+      "description": "Machine Factory produces T-21 Hammer"
+    },
+    {
+      "source": "bld_conf_machine_factory",
+      "target": "unit_conf_zeus",
+      "type": "Produces",
+      "description": "Machine Factory produces T-22 Zeus"
+    },
+    {
+      "source": "bld_conf_machine_factory",
+      "target": "unit_conf_mlrs",
+      "type": "Produces",
+      "description": "Machine Factory produces MLRS Torrent"
+    },
+    {
+      "source": "bld_conf_tech_centre",
+      "target": "tech_conf_energy_suit",
+      "type": "Produces",
+      "description": "Technology Centre researches Energy suit"
+    },
+    {
+      "source": "bld_conf_tech_centre",
+      "target": "tech_conf_bio_suit",
+      "type": "Produces",
+      "description": "Technology Centre researches Bio suit"
+    },
+    {
+      "source": "bld_conf_tech_centre",
+      "target": "tech_conf_enhanced_firing",
+      "type": "Produces",
+      "description": "Technology Centre researches Enhanced firing rate"
+    },
+    {
+      "source": "bld_conf_tech_centre",
+      "target": "tech_conf_ap_bullet",
+      "type": "Produces",
+      "description": "Technology Centre researches Armour-piercing bullet"
+    },
+    {
+      "source": "bld_conf_tech_centre",
+      "target": "tech_conf_heavy_shells",
+      "type": "Produces",
+      "description": "Technology Centre researches Heavy shells"
+    },
+    {
+      "source": "bld_conf_tech_centre",
+      "target": "tech_conf_forced_missiles",
+      "type": "Produces",
+      "description": "Technology Centre researches Forced light missiles"
+    },
+    {
+      "source": "bld_conf_tech_centre",
+      "target": "tech_conf_lava_flame",
+      "type": "Produces",
+      "description": "Technology Centre researches Lava flame fuel"
+    },
+    {
+      "source": "bld_conf_tech_centre",
+      "target": "tech_conf_volcano_gun",
+      "type": "Produces",
+      "description": "Technology Centre researches Volcano flame gun"
+    },
+    {
+      "source": "bld_reb_barracks",
+      "target": "unit_reb_infantry",
+      "type": "Produces",
+      "description": "Barracks produces Infantry"
+    },
+    {
+      "source": "bld_reb_barracks",
+      "target": "unit_reb_grenadier",
+      "type": "Produces",
+      "description": "Barracks produces Grenadiers"
+    },
+    {
+      "source": "bld_reb_barracks",
+      "target": "unit_reb_sniper",
+      "type": "Produces",
+      "description": "Barracks produces Snipers (requires tech)"
+    },
+    {
+      "source": "bld_reb_factory",
+      "target": "unit_reb_coyote",
+      "type": "Produces",
+      "description": "Factory produces Coyotes"
+    },
+    {
+      "source": "bld_reb_factory",
+      "target": "unit_reb_armadillo",
+      "type": "Produces",
+      "description": "Factory produces Armadillos"
+    },
+    {
+      "source": "bld_reb_factory",
+      "target": "unit_reb_rhino",
+      "type": "Produces",
+      "description": "Factory produces Rhinos (requires tech)"
+    },
+    {
+      "source": "bld_reb_factory",
+      "target": "unit_reb_porcupine",
+      "type": "Produces",
+      "description": "Factory produces MMC Porcupines"
+    },
+    {
+      "source": "bld_reb_laboratory",
+      "target": "tech_reb_titanium_jacket",
+      "type": "Produces",
+      "description": "Laboratory researches Titanium jacket"
+    },
+    {
+      "source": "bld_reb_laboratory",
+      "target": "tech_reb_first_aid",
+      "type": "Produces",
+      "description": "Laboratory researches First-aid kit"
+    },
+    {
+      "source": "bld_reb_laboratory",
+      "target": "tech_reb_enhanced_fire",
+      "type": "Produces",
+      "description": "Laboratory researches Enhanced fire rate"
+    },
+    {
+      "source": "bld_reb_laboratory",
+      "target": "tech_reb_doping",
+      "type": "Produces",
+      "description": "Laboratory researches Doping"
+    },
+    {
+      "source": "bld_reb_laboratory",
+      "target": "tech_reb_snipers",
+      "type": "Produces",
+      "description": "Laboratory researches Snipers"
+    },
+    {
+      "source": "bld_reb_laboratory",
+      "target": "tech_reb_hornet",
+      "type": "Produces",
+      "description": "Laboratory researches Rifle Hornet-10"
+    },
+    {
+      "source": "bld_reb_laboratory",
+      "target": "tech_reb_heavy_mg",
+      "type": "Produces",
+      "description": "Laboratory researches Heavy machine gun"
+    },
+    {
+      "source": "bld_reb_laboratory",
+      "target": "tech_reb_reinforced_engine",
+      "type": "Produces",
+      "description": "Laboratory researches Reinforced engine"
+    },
+    {
+      "source": "bld_conf_generator",
+      "target": "bld_conf_command_centre",
+      "type": "Powers",
+      "description": "Generator provides power to Command Centre"
+    },
+    {
+      "source": "bld_conf_generator",
+      "target": "bld_conf_infantry_centre",
+      "type": "Powers",
+      "description": "Generator provides power to Infantry Centre"
+    },
+    {
+      "source": "bld_conf_machine_factory",
+      "target": "bld_conf_tech_centre",
+      "type": "Depends_On",
+      "description": "Machine Factory requires Technology Centre (tech_requirement: 3)"
+    },
+    {
+      "source": "tech_conf_forced_missiles",
+      "target": "unit_conf_flame_assault",
+      "type": "Upgrades",
+      "description": "Forced light missiles unlocks Flame Assault training"
+    },
+    {
+      "source": "tech_conf_lava_flame",
+      "target": "unit_conf_av40",
+      "type": "Upgrades",
+      "description": "Lava flame fuel upgrades AV-40 with heavy flamethrower"
+    },
+    {
+      "source": "tech_conf_volcano_gun",
+      "target": "unit_conf_zeus",
+      "type": "Upgrades",
+      "description": "Volcano flame gun increases Zeus damage by 25%"
+    },
+    {
+      "source": "tech_conf_volcano_gun",
+      "target": "unit_conf_hammer",
+      "type": "Upgrades",
+      "description": "Volcano flame gun increases Hammer damage by 25%"
+    },
+    {
+      "source": "tech_conf_energy_suit",
+      "target": "unit_conf_infantry",
+      "type": "Upgrades",
+      "description": "Energy suit increases Infantry armour by 2"
+    },
+    {
+      "source": "tech_conf_bio_suit",
+      "target": "unit_conf_infantry",
+      "type": "Upgrades",
+      "description": "Bio suit triples Infantry health recovery"
+    },
+    {
+      "source": "tech_conf_ap_bullet",
+      "target": "unit_conf_av40",
+      "type": "Upgrades",
+      "description": "Armour-piercing bullet increases Assault damage by 40%"
+    },
+    {
+      "source": "tech_reb_snipers",
+      "target": "unit_reb_sniper",
+      "type": "Upgrades",
+      "description": "Snipers tech unlocks Sniper training"
+    },
+    {
+      "source": "tech_reb_reinforced_engine",
+      "target": "unit_reb_rhino",
+      "type": "Upgrades",
+      "description": "Reinforced engine unlocks Rhino tank"
+    },
+    {
+      "source": "tech_reb_hornet",
+      "target": "unit_reb_sniper",
+      "type": "Upgrades",
+      "description": "Hornet-10 increases Sniper range and damage"
+    },
+    {
+      "source": "tech_reb_heavy_mg",
+      "target": "unit_reb_coyote",
+      "type": "Upgrades",
+      "description": "Heavy machine gun increases Coyote damage by 15%"
+    },
+    {
+      "source": "tech_reb_heavy_mg",
+      "target": "unit_reb_armadillo",
+      "type": "Upgrades",
+      "description": "Heavy machine gun increases Armadillo damage by 15%"
+    },
+    {
+      "source": "tech_reb_titanium_jacket",
+      "target": "unit_reb_infantry",
+      "type": "Upgrades",
+      "description": "Titanium jacket increases Infantry armour by 1"
+    },
+    {
+      "source": "tech_reb_first_aid",
+      "target": "unit_reb_infantry",
+      "type": "Upgrades",
+      "description": "First-aid kit triples Infantry health recovery"
+    },
+    {
+      "source": "tech_conf_bio_suit",
+      "target": "tech_conf_energy_suit",
+      "type": "Depends_On",
+      "description": "Bio suit requires Energy suit research"
+    },
+    {
+      "source": "tech_conf_lava_flame",
+      "target": "tech_reb_reinforced_engine",
+      "type": "Depends_On",
+      "description": "Lava flame fuel requires Reinforced engine (cross-faction dependency in research IDs)"
+    },
+    {
+      "source": "unit_conf_infantry",
+      "target": "unit_reb_infantry",
+      "type": "Attacks",
+      "description": "Confederation Infantry can attack Rebels Infantry"
+    },
+    {
+      "source": "unit_conf_grenadier",
+      "target": "unit_reb_coyote",
+      "type": "Attacks",
+      "description": "Grenadiers are effective against light machinery like Coyotes"
+    },
+    {
+      "source": "unit_conf_mlrs",
+      "target": "bld_reb_headquarters",
+      "type": "Attacks",
+      "description": "MLRS Torrent with siege mode can attack buildings"
+    },
+    {
+      "source": "unit_conf_zeus",
+      "target": "unit_reb_rhino",
+      "type": "Attacks",
+      "description": "Zeus heavy tank can attack Rhino medium tank"
+    },
+    {
+      "source": "unit_reb_sniper",
+      "target": "unit_conf_infantry",
+      "type": "Attacks",
+      "description": "Snipers are effective against infantry with long range"
+    },
+    {
+      "source": "unit_reb_rhino",
+      "target": "bld_conf_command_centre",
+      "type": "Attacks",
+      "description": "Rhino with siege mode can attack buildings"
+    },
+    {
+      "source": "unit_reb_porcupine",
+      "target": "unit_conf_zeus",
+      "type": "Attacks",
+      "description": "Porcupine missile system can attack heavy tanks"
+    },
+    {
+      "source": "sys_combat",
+      "target": "unit_conf_infantry",
+      "type": "Updates",
+      "description": "Combat system updates unit HP and state"
+    },
+    {
+      "source": "sys_combat",
+      "target": "unit_reb_infantry",
+      "type": "Updates",
+      "description": "Combat system updates unit HP and state"
+    },
+    {
+      "source": "sys_combat",
+      "target": "bld_conf_command_centre",
+      "type": "Updates",
+      "description": "Combat system updates building HP"
+    },
+    {
+      "source": "sys_combat",
+      "target": "bld_reb_headquarters",
+      "type": "Updates",
+      "description": "Combat system updates building HP"
+    },
+    {
+      "source": "net_session_init",
+      "target": "s0_a",
+      "type": "Updates",
+      "description": "SESSION_INIT updates game state manager with session data"
+    },
+    {
+      "source": "net_match_start",
+      "target": "s0_w",
+      "type": "Updates",
+      "description": "MATCH_START loads map data into Game Logic Handler"
+    },
+    {
+      "source": "net_game_state",
+      "target": "s0_w",
+      "type": "Updates",
+      "description": "GAME_STATE syncs tile and unit data with Game Logic Handler"
+    },
+    {
+      "source": "net_upgrade_data",
+      "target": "sys_research",
+      "type": "Updates",
+      "description": "UPGRADE_DATA syncs technology state with Research System"
+    },
+    {
+      "source": "net_game_result",
+      "target": "s0_a",
+      "type": "Updates",
+      "description": "GAME_RESULT transitions to result screen"
+    },
+    {
+      "source": "net_lobby_list",
+      "target": "ss_14",
+      "type": "Updates",
+      "description": "LOBBY_LIST updates Online Game Lobby screen"
+    },
+    {
+      "source": "net_match_start",
+      "target": "ss_31",
+      "type": "Updates",
+      "description": "MATCH_START transitions to Matchmaking Wait"
+    },
+    {
+      "source": "net_game_result",
+      "target": "ss_41",
+      "type": "Updates",
+      "description": "GAME_RESULT transitions to Game Result screen"
+    },
+    {
+      "source": "net_ally_list",
+      "target": "ss_88",
+      "type": "Updates",
+      "description": "ALLY_LIST transitions to Alliance screen"
+    },
+    {
+      "source": "s0_a",
+      "target": "ss_0",
+      "type": "References",
+      "description": "Game State Manager manages Main Menu state"
+    },
+    {
+      "source": "s0_a",
+      "target": "ss_8",
+      "type": "References",
+      "description": "Game State Manager manages Login state"
+    },
+    {
+      "source": "s0_a",
+      "target": "ss_14",
+      "type": "References",
+      "description": "Game State Manager manages Online Game Lobby state"
+    },
+    {
+      "source": "s0_a",
+      "target": "ss_17",
+      "type": "References",
+      "description": "Game State Manager manages Game Screen state"
+    },
+    {
+      "source": "s0_a",
+      "target": "ss_19",
+      "type": "References",
+      "description": "Game State Manager manages Battle state"
+    },
+    {
+      "source": "s0_a",
+      "target": "ss_30",
+      "type": "References",
+      "description": "Game State Manager manages Game Session state"
+    },
+    {
+      "source": "s0_a",
+      "target": "ss_43",
+      "type": "References",
+      "description": "Game State Manager manages Building state"
+    },
+    {
+      "source": "s0_a",
+      "target": "ss_44",
+      "type": "References",
+      "description": "Game State Manager manages Town View state"
+    },
+    {
+      "source": "s0_a",
+      "target": "ss_45",
+      "type": "References",
+      "description": "Game State Manager manages World Map state"
+    },
+    {
+      "source": "s0_a",
+      "target": "ss_47",
+      "type": "References",
+      "description": "Game State Manager manages Shop state"
+    },
+    {
+      "source": "s0_a",
+      "target": "ss_48",
+      "type": "References",
+      "description": "Game State Manager manages Profile state"
+    },
+    {
+      "source": "s0_a",
+      "target": "ss_54",
+      "type": "References",
+      "description": "Game State Manager manages Rankings state"
+    },
+    {
+      "source": "sys_resource",
+      "target": "bld_conf_generator",
+      "type": "Updates",
+      "description": "Resource system tracks power generation from Generator"
+    },
+    {
+      "source": "sys_resource",
+      "target": "bld_reb_powerplant",
+      "type": "Updates",
+      "description": "Resource system tracks power generation from Powerplant"
+    },
+    {
+      "source": "sys_resource",
+      "target": "bld_conf_command_centre",
+      "type": "Updates",
+      "description": "Resource system tracks credit income from Command Centre"
+    },
+    {
+      "source": "sys_network",
+      "target": "sys_encryption",
+      "type": "Uses",
+      "description": "Network system uses encryption for data protection"
+    },
+    {
+      "source": "sys_encryption",
+      "target": "enc_xor_asset",
+      "type": "Uses",
+      "description": "Encryption system uses XOR Asset Cipher"
+    },
+    {
+      "source": "sys_encryption",
+      "target": "enc_custom_base64",
+      "type": "Uses",
+      "description": "Encryption system uses Custom Base64"
+    },
+    {
+      "source": "sys_encryption",
+      "target": "enc_xor_stream",
+      "type": "Uses",
+      "description": "Encryption system uses XOR Stream Cipher"
+    },
+    {
+      "source": "sys_encryption",
+      "target": "enc_data_at_rest",
+      "type": "Uses",
+      "description": "Encryption system uses Data-At-Rest Encryption"
+    },
+    {
+      "source": "sys_encryption",
+      "target": "enc_http_xor",
+      "type": "Uses",
+      "description": "Encryption system uses HTTP XOR Cipher"
+    },
+    {
+      "source": "sys_encryption",
+      "target": "enc_billing_signature",
+      "type": "Uses",
+      "description": "Encryption system uses Billing Signature Verification"
+    },
+    {
+      "source": "campaign_online",
+      "target": "net_town_data_full",
+      "type": "Receives",
+      "description": "Online campaign receives town data from server"
+    },
+    {
+      "source": "campaign_online",
+      "target": "net_ally_list",
+      "type": "Receives",
+      "description": "Online campaign receives alliance data from server"
+    },
+    {
+      "source": "campaign_online",
+      "target": "net_town_list",
+      "type": "Receives",
+      "description": "Online campaign receives town lists from server"
+    },
+    {
+      "source": "campaign_online",
+      "target": "ss_44",
+      "type": "References",
+      "description": "Online campaign uses Town View screen"
+    },
+    {
+      "source": "campaign_online",
+      "target": "ss_45",
+      "type": "References",
+      "description": "Online campaign uses World Map screen"
+    },
+    {
+      "source": "campaign_online",
+      "target": "ss_88",
+      "type": "References",
+      "description": "Online campaign uses Alliance screen"
+    },
+    {
+      "source": "campaign_skirmish",
+      "target": "net_match_start",
+      "type": "Receives",
+      "description": "Skirmish receives match start from server"
+    },
+    {
+      "source": "campaign_skirmish",
+      "target": "net_game_state",
+      "type": "Receives",
+      "description": "Skirmish receives game state updates"
+    },
+    {
+      "source": "campaign_skirmish",
+      "target": "net_game_result",
+      "type": "Receives",
+      "description": "Skirmish receives game result"
+    },
+    {
+      "source": "campaign_skirmish",
+      "target": "ss_19",
+      "type": "References",
+      "description": "Skirmish uses Battle screen"
+    },
+    {
+      "source": "campaign_skirmish",
+      "target": "ss_22",
+      "type": "References",
+      "description": "Skirmish uses Battle View screen"
+    },
+    {
+      "source": "campaign_tutorial",
+      "target": "ss_78",
+      "type": "References",
+      "description": "Tutorial uses Tutorial screen state"
+    },
+    {
+      "source": "map_config",
+      "target": "net_map_data",
+      "type": "Loads",
+      "description": "Map system loads data from MAP_DATA network message"
+    },
+    {
+      "source": "map_config",
+      "target": "net_map_validation",
+      "type": "References",
+      "description": "Map system uses MAP_VALIDATION for integrity checks"
+    },
+    {
+      "source": "s0_w",
+      "target": "map_config",
+      "type": "Uses",
+      "description": "Game Logic Handler uses map system for terrain and placement"
+    }
+  ],
+  "statistics": {
+    "total_nodes": 215,
+    "nodes_by_type": {
+      "Class": 46,
+      "System": 16,
+      "Faction": 2,
+      "Unit": 17,
+      "Building": 16,
+      "Technology": 16,
+      "NetworkMessage": 31,
+      "ScreenState": 33,
+      "Asset": 11,
+      "Map": 1,
+      "Campaign": 3,
+      "Encryption": 8,
+      "GameConstant": 15
+    },
+    "total_edges": 191,
+    "edges_by_type": {
+      "Creates": 6,
+      "Loads": 9,
+      "Uses": 32,
+      "References": 21,
+      "Implements": 8,
+      "Receives": 9,
+      "Sends": 1,
+      "Owns": 33,
+      "Produces": 30,
+      "Powers": 2,
+      "Depends_On": 3,
+      "Upgrades": 14,
+      "Attacks": 7,
+      "Updates": 16
+    }
+  }
+}

@@ -272,22 +272,88 @@ public sealed interface CommandType {
 
 ## Reverse Engineering Reference Files
 
-The original reverse engineering produced analysis documents referenced throughout the codebase via `REF:` comments. These files are located in the `docs/RE/` directory:
+The original reverse engineering produced a comprehensive archive of analysis documents, game data, diagrams, and processed assets. These files are located in the `docs/RE/` directory and are the **ground truth** for game balance and behavior. When in doubt, consult these files.
+
+### Analysis Documents (`docs/RE/`)
 
 | File | Content |
 |------|---------|
-| `ai_analysis.md` | Original AI decision patterns and timing |
-| `combat_formulas.md` | Damage calculation, attack cycles, research effects |
-| `pathfinding.md` | A* implementation details, path storage format |
-| `protocol_specification.md` | Network protocol, command format, session flow |
-| `multiplayer_architecture.md` | ELO system, matchmaking, WebSocket architecture |
-| `unit_stats.md` | Complete unit stat definitions from RE |
-| `tech_tree_confederation.md` | Confederation tech tree structure |
-| `tech_tree_rebels.md` | Resistance tech tree structure |
-| `complete_unit_stats.json` | Full unit data from RE |
-| `complete_building_stats.json` | Full building data from RE |
+| `gameplay_analysis/ai_analysis.md` | Original AI decision patterns and timing |
+| `gameplay_analysis/combat_formulas.md` | Damage calculation, attack cycles, research effects |
+| `gameplay_analysis/pathfinding.md` | A* implementation details, path storage format |
+| `gameplay_analysis/unit_stats.md` | Complete unit stat definitions from RE |
+| `gameplay_analysis/building_stats.md` | Complete building stat definitions from RE |
+| `gameplay_analysis/complete_unit_stats.json` | Full unit data from RE (authoritative JSON) |
+| `gameplay_analysis/complete_building_stats.json` | Full building data from RE (authoritative JSON) |
+| `gameplay_analysis/decrypted_data.json` | 3.76 MB of extracted game data |
+| `gameplay_analysis/decryption_algorithm.md` | How game data was decrypted |
+| `gameplay_analysis/text_strings.json` | 567 decoded in-game strings |
+| `gameplay_analysis/campaign_guide.md` | Campaign mission specifications |
+| `gameplay_analysis/map_system.md` | Map format and terrain system |
+| `network_analysis/protocol_specification.md` | Network protocol, command format, session flow |
+| `network_analysis/multiplayer_architecture.md` | ELO system, matchmaking, WebSocket architecture |
+| `network_analysis/session_lifecycle.md` | Session start/end/reconnect flow |
+| `network_analysis/packet_formats.json` | All 34+ network packet formats |
+| `documentation/MASTER_DOCUMENTATION.md` | 3,330-line master reference (THE source of truth) |
+| `documentation/ArtOfWar3_Recreation_Blueprint.md` | 2,283-line recreation architecture guide |
+| `documentation/class_mapping.json` | Decompiled class → project class mapping |
+| `documentation/diagrams/` | Architecture diagrams, combat flow, state machines |
+| `documentation/diagrams/tech_tree_confederation.md` | Confederation tech tree structure |
+| `documentation/diagrams/tech_tree_rebels.md` | Resistance tech tree structure |
+| `database_analysis/save_system.md` | Original save system analysis |
 
-These are the ground truth for game balance and behavior. When in doubt, consult these files.
+### Extracted Assets (`docs/RE/assets_processed/`)
+
+Original game sprites, fonts, and UI assets extracted from both factions:
+- `faction_s0/` — Confederation faction assets
+- `faction_s1/` — Resistance faction assets
+- Each faction contains: `sprites/`, `fonts/`, `ui/`, `maps/`
+
+### Source Code (`docs/RE/source_readable/`)
+
+Decompiled Java source from the original game (if present in the archive).
+
+### Backup Location
+
+The original zip archive is stored at: `/home/z/my-project/upload/art-of-war-2-online-re-full.zip`
+
+---
+
+## Skills
+
+Two specialized skills are available for this project:
+
+### aow2-developer (Development Skill)
+- **Location**: `/home/z/my-project/skills/aow2-developer/`
+- **Purpose**: Spec-driven game development with anti-hallucination safeguards
+- **Key references**: Goal.md, phases.md, ProjectProgress.md, coding_standards.md, anti_hallucination.md
+- **Trigger**: Use when implementing game features, fixing bugs, or adding new systems
+- **Workflow**: Read RE docs → Plan → Implement → Test → Cross-reference → Update progress
+
+### aow2-analyzer (Analysis/QA Skill)
+- **Location**: `/home/z/my-project/skills/aow2-analyzer/`
+- **Purpose**: Critical project analysis, spec compliance checking, bug hunting
+- **Key references**: analysis_checklist.md, validation_methods.md
+- **Trigger**: Use when auditing code quality, verifying spec compliance, or finding bugs
+- **Workflow**: Read RE docs → Read code → Compare → Self-validate → Report with evidence
+
+### Before Starting Any Work:
+1. Read the developer skill's `Goal.md` to understand the end state
+2. Read `ProjectProgress.md` to see what's been done
+3. Consult the appropriate RE documentation before implementing or analyzing
+
+---
+
+## Anti-Hallucination Rules (CRITICAL)
+
+When working on this project, you MUST follow these rules:
+
+1. **Never invent game data** — All stats, formulas, and mechanics come from `docs/RE/` files
+2. **Cross-reference before implementing** — Read at least 2 RE sources before writing game logic
+3. **Mark assumptions** — Use `// ASSUMPTION:` comments when spec is unclear
+4. **Validate against spec** — After implementing, compare output against documented formulas
+5. **Read before writing** — Always read the relevant RE file, never work from memory
+6. **Primary sources** (most authoritative): `MASTER_DOCUMENTATION.md` > `complete_unit_stats.json` > wiki research
 
 ---
 
@@ -356,7 +422,7 @@ Fixes are annotated in source code with `FIX (P<X>-<ID>):` comments.
 - **Branch**: `main`
 - **Commit style**: `fix(scope): description` or `feat(scope): description`
 - **Recent history**: Series of bug-fix commits driven by analysis reports
-- **Unstaged changes**: +1463 insertions, -1147 deletions (P0-P3 fixes)
+- **Remote**: `https://github.com/nawaf-al-hussain/AOW2-Online.git`
 
 ---
 
@@ -370,7 +436,14 @@ AOW2-Online/
 ├── docker/                       # Docker deployment
 │   ├── docker-compose.yml
 │   └── server.Dockerfile
-├── docs/                         # Documentation + RE files
+├── docs/                         # Documentation
+│   └── RE/                       # Reverse Engineering archive (ground truth)
+│       ├── gameplay_analysis/    # Combat, units, buildings, AI, pathfinding, campaigns
+│       ├── network_analysis/    # Protocol, multiplayer, packets, sessions
+│       ├── documentation/       # Master docs, blueprints, diagrams, class mappings
+│       ├── database_analysis/   # Save system analysis
+│       ├── assets_processed/    # Original sprites, fonts, UI assets per faction
+│       └── wiki_research/       # Wiki research results and game data
 ├── agent-ctx/                    # Agent context from previous sessions
 ├── aow2-common/                  # Shared models
 │   └── src/main/resources/data/   # Game data JSONs

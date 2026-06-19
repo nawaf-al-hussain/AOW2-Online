@@ -1,0 +1,139 @@
+digraph ClassDependency {
+    // Graph settings
+    rankdir=TB;
+    bgcolor="#1a1a2e";
+    fontcolor="#e0e0e0";
+    fontname="sans-serif";
+    node [shape=box, style="rounded,filled", fontname="sans-serif", fontsize=10, fontcolor="white"];
+    edge [color="#888888", arrowsize=0.8];
+
+    // Platform Layer
+    subgraph cluster_platform {
+        label="Platform Layer";
+        style=filled;
+        color="#7f8c8d";
+        fillcolor="#2c3e50";
+        Application [fillcolor="#7f8c8d", label="Application\n(Activity)"];
+        AppCtrl [fillcolor="#7f8c8d", label="AppCtrl\n(Main Thread)"];
+        SurfaceView [fillcolor="#7f8c8d", label="an (SurfaceView)"];
+        Renderer [fillcolor="#7f8c8d", label="h (Renderer)"];
+    }
+
+    // Core Engine
+    subgraph cluster_core {
+        label="Core Engine";
+        style=filled;
+        color="#e74c3c";
+        fillcolor="#3a1a1a";
+        MIDlet [fillcolor="#e74c3c", label="bh (MIDlet)"];
+        ScreenSelect [fillcolor="#e74c3c", label="bb (Screen Select)"];
+        GlobalData [fillcolor="#e74c3c", label="y (Global Data)"];
+    }
+
+    // Game Canvas
+    subgraph cluster_canvas {
+        label="Game Canvas Hierarchy";
+        style=filled;
+        color="#3498db";
+        fillcolor="#1a2a3a";
+        Displayable [fillcolor="#3498db", label="bv (Displayable)"];
+        Canvas [fillcolor="#3498db", label="z (Abstract Canvas)"];
+        ResourceLoader [fillcolor="#3498db", label="bu (Resource Loader)"];
+        BaseCanvas [fillcolor="#3498db", label="x (Base Game Canvas)"];
+        MainGame [fillcolor="#3498db", label="k (Main Game Class)"];
+        Graphics [fillcolor="#3498db", label="aq (Android Graphics)"];
+    }
+
+    // Game Systems
+    subgraph cluster_systems {
+        label="Game Systems";
+        style=filled;
+        color="#2ecc71";
+        fillcolor="#1a3a1a";
+        GameLogic [fillcolor="#2ecc71", label="w (Game Logic/Map)"];
+        NetworkMgr [fillcolor="#9b59b6", label="e (Network Manager)"];
+        NetSender [fillcolor="#9b59b6", label="m (Sender Thread)"];
+        NetReceiver [fillcolor="#9b59b6", label="o (Receiver Thread)"];
+        RequestQueue [fillcolor="#9b59b6", label="z (Request Queue)"];
+        HTTPHandler [fillcolor="#9b59b6", label="aa (HTTP Handler)"];
+        AudioMgr [fillcolor="#f39c12", label="i (Audio Manager)"];
+        FontMgr [fillcolor="#f39c12", label="f (Font Manager)"];
+        BitmapFont [fillcolor="#f39c12", label="d (Bitmap Font)"];
+        ConfigMgr [fillcolor="#f39c12", label="c (Config Manager)"];
+        GameState [fillcolor="#2ecc71", label="a (Game State Mgr)"];
+    }
+
+    // UI
+    subgraph cluster_ui {
+        label="UI System";
+        style=filled;
+        color="#f39c12";
+        fillcolor="#3a2a0a";
+        Dialog [fillcolor="#f39c12", label="bz (Dialog Base)"];
+        DialogForm [fillcolor="#f39c12", label="af (Dialog Form)"];
+        UIItem [fillcolor="#f39c12", label="t (UI Item)"];
+    }
+
+    // Persistence
+    subgraph cluster_persist {
+        label="Persistence";
+        style=filled;
+        color="#1abc9c";
+        fillcolor="#0a2a2a";
+        RecordStore [fillcolor="#1abc9c", label="i (RMS Storage)"];
+        Billing [fillcolor="#e74c3c", label="ae (Billing Manager)"];
+    }
+
+    // Edges - Platform
+    Application -> AppCtrl;
+    AppCtrl -> MIDlet;
+    AppCtrl -> ScreenSelect;
+    AppCtrl -> SurfaceView;
+    SurfaceView -> Renderer;
+
+    // Edges - Core
+    MIDlet -> MainGame;
+    ScreenSelect -> MainGame;
+    GlobalData -> GameLogic;
+    GlobalData -> MainGame;
+
+    // Edges - Canvas hierarchy
+    Displayable -> Canvas;
+    Canvas -> ResourceLoader;
+    ResourceLoader -> BaseCanvas;
+    BaseCanvas -> MainGame;
+    MainGame -> Graphics;
+
+    // Edges - Game Systems
+    MainGame -> GameLogic;
+    MainGame -> NetworkMgr;
+    MainGame -> AudioMgr;
+    MainGame -> FontMgr;
+    MainGame -> ConfigMgr;
+    MainGame -> GameState;
+
+    // Edges - Network
+    NetworkMgr -> NetSender;
+    NetworkMgr -> NetReceiver;
+    NetworkMgr -> RequestQueue;
+    RequestQueue -> HTTPHandler;
+
+    // Edges - Fonts
+    FontMgr -> BitmapFont;
+
+    // Edges - UI
+    MainGame -> Dialog;
+    Dialog -> DialogForm;
+    DialogForm -> UIItem;
+
+    // Edges - Persistence
+    ConfigMgr -> RecordStore;
+    MainGame -> Billing;
+
+    // Edges - Cross-system
+    GameLogic -> NetworkMgr [style=dashed, color="#9b59b6"];
+    GameLogic -> Graphics [style=dashed, color="#3498db"];
+    GameLogic -> GlobalData [style=dashed, color="#e74c3c"];
+    GameState -> GameLogic [style=dashed, color="#2ecc71"];
+    NetworkMgr -> GameLogic [style=dashed, color="#9b59b6"];
+}

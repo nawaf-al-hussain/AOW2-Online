@@ -1,0 +1,542 @@
+{
+  "metadata": {
+    "game": "Art of War 2 Online",
+    "developer": "HeroCraft",
+    "platform": "Android (J2ME MIDlet port)",
+    "engine": "Custom Canvas-based game engine",
+    "analysis_date": "2024-01-20"
+  },
+  "critical_finding": {
+    "s0_s1_s2_are": "Screen resolution variants, NOT factions",
+    "s0": "Small screens (<=320px width), portrait orientation",
+    "s1": "Medium screens (~320px width), landscape orientation",
+    "s2": "Large screens (>320px width), portrait orientation",
+    "selection_logic": "Math.min(displayWidth, displayHeight) compared to 320",
+    "real_factions": "2 factions stored in y.bV short[2][7] array within game data"
+  },
+  "main_package": {
+    "Application": {
+      "file": "Application.java",
+      "purpose": "Android Activity entry point",
+      "extends": "Activity",
+      "key_methods": ["onCreate", "onPause", "onResume", "onDestroy"],
+      "delegates_to": "AppCtrl"
+    },
+    "AppCtrl": {
+      "file": "AppCtrl.java",
+      "purpose": "Main game controller and thread",
+      "implements": "Runnable",
+      "key_fields": {
+        "appcontrol": "Static singleton reference",
+        "bStatePause": "Pause state flag",
+        "bStateReady": "Ready state flag",
+        "context": "Activity context",
+        "currentCanvas": "Current z (Canvas) instance",
+        "currentDisplayable": "Current bv (Displayable) instance",
+        "midlet": "bh (MIDlet) instance",
+        "midletview": "an (SurfaceView) instance"
+      },
+      "key_methods": ["onCreate", "run", "getResourceAsStream", "gc"],
+      "dynamic_loading": "Class.forName(package + '.' + variant + 'aow2ol')"
+    },
+    "bh": {
+      "file": "bh.java",
+      "purpose": "Abstract MIDlet base class",
+      "key_methods": ["a(String) - get app property", "a() - resume", "b() - pause", "c() - destroy"],
+      "vendor_check": "MIDlet-Vendor must equal 'HeroCraft'"
+    },
+    "_EMPTY_MIDLET_": {
+      "file": "_EMPTY_MIDLET_.java",
+      "purpose": "Null MIDlet stub",
+      "extends": "bh"
+    },
+    "an": {
+      "file": "an.java",
+      "purpose": "Abstract SurfaceView (MIDlet View)",
+      "extends": "SurfaceView implements SurfaceHolder.Callback",
+      "handles": ["Touch events (dispatchTouchEvent)", "Key events (dispatchKeyEvent)", "Surface lifecycle"],
+      "touch_deadzone": "5px on ACTION_MOVE"
+    },
+    "h": {
+      "file": "h.java",
+      "purpose": "Concrete SurfaceView renderer",
+      "extends": "an",
+      "rendering": "SurfaceHolder.lockCanvas()/unlockCanvasAndPost()",
+      "uses": "aq for graphics adapter"
+    },
+    "z": {
+      "file": "z.java",
+      "purpose": "Abstract game Canvas/Screen",
+      "extends": "bv",
+      "key_methods": ["a(x,y) pointerPressed", "b(x,y) pointerReleased", "c(x,y) pointerDragged", "e(int) keyPressed", "f(int) keyReleased", "b(v) paint"],
+      "fields": {"bb": "width", "bc": "height", "bd": "visible flag"}
+    },
+    "bv": {
+      "file": "bv.java",
+      "purpose": "Abstract Displayable base",
+      "key_fields": {"aZ": "title", "ba": "command listener (ag)", "bb": "width", "bc": "height", "bd": "visible"}
+    },
+    "bu": {
+      "file": "bu.java",
+      "purpose": "Canvas + Resource/Asset loader",
+      "extends": "z",
+      "asset_decryption": "XOR cipher with rotating 8-byte key [-96,-95,-94,-93,-92,-91,-90,-89]",
+      "key_rotates_after_use": "Elements 3-5 shifted left"
+    },
+    "aq": {
+      "file": "aq.java",
+      "purpose": "Android Graphics adapter (Canvas wrapper)",
+      "extends": "v",
+      "wraps": "android.graphics.Canvas",
+      "drawing_methods": ["drawBitmap", "drawLine", "drawRect", "drawText", "clipRect"]
+    },
+    "v": {
+      "file": "v.java",
+      "purpose": "Abstract Graphics interface",
+      "drawing_primitives": ["drawImage", "drawString", "drawRect", "drawLine", "clipRect", "setClip", "fillRect"],
+      "color_management": "setColor with alpha=255 forced, getColor masks alpha"
+    },
+    "q": {
+      "file": "q.java",
+      "purpose": "Image/Bitmap wrapper",
+      "wraps": "android.graphics.Bitmap",
+      "config": "RGB_565 default, ARGB_8888 for specific files",
+      "factory_methods": ["a(int,int) create blank", "a(String) load from file", "a(byte[],int,int) decode bytes"]
+    },
+    "by": {
+      "file": "by.java",
+      "purpose": "Font manager",
+      "caches_fonts": "Hashtable by style key",
+      "supports": "DEFAULT, MONOSPACE typefaces; PLAIN, BOLD, ITALIC styles; 8/0/16 sizes",
+      "string_decoder": "by.a(byte[], boolean) decodes UTF-8 byte arrays"
+    },
+    "bd": {
+      "file": "bd.java",
+      "purpose": "Display Manager",
+      "manages": "currentDisplayable / currentCanvas switching",
+      "services": "Vibrator (android.os.Vibrator)"
+    },
+    "bb": {
+      "file": "bb.java",
+      "purpose": "Screen Configuration",
+      "asset_paths": ["s0/", "s1/", "s2/"],
+      "package_prefixes": ["s0.", "s1.", "s2."],
+      "orientations": [1, 0, 1],
+      "rgb565_forces": ["/bg.png"]
+    },
+    "ad": {
+      "file": "ad.java",
+      "purpose": "Command/Button",
+      "fields": {"a": "shortLabel", "b": "longLabel", "c": "priority", "d": "bound value", "e": "verification helper"},
+      "types": "1-8 (BACK, CANCEL, EXIT, HELP, ITEM, OK, SCREEN, STOP)"
+    },
+    "ag": {
+      "file": "ag.java",
+      "purpose": "Command Listener interface",
+      "method": "void a(ad)"
+    },
+    "as": {
+      "file": "as.java",
+      "purpose": "Command Listener interface (alternate)",
+      "method": "void b(ad)"
+    },
+    "t": {
+      "file": "t.java",
+      "purpose": "Abstract UI Item",
+      "wraps": "LinearLayout + TextView",
+      "manages": "Commands, click handlers, layout"
+    },
+    "b": {
+      "file": "b.java",
+      "purpose": "Image Item (ImageView wrapper)",
+      "extends": "t",
+      "wraps": "ImageView",
+      "verification_role": "Signature and package verification"
+    },
+    "ak": {
+      "file": "ak.java",
+      "purpose": "Text Item (TextView wrapper)",
+      "extends": "t",
+      "wraps": "TextView"
+    },
+    "cd": {
+      "file": "cd.java",
+      "purpose": "Text Input Field (EditText wrapper)",
+      "extends": "t",
+      "wraps": "EditText",
+      "has": "Character counter and submit button"
+    },
+    "x": {
+      "file": "x.java",
+      "purpose": "Choice Group (RadioGroup/CheckBox)",
+      "extends": "t",
+      "wraps": "RadioGroup with RadioButton/CheckBox",
+      "types": "EXCLUSIVE(1), MULTIPLE(2), POPUP(4)"
+    },
+    "br": {
+      "file": "br.java",
+      "purpose": "Gauge/Progress bar",
+      "extends": "t",
+      "verification_helper": "Used in signature/billing verification"
+    },
+    "bz": {
+      "file": "bz.java",
+      "purpose": "Abstract Dialog/Form",
+      "extends": "bv",
+      "managed_on_ui_thread": true,
+      "components": "Dialog, ScrollView, LinearLayout containers"
+    },
+    "af": {
+      "file": "af.java",
+      "purpose": "Dialog (Form with items)",
+      "extends": "bz",
+      "payment_ui": "Used for payment confirmation dialogs"
+    },
+    "am": {
+      "file": "am.java",
+      "purpose": "Empty/No-op Dialog",
+      "extends": "bz"
+    },
+    "be": {
+      "file": "be.java",
+      "purpose": "Dialog UI Controller",
+      "implements": ["Runnable", "OnClickListener", "OnKeyListener"],
+      "manages": "Dialog show/dismiss/title/button operations on UI thread"
+    },
+    "bf": {
+      "file": "bf.java",
+      "purpose": "Purchase Selection Dialog",
+      "extends": "Dialog",
+      "billing_item_selection": true
+    },
+    "r": {
+      "file": "r.java",
+      "purpose": "Dialog creation Runnable",
+      "creates": "bf on UI thread"
+    },
+    "ah": {
+      "file": "ah.java",
+      "purpose": "Item Click Handler",
+      "implements": "OnClickListener",
+      "delegates": "To command listener"
+    },
+    "i": {
+      "file": "i.java",
+      "purpose": "Record Store (Persistence)",
+      "implements": "J2ME RMS-like file storage",
+      "file_suffix": ".datrms",
+      "thread_safe": true,
+      "operations": ["addRecord", "getRecord", "setRecord", "deleteRecord"]
+    },
+    "cg": {
+      "file": "cg.java",
+      "purpose": "Purchase Record (abstract)",
+      "fields": ["id", "notificationId", "productId", "orderId", "purchaseTime", "developerPayload"]
+    },
+    "l": {
+      "file": "l.java",
+      "purpose": "Purchase Record (concrete)",
+      "extends": "cg",
+      "serializable": true
+    },
+    "ae": {
+      "file": "ae.java",
+      "purpose": "Billing Manager (Google Play)",
+      "manages": "In-app billing lifecycle",
+      "persists_purchases": true
+    },
+    "BillingService": {
+      "file": "BillingService.java",
+      "purpose": "Android Billing Service",
+      "extends": "Service implements ServiceConnection",
+      "binds_to": "com.android.vending.billing.MarketBillingService"
+    },
+    "ac": {
+      "file": "ac.java",
+      "purpose": "Abstract Billing Request",
+      "subclasses": ["a (Confirm)", "aa (Restore)", "bk (GetPurchaseInfo)", "bx (RequestPurchase)", "o (CheckSupported)"]
+    },
+    "bo": {
+      "file": "bo.java",
+      "purpose": "Billing Service Stub (IPC)",
+      "extends": "Binder implements m",
+      "interface": "com.android.vending.billing.IMarketBillingService"
+    },
+    "bc": {
+      "file": "bc.java",
+      "purpose": "Billing Service Proxy (IPC)",
+      "implements": "m",
+      "transact_code": 1
+    },
+    "m": {
+      "file": "m.java",
+      "purpose": "Billing AIDL Interface",
+      "extends": "IInterface",
+      "method": "Bundle a(Bundle)"
+    },
+    "bm": {
+      "file": "bm.java",
+      "purpose": "Billing Result Enum",
+      "values": ["RESULT_OK", "RESULT_USER_CANCELED", "RESULT_SERVICE_UNAVAILABLE", "RESULT_BILLING_UNAVAILABLE", "RESULT_ITEM_UNAVAILABLE", "RESULT_DEVELOPER_ERROR", "RESULT_ERROR"]
+    },
+    "s": {
+      "file": "s.java",
+      "purpose": "Purchase State Enum",
+      "values": ["PURCHASED", "CANCELED", "REFUNDED"]
+    },
+    "ar": {
+      "file": "ar.java",
+      "purpose": "Security/Signature Verifier",
+      "uses": "RSA SHA1withRSA",
+      "parses": "JSON purchase data with nonce verification"
+    },
+    "at": {
+      "file": "at.java",
+      "purpose": "Billing Broadcast Handler",
+      "routes": "Billing intents to BillingService"
+    },
+    "CommonReceiver": {
+      "file": "CommonReceiver.java",
+      "purpose": "Broadcast Receiver",
+      "handles": ["INSTALL_REFERRER", "IN_APP_NOTIFY", "RESPONSE_CODE", "PURCHASE_STATE_CHANGED"]
+    },
+    "aw": {
+      "file": "aw.java",
+      "purpose": "Billing Callback Interface",
+      "method": "boolean a(int, String)"
+    },
+    "bi": {
+      "file": "bi.java",
+      "purpose": "Base64 Decoder",
+      "custom_implementation": true,
+      "for": "Billing signature verification"
+    },
+    "cf": {
+      "file": "cf.java",
+      "purpose": "Base64 Exception",
+      "extends": "Exception"
+    },
+    "k": {
+      "file": "k.java",
+      "purpose": "UI Utility / Dialog Runner",
+      "features": ["AlertDialog creation", "Toast display", "Device ID", "Stream closing", "UTF null handling"]
+    },
+    "n": {
+      "file": "n.java",
+      "purpose": "Dialog Key/Click Handler",
+      "implements": ["OnClickListener", "OnKeyListener"],
+      "blocks": "Search key (keyCode 84)"
+    },
+    "c": {
+      "file": "c.java",
+      "purpose": "Connection Factory",
+      "creates": ["HTTP (ba) for http://", "Socket (au) for socket://", "Generic (w) for other"],
+      "modes": "READ(1), WRITE(2), READ_WRITE(3)"
+    },
+    "au": {
+      "file": "au.java",
+      "purpose": "Socket Connection",
+      "implements": "bl",
+      "wraps": "java.net.Socket",
+      "options": ["TCP_NODELAY(0)", "SO_LINGER(1)", "KEEPALIVE(2)", "RCVBUF(3)", "SNDBUF(4)"],
+      "url_format": "socket://host:port"
+    },
+    "ba": {
+      "file": "ba.java",
+      "purpose": "HTTP Connection",
+      "extends": "bt implements e",
+      "wraps": "HttpURLConnection",
+      "methods": ["setRequestMethod", "setRequestProperty", "getResponseCode", "disconnect"]
+    },
+    "w": {
+      "file": "w.java",
+      "purpose": "URL Connection Base",
+      "implements": "az",
+      "wraps": "URLConnection",
+      "caching": "disabled"
+    },
+    "bt": {
+      "file": "bt.java",
+      "purpose": "Content-Length Connection",
+      "extends": "w implements ay",
+      "adds": "getContentLength()"
+    },
+    "al": {"file": "al.java", "purpose": "Connection close interface"},
+    "ao": {"file": "ao.java", "purpose": "DataOutputStream interface"},
+    "bp": {"file": "bp.java", "purpose": "DataInputStream interface"},
+    "az": {"file": "az.java", "purpose": "Full Connection interface (input+output)"},
+    "ay": {"file": "ay.java", "purpose": "Content-Length interface"},
+    "e": {"file": "e.java", "purpose": "HTTP Connection interface"},
+    "bl": {"file": "bl.java", "purpose": "Socket Connection interface"},
+    "y": {"file": "y.java", "purpose": "Connection Exception", "extends": "IOException"},
+    "d": {"file": "d.java", "purpose": "Base Game Exception", "extends": "Exception"},
+    "ab": {"file": "ab.java", "purpose": "RecordStore Not Found", "extends": "d"},
+    "ap": {"file": "ap.java", "purpose": "RecordStore Full", "extends": "d"},
+    "p": {"file": "p.java", "purpose": "RecordStore Invalid ID", "extends": "d"},
+    "bq": {"file": "bq.java", "purpose": "RecordStore Not Open", "extends": "d"},
+    "j": {"file": "j.java", "purpose": "Checkbox Change Listener", "implements": "OnCheckedChangeListener"},
+    "f": {"file": "f.java", "purpose": "Contact Picker AsyncTask", "extends": "AsyncTask"},
+    "aj": {"file": "aj.java", "purpose": "EditText Creator Runnable"},
+    "bj": {"file": "bj.java", "purpose": "Text Input Handler", "implements": ["TextWatcher", "OnClickListener"]},
+    "bg": {"file": "bg.java", "purpose": "CRC Hash Helper"},
+    "g": {"file": "g.java", "purpose": "CRC32 Utility", "extends": "CRC32"},
+    "cb": {"file": "cb.java", "purpose": "Verification Helper"},
+    "ax": {"file": "ax.java", "purpose": "Marker Interface (empty)"},
+    "av": {"file": "av.java", "purpose": "Zip Entry Helper", "extends": "ZipEntry"},
+    "bn": {"file": "bn.java", "purpose": "APK ZipFile Verifier", "extends": "ZipFile"},
+    "bw": {"file": "bw.java", "purpose": "Verification Display", "extends": "bz"},
+    "ai": {"file": "ai.java", "purpose": "Request ID holder", "field": "static long a = -1"},
+    "C0000R": {"file": "C0000R.java", "purpose": "R class stub (auto-generated)"}
+  },
+  "s0_package": {
+    "_comment": "Small screen variant (<=320px, portrait)",
+    "aow2ol": {"purpose": "MIDlet Entry Point", "main_class": "k", "config_class": "c"},
+    "k": {"purpose": "MAIN GAME CLASS", "extends": "x", "implements": "Runnable", "is_game_loop": true},
+    "x": {"purpose": "Base Game Canvas", "extends": "bu"},
+    "c": {"purpose": "Game Config/Resource Manager", "server_url": "http://wap.herocraft.com/login/"},
+    "a": {"purpose": "Game State/Screen Manager", "extends": "p"},
+    "p": {"purpose": "Game Form Base", "implements": "ag"},
+    "y": {"purpose": "Global Game Data Constants", "server_host": "artofwaronline.herocraft.com", "alt_host": "aow2.ru"},
+    "w": {"purpose": "Game Logic/Map Handler", "features": ["Map rendering", "Unit AI", "Pathfinding", "Combat"]},
+    "e": {"purpose": "Network Manager (TCP Socket)", "extends": "Thread", "server": "artofwaronline.herocraft.com:47584-47588"},
+    "z": {"purpose": "Network Request Queue", "implements": "Runnable", "triple_buffered": true},
+    "aa": {"purpose": "HTTP Connection Handler", "implements": "Runnable", "xor_encrypted": true},
+    "f": {"purpose": "Text/Font Manager", "font_files": ["/f0", "/f1", "/f2", "/f3"]},
+    "d": {"purpose": "Custom Bitmap Font Renderer"},
+    "t": {"purpose": "Billing Callback", "implements": "aw"},
+    "q": {"purpose": "Payment Handler", "sms_code": 1161},
+    "i": {"purpose": "Audio Manager", "implements": "bs", "formats": [".o", ".3", ".m"]},
+    "b": {"purpose": "MediaPlayer Wrapper", "extends": "MediaPlayer"},
+    "m": {"purpose": "Network Sender Thread", "extends": "Thread"},
+    "o": {"purpose": "Network Receiver Thread", "extends": "Thread"},
+    "r": {"purpose": "Connection Factory Wrapper"},
+    "g": {"purpose": "Base64 Decoder"},
+    "h": {"purpose": "Bit Reversal/Hash", "xor_key": -128255633},
+    "n": {"purpose": "CRC32 Hash", "polynomial": "0xEDB88320"},
+    "j": {"purpose": "Color Constants"},
+    "u": {"purpose": "Ad/Interstitial Handler", "sdk": "Inner-Active M2M", "implements": ["Runnable", "ag", "as"]},
+    "l": {"purpose": "SMS Sender", "extends": "BroadcastReceiver"},
+    "s": {"purpose": "Billing/AE Wrapper"},
+    "v": {"purpose": "Online Status Reporter", "implements": "Runnable"}
+  },
+  "s1_package": {
+    "_comment": "Medium screen variant (~320px, landscape)",
+    "aow2ol": {"purpose": "MIDlet Entry Point", "main_class": "c", "config_class": "u"},
+    "c": {"purpose": "MAIN GAME CLASS", "equivalent_to": "s0.k"},
+    "i": {"purpose": "Base Game Canvas", "equivalent_to": "s0.x"},
+    "u": {"purpose": "Game Config/Resource Manager", "equivalent_to": "s0.c"},
+    "a": {"purpose": "Game State/Screen Manager", "equivalent_to": "s0.a"},
+    "p": {"purpose": "Game Form Base", "equivalent_to": "s0.p"},
+    "y": {"purpose": "Global Game Data Constants", "equivalent_to": "s0.y"},
+    "w": {"purpose": "Game Logic/Map Handler", "equivalent_to": "s0.w"},
+    "n": {"purpose": "Network Manager", "equivalent_to": "s0.e"},
+    "r": {"purpose": "Network Request Queue", "equivalent_to": "s0.z"},
+    "aa": {"purpose": "HTTP Connection Handler", "equivalent_to": "s0.aa"},
+    "f": {"purpose": "Text/Font Manager", "equivalent_to": "s0.f"},
+    "d": {"purpose": "Custom Bitmap Font Renderer", "equivalent_to": "s0.d"},
+    "t": {"purpose": "Billing Callback", "equivalent_to": "s0.t"},
+    "q": {"purpose": "Payment Handler", "equivalent_to": "s0.q"},
+    "e": {"purpose": "Audio Manager", "equivalent_to": "s0.i"},
+    "m": {"purpose": "Network Sender Thread", "equivalent_to": "s0.m"},
+    "o": {"purpose": "Network Receiver Thread", "equivalent_to": "s0.o"},
+    "g": {"purpose": "Base64 Decoder", "equivalent_to": "s0.g"},
+    "h": {"purpose": "Bit Reversal/Hash", "equivalent_to": "s0.h"},
+    "k": {"purpose": "CRC32 Hash", "equivalent_to": "s0.n"},
+    "j": {"purpose": "Color Constants", "equivalent_to": "s0.j"},
+    "v": {"purpose": "Ad/Interstitial Handler", "equivalent_to": "s0.u"},
+    "l": {"purpose": "SMS Sender", "equivalent_to": "s0.l"},
+    "s": {"purpose": "Billing/AE Wrapper", "equivalent_to": "s0.s"},
+    "x": {"purpose": "Online Status Reporter", "equivalent_to": "s0.v"}
+  },
+  "s2_package": {
+    "_comment": "Large screen variant (>320px, portrait)",
+    "aow2ol": {"purpose": "MIDlet Entry Point", "main_class": "q", "config_class": "o"},
+    "q": {"purpose": "MAIN GAME CLASS", "equivalent_to": "s0.k"},
+    "p": {"purpose": "Base Game Canvas", "equivalent_to": "s0.x"},
+    "o": {"purpose": "Game Config/Resource Manager", "equivalent_to": "s0.c"},
+    "a": {"purpose": "Game State/Screen Manager", "equivalent_to": "s0.a"},
+    "y": {"purpose": "Global Game Data Constants", "equivalent_to": "s0.y"},
+    "z": {"purpose": "Game Logic/Map Handler", "equivalent_to": "s0.w"},
+    "h": {"purpose": "Network Manager", "equivalent_to": "s0.e"},
+    "y_network": {"purpose": "Network Request Queue", "equivalent_to": "s0.z", "note": "Name collision with y data class in decompiled output"},
+    "aa": {"purpose": "HTTP Connection Handler", "equivalent_to": "s0.aa"},
+    "f": {"purpose": "Text/Font Manager", "equivalent_to": "s0.f"},
+    "d": {"purpose": "Custom Bitmap Font Renderer", "equivalent_to": "s0.d"},
+    "t": {"purpose": "Billing Callback", "equivalent_to": "s0.t"},
+    "q_payment": {"purpose": "Payment Handler", "equivalent_to": "s0.q", "note": "Name collision with q game class in decompiled output"},
+    "i": {"purpose": "Audio Manager", "equivalent_to": "s0.i"},
+    "m": {"purpose": "Network Sender Thread", "equivalent_to": "s0.m"},
+    "k": {"purpose": "Network Receiver Thread", "equivalent_to": "s0.o"},
+    "g": {"purpose": "Base64 Decoder", "equivalent_to": "s0.g"},
+    "h_hash": {"purpose": "Bit Reversal/Hash", "equivalent_to": "s0.h", "note": "Name collision with h network class"},
+    "n": {"purpose": "CRC32 Hash", "equivalent_to": "s0.n"},
+    "j": {"purpose": "Color Constants", "equivalent_to": "s0.j"},
+    "u": {"purpose": "Ad/Interstitial Handler", "equivalent_to": "s0.u"},
+    "l": {"purpose": "SMS Sender", "equivalent_to": "s0.l"},
+    "s": {"purpose": "Billing/AE Wrapper", "equivalent_to": "s0.s"},
+    "w": {"purpose": "Online Status Reporter", "equivalent_to": "s0.v"}
+  },
+  "s0_to_s1_to_s2_mapping": {
+    "_comment": "Cross-reference: same role across resolution variants",
+    "MIDlet_Entry": ["s0.aow2ol", "s1.aow2ol", "s2.aow2ol"],
+    "Main_Game_Class": ["s0.k", "s1.c", "s2.q"],
+    "Base_Game_Canvas": ["s0.x", "s1.i", "s2.p"],
+    "Config_Manager": ["s0.c", "s1.u", "s2.o"],
+    "Game_State_Manager": ["s0.a", "s1.a", "s2.a"],
+    "Game_Form_Base": ["s0.p", "s1.p", "s2.p"],
+    "Global_Data": ["s0.y", "s1.y", "s2.y"],
+    "Game_Logic_Map": ["s0.w", "s1.w", "s2.z"],
+    "Network_Manager": ["s0.e", "s1.n", "s2.h"],
+    "Network_Request_Queue": ["s0.z", "s1.r", "s2.y"],
+    "HTTP_Handler": ["s0.aa", "s1.aa", "s2.aa"],
+    "Font_Manager": ["s0.f", "s1.f", "s2.f"],
+    "Bitmap_Font": ["s0.d", "s1.d", "s2.d"],
+    "Billing_Callback": ["s0.t", "s1.t", "s2.t"],
+    "Payment_Handler": ["s0.q", "s1.q", "s2.q"],
+    "Audio_Manager": ["s0.i", "s1.e", "s2.i"],
+    "Network_Sender": ["s0.m", "s1.m", "s2.m"],
+    "Network_Receiver": ["s0.o", "s1.o", "s2.k"],
+    "Base64_Decoder": ["s0.g", "s1.g", "s2.g"],
+    "Bit_Hash": ["s0.h", "s1.h", "s2.h"],
+    "CRC32_Hash": ["s0.n", "s1.k", "s2.n"],
+    "Color_Constants": ["s0.j", "s1.j", "s2.j"],
+    "Ad_Handler": ["s0.u", "s1.v", "s2.u"],
+    "SMS_Sender": ["s0.l", "s1.l", "s2.l"],
+    "Billing_Wrapper": ["s0.s", "s1.s", "s2.s"],
+    "Online_Reporter": ["s0.v", "s1.x", "s2.w"]
+  },
+  "network_protocol": {
+    "server_hostname": "artofwaronline.herocraft.com",
+    "alt_hostname": "aow2.ru",
+    "port_range": "47584-47588",
+    "transport": "TCP (raw socket)",
+    "packet_format": {
+      "outgoing": {
+        "byte_0": "message_type",
+        "bytes_1_2": "total_length (short, big-endian)",
+        "bytes_3_4": "string_length (short, big-endian)",
+        "bytes_5_N": "payload (string as bytes)"
+      }
+    },
+    "error_recovery": {
+      "max_errors_before_disconnect": 3,
+      "max_reconnect_attempts": 10,
+      "reconnect_delay_ms": 2500
+    },
+    "http_fallback": {
+      "url": "http://m2m1.inner-active.com/simpleM2M/clientRequestAd",
+      "encryption": "XOR with 15-byte key",
+      "timeouts_ms": {"connect": 10000, "session": 5000, "data": 30000}
+    }
+  },
+  "security": {
+    "string_obfuscation": "UTF-encoded byte arrays decoded via by.a(byte[], true)",
+    "asset_encryption": "XOR cipher with rotating 8-byte key",
+    "apk_verification": "CRC32 of ZIP entries via bn/av classes",
+    "signature_verification": "RSA SHA1withRSA for billing",
+    "vendor_check": "MIDlet-Vendor must equal 'HeroCraft'",
+    "bit_obfuscation": "Bit reversal + XOR with 0xF5956A5F",
+    "hash_verification": "CRC32 with polynomial 0xEDB88320",
+    "dynamic_loading": "Game class loaded via Class.forName()"
+  }
+}

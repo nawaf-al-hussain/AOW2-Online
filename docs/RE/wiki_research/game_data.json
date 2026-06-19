@@ -1,0 +1,615 @@
+{
+  "meta": {
+    "game_title": "Art of War 2 Online",
+    "also_known_as": [
+      "Art of War 2: Global Confederation",
+      "Art of War 2: Liberation of Peru",
+      "Art of War 2: Online",
+      "Art of War 2: Освобождение Перу",
+      "Art of War 2: Всемирная Конфедерация"
+    ],
+    "developer": "Gear Games Ltd",
+    "developer_current_name": "GEAR GAMES GLOBAL FZE",
+    "publisher": "HeroCraft",
+    "genre": "Real-Time Strategy (RTS)",
+    "research_date": "2026-03-05",
+    "data_sources": [
+      "Apple App Store",
+      "Gear Games official site",
+      "Mobiles24 forums",
+      "Community strategy guides",
+      "YouTube Let's Play descriptions",
+      "AOW3 wiki (Fandom) for cross-reference",
+      "Marlvel.ai intelligence report",
+      "ChapterCheats Q&A"
+    ],
+    "confidence_notes": "Unit stats and exact costs are estimated from community guides and AOW3 comparisons. Exact numerical values for AOW2 are not documented online; AOW3 data used as reference for likely similar systems."
+  },
+
+  "releases": {
+    "episodes": [
+      {
+        "id": "ep1",
+        "title": "Art of War 2: Global Confederation",
+        "episode_number": 1,
+        "release_date": "2009-03-26",
+        "platform": "J2ME",
+        "player_faction": "Global Confederation",
+        "setting_year": 2038,
+        "campaign_missions": 7,
+        "custom_missions": 15,
+        "description": "Play as a Confederation general suppressing a revolt in Peru"
+      },
+      {
+        "id": "ep2",
+        "title": "Art of War 2: Liberation of Peru",
+        "episode_number": 2,
+        "release_date": "2009-11-10",
+        "platform": "J2ME",
+        "player_faction": "Resistance",
+        "setting_year": 2039,
+        "campaign_missions": 7,
+        "custom_missions": 0,
+        "bluetooth_multiplayer": true,
+        "protagonist": "General José Monteros",
+        "description": "Play as Resistance general liberating Peru from Confederation control"
+      },
+      {
+        "id": "online",
+        "title": "Art of War 2: Online",
+        "release_date": "2010-02-02",
+        "platform": "J2ME",
+        "type": "multiplayer_expansion",
+        "multiplayer": true,
+        "free_to_play": true,
+        "description": "First free MMORTS for mobile devices"
+      }
+    ],
+    "ports": [
+      {
+        "platform": "iOS",
+        "app_store_id": 336302082,
+        "developer_listing": "GEAR GAMES GLOBAL FZE",
+        "category": "Strategy",
+        "age_rating": "9+",
+        "current_version": "2.4",
+        "last_release_notes": "Introduced 15 custom maps to the game.",
+        "rating": 4.0,
+        "rating_count": 49,
+        "languages": ["English", "Russian"],
+        "devices": ["iPhone", "iPod"]
+      },
+      {
+        "platform": "J2ME",
+        "resolutions": [
+          {"width": 128, "height": 160, "file_size_kb": 716.5},
+          {"width": 176, "height": 208, "file_size_kb": 769.0},
+          {"width": 240, "height": 320, "file_size_kb": 800}
+        ],
+        "carrier_restrictions": true,
+        "note": "Can be played on Android via J2ME Loader emulator"
+      }
+    ]
+  },
+
+  "lore": {
+    "setting": "Near-future sci-fi, year 2038-2039",
+    "background": "For 20 years, the Earth has been under the rule of the Global Confederation that united all countries. Resistance movements emerge against the Senate's policies.",
+    "locations": [
+      "Pucallpa, Peru",
+      "Amazon rainforest/jungle",
+      "Andes Mountains",
+      "Ucayali River",
+      "Mountain gorges"
+    ]
+  },
+
+  "factions": {
+    "confederation": {
+      "id": "confederation",
+      "full_name": "Global Confederation",
+      "government_type": "Representative democracy with Senate",
+      "philosophy": "New and perfect world without wars, but must rise in arms against global threat",
+      "characteristics": {
+        "technology_level": "Advanced",
+        "unit_strength": "Heavy armor, high firepower",
+        "unit_speed": "Slower than Resistance",
+        "unit_cost": "More expensive",
+        "resource_collection": "Slower than Resistance",
+        "tactical_doctrine": "Force enemy into head-on engagement, armored meat grinder",
+        "key_advantage": "Superior individual unit quality and armor",
+        "key_disadvantage": "Slower resource collection and unit production"
+      },
+      "unique_units": [
+        "T-22 Zeus (Heavy Battle Tank)",
+        "M-55 Assault Rifle Infantry"
+      ]
+    },
+    "resistance": {
+      "id": "resistance",
+      "full_name": "Resistance / Liberation Army",
+      "government_type": "Liberation army / Guerrilla movement",
+      "philosophy": "Fighting for freedom, justice, and human rights",
+      "characteristics": {
+        "technology_level": "Conventional/Reliable",
+        "unit_strength": "Lower armor, adequate firepower",
+        "unit_speed": "Faster than Confederation",
+        "unit_cost": "Cheaper",
+        "resource_collection": "Faster than Confederation (confirmed by developer)",
+        "tactical_doctrine": "Speed, stealth, surprise, hit-and-run",
+        "key_advantage": "Faster resource collection and unit production",
+        "key_disadvantage": "Weaker individual units, less armor"
+      },
+      "unique_units": []
+    }
+  },
+
+  "units": {
+    "unit_categories": [
+      {
+        "category": "Infantry (Basic)",
+        "strong_against": ["Rocket Soldiers", "Soft Targets"],
+        "weak_against": ["Vehicles", "Flamethrowers"],
+        "tactical_role": "Scout units, early-game pressure, meat-shields",
+        "produced_at": "Barracks"
+      },
+      {
+        "category": "Rocket Soldiers",
+        "strong_against": ["Heavy Tanks", "Aviation"],
+        "weak_against": ["Basic Infantry", "Anti-Infantry Vehicles"],
+        "tactical_role": "Defensive line anchors, cost-effective anti-armor",
+        "produced_at": "Barracks"
+      },
+      {
+        "category": "Light Assault Vehicles",
+        "strong_against": ["Infantry", "Recon Units"],
+        "weak_against": ["Heavy Tanks", "Stationary Turrets"],
+        "tactical_role": "Flanking maneuvers, harrying resource lines",
+        "produced_at": "Assault Vehicle Factory"
+      },
+      {
+        "category": "Heavy Battle Tanks",
+        "strong_against": ["Light Vehicles", "Structures"],
+        "weak_against": ["Rocket Infantry (in cover)", "Aviation"],
+        "tactical_role": "Main assault force, high health pools",
+        "produced_at": "Special Vehicle Factory"
+      },
+      {
+        "category": "Helicopters / Jets",
+        "strong_against": ["Heavy Tanks", "Artillery"],
+        "weak_against": ["Anti-Air Vehicles", "Flak Turrets"],
+        "tactical_role": "Tactical bombardment, bypassing geographical walls",
+        "produced_at": "Aviation Factory"
+      },
+      {
+        "category": "Artillery",
+        "strong_against": ["Structures", "Stationary Targets"],
+        "weak_against": ["Fast Units", "Aviation"],
+        "tactical_role": "Siege warfare, area denial",
+        "produced_at": "Special Vehicle Factory"
+      },
+      {
+        "category": "Anti-Air Vehicles",
+        "strong_against": ["Helicopters", "Jets"],
+        "weak_against": ["Ground Units"],
+        "tactical_role": "Air defense",
+        "produced_at": "Assault Vehicle Factory"
+      }
+    ],
+
+    "confederation_units": [
+      {
+        "name": "Assault Infantry",
+        "type": "Infantry",
+        "weapon": "M-55 assault rifle, anti-personnel fragmentation grenades",
+        "notes": "Main infantry unit of Confederation in AOW2 and AOW3"
+      },
+      {
+        "name": "Rocket Soldier",
+        "type": "Infantry",
+        "weapon": "Anti-armor rockets",
+        "notes": "Anti-armor specialist"
+      },
+      {
+        "name": "Light Assault Vehicle",
+        "type": "Vehicle",
+        "weapon": "Unknown",
+        "notes": "Fast scout/recon vehicle"
+      },
+      {
+        "name": "T-22 Zeus",
+        "type": "Heavy Tank",
+        "weapon": "Unknown",
+        "notes": "Heavy battle tank, key unit for Confederation strategy"
+      },
+      {
+        "name": "Helicopter",
+        "type": "Aviation",
+        "weapon": "Unknown",
+        "notes": "Tactical bombardment, can bypass terrain"
+      },
+      {
+        "name": "Artillery",
+        "type": "Siege",
+        "weapon": "Unknown",
+        "notes": "Long-range siege unit"
+      },
+      {
+        "name": "Anti-Air Vehicle",
+        "type": "Vehicle",
+        "weapon": "Anti-air missiles/flak",
+        "notes": "Air defense specialist"
+      }
+    ],
+
+    "resistance_units": [
+      {
+        "name": "Infantry",
+        "type": "Infantry",
+        "weapon": "Unknown",
+        "notes": "Faster but less armored than Confederation Assault"
+      },
+      {
+        "name": "Rocket Soldier",
+        "type": "Infantry",
+        "weapon": "Anti-armor rockets",
+        "notes": "Anti-armor variant"
+      },
+      {
+        "name": "Light Vehicle",
+        "type": "Vehicle",
+        "weapon": "Unknown",
+        "notes": "Speed-focused assault vehicle"
+      },
+      {
+        "name": "Tank",
+        "type": "Heavy Tank",
+        "weapon": "Unknown",
+        "notes": "Less armored but more mobile than Confederation tanks"
+      },
+      {
+        "name": "Aviation",
+        "type": "Aviation",
+        "weapon": "Unknown",
+        "notes": "Air support units"
+      },
+      {
+        "name": "Artillery",
+        "type": "Siege",
+        "weapon": "Unknown",
+        "notes": "Mobile artillery"
+      },
+      {
+        "name": "Anti-Air",
+        "type": "Vehicle",
+        "weapon": "Unknown",
+        "notes": "Air defense"
+      }
+    ]
+  },
+
+  "buildings": {
+    "categories": [
+      {
+        "category": "Administrative",
+        "buildings": [
+          {
+            "name": "Command Center",
+            "alternate_names": ["HQ", "Headquarters"],
+            "function": "Main base building, central structure",
+            "notes": "Can build additional command centers"
+          },
+          {
+            "name": "Power Plant",
+            "alternate_names": ["Generator"],
+            "function": "Generates power for base operations",
+            "notes": "Usually built first in build order"
+          },
+          {
+            "name": "Supply Center",
+            "alternate_names": ["Factory", "Credit Generator"],
+            "function": "Generates credits automatically over time",
+            "notes": "Core of automatic resource system"
+          }
+        ]
+      },
+      {
+        "category": "Military",
+        "buildings": [
+          {
+            "name": "Barracks",
+            "function": "Produces infantry units (Riflemen, Rocket Soldiers)",
+            "produces": ["Assault Infantry", "Rocket Soldiers"]
+          },
+          {
+            "name": "Assault Vehicle Factory",
+            "alternate_names": ["Machine Factory"],
+            "function": "Produces light assault vehicles and anti-air vehicles",
+            "produces": ["Light Assault Vehicles", "Anti-Air Vehicles"]
+          },
+          {
+            "name": "Special Vehicle Factory",
+            "alternate_names": ["Heavy Factory"],
+            "function": "Produces heavy tanks and artillery",
+            "produces": ["Heavy Battle Tanks", "Artillery"]
+          },
+          {
+            "name": "Aviation Factory",
+            "alternate_names": ["Air Factory", "Helipad"],
+            "function": "Produces helicopters and aircraft",
+            "produces": ["Helicopters", "Jets"]
+          }
+        ]
+      },
+      {
+        "category": "Defensive",
+        "buildings": [
+          {
+            "name": "Bunker",
+            "function": "Defensive infantry position",
+            "notes": "4 bunkers recommended for early defense"
+          },
+          {
+            "name": "Turret",
+            "alternate_names": ["Stationary Turret"],
+            "function": "Automated defensive weapon",
+            "notes": "Effective against light vehicles"
+          },
+          {
+            "name": "Flak Turret",
+            "function": "Anti-air defensive structure",
+            "notes": "Counters aviation units"
+          }
+        ]
+      },
+      {
+        "category": "Research",
+        "buildings": [
+          {
+            "name": "Workshop",
+            "alternate_names": ["Research Lab", "Tech Center"],
+            "function": "Upgrades for unit armor, weapons, and building durability",
+            "upgrades": ["Unit Armor", "Weapon Systems", "Building Durability"]
+          }
+        ]
+      }
+    ],
+
+    "build_order_confederation": [
+      {"step": 1, "building": "Generator/Power Plant", "note": "First priority"},
+      {"step": 2, "building": "Bunker x4", "note": "Early defense"},
+      {"step": 3, "building": "Machine Factory", "note": "Vehicle production"},
+      {"step": 4, "building": "Additional Command Center", "note": "Expand base"},
+      {"step": 5, "building": "Produce all 3 vehicle types", "note": "T-22 Zeus for main assault"}
+    ]
+  },
+
+  "resources": {
+    "system_type": "Automatic generation (no manual mining)",
+    "resource_types": [
+      {
+        "name": "Credits",
+        "source": "Supply Center / Factory",
+        "generation": "Automatic over time",
+        "faction_difference": "Resistance generates faster than Confederation"
+      },
+      {
+        "name": "Power",
+        "source": "Power Plant / Generator",
+        "generation": "Automatic over time",
+        "faction_difference": "Unknown if faction difference exists"
+      }
+    ],
+    "design_philosophy": "No need to mine resources; they are gained automatically to keep focus on combat and base construction"
+  },
+
+  "combat_mechanics": {
+    "system": "Rock-Paper-Scissors balancing across unit categories",
+    "control_type": "Direct unit control (select and command)",
+    "fog_of_war": true,
+    "terrain_effects": true,
+    "terrain_types": ["Jungle", "Mountain", "River", "Gorge", "Plains"],
+    "cover_system": true,
+    "cover_mechanic": "Infantry in cover gains defensive bonuses against certain unit types",
+    "auto_attack": true,
+    "unit_grouping": true,
+    "asymmetric_balance": "Confederation (heavy/slow/expensive) vs Resistance (light/fast/cheap)"
+  },
+
+  "campaign": {
+    "episode1": {
+      "title": "Global Confederation",
+      "mission_count": 7,
+      "player_faction": "Confederation",
+      "setting": "Peru, 2038",
+      "objective": "Crush the revolt in Peru and capture the rebellion leader",
+      "known_missions": [
+        {"mission": 1, "notes": "Tutorial/introductory mission"},
+        {"mission": 2, "name": "Ucayali Bank", "notes": "River/jungle terrain, destroy enemy base"},
+        {"mission": 3, "name": "Miguel Capture", "notes": "Capture mission objective"},
+        {"mission": 4, "notes": "Unknown"},
+        {"mission": 5, "name": "Slaughter", "notes": "Heavy combat mission"},
+        {"mission": 6, "name": "Storm In Gorge", "notes": "Mountain/gorge terrain"},
+        {"mission": 7, "name": "The Last Battle", "notes": "Final mission"}
+      ],
+      "locations": [
+        "Amazonian jungles",
+        "Highlands of the Andes",
+        "Ucayali River",
+        "Mountain gorges"
+      ],
+      "custom_missions_included": 15
+    },
+    "episode2": {
+      "title": "Liberation of Peru",
+      "mission_count": 7,
+      "player_faction": "Resistance",
+      "setting": "Peru, 2039",
+      "protagonist": "General José Monteros",
+      "objective": "Liberate Peru from Confederation control",
+      "known_missions": [
+        {"mission": 1, "notes": "Introductory mission"},
+        {"mission": 2, "notes": "Unknown"},
+        {"mission": 3, "name": "Sabotage", "notes": "Get into the rear of the enemy"}
+      ]
+    }
+  },
+
+  "multiplayer": {
+    "online": {
+      "type": "MMORTS",
+      "description": "First free Massively Multiplayer Real Time Strategy game for mobile devices",
+      "release_date": "2010-02-02",
+      "platforms": ["J2ME"],
+      "server_status": "Likely defunct"
+    },
+    "bluetooth": {
+      "available_in": "Liberation of Peru (Episode 2)",
+      "connection_type": "Bluetooth local multiplayer",
+      "max_players": 2,
+      "unlock_required": true,
+      "unlock_procedure": "Start game > Select first country > Main menu > Exit > Restart > Select 'Crack AOW2' > Exit > Now playable"
+    },
+    "skirmish_maps": {
+      "available_count": "60+ (from mod community)",
+      "download_source": "Originally from Gear Games servers (likely offline)"
+    }
+  },
+
+  "map_editor": {
+    "available": true,
+    "features": [
+      "Create custom missions",
+      "Create skirmish/multiplayer maps",
+      "Share custom maps"
+    ],
+    "community_content": [
+      "YouTube tutorials available (VOLK BLACK playlist, 3 videos)",
+      "Custom campaign modding",
+      "New unit mods (Aircraft Carriers, Military Jeep, Military Motorcycle, Military Hovercraft, Super Flying Fortress, Rhino Tank)"
+    ]
+  },
+
+  "technology_system": {
+    "research_building": "Workshop",
+    "upgrade_categories": [
+      "Unit Armor Enhancements",
+      "Weapon System Improvements",
+      "Building Durability Upgrades"
+    ],
+    "progression": "Campaign missions gradually introduce new units and buildings",
+    "workshop_system": "Central facility for researching unit and structure upgrades"
+  },
+
+  "developer_history": {
+    "company_name": "Gear Games Ltd",
+    "current_name": "GEAR GAMES GLOBAL FZE",
+    "founded": "2004",
+    "location_original": "Moscow, Russia",
+    "location_current": "Global offices (expanding)",
+    "employee_count": "100+",
+    "websites": [
+      "gear-games.com (old WAP site, last updated 2013)",
+      "geargames.org (current)",
+      "aow3.gear-games.com (AOW3 official)"
+    ],
+    "notable_partnerships": [
+      "Scopely",
+      "Riot Games",
+      "Rovio",
+      "2K Games",
+      "Sony",
+      "Playstudios",
+      "Tilting Point",
+      "HeroCraft"
+    ],
+    "game_series": [
+      {"title": "Art of War: N.A.C.", "year": 2006},
+      {"title": "Art of War 2: Global Confederation", "year": 2009},
+      {"title": "Art of War 2: Liberation of Peru", "year": 2009},
+      {"title": "Art of War 2: Online", "year": 2010},
+      {"title": "Art of War 3: Global Conflict", "year": "2020s (active)"}
+    ],
+    "other_games": [
+      "Танчики 2012 (Tanchiki 2012)",
+      "Танчики 2059 (Tanchiki 2059)",
+      "Футбольный Менеджер Онлайн (Football Manager Online)",
+      "Футбольный менеджер 2009",
+      "Первобытный парк (Primitive Park)",
+      "Первобытные войны (Primitive Wars)",
+      "Wasteland: Phase One",
+      "SMS-Гуру (SMS Guru)"
+    ]
+  },
+
+  "known_issues": {
+    "bugs": [
+      {
+        "issue": "Frequent app crashes",
+        "platform": "iOS",
+        "severity": "High",
+        "source": "Marlvel.ai user sentiment analysis"
+      }
+    ],
+    "removed_features": [
+      {
+        "feature": "Server-based custom map downloads",
+        "status": "Likely offline - Gear Games servers no longer serving AOW2 content"
+      },
+      {
+        "feature": "Online multiplayer (AOW2: Online)",
+        "status": "Likely defunct - servers probably shut down"
+      },
+      {
+        "feature": "Store availability",
+        "status": "Delisted from most mobile app stores, regional restrictions"
+      }
+    ],
+    "workarounds": [
+      "J2ME Loader on Android for original Java versions",
+      "Community modding for custom content",
+      "Bluetooth multiplayer still works locally"
+    ]
+  },
+
+  "disambiguation": {
+    "flash_game": {
+      "title": "Art of War 2 (Flash)",
+      "platforms": ["Newgrounds", "Kongregate", "AddictingGames"],
+      "developer": "Asvegren",
+      "genre": "Side-scrolling shooter",
+      "setting": "WWII Battle of Stalingrad",
+      "protagonist": "Sergeant Sokolov (Soviet soldier)",
+      "cheats": "Infinite ammo and grenades, 15 seconds timeout per round",
+      "expansions": ["Stalingrad Winters"],
+      "note": "COMPLETELY DIFFERENT GAME from Gear Games RTS - same name only"
+    }
+  },
+
+  "aow3_comparison": {
+    "note": "Art of War 3 carries forward many AOW2 systems. These AOW3 features may help understand AOW2 internals.",
+    "aow3_new_features": [
+      "Hero units with unique tactical abilities",
+      "Naval units and naval platform buildings",
+      "Super weapons (Solaris for Confederation - satellite-based)",
+      "Full 3D graphics",
+      "Global server with thousands of players",
+      "Tournaments and rankings",
+      "Hall of Fame",
+      "Workshop 2.0 with detailed unit info",
+      "Multiple game modes"
+    ],
+    "aow3_building_types": {
+      "administrative": ["Command Center", "Power Plant", "Supply Center"],
+      "military": ["Barracks", "Assault Vehicle Factory", "Special Vehicle Factory", "Aviation Factory"],
+      "defensive": ["Bunkers", "Turrets", "Flak Turrets"],
+      "naval": ["Naval Platform", "Ship Factory"],
+      "research": ["Workshop"]
+    },
+    "aow3_confederation_unique": [
+      "Juggernaut Power Armor with jetpack (effective vs infantry and light vehicles)",
+      "Cyclone (vehicle unit)",
+      "Solaris (super weapon - satellite broadcast inducing apathy)"
+    ]
+  }
+}

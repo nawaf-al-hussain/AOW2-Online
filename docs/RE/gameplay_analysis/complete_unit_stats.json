@@ -1,0 +1,368 @@
+{
+  "metadata": {
+    "game": "Art of War 2 Online",
+    "description": "Complete unit statistics extracted from encrypted game data"
+  },
+  "confederation_units": [
+    {
+      "name": "Infantry",
+      "type": "infantry",
+      "description": "Armed with an automatic rifle. Light equipment allows fast movement. Effective against infantry",
+      "faction": "Confederation",
+      "hp": 40,
+      "damage": 2,
+      "base_cost": 1,
+      "speed": 5,
+      "armor": 5,
+      "attack_bonus": 0,
+      "sight_range": 4,
+      "build_time": 4,
+      "rank": 3,
+      "upgrade_level": 0,
+      "cost_credits": 10,
+      "reward_credits": 650,
+      "availability_flag": -1,
+      "attack_range": 4,
+      "extended_armor": 6,
+      "siege_targets": 255
+    },
+    {
+      "name": "Grenadier",
+      "type": "infantry",
+      "description": "Armed with a rocket launcher. Effective against light and medium machinery",
+      "faction": "Confederation",
+      "hp": 40,
+      "damage": 2,
+      "base_cost": 1,
+      "speed": 6,
+      "armor": 5,
+      "attack_bonus": 0,
+      "sight_range": 4,
+      "build_time": 5,
+      "rank": 3,
+      "upgrade_level": 0,
+      "cost_credits": 10,
+      "reward_credits": 200,
+      "availability_flag": -1,
+      "attack_range": 4,
+      "extended_armor": 6,
+      "siege_targets": 255
+    },
+    {
+      "name": "Flame Assault",
+      "type": "infantry",
+      "description": "Armed with a hand flamer. Very effective against infantry. Heavy equipment reduces movement speed",
+      "faction": "Confederation",
+      "hp": 50,
+      "damage": 4,
+      "base_cost": 2,
+      "speed": 6,
+      "armor": 5,
+      "attack_bonus": 0,
+      "sight_range": 5,
+      "build_time": 9,
+      "rank": 3,
+      "upgrade_level": 0,
+      "cost_credits": 20,
+      "reward_credits": 300,
+      "availability_flag": -1,
+      "attack_range": 6,
+      "extended_armor": 12,
+      "siege_targets": 255
+    },
+    {
+      "name": "AV-40 Fortress",
+      "type": "vehicle",
+      "description": "Heavy-armoured assault machine. Armed with a heavy machine gun",
+      "faction": "Confederation",
+      "hp": 50,
+      "damage": 4,
+      "base_cost": 2,
+      "speed": 7,
+      "armor": 5,
+      "attack_bonus": 1,
+      "sight_range": 5,
+      "build_time": 10,
+      "rank": 3,
+      "upgrade_level": 0,
+      "cost_credits": 20,
+      "reward_credits": 350,
+      "availability_flag": -1,
+      "attack_range": 9,
+      "extended_armor": 12,
+      "siege_targets": 255
+    },
+    {
+      "name": "T-21 Hammer",
+      "type": "vehicle",
+      "description": "Light tank with high speed rotating gun",
+      "faction": "Confederation",
+      "hp": 50,
+      "damage": 8,
+      "base_cost": 4,
+      "speed": 7,
+      "armor": 9,
+      "attack_bonus": 0,
+      "sight_range": 6,
+      "build_time": 11,
+      "rank": 3,
+      "upgrade_level": 1,
+      "cost_credits": 40,
+      "reward_credits": 350,
+      "availability_flag": 10,
+      "attack_range": 6,
+      "extended_armor": 8,
+      "siege_targets": 14
+    },
+    {
+      "name": "T-22 Zeus",
+      "type": "vehicle",
+      "description": "Heavy tank. Low speed, very powerful damage and wide attack range",
+      "faction": "Confederation",
+      "hp": 70,
+      "damage": 6,
+      "base_cost": 3,
+      "speed": 7,
+      "armor": 5,
+      "attack_bonus": 0,
+      "sight_range": 2,
+      "build_time": 14,
+      "rank": 3,
+      "upgrade_level": 0,
+      "cost_credits": 30,
+      "reward_credits": 300,
+      "availability_flag": -1,
+      "attack_range": 6,
+      "extended_armor": 8,
+      "siege_targets": 255
+    },
+    {
+      "name": "MLRS Torrent",
+      "type": "vehicle",
+      "description": "Multiple rocket launcher system with extra-wide attack range. Needs siege mode",
+      "faction": "Confederation",
+      "hp": 80,
+      "damage": 15,
+      "base_cost": 8,
+      "speed": 4,
+      "armor": 7,
+      "attack_bonus": 2,
+      "sight_range": 6,
+      "build_time": 7,
+      "rank": 2,
+      "upgrade_level": 0,
+      "cost_credits": 50,
+      "reward_credits": 250,
+      "availability_flag": -1,
+      "attack_range": 6,
+      "extended_armor": 8,
+      "siege_targets": 255
+    }
+  ],
+  "rebels_units": [
+    {
+      "name": "Infantry",
+      "type": "infantry",
+      "description": "Armed with an automatic rifle. Light equipment allows fast movement. Effective against infantry",
+      "faction": "Rebels",
+      "sight_range": 9,
+      "attack_range": 5,
+      "armor": 4,
+      "faction_flag": 0,
+      "type_class": 0
+    },
+    {
+      "name": "Grenadier",
+      "type": "infantry",
+      "description": "Armed with a rocket launcher. Effective against light and medium machinery",
+      "faction": "Rebels",
+      "sight_range": 10,
+      "attack_range": 5,
+      "armor": 4,
+      "faction_flag": 0,
+      "type_class": 0
+    },
+    {
+      "name": "Sniper",
+      "type": "infantry",
+      "description": "Armed with a long-range sniper rifle. In siege mode overview and attack radius extends",
+      "faction": "Rebels",
+      "sight_range": 15,
+      "attack_range": 7,
+      "armor": 6,
+      "faction_flag": 0,
+      "type_class": 4
+    },
+    {
+      "name": "Coyote",
+      "type": "vehicle",
+      "description": "Light assault car with light armour and medium machine gun. High speed for quick attacks and scouting",
+      "faction": "Rebels",
+      "sight_range": 25,
+      "attack_range": 7,
+      "armor": 6,
+      "faction_flag": 1,
+      "type_class": 0
+    },
+    {
+      "name": "Armadillo",
+      "type": "vehicle",
+      "description": "Heavy-armoured assault machine. Armed with a heavy machine gun",
+      "faction": "Rebels",
+      "sight_range": 18,
+      "attack_range": 10,
+      "armor": 6,
+      "faction_flag": 0,
+      "type_class": 4
+    },
+    {
+      "name": "Rhino",
+      "type": "vehicle",
+      "description": "Medium tank. High speed. Upgrade allows siege mode which increases damage and firing rate",
+      "faction": "Rebels",
+      "sight_range": 11,
+      "attack_range": 7,
+      "armor": 4,
+      "faction_flag": 0,
+      "type_class": 1
+    },
+    {
+      "name": "MMC Porcupine",
+      "type": "vehicle",
+      "description": "Mobile missile system. Armed with heavy machine gun and rocket launcher with fast reloading",
+      "faction": "Rebels",
+      "sight_range": 35,
+      "attack_range": 12,
+      "armor": 6,
+      "faction_flag": 2,
+      "type_class": 1
+    }
+  ],
+  "mines": [
+    {
+      "name": "Mine Scorpio",
+      "type": "mine",
+      "faction": "Confederation",
+      "description": "A personnel mine. Deals light damage to machinery",
+      "hp": 110,
+      "damage": 60,
+      "base_cost": 36,
+      "speed": 6,
+      "armor": 9,
+      "sight_range": 8,
+      "cost_credits": 150
+    },
+    {
+      "name": "Mine Frog",
+      "type": "mine",
+      "faction": "Confederation",
+      "description": "A multi-charged mine. Jumps before detonation. Fragments and additional charges scatter",
+      "hp": 100,
+      "damage": 80,
+      "base_cost": 55,
+      "speed": 9,
+      "armor": 12,
+      "sight_range": 13,
+      "cost_credits": 250
+    },
+    {
+      "name": "Mine Lizard",
+      "type": "mine",
+      "faction": "Confederation",
+      "description": "Anti-tank mine. Detonates only when enemy machines are nearby",
+      "hp": 120,
+      "damage": 90,
+      "base_cost": 60,
+      "speed": 8,
+      "armor": 8,
+      "sight_range": 7,
+      "cost_credits": 220
+    }
+  ],
+  "technologies": {
+    "confederation": [
+      {
+        "id": 0,
+        "name": "Energy suit",
+        "effect": "Increases infantry armour by 2"
+      },
+      {
+        "id": 1,
+        "name": "Bio suit",
+        "effect": "Health recovery for infantry increases 3 times. Requires Energy suit"
+      },
+      {
+        "id": 2,
+        "name": "Enhanced firing rate",
+        "effect": "Assault's fire rate increases by 50%"
+      },
+      {
+        "id": 3,
+        "name": "Armour-piercing bullet",
+        "effect": "Assault's damage increases by 40%"
+      },
+      {
+        "id": 4,
+        "name": "Heavy shells",
+        "effect": "Heavy Assault's damage increases by 40%"
+      },
+      {
+        "id": 5,
+        "name": "Forced light missiles",
+        "effect": "Allows you to train Flame Assaults"
+      },
+      {
+        "id": 6,
+        "name": "Lava flame fuel",
+        "effect": "Heavy flamethrower installs on AV-40. Requires: Reinforced engine"
+      },
+      {
+        "id": 7,
+        "name": "Volcano flame gun",
+        "effect": "Increases damage for Zeus and Hammer tanks by 25%"
+      }
+    ],
+    "rebels": [
+      {
+        "id": 0,
+        "name": "Titanium jacket",
+        "effect": "Increases armour for all infantry by 1"
+      },
+      {
+        "id": 1,
+        "name": "First-aid kit",
+        "effect": "Triples health recovery for all infantry"
+      },
+      {
+        "id": 2,
+        "name": "Enhanced fire rate",
+        "effect": "Infantry firing rate increases by 50%"
+      },
+      {
+        "id": 3,
+        "name": "Doping",
+        "effect": "Infantry speed increases by 1"
+      },
+      {
+        "id": 4,
+        "name": "Snipers",
+        "effect": "Allows you to train snipers"
+      },
+      {
+        "id": 5,
+        "name": "Rifle 'Hornet-10'",
+        "effect": "Sniper's overview radius and fire range increases by 2, damage increases by 20%"
+      },
+      {
+        "id": 6,
+        "name": "Heavy machine gun",
+        "effect": "Increases damage for coyotes and armadillos by 15%"
+      },
+      {
+        "id": 7,
+        "name": "Reinforced engine",
+        "effect": "Increases speed for all machinery by 1. Allows Rhino tank"
+      }
+    ]
+  }
+}
