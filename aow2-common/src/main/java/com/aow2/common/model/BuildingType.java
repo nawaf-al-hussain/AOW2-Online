@@ -3,29 +3,32 @@ package com.aow2.common.model;
 /**
  * All building types from the original game.
  * REF: complete_building_stats.json - 8 buildings per faction
- * Type IDs from building_stats.md: CommandCentre=1, Barracks=2, MachineFactory=3,
- * Generator=4, TechCentre=5, Headquarters=6, Bunker=7, RocketLauncher=8, Wall=9, Locator=10
+ * Type IDs use faction-qualified IDs to avoid collisions:
+ *   Confederation: 100-109 (1xx prefix)
+ *   Resistance:    200-209 (2xx prefix)
+ *
+ * For lookups by faction-relative ID, use {@link #fromFactionRelativeId(int, Faction)}.
  */
 public enum BuildingType {
-    // Confederation Buildings
-    CONFED_COMMAND_CENTRE(1, "Command Centre", Faction.CONFEDERATION),
-    CONFED_GENERATOR(4, "Generator", Faction.CONFEDERATION),
-    CONFED_INFANTRY_CENTRE(2, "Infantry Centre", Faction.CONFEDERATION),
-    CONFED_MACHINE_FACTORY(3, "Machine Factory", Faction.CONFEDERATION),
-    CONFED_TECH_CENTRE(5, "Technology Centre", Faction.CONFEDERATION),
-    CONFED_BUNKER(7, "Bunker", Faction.CONFEDERATION),
-    CONFED_LOCATOR(10, "Locator", Faction.CONFEDERATION),
-    CONFED_ROCKET_LAUNCHER(8, "Rocket Launcher", Faction.CONFEDERATION),
+    // Confederation Buildings (type IDs 100-109)
+    CONFED_COMMAND_CENTRE(101, "Command Centre", Faction.CONFEDERATION),
+    CONFED_GENERATOR(104, "Generator", Faction.CONFEDERATION),
+    CONFED_INFANTRY_CENTRE(102, "Infantry Centre", Faction.CONFEDERATION),
+    CONFED_MACHINE_FACTORY(103, "Machine Factory", Faction.CONFEDERATION),
+    CONFED_TECH_CENTRE(105, "Technology Centre", Faction.CONFEDERATION),
+    CONFED_BUNKER(107, "Bunker", Faction.CONFEDERATION),
+    CONFED_LOCATOR(110, "Locator", Faction.CONFEDERATION),
+    CONFED_ROCKET_LAUNCHER(108, "Rocket Launcher", Faction.CONFEDERATION),
 
-    // Resistance Buildings
-    REBEL_HEADQUARTERS(6, "Headquarters", Faction.RESISTANCE),
-    REBEL_POWERPLANT(4, "Powerplant", Faction.RESISTANCE),
-    REBEL_BARRACKS(2, "Barracks", Faction.RESISTANCE),
-    REBEL_FACTORY(3, "Factory", Faction.RESISTANCE),
-    REBEL_LABORATORY(5, "Laboratory", Faction.RESISTANCE),
-    REBEL_BUNKER(7, "Bunker", Faction.RESISTANCE),
-    REBEL_TOWER(8, "Tower", Faction.RESISTANCE),
-    REBEL_WALL(9, "Wall", Faction.RESISTANCE);
+    // Resistance Buildings (type IDs 200-209)
+    REBEL_HEADQUARTERS(206, "Headquarters", Faction.RESISTANCE),
+    REBEL_POWERPLANT(204, "Powerplant", Faction.RESISTANCE),
+    REBEL_BARRACKS(202, "Barracks", Faction.RESISTANCE),
+    REBEL_FACTORY(203, "Factory", Faction.RESISTANCE),
+    REBEL_LABORATORY(205, "Laboratory", Faction.RESISTANCE),
+    REBEL_BUNKER(207, "Bunker", Faction.RESISTANCE),
+    REBEL_TOWER(208, "Tower", Faction.RESISTANCE),
+    REBEL_WALL(209, "Wall", Faction.RESISTANCE);
 
     private final int typeId;
     private final String displayName;
@@ -40,6 +43,34 @@ public enum BuildingType {
     public int typeId() { return typeId; }
     public String displayName() { return displayName; }
     public Faction faction() { return faction; }
+
+    /**
+     * Look up a BuildingType by its unique (faction-qualified) type ID.
+     *
+     * @param typeId the faction-qualified type ID (100-109 for Confed, 200-209 for Rebel)
+     * @return the matching BuildingType, or null if not found
+     */
+    public static BuildingType fromTypeId(int typeId) {
+        for (BuildingType bt : values()) {
+            if (bt.typeId == typeId) return bt;
+        }
+        return null;
+    }
+
+    /**
+     * Look up a BuildingType by its faction-relative type ID.
+     * Faction-relative IDs: CommandCentre=1, InfantryCentre/Barracks=2,
+     * MachineFactory/Factory=3, Generator/Powerplant=4, TechCentre/Lab=5,
+     * Headquarters=6, Bunker=7, RocketLauncher/Tower=8, Wall=9, Locator=10
+     *
+     * @param relativeId the faction-relative type ID (1-10)
+     * @param faction    the faction context
+     * @return the matching BuildingType, or null if not found
+     */
+    public static BuildingType fromFactionRelativeId(int relativeId, Faction faction) {
+        int qualifiedId = faction == Faction.CONFEDERATION ? 100 + relativeId : 200 + relativeId;
+        return fromTypeId(qualifiedId);
+    }
 
     public boolean isHQ() {
         return this == CONFED_COMMAND_CENTRE || this == REBEL_HEADQUARTERS;

@@ -26,7 +26,7 @@ class GameConfigTest {
         @DisplayName("Should build config with default values")
         void shouldBuildWithDefaults() {
             GameConfig config = GameConfig.builder().build();
-            assertArrayEquals(new int[]{30, 20, 10}, config.getTurnTimeSettings());
+            assertArrayEquals(new int[]{30, 20, 30, 20}, config.getTurnTimeSettings());
             assertArrayEquals(new int[]{10, 20, 30, 40, 60, 127}, config.getBuildingPowerRadius());
             assertArrayEquals(new int[]{20, 35, 50}, config.getRankExpThresholds());
             assertArrayEquals(new int[]{10, 25, 51}, config.getRankCreditRewards());
@@ -55,7 +55,7 @@ class GameConfigTest {
         void shouldParseFromJson() throws IOException {
             String json = """
                 {
-                  "turnTimeSettings": [30, 20, 10],
+                  "turnTimeSettings": [30, 20, 30, 20],
                   "buildingFootprintWidths": [2, 2, 3],
                   "buildingFootprintHeights": [2, 2, 3],
                   "buildingPowerRadius": [10, 20, 30, 40, 60, 127],
@@ -66,7 +66,7 @@ class GameConfigTest {
                 }
                 """;
             GameConfig config = GameConfig.parseJson(json);
-            assertArrayEquals(new int[]{30, 20, 10}, config.getTurnTimeSettings());
+            assertArrayEquals(new int[]{30, 20, 30, 20}, config.getTurnTimeSettings());
             assertArrayEquals(new int[]{20, 35, 50}, config.getRankExpThresholds());
             assertArrayEquals(new int[]{300, 600, 900, 1200}, config.getBattleTimeLimits());
         }

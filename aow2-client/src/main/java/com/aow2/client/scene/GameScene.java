@@ -382,10 +382,11 @@ public class GameScene {
         hud.setEntityManager(entityManager);
         hud.setPlayerFaction(Faction.CONFEDERATION);
 
-        // Initialize fog of war system and connect to renderer
+        // Initialize fog of war system and connect to renderer and tick manager
         fogOfWarSystem.initialize(map);
         fogRenderer.setFogOfWar(fogOfWarSystem);
         fogRenderer.setPlayerId(LOCAL_PLAYER_ID);
+        tickManager.setFogOfWar(fogOfWarSystem);
 
         // Create test entities using StatsRegistry
         createTestEntities();

@@ -83,7 +83,12 @@ public final class LuaEngine {
         globals.remove("io");       // Prevent file I/O operations
         globals.remove("java");     // Prevent Java reflection/class access
         globals.remove("debug");    // Prevent debug hooks and introspection
-        // Keep: base, math, string, table, coroutine (safe for game scripting)
+        // CRITICAL: Remove base library functions that can reconstruct removed libraries
+        globals.set("load", new org.luaj.vm2.LuaNil());       // Prevent load("os.execute('rm -rf /')")()
+        globals.set("loadstring", new org.luaj.vm2.LuaNil()); // Prevent loadstring reconstruction
+        globals.set("dofile", new org.luaj.vm2.LuaNil());      // Prevent dofile
+        globals.set("require", new org.luaj.vm2.LuaNil());     // Prevent require to load libs
+        // Keep: base (minus above), math, string, table, coroutine (safe for game scripting)
 
         // Create and apply script bindings
         this.scriptBindings = new ScriptBindings(globals, state, entities, economySystem);

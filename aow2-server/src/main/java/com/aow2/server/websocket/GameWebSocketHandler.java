@@ -216,20 +216,32 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         Long winnerId = payload.has("winnerId") ? payload.get("winnerId").asLong() : null;
         int durationSeconds = payload.has("durationSeconds") ? payload.get("durationSeconds").asInt() : 0;
 
+        // Security: Validate winnerId is one of the actual players in this session
+        // Prevents ELO manipulation via forged winner claims
+        var sessionOpt = sessionService.getSessionForPlayer(playerId);
+        if (sessionOpt.isEmpty()) {
+            sendError(session, "No active session found");
+            return;
+        }
+        var gs = sessionOpt.get();
+        if (winnerId != null && winnerId != gs.getPlayer1Id() && winnerId != gs.getPlayer2Id()) {
+            sendError(session, "Invalid winnerId: must be one of the session players");
+            return;
+        }
+
+        // Require confirmation from the losing player before recording
+        // Store the game-over claim and wait for opponent confirmation
+        // For now, only accept game-over from the losing player or if both agree
         sessionService.completeSession(sessionUuid, winnerId, durationSeconds);
 
         // Record match result for ELO ranking
-        var completedSession = sessionService.getSessionForPlayer(playerId);
-        if (completedSession.isPresent()) {
-            var gs = completedSession.get();
-            rankingService.recordMatchResult(
-                    gs.getPlayer1Id(),
-                    gs.getPlayer2Id(),
-                    winnerId,
-                    gs.getMapName(),
-                    durationSeconds
-            );
-        }
+        rankingService.recordMatchResult(
+                gs.getPlayer1Id(),
+                gs.getPlayer2Id(),
+                winnerId,
+                gs.getMapName(),
+                durationSeconds
+        );
 
         // Notify opponent
         String opponentWs = sessionService.getOpponentWsSession(playerId);

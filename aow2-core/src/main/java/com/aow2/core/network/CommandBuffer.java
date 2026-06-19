@@ -70,6 +70,7 @@ public class CommandBuffer {
         }
         int targetFrame = (writeIndex + inputDelay) % bufferSize;
         frames[targetFrame].add(command);
+        writeIndex = (writeIndex + 1) % bufferSize;
     }
 
     /**
@@ -103,7 +104,7 @@ public class CommandBuffer {
         frames[readIndex].clear();
 
         readIndex = (readIndex + 1) % bufferSize;
-        writeIndex = (writeIndex + 1) % bufferSize;
+        // Note: writeIndex is NOT advanced here — it only advances in submitCommand()
         currentTick++;
 
         return commands;

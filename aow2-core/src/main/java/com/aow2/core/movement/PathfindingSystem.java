@@ -203,7 +203,11 @@ public final class PathfindingSystem {
                 PathNode neighborNode = new PathNode(neighbor, tentativeG,
                     tentativeG + heuristic(neighbor, goal), current, isDiagonal);
 
-                openSet.add(neighborNode);
+                // Check if this position already has a better path in the open set
+                // Avoid unbounded growth by only adding if we found a better or equal path
+                if (!isBetterPathInSet(neighborNode, openSet)) {
+                    openSet.add(neighborNode);
+                }
                 dirIndex++;
             }
         }
@@ -231,6 +235,23 @@ public final class PathfindingSystem {
             return costs[ordinal];
         }
         return Integer.MAX_VALUE;
+    }
+
+    /**
+     * Checks if a better path to the same position already exists in the open set.
+     * If so, we skip adding the duplicate to avoid unbounded openSet growth.
+     *
+     * @param newNode  the candidate node
+     * @param openSet  the current open set
+     * @return true if a better path already exists in the set
+     */
+    private boolean isBetterPathInSet(PathNode newNode, java.util.PriorityQueue<PathNode> openSet) {
+        for (PathNode existing : openSet) {
+            if (existing.position().equals(newNode.position()) && existing.g() <= newNode.g()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

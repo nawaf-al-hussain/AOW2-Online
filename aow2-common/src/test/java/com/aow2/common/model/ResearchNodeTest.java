@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -89,11 +90,11 @@ class ResearchNodeTest {
         }
 
         @Test
-        @DisplayName("Should create valid research node")
+        @DisplayName("Should create valid research node with no prerequisites")
         void shouldCreateValidNode() {
             ResearchEffect effect = createInfantryArmorEffect();
             ResearchNode node = new ResearchNode(0, "Reinforced Plating", Faction.CONFEDERATION,
-                "Increases infantry armor by 2", 30, 300, -1,
+                "Increases infantry armor by 2", 30, 300, List.of(),
                 ResearchCategory.INFANTRY_ARMOR, effect);
 
             assertEquals(0, node.id());
@@ -102,9 +103,47 @@ class ResearchNodeTest {
             assertEquals("Increases infantry armor by 2", node.description());
             assertEquals(30, node.cost());
             assertEquals(300, node.researchTime());
-            assertEquals(-1, node.prerequisiteId());
+            assertFalse(node.hasPrerequisite());
+            assertTrue(node.getPrerequisites().isEmpty());
             assertEquals(ResearchCategory.INFANTRY_ARMOR, node.category());
             assertEquals(effect, node.effect());
+        }
+
+        @Test
+        @DisplayName("Should create valid research node with single prerequisite")
+        void shouldCreateValidNodeWithPrerequisite() {
+            ResearchEffect effect = createInfantryArmorEffect();
+            ResearchNode node = new ResearchNode(1, "Advanced Targeting", Faction.CONFEDERATION,
+                "desc", 50, 400, List.of(0),
+                ResearchCategory.ENEMY_RANGE_REDUCTION, effect);
+
+            assertTrue(node.hasPrerequisite());
+            assertEquals(List.of(0), node.getPrerequisites());
+        }
+
+        @Test
+        @DisplayName("Should create valid research node with anyOf prerequisites")
+        void shouldCreateValidNodeWithAnyOfPrerequisites() {
+            ResearchEffect effect = createInfantryArmorEffect();
+            ResearchNode node = new ResearchNode(8, "Heavy Artillery", Faction.CONFEDERATION,
+                "desc", 100, 500, List.of(6, 7),
+                ResearchCategory.ATTACK_RANGE, effect);
+
+            assertTrue(node.hasPrerequisite());
+            assertEquals(2, node.getPrerequisites().size());
+            assertTrue(node.getPrerequisites().contains(6));
+            assertTrue(node.getPrerequisites().contains(7));
+        }
+
+        @Test
+        @DisplayName("Should accept null prerequisites and treat as empty list")
+        void shouldAcceptNullPrerequisites() {
+            ResearchEffect effect = createInfantryArmorEffect();
+            ResearchNode node = new ResearchNode(0, "Basic", Faction.CONFEDERATION, "desc",
+                30, 300, null, ResearchCategory.INFANTRY_ARMOR, effect);
+
+            assertFalse(node.hasPrerequisite());
+            assertTrue(node.getPrerequisites().isEmpty());
         }
 
         @Test
@@ -112,7 +151,7 @@ class ResearchNodeTest {
         void shouldRejectIdBelowZero() {
             assertThrows(IllegalArgumentException.class,
                 () -> new ResearchNode(-1, "Test", Faction.CONFEDERATION, "desc",
-                    10, 100, -1, ResearchCategory.INFANTRY_ARMOR, createInfantryArmorEffect()));
+                    10, 100, null, ResearchCategory.INFANTRY_ARMOR, createInfantryArmorEffect()));
         }
 
         @Test
@@ -120,16 +159,16 @@ class ResearchNodeTest {
         void shouldRejectIdAbove47() {
             assertThrows(IllegalArgumentException.class,
                 () -> new ResearchNode(48, "Test", Faction.CONFEDERATION, "desc",
-                    10, 100, -1, ResearchCategory.INFANTRY_ARMOR, createInfantryArmorEffect()));
+                    10, 100, null, ResearchCategory.INFANTRY_ARMOR, createInfantryArmorEffect()));
         }
 
         @Test
         @DisplayName("Should accept boundary IDs 0 and 47")
         void shouldAcceptBoundaryIds() {
             assertDoesNotThrow(() -> new ResearchNode(0, "First", Faction.CONFEDERATION, "desc",
-                10, 100, -1, ResearchCategory.INFANTRY_ARMOR, createInfantryArmorEffect()));
+                10, 100, null, ResearchCategory.INFANTRY_ARMOR, createInfantryArmorEffect()));
             assertDoesNotThrow(() -> new ResearchNode(47, "Last", Faction.RESISTANCE, "desc",
-                10, 100, -1, ResearchCategory.SPECIAL, createInfantryArmorEffect()));
+                10, 100, null, ResearchCategory.SPECIAL, createInfantryArmorEffect()));
         }
 
         @Test
@@ -137,10 +176,10 @@ class ResearchNodeTest {
         void shouldRejectBlankName() {
             assertThrows(IllegalArgumentException.class,
                 () -> new ResearchNode(0, null, Faction.CONFEDERATION, "desc",
-                    10, 100, -1, ResearchCategory.INFANTRY_ARMOR, createInfantryArmorEffect()));
+                    10, 100, null, ResearchCategory.INFANTRY_ARMOR, createInfantryArmorEffect()));
             assertThrows(IllegalArgumentException.class,
                 () -> new ResearchNode(0, "", Faction.CONFEDERATION, "desc",
-                    10, 100, -1, ResearchCategory.INFANTRY_ARMOR, createInfantryArmorEffect()));
+                    10, 100, null, ResearchCategory.INFANTRY_ARMOR, createInfantryArmorEffect()));
         }
 
         @Test
@@ -148,7 +187,7 @@ class ResearchNodeTest {
         void shouldRejectNullFaction() {
             assertThrows(IllegalArgumentException.class,
                 () -> new ResearchNode(0, "Test", null, "desc",
-                    10, 100, -1, ResearchCategory.INFANTRY_ARMOR, createInfantryArmorEffect()));
+                    10, 100, null, ResearchCategory.INFANTRY_ARMOR, createInfantryArmorEffect()));
         }
 
         @Test
@@ -156,7 +195,7 @@ class ResearchNodeTest {
         void shouldRejectNegativeCost() {
             assertThrows(IllegalArgumentException.class,
                 () -> new ResearchNode(0, "Test", Faction.CONFEDERATION, "desc",
-                    -1, 100, -1, ResearchCategory.INFANTRY_ARMOR, createInfantryArmorEffect()));
+                    -1, 100, null, ResearchCategory.INFANTRY_ARMOR, createInfantryArmorEffect()));
         }
 
         @Test
@@ -164,7 +203,7 @@ class ResearchNodeTest {
         void shouldRejectNegativeResearchTime() {
             assertThrows(IllegalArgumentException.class,
                 () -> new ResearchNode(0, "Test", Faction.CONFEDERATION, "desc",
-                    10, -1, -1, ResearchCategory.INFANTRY_ARMOR, createInfantryArmorEffect()));
+                    10, -1, null, ResearchCategory.INFANTRY_ARMOR, createInfantryArmorEffect()));
         }
 
         @Test
@@ -172,10 +211,10 @@ class ResearchNodeTest {
         void shouldRejectInvalidPrerequisiteId() {
             assertThrows(IllegalArgumentException.class,
                 () -> new ResearchNode(0, "Test", Faction.CONFEDERATION, "desc",
-                    10, 100, -2, ResearchCategory.INFANTRY_ARMOR, createInfantryArmorEffect()));
+                    10, 100, List.of(-2), ResearchCategory.INFANTRY_ARMOR, createInfantryArmorEffect()));
             assertThrows(IllegalArgumentException.class,
                 () -> new ResearchNode(0, "Test", Faction.CONFEDERATION, "desc",
-                    10, 100, 48, ResearchCategory.INFANTRY_ARMOR, createInfantryArmorEffect()));
+                    10, 100, List.of(48), ResearchCategory.INFANTRY_ARMOR, createInfantryArmorEffect()));
         }
 
         @Test
@@ -183,7 +222,7 @@ class ResearchNodeTest {
         void shouldRejectNullCategory() {
             assertThrows(IllegalArgumentException.class,
                 () -> new ResearchNode(0, "Test", Faction.CONFEDERATION, "desc",
-                    10, 100, -1, null, createInfantryArmorEffect()));
+                    10, 100, null, null, createInfantryArmorEffect()));
         }
 
         @Test
@@ -191,19 +230,7 @@ class ResearchNodeTest {
         void shouldRejectNullEffect() {
             assertThrows(IllegalArgumentException.class,
                 () -> new ResearchNode(0, "Test", Faction.CONFEDERATION, "desc",
-                    10, 100, -1, ResearchCategory.INFANTRY_ARMOR, null));
-        }
-
-        @Test
-        @DisplayName("Should report hasPrerequisite when prerequisiteId >= 0")
-        void shouldReportHasPrerequisiteWhenSet() {
-            ResearchNode withPrereq = new ResearchNode(8, "Advanced", Faction.CONFEDERATION, "desc",
-                50, 500, 0, ResearchCategory.INFANTRY_ARMOR, createInfantryArmorEffect());
-            assertTrue(withPrereq.hasPrerequisite());
-
-            ResearchNode noPrereq = new ResearchNode(0, "Basic", Faction.CONFEDERATION, "desc",
-                30, 300, -1, ResearchCategory.INFANTRY_ARMOR, createInfantryArmorEffect());
-            assertFalse(noPrereq.hasPrerequisite());
+                    10, 100, null, ResearchCategory.INFANTRY_ARMOR, null));
         }
     }
 
@@ -214,14 +241,8 @@ class ResearchNodeTest {
     class ResearchCategoryTests {
 
         @Test
-        @DisplayName("Should have exactly 8 categories")
-        void shouldHave8Categories() {
-            assertEquals(8, ResearchCategory.values().length);
-        }
-
-        @Test
-        @DisplayName("Should contain all expected categories")
-        void shouldContainAllCategories() {
+        @DisplayName("Should contain all original 8 categories")
+        void shouldContainAllOriginalCategories() {
             assertNotNull(ResearchCategory.INFANTRY_ARMOR);
             assertNotNull(ResearchCategory.INFANTRY_SPEED);
             assertNotNull(ResearchCategory.INFANTRY_WEAPONRY);
@@ -233,10 +254,28 @@ class ResearchNodeTest {
         }
 
         @Test
-        @DisplayName("Should be convertible from string name")
-        void shouldConvertFromString() {
-            ResearchCategory category = ResearchCategory.valueOf("INFANTRY_ARMOR");
-            assertEquals(ResearchCategory.INFANTRY_ARMOR, category);
+        @DisplayName("Should contain tech_tree.json categories")
+        void shouldContainTechTreeCategories() {
+            assertNotNull(ResearchCategory.ENEMY_RANGE_REDUCTION);
+            assertNotNull(ResearchCategory.ATTACK_SPEED);
+            assertNotNull(ResearchCategory.ATTACK_DAMAGE);
+            assertNotNull(ResearchCategory.BUILDING_ARMOR);
+            assertNotNull(ResearchCategory.BUILDING_RADIUS);
+            assertNotNull(ResearchCategory.BUILDING_ARMOR_OVERRIDE);
+            assertNotNull(ResearchCategory.UNIT_UPGRADE);
+            assertNotNull(ResearchCategory.ATTACK_RANGE);
+            assertNotNull(ResearchCategory.PRODUCTION_SPEED);
+            assertNotNull(ResearchCategory.SCORING);
+        }
+
+        @Test
+        @DisplayName("Should parse from string case-insensitively")
+        void shouldParseFromString() {
+            assertEquals(ResearchCategory.INFANTRY_ARMOR, ResearchCategory.fromString("INFANTRY_ARMOR"));
+            assertEquals(ResearchCategory.INFANTRY_ARMOR, ResearchCategory.fromString("infantry_armor"));
+            assertEquals(ResearchCategory.ATTACK_SPEED, ResearchCategory.fromString("ATTACK_SPEED"));
+            assertNull(ResearchCategory.fromString("nonexistent"));
+            assertNull(ResearchCategory.fromString(null));
         }
     }
 }

@@ -259,12 +259,9 @@ public class CombatSystem {
         Unit nearestEnemy = findNearestEnemyUnit(building.getPosition(), building.getFaction(), attackRange);
 
         if (nearestEnemy != null) {
-            // Determine weapon type based on building type
-            WeaponType weaponType = getBuildingWeaponType(type);
-
-            // Create a temporary "attacker unit" reference for the projectile
-            // The building itself fires, so source ID is building ID
-            int targetArmor = nearestEnemy.getStats().armor();
+            // Use research-adjusted armor for the target, not raw base armor
+            int targetArmor = armorCalculator.calculateEffectiveArmor(nearestEnemy,
+                getCompletedResearchForBuilding(building));
             int effectiveDamage = DamageCalculator.calculateDamage(damage, targetArmor);
 
             nearestEnemy.takeDamage(effectiveDamage);
@@ -320,7 +317,10 @@ public class CombatSystem {
             weaponDamage += getSiegDamageBonus(attacker);
         }
 
-        attacker.setWeaponCooldown(attacker.getStats().speed());
+        // Use attackSpeed for weapon cooldown, NOT movement speed
+        // REF: combat_formulas.md - weapon cooldown = attackSpeed stat
+        int cooldown = attacker.getStats().attackSpeed();
+        attacker.setWeaponCooldown(cooldown > 0 ? cooldown : attacker.getStats().speed());
 
         WeaponType weaponType = attacker.getStats().weaponType();
 
@@ -368,7 +368,10 @@ public class CombatSystem {
             weaponDamage += getSiegDamageBonus(attacker);
         }
 
-        attacker.setWeaponCooldown(attacker.getStats().speed());
+        // Use attackSpeed for weapon cooldown, NOT movement speed
+        // REF: combat_formulas.md - weapon cooldown = attackSpeed stat
+        int cooldown = attacker.getStats().attackSpeed();
+        attacker.setWeaponCooldown(cooldown > 0 ? cooldown : attacker.getStats().speed());
 
         WeaponType weaponType = attacker.getStats().weaponType();
 
@@ -498,6 +501,18 @@ public class CombatSystem {
     private java.util.Set<Integer> getCompletedResearch(Unit unit) {
         if (researchSystem == null) return java.util.Set.of();
         return researchSystem.getCompletedResearch(EconomySystem.playerId(unit.getFaction()));
+    }
+
+    /**
+     * Get completed research set for a building's owner.
+     * Returns empty set if no research system is available.
+     *
+     * @param building the building
+     * @return set of completed research IDs
+     */
+    private java.util.Set<Integer> getCompletedResearchForBuilding(Building building) {
+        if (researchSystem == null) return java.util.Set.of();
+        return researchSystem.getCompletedResearch(EconomySystem.playerId(building.getFaction()));
     }
 
     /**

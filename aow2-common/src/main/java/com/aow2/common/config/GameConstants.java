@@ -22,9 +22,9 @@ public final class GameConstants {
     public static final int MAX_UNITS_PER_PLAYER = 50;
     // REF: MASTER_DOCUMENTATION.md Section 4 — 22 building slots per player
     public static final int MAX_BUILDINGS_PER_PLAYER = 22;
-    public static final int UNIT_SLOTS_PLAYER_0_START = 1;
-    // Units start after building slots (MAX_BUILDINGS_PER_PLAYER + 1)
-    public static final int UNIT_SLOTS_PLAYER_1_START = 23;
+    // Units start after building slots (2 players × MAX_BUILDINGS_PER_PLAYER)
+    public static final int UNIT_SLOTS_PLAYER_0_START = MAX_BUILDINGS_PER_PLAYER * 2;
+    public static final int UNIT_SLOTS_PLAYER_1_START = MAX_BUILDINGS_PER_PLAYER * 2 + MAX_UNITS_PER_PLAYER;
 
     // Combat
     public static final int ARMOR_DIVISOR = 10;

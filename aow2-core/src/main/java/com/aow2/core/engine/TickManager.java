@@ -46,8 +46,8 @@ public final class TickManager {
     /** The command processor for dispatching player commands. */
     private final CommandProcessor commandProcessor;
 
-    /** Pending commands to be processed on the next tick. */
-    private final java.util.concurrent.ConcurrentLinkedQueue<CommandType> pendingCommands;
+    /** Pending commands to be processed on the next tick. Uses a priority queue ordered by tick. */
+    private final java.util.concurrent.PriorityBlockingQueue<CommandType> pendingCommands;
 
     /** The fog of war system. */
     private FogOfWarSystem fogOfWar;
@@ -66,7 +66,8 @@ public final class TickManager {
      */
     public TickManager() {
         this.commandProcessor = new CommandProcessor();
-        this.pendingCommands = new java.util.concurrent.ConcurrentLinkedQueue<>();
+        this.pendingCommands = new java.util.concurrent.PriorityBlockingQueue<>(
+            64, java.util.Comparator.comparingLong(CommandType::tick));
     }
 
     /**
@@ -77,7 +78,8 @@ public final class TickManager {
      */
     public TickManager(CommandProcessor commandProcessor, FogOfWarSystem fogOfWar) {
         this.commandProcessor = commandProcessor;
-        this.pendingCommands = new java.util.concurrent.ConcurrentLinkedQueue<>();
+        this.pendingCommands = new java.util.concurrent.PriorityBlockingQueue<>(
+            64, java.util.Comparator.comparingLong(CommandType::tick));
         this.fogOfWar = fogOfWar;
     }
 
@@ -227,18 +229,19 @@ public final class TickManager {
                                  MovementSystem movement, CombatSystem combat,
                                  EconomySystem economy, ProductionSystem production,
                                  ResearchSystem research, BuildingPlacementSystem placement) {
+        // Drain all commands and separate into current-tick and future-tick lists
+        java.util.List<CommandType> futureCommands = new java.util.ArrayList<>();
         CommandType command;
         while ((command = pendingCommands.poll()) != null) {
-            // Only process commands for the current tick
             if (command.tick() <= state.currentTick()) {
                 commandProcessor.process(command, state, entities, map,
                     movement, combat, economy, production, research, placement);
             } else {
-                // Re-queue future commands
-                pendingCommands.add(command);
-                break; // Commands are ordered by tick
+                futureCommands.add(command);
             }
         }
+        // Re-add future commands back to the queue (ordered by tick via PriorityQueue)
+        pendingCommands.addAll(futureCommands);
     }
 
     /**

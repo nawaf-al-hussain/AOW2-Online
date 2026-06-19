@@ -1,21 +1,23 @@
 package com.aow2.common.model;
 
+import java.util.Collections;
+import java.util.List;
+
 /**
  * Represents a research/tech tree node in the technology tree.
- * There are 48 research IDs (0-47), with 8 base researches per faction
- * and asymmetric effects between Confederation and Resistance.
+ * There are 48 research IDs (0-47), with asymmetric effects between Confederation and Resistance.
  * REF: combat_formulas.md section "Research/Upgrade Effects" - 48 research IDs
  * REF: complete_unit_stats.json technologies section
  *
- * @param id              unique research identifier (0-47)
- * @param name            human-readable research name
- * @param faction         the faction that can research this node
- * @param description     lore/functional description
- * @param cost            credit cost to start this research
- * @param researchTime    ticks required to complete this research
- * @param prerequisiteId  ID of prerequisite research, or -1 if none
- * @param category        the research category branch
- * @param effect          the stat modification this research applies
+ * @param id               unique research identifier (0-47)
+ * @param name             human-readable research name
+ * @param faction          the faction that can research this node
+ * @param description      lore/functional description
+ * @param cost             credit cost to start this research
+ * @param researchTime     ticks required to complete this research
+ * @param prerequisites    list of prerequisite research IDs (anyOf semantics — any one satisfies the requirement), empty if none
+ * @param category         the research category branch
+ * @param effect           the stat modification this research applies
  */
 public record ResearchNode(
     int id,
@@ -24,7 +26,7 @@ public record ResearchNode(
     String description,
     int cost,
     int researchTime,
-    int prerequisiteId,
+    List<Integer> prerequisites,
     ResearchCategory category,
     ResearchEffect effect
 ) {
@@ -47,8 +49,13 @@ public record ResearchNode(
         if (researchTime < 0) {
             throw new IllegalArgumentException("researchTime must not be negative, got: " + researchTime);
         }
-        if (prerequisiteId < -1 || prerequisiteId > 47) {
-            throw new IllegalArgumentException("prerequisiteId must be -1 or 0-47, got: " + prerequisiteId);
+        if (prerequisites == null) {
+            prerequisites = List.of();
+        }
+        for (int p : prerequisites) {
+            if (p < -1 || p > 47) {
+                throw new IllegalArgumentException("prerequisite ID must be -1 or 0-47, got: " + p);
+            }
         }
         if (category == null) {
             throw new IllegalArgumentException("category must not be null");
@@ -56,14 +63,29 @@ public record ResearchNode(
         if (effect == null) {
             throw new IllegalArgumentException("effect must not be null");
         }
+        // Defensive copy
+        prerequisites = List.copyOf(prerequisites);
+        if (description == null) {
+            description = "";
+        }
     }
 
     /**
-     * Returns whether this research node has a prerequisite.
+     * Returns whether this research node has any prerequisites.
      *
-     * @return true if a prerequisite research is required
+     * @return true if at least one prerequisite research is required
      */
     public boolean hasPrerequisite() {
-        return prerequisiteId >= 0;
+        return !prerequisites.isEmpty();
+    }
+
+    /**
+     * Returns an unmodifiable view of the prerequisite IDs.
+     * Any one of these IDs being completed satisfies the requirement (anyOf semantics).
+     *
+     * @return list of prerequisite research IDs
+     */
+    public List<Integer> getPrerequisites() {
+        return prerequisites;
     }
 }

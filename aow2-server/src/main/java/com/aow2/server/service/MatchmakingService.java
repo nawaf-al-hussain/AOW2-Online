@@ -47,8 +47,30 @@ public class MatchmakingService {
 
     private final PlayerRepository playerRepository;
 
+    /** Callback for notifying matched players via WebSocket. */
+    private MatchNotificationCallback notificationCallback;
+
     /** Background scheduler for periodic matchmaking sweeps */
     private ScheduledExecutorService matchmakingScheduler;
+
+    /**
+     * Functional interface for match notification callbacks.
+     * Implementations should send WebSocket messages to matched players.
+     */
+    @FunctionalInterface
+    public interface MatchNotificationCallback {
+        void notifyMatched(Long player1Id, Long player2Id);
+    }
+
+    /**
+     * Sets the match notification callback.
+     * Called by LobbyWebSocketHandler after construction to wire up WebSocket notifications.
+     *
+     * @param callback the notification callback
+     */
+    public void setNotificationCallback(MatchNotificationCallback callback) {
+        this.notificationCallback = callback;
+    }
 
     /**
      * Constructs the MatchmakingService.
@@ -125,7 +147,10 @@ public class MatchmakingService {
                     matched.add(b.playerId);
                     log.info("Background match found: player {} (ELO:{}) vs player {} (ELO:{})",
                             a.playerId, a.eloRating, b.playerId, b.eloRating);
-                    // TODO: notify matched players via WebSocket
+                    // Notify matched players via WebSocket callback
+                    if (notificationCallback != null) {
+                        notificationCallback.notifyMatched(a.playerId, b.playerId);
+                    }
                     break;
                 }
             }

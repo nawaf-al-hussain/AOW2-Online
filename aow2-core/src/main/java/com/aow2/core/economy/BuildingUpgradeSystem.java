@@ -82,9 +82,9 @@ public final class BuildingUpgradeSystem {
         building.setUpgradeLevel(currentLevel + 1);
 
         // REF: building_stats.md — upgrade increases HP cap and production speed
-        // Increase HP by 20% per level (applied to maxHp)
-        int hpIncrease = (int)(building.getMaxHp() * 0.20);
-        building.setUpgradeMaxHpBonus(hpIncrease);
+        // Increase HP by 20% per level (applied to base maxHp), accumulated across levels
+        int hpIncrease = (int)(building.getStats().maxHp() * 0.20);
+        building.setUpgradeMaxHpBonus(building.getUpgradeMaxHpBonus() + hpIncrease);
         building.heal(hpIncrease); // Also heal the HP increase
 
         LOG.info("Building {} upgraded to level {} for {} credits (HP+{})",
