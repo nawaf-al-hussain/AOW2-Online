@@ -19,6 +19,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,7 +27,8 @@ import java.util.Map;
 /**
  * Integrated map editor accessible from main menu.
  * Allows creating and editing game maps with terrain painting,
- * building/unit placement, and starting position configuration.
+ * building/unit placement, starting position configuration,
+ * resource deposits, and AI config metadata.
  * <p>
  * REF: phases.md Phase 9 - Map Builder
  */
@@ -65,8 +67,23 @@ public final class MapEditor {
     /** Starting positions for each player. Key = playerId, Value = grid position. */
     private final Map<Integer, GridPosition> startingPositions;
 
+    /** Resource deposits placed on the map. */
+    private final List<ResourceDepositData> resourceDeposits;
+
+    /** AI difficulty setting for the map. */
+    private String aiDifficulty;
+
+    /** AI faction assignments. Key = playerId, Value = "ai" or "human". */
+    private Map<Integer, String> aiFactions;
+
     /** Map name for save/load. */
     private String mapName;
+
+    /**
+     * Resource deposit data: position on the map plus the type of resource.
+     * resourceType 0 = credits, 1 = special.
+     */
+    public record ResourceDepositData(int x, int y, int resourceType) {}
 
     /**
      * Editor tools available in the map editor.
@@ -76,7 +93,8 @@ public final class MapEditor {
         BUILDING_PLACE,
         UNIT_PLACE,
         ERASE,
-        STARTING_POSITION
+        STARTING_POSITION,
+        RESOURCE_DEPOSIT
     }
 
     /**
@@ -89,12 +107,18 @@ public final class MapEditor {
         this.selectedTerrain = TerrainType.GRASS;
         this.currentPlayerId = 0;
         this.startingPositions = new HashMap<>();
+        this.resourceDeposits = new ArrayList<>();
+        this.aiDifficulty = "normal";
+        this.aiFactions = new HashMap<>();
+        this.aiFactions.put(0, "human");
+        this.aiFactions.put(1, "ai");
         this.mapName = "Untitled";
     }
 
     /**
      * Creates a new map with the given dimensions.
      * Fills the map with GRASS terrain by default.
+     * Resets resource deposits and AI config to defaults.
      *
      * @param width  map width (1-127)
      * @param height map height (1-127)
@@ -103,6 +127,11 @@ public final class MapEditor {
         this.currentMap = new GameMap(width, height);
         this.entityManager = new EntityManager();
         this.startingPositions.clear();
+        this.resourceDeposits.clear();
+        this.aiDifficulty = "normal";
+        this.aiFactions = new HashMap<>();
+        this.aiFactions.put(0, "human");
+        this.aiFactions.put(1, "ai");
         this.mapName = "Untitled";
 
         tilePainter.setMap(currentMap);
@@ -174,6 +203,55 @@ public final class MapEditor {
         }
         startingPositions.put(playerId, pos);
         LOG.debug("Set starting position for player {} at ({},{})", playerId, pos.x(), pos.y());
+    }
+
+    /**
+     * Places a resource deposit at the given position.
+     * The terrain at the position must be RESOURCE_DEPOSIT or passable.
+     *
+     * @param x           the x coordinate on the grid
+     * @param y           the y coordinate on the grid
+     * @param resourceType the resource type (0 = credits, 1 = special)
+     * @return true if placement succeeded, false if out of bounds or invalid terrain
+     */
+    public boolean placeResourceDeposit(int x, int y, int resourceType) {
+        if (currentMap == null) {
+            LOG.warn("No map loaded; cannot place resource deposit");
+            return false;
+        }
+        if (!currentMap.isInBounds(x, y)) {
+            LOG.warn("Resource deposit position ({},{}) is out of bounds", x, y);
+            return false;
+        }
+        TerrainType terrain = currentMap.getTile(x, y);
+        if (terrain != TerrainType.RESOURCE_DEPOSIT && !currentMap.isPassable(x, y)) {
+            LOG.warn("Resource deposit position ({},{}) has impassable terrain: {}", x, y, terrain);
+            return false;
+        }
+
+        resourceDeposits.add(new ResourceDepositData(x, y, resourceType));
+        LOG.debug("Placed resource deposit at ({},{}) type={}", x, y, resourceType);
+        return true;
+    }
+
+    /**
+     * Returns an unmodifiable view of the resource deposits on the map.
+     *
+     * @return unmodifiable list of resource deposits
+     */
+    public List<ResourceDepositData> getResourceDeposits() {
+        return Collections.unmodifiableList(resourceDeposits);
+    }
+
+    /**
+     * Removes the resource deposit at the given position, if one exists.
+     *
+     * @param x the x coordinate
+     * @param y the y coordinate
+     * @return true if a deposit was found and removed, false otherwise
+     */
+    public boolean removeResourceDeposit(int x, int y) {
+        return resourceDeposits.removeIf(d -> d.x() == x && d.y() == y);
     }
 
     /**
@@ -352,7 +430,7 @@ public final class MapEditor {
     /**
      * Saves the map to a JSON file.
      * The JSON format includes map dimensions, terrain tiles, placed entities,
-     * and starting positions.
+     * starting positions, resource deposits, and AI configuration.
      *
      * @param filePath path to save the map file
      * @return true if save succeeded
@@ -416,12 +494,26 @@ public final class MapEditor {
                 data.startingPositions.add(sp);
             }
 
+            // Export resource deposits
+            data.resourceDeposits = new ArrayList<>();
+            for (ResourceDepositData rd : resourceDeposits) {
+                ResourceDepositExport rde = new ResourceDepositExport();
+                rde.x = rd.x();
+                rde.y = rd.y();
+                rde.resourceType = rd.resourceType();
+                data.resourceDeposits.add(rde);
+            }
+
+            // Export AI config
+            data.aiDifficulty = aiDifficulty;
+            data.aiFactions = new HashMap<>(aiFactions);
+
             String json = MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(data);
             Files.writeString(filePath, json, StandardCharsets.UTF_8);
 
-            LOG.info("Map saved to {} ({}x{}, {} buildings, {} units)",
+            LOG.info("Map saved to {} ({}x{}, {} buildings, {} units, {} resource deposits)",
                 filePath, data.width, data.height,
-                data.buildings.size(), data.units.size());
+                data.buildings.size(), data.units.size(), data.resourceDeposits.size());
             return true;
 
         } catch (IOException e) {
@@ -485,6 +577,21 @@ public final class MapEditor {
                 for (StartingPositionExport sp : data.startingPositions) {
                     setStartingPosition(sp.playerId, new GridPosition(sp.x, sp.y));
                 }
+            }
+
+            // Load resource deposits
+            if (data.resourceDeposits != null) {
+                for (ResourceDepositExport rde : data.resourceDeposits) {
+                    placeResourceDeposit(rde.x, rde.y, rde.resourceType);
+                }
+            }
+
+            // Load AI config
+            if (data.aiDifficulty != null) {
+                this.aiDifficulty = data.aiDifficulty;
+            }
+            if (data.aiFactions != null && !data.aiFactions.isEmpty()) {
+                this.aiFactions = new HashMap<>(data.aiFactions);
             }
 
             LOG.info("Map loaded from {} ({}x{})", filePath, data.width, data.height);
@@ -566,6 +673,22 @@ public final class MapEditor {
         this.mapName = mapName;
     }
 
+    public String getAiDifficulty() {
+        return aiDifficulty;
+    }
+
+    public void setAiDifficulty(String aiDifficulty) {
+        this.aiDifficulty = aiDifficulty;
+    }
+
+    public Map<Integer, String> getAiFactions() {
+        return Collections.unmodifiableMap(aiFactions);
+    }
+
+    public void setAiFactions(Map<Integer, String> aiFactions) {
+        this.aiFactions = new HashMap<>(aiFactions);
+    }
+
     // --- JSON Export DTOs ---
 
     /** DTO for map data export/import. */
@@ -584,6 +707,12 @@ public final class MapEditor {
         public List<EntityExport> units;
         @JsonProperty("starting_positions")
         public List<StartingPositionExport> startingPositions;
+        @JsonProperty("resource_deposits")
+        public List<ResourceDepositExport> resourceDeposits;
+        @JsonProperty("ai_difficulty")
+        public String aiDifficulty;
+        @JsonProperty("ai_factions")
+        public Map<Integer, String> aiFactions;
     }
 
     /** DTO for tile export. */
@@ -616,5 +745,15 @@ public final class MapEditor {
         public int x;
         @JsonProperty("y")
         public int y;
+    }
+
+    /** DTO for resource deposit export. */
+    static final class ResourceDepositExport {
+        @JsonProperty("x")
+        public int x;
+        @JsonProperty("y")
+        public int y;
+        @JsonProperty("resource_type")
+        public int resourceType;
     }
 }
