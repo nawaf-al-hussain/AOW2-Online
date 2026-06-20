@@ -31,6 +31,10 @@ public class CommandBuffer {
      * thread-safe concurrent adds from network thread and reads from game loop. */
     private final CopyOnWriteArrayList<CommandType>[] frames;
 
+    /** Per-frame flag tracking whether an opponent command was received.
+     * Used by the lockstep engine to detect disconnects. */
+    private final boolean[] opponentCommandPresent;
+
     /** The current write frame index */
     private int writeIndex;
 
@@ -57,6 +61,7 @@ public class CommandBuffer {
         this.inputDelay = inputDelay;
         this.bufferSize = bufferSize;
         this.frames = (CopyOnWriteArrayList<CommandType>[]) new CopyOnWriteArrayList[bufferSize];
+        this.opponentCommandPresent = new boolean[bufferSize];
         for (int i = 0; i < bufferSize; i++) {
             frames[i] = new CopyOnWriteArrayList<>();
         }
@@ -103,6 +108,7 @@ public class CommandBuffer {
         }
         // CopyOnWriteArrayList.add is thread-safe — no outer lock needed
         frames[targetFrame].add(command);
+        opponentCommandPresent[targetFrame] = true;
     }
 
     /**
@@ -114,12 +120,23 @@ public class CommandBuffer {
     public synchronized List<CommandType> drainFrame() {
         List<CommandType> commands = List.copyOf(frames[readIndex]);
         frames[readIndex].clear();
+        opponentCommandPresent[readIndex] = false;
 
         readIndex = (readIndex + 1) % bufferSize;
         // Note: writeIndex is NOT advanced here — it only advances in submitCommand()
         currentTick++;
 
         return commands;
+    }
+
+    /**
+     * Checks whether an opponent command exists in the current (read) frame slot.
+     * Used by the lockstep engine to track opponent connectivity.
+     *
+     * @return true if at least one opponent command was received for the current frame
+     */
+    public boolean hasOpponentCommandForCurrentFrame() {
+        return opponentCommandPresent[readIndex];
     }
 
     /**
@@ -160,6 +177,7 @@ public class CommandBuffer {
     public void reset() {
         for (int i = 0; i < bufferSize; i++) {
             frames[i].clear();
+            opponentCommandPresent[i] = false;
         }
         writeIndex = 0;
         readIndex = 0;

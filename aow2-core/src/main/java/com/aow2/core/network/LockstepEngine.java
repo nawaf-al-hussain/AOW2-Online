@@ -44,6 +44,10 @@ public final class LockstepEngine {
      *  Previously 30 ticks = 3 seconds, which was 5x too frequent. */
     private static final int DEFAULT_SYNC_INTERVAL = 150;
 
+    /** Number of consecutive frames without an opponent command before pausing.
+     * 140 ticks ≈ 14 seconds at 10 TPS. */
+    static final int DISCONNECT_TIMEOUT_TICKS = 140;
+
     /** Command buffer for managing frame-based command storage */
     private final CommandBuffer commandBuffer;
 
@@ -59,6 +63,12 @@ public final class LockstepEngine {
     /** Callback for desync notification */
     private Consumer<Long> desyncCallback;
 
+    /** Callback invoked when the engine pauses due to opponent disconnect */
+    private Runnable pauseCallback;
+
+    /** Callback invoked when the engine resumes after reconnection */
+    private Runnable resumeCallback;
+
     /** Game systems needed for command routing */
     private GameMap gameMap;
     private MovementSystem movementSystem;
@@ -73,6 +83,18 @@ public final class LockstepEngine {
 
     /** Frame counter for the current lockstep frame */
     private long lockstepFrame;
+
+    /** Whether the engine is paused due to opponent disconnect */
+    private boolean paused;
+
+    /** The frame at which the engine was paused */
+    private long pausedAtFrame;
+
+    /** Count of consecutive frames with no opponent command received */
+    private int opponentMissedFrames;
+
+    /** The tick of the last opponent command received */
+    private long lastOpponentCommandTick;
 
     /**
      * Constructs a LockstepEngine with default parameters.
@@ -94,6 +116,10 @@ public final class LockstepEngine {
         this.commandProcessor = new CommandProcessor();
         this.running = false;
         this.lockstepFrame = 0;
+        this.paused = false;
+        this.pausedAtFrame = 0;
+        this.opponentMissedFrames = 0;
+        this.lastOpponentCommandTick = 0;
     }
 
     /**
@@ -155,6 +181,7 @@ public final class LockstepEngine {
 
         CommandType command = CommandSerializer.deserialize(data);
         commandBuffer.submitOpponentCommand(command, command.tick());
+        lastOpponentCommandTick = command.tick();
     }
 
     /**
@@ -174,8 +201,26 @@ public final class LockstepEngine {
             return List.of();
         }
 
+        // If paused due to opponent disconnect, do not advance
+        if (paused) {
+            log.debug("Engine paused at frame {}, waiting for opponent reconnection", pausedAtFrame);
+            return List.of();
+        }
+
         // Drain commands for the current frame
         List<CommandType> commands = commandBuffer.drainFrame();
+
+        // Track consecutive frames without opponent commands
+        if (lockstepFrame - lastOpponentCommandTick > DISCONNECT_TIMEOUT_TICKS) {
+            paused = true;
+            pausedAtFrame = lockstepFrame;
+            log.warn("Opponent disconnected: no commands received for {} frames (paused at frame {})",
+                    DISCONNECT_TIMEOUT_TICKS, pausedAtFrame);
+            if (pauseCallback != null) {
+                pauseCallback.run();
+            }
+            return List.of();
+        }
 
         // Apply commands to game state
         for (CommandType command : commands) {
@@ -219,6 +264,56 @@ public final class LockstepEngine {
      */
     public void setDesyncCallback(Consumer<Long> callback) {
         this.desyncCallback = callback;
+    }
+
+    /**
+     * Reconnects to the opponent with a new send callback.
+     * If the engine is currently paused due to a disconnect, it will resume.
+     * Resets missed frame tracking and logs the reconnection.
+     *
+     * @param newSendCallback the new callback for sending commands to the opponent
+     */
+    public void reconnect(Consumer<byte[]> newSendCallback) {
+        if (!running) {
+            log.warn("Cannot reconnect: engine not running");
+            return;
+        }
+
+        this.sendCallback = newSendCallback;
+        boolean wasPaused = paused;
+        paused = false;
+        opponentMissedFrames = 0;
+        log.info("Opponent reconnected at frame {} (wasPaused={})", lockstepFrame, wasPaused);
+        if (wasPaused && resumeCallback != null) {
+            resumeCallback.run();
+        }
+    }
+
+    /**
+     * Sets the callback invoked when the engine pauses due to opponent disconnect.
+     *
+     * @param callback the pause callback
+     */
+    public void setPauseCallback(Runnable callback) {
+        this.pauseCallback = callback;
+    }
+
+    /**
+     * Sets the callback invoked when the engine resumes after reconnection.
+     *
+     * @param callback the resume callback
+     */
+    public void setResumeCallback(Runnable callback) {
+        this.resumeCallback = callback;
+    }
+
+    /**
+     * Returns whether the engine is currently paused due to opponent disconnect.
+     *
+     * @return true if paused
+     */
+    public boolean isPaused() {
+        return paused;
     }
 
     /**
@@ -420,7 +515,13 @@ public final class LockstepEngine {
         syncChecker.reset();
         running = false;
         lockstepFrame = 0;
+        paused = false;
+        pausedAtFrame = 0;
+        opponentMissedFrames = 0;
+        lastOpponentCommandTick = 0;
         sendCallback = null;
         desyncCallback = null;
+        pauseCallback = null;
+        resumeCallback = null;
     }
 }
