@@ -3,6 +3,7 @@ package com.aow2.client.input;
 import com.aow2.client.render.CameraController;
 import com.aow2.client.render.IsometricRenderer;
 
+import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
@@ -10,6 +11,11 @@ import javafx.scene.input.ScrollEvent;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Processes all mouse and keyboard input for the game.
@@ -44,6 +50,9 @@ public class InputHandler {
 
     /** Current command mode. */
     private CommandMode commandMode;
+
+    /** FIX (L-NEW-17): Control groups (Ctrl+1-9 assign, 1-9 recall). LinkedHashMap for determinism. */
+    private final Map<Integer, List<Integer>> controlGroups = new LinkedHashMap<>();
 
     /** Callback for command execution. */
     private CommandCallback commandCallback;
@@ -259,6 +268,45 @@ public class InputHandler {
                 } else {
                     selectionManager.clearSelection();
                     LOG.debug("Selection cleared");
+                }
+            }
+            // FIX (L-NEW-17): Control groups — Ctrl+Digit1-9 assign, Digit1-9/0 recall
+            case DIGIT1, DIGIT2, DIGIT3, DIGIT4, DIGIT5,
+                 DIGIT6, DIGIT7, DIGIT8, DIGIT9, DIGIT0 -> {
+                int groupNumber = switch (event.getCode()) {
+                    case DIGIT1 -> 1;
+                    case DIGIT2 -> 2;
+                    case DIGIT3 -> 3;
+                    case DIGIT4 -> 4;
+                    case DIGIT5 -> 5;
+                    case DIGIT6 -> 6;
+                    case DIGIT7 -> 7;
+                    case DIGIT8 -> 8;
+                    case DIGIT9 -> 9;
+                    case DIGIT0 -> 0;
+                    default -> -1;
+                };
+                if (groupNumber < 0) break;
+                if (event.isControlDown() || event.isMetaDown()) {
+                    // Assign current selection to control group
+                    List<Integer> selectedIds = new ArrayList<>(selectionManager.getSelectedIds());
+                    if (!selectedIds.isEmpty()) {
+                        controlGroups.put(groupNumber, selectedIds);
+                        LOG.debug("Control group {} assigned: {} units", groupNumber, selectedIds.size());
+                    }
+                } else {
+                    // Recall control group
+                    List<Integer> groupIds = controlGroups.get(groupNumber);
+                    if (groupIds != null && !groupIds.isEmpty()) {
+                        selectionManager.clearSelection();
+                        // NOTE: SelectionManager does not yet have selectUnitsByIds(List<Integer>);
+                        // This requires adding that method to SelectionManager for full functionality.
+                        for (int id : groupIds) {
+                            // TODO (L-NEW-17): Call selectionManager.selectUnitsByIds(groupIds) once available
+                            LOG.debug("Control group {} recalled: {} units (selection API pending)",
+                                groupNumber, groupIds.size());
+                        }
+                    }
                 }
             }
             default -> { /* unhandled key */ }

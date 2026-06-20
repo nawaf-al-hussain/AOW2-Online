@@ -41,6 +41,9 @@ public class LobbyWebSocketHandler extends TextWebSocketHandler {
     /** Tracks which players have signaled ready, keyed by session UUID */
     private final Map<String, Set<String>> readyPlayers = new ConcurrentHashMap<>();
 
+    /** Tracks map vetoes per session, keyed by session UUID. Value is the set of vetoed map names. */
+    private final Map<String, Set<String>> mapVetoes = new ConcurrentHashMap<>();
+
     /** Scheduled executor for cleaning up stale readyPlayers entries. */
     private final java.util.concurrent.ScheduledExecutorService readyCleanupExecutor =
             java.util.concurrent.Executors.newSingleThreadScheduledExecutor(r -> {
@@ -246,15 +249,39 @@ public class LobbyWebSocketHandler extends TextWebSocketHandler {
             return;
         }
 
-        String mapName = payload.has("mapName") ? payload.get("mapName").asText() : "<unknown>";
-        log.info("Player {} vetoed map '{}' (map_veto phase — full veto UI is a future enhancement)",
-                playerId, mapName);
+        String mapName = payload.has("mapName") ? payload.get("mapName").asText() : null;
+        if (mapName == null || mapName.isBlank()) {
+            sendError(session, "mapName is required");
+            return;
+        }
+
+        // Look up the player's current session to key the veto
+        var gameSession = sessionService.getSessionForPlayer(playerId);
+        if (gameSession.isEmpty()) {
+            sendError(session, "No active session");
+            return;
+        }
+
+        String sessionUuid = gameSession.get().getSessionUuid();
+        mapVetoes.computeIfAbsent(sessionUuid, k -> ConcurrentHashMap.newKeySet()).add(mapName);
+        log.info("Player {} vetoed map '{}' for session {}", playerId, mapName, sessionUuid);
         sendMessage(session, Map.of(
                 "type", "map_veto_ack",
                 "playerId", playerId,
                 "vetoedMap", mapName,
-                "message", "Veto recorded. Full map veto system coming soon."
+                "sessionUuid", sessionUuid,
+                "message", "Veto recorded."
         ));
+    }
+
+    /**
+     * Gets the set of vetoed map names for a given session.
+     *
+     * @param sessionUuid the session UUID
+     * @return unmodifiable set of vetoed map names, or empty set if no vetoes exist
+     */
+    public Set<String> getMapVetoes(String sessionUuid) {
+        return Set.copyOf(mapVetoes.getOrDefault(sessionUuid, Set.of()));
     }
 
     /**

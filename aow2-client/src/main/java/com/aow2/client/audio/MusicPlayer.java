@@ -10,6 +10,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * Background music player with playlist support and crossfading.
@@ -41,6 +42,12 @@ public final class MusicPlayer {
 
     /** Whether to shuffle the playlist. */
     private boolean shuffle;
+
+    /** FIX (L-NEW-13): Pre-computed shuffle order (Fisher-Yates) for no-repeat playback. */
+    private List<Integer> shuffledOrder = new ArrayList<>();
+
+    /** FIX (L-NEW-13): Current position in the shuffled order list. */
+    private int shuffleIndex;
 
     /** Whether playback is currently active. */
     private boolean playing;
@@ -95,6 +102,8 @@ public final class MusicPlayer {
         stop();
         playlist.clear();
         currentTrackIndex = -1;
+        shuffledOrder.clear();
+        shuffleIndex = 0;
         LOG.debug("Playlist cleared");
     }
 
@@ -183,12 +192,37 @@ public final class MusicPlayer {
 
     /**
      * Set whether to shuffle the playlist.
+     * When enabling shuffle, a new Fisher-Yates shuffle order is generated.
      *
      * @param shuffle true to enable shuffle
      */
     public void setShuffle(boolean shuffle) {
         this.shuffle = shuffle;
+        if (shuffle && !playlist.isEmpty()) {
+            reshufflePlaylist();
+        }
         LOG.debug("Shuffle {}", shuffle ? "enabled" : "disabled");
+    }
+
+    /**
+     * FIX (L-NEW-13): Generates a new shuffle order using the Fisher-Yates algorithm.
+     * Ensures every track plays exactly once before any track repeats.
+     */
+    private void reshufflePlaylist() {
+        shuffledOrder.clear();
+        for (int i = 0; i < playlist.size(); i++) {
+            shuffledOrder.add(i);
+        }
+        // Fisher-Yates shuffle with ThreadLocalRandom (better than Math.random)
+        ThreadLocalRandom rng = ThreadLocalRandom.current();
+        for (int i = shuffledOrder.size() - 1; i > 0; i--) {
+            int j = rng.nextInt(i + 1);
+            int tmp = shuffledOrder.get(i);
+            shuffledOrder.set(i, shuffledOrder.get(j));
+            shuffledOrder.set(j, tmp);
+        }
+        shuffleIndex = 0;
+        LOG.debug("Playlist reshuffled ({} tracks)", shuffledOrder.size());
     }
 
     /**
@@ -313,6 +347,7 @@ public final class MusicPlayer {
     /**
      * Called when the current track finishes playing.
      * Automatically advances to the next track.
+     * FIX (L-NEW-13): Uses Fisher-Yates pre-computed shuffle order instead of Math.random().
      */
     private void onTrackEnd() {
         if (!playing) {
@@ -320,7 +355,11 @@ public final class MusicPlayer {
         }
 
         if (shuffle) {
-            currentTrackIndex = (int) (Math.random() * playlist.size());
+            if (shuffledOrder.isEmpty() || shuffleIndex >= shuffledOrder.size()) {
+                reshufflePlaylist();
+            }
+            currentTrackIndex = shuffledOrder.get(shuffleIndex);
+            shuffleIndex++;
         } else {
             currentTrackIndex = (currentTrackIndex + 1) % playlist.size();
         }

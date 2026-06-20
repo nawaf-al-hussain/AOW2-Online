@@ -1,5 +1,7 @@
 package com.aow2.common.model;
 
+import java.time.Instant;
+
 /**
  * Immutable record for chat message transfer between server and client.
  * Used as the DTO for chat messages in REST and WebSocket communication.
@@ -8,12 +10,12 @@ package com.aow2.common.model;
  * @param matchId   the match/session UUID this message belongs to
  * @param playerId  the player ID who sent the message
  * @param message   the chat message content
- * @param timestamp the epoch millis when the message was sent
+ * @param timestamp the instant when the message was sent
  */
 public record ChatMessageRecord(
         String matchId,
-        int playerId,
+        long playerId,
         String message,
-        long timestamp
+        Instant timestamp
 ) {
 }

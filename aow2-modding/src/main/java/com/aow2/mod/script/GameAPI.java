@@ -231,11 +231,9 @@ public final class GameAPI {
     }
 
     // --- Event Hooks ---
-    // NOTE (H-26): Event hooks are registered here but never actually fired. The
-    // core event system (e.g., ModEventBridge, GameState events) does not call back
-    // into GameAPI.getEventHooks() to dispatch to Lua. To fix, integrate with the
-    // event pipeline so that when events like UnitKilled or BuildingDestroyed occur,
-    // the corresponding Lua callbacks registered here are invoked via LuaEngine.
+    // FIX (M-NEW-13): Event hooks are now dispatched via fireEvent() and the
+    // EventDispatcher functional interface. Combat systems call fireEvent()
+    // which delegates to the configured dispatcher (typically LuaEngine).
 
     /**
      * Registers a callback for the unit killed event.
@@ -330,6 +328,58 @@ public final class GameAPI {
             case "resistance", "rebel", "player1" -> Faction.RESISTANCE;
             default -> throw new IllegalArgumentException("Unknown faction: " + faction);
         };
+    }
+
+    /**
+     * Functional interface for dispatching events to Lua scripts.
+     * Allows the combat system to fire events without directly depending on LuaEngine.
+     */
+    @FunctionalInterface
+    public interface EventDispatcher {
+        /**
+         * Dispatches a Lua event callback.
+         *
+         * @param callbackName the Lua function name registered via onUnitKilled / onBuildingDestroyed etc.
+         * @param args         arguments to pass to the Lua function
+         */
+        void dispatch(String callbackName, Object... args);
+    }
+
+    /** The event dispatcher used to invoke Lua callbacks. */
+    private static EventDispatcher eventDispatcher;
+
+    /**
+     * Sets the event dispatcher used to invoke registered Lua callbacks.
+     * Typically set to a lambda that calls LuaEngine.callFunction().
+     *
+     * @param dispatcher the dispatcher implementation
+     */
+    public static void setEventDispatcher(EventDispatcher dispatcher) {
+        eventDispatcher = dispatcher;
+    }
+
+    /**
+     * Fires a registered event hook by looking up the callback name and invoking
+     * it via the configured EventDispatcher.
+     *
+     * @param eventType the event type key (e.g., "unitKilled", "buildingDestroyed")
+     * @param args       arguments to pass to the Lua callback
+     */
+    public static void fireEvent(String eventType, Object... args) {
+        String callbackName = eventHooks.get(eventType);
+        if (callbackName == null) {
+            return;
+        }
+        if (eventDispatcher != null) {
+            try {
+                eventDispatcher.dispatch(callbackName, args);
+                LOG.debug("Fired event hook: {} -> {}", eventType, callbackName);
+            } catch (Exception e) {
+                LOG.error("Failed to fire event hook: {} -> {}", eventType, callbackName, e);
+            }
+        } else {
+            LOG.warn("Event hook '{}' registered but no EventDispatcher configured", eventType);
+        }
     }
 
     /**

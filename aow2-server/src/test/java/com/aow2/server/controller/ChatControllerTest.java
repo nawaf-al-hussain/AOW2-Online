@@ -46,7 +46,7 @@ class ChatControllerTest {
     void sendMessageSuccess() {
         when(authentication.getPrincipal()).thenReturn(1L);
 
-        ChatMessage saved = new ChatMessage("match-uuid-1", 1, "hello");
+        ChatMessage saved = new ChatMessage("match-uuid-1", 1L, "hello");
         saved.setId(1L);
         saved.setTimestamp(Instant.now());
         when(chatMessageRepository.save(any(ChatMessage.class))).thenReturn(saved);
@@ -107,9 +107,9 @@ class ChatControllerTest {
     @Test
     @DisplayName("Get chat history returns messages for match")
     void getChatHistory() {
-        ChatMessage msg1 = new ChatMessage("match-uuid-1", 1, "hello");
+        ChatMessage msg1 = new ChatMessage("match-uuid-1", 1L, "hello");
         msg1.setTimestamp(Instant.now().minusSeconds(10));
-        ChatMessage msg2 = new ChatMessage("match-uuid-1", 2, "hi there");
+        ChatMessage msg2 = new ChatMessage("match-uuid-1", 2L, "hi there");
         msg2.setTimestamp(Instant.now());
 
         when(chatMessageRepository.findByMatchIdOrderByTimestampAsc("match-uuid-1"))

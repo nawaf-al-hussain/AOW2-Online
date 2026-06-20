@@ -177,6 +177,12 @@ public final class EntityPlacer {
     /**
      * Removes an entity at the given position.
      * Checks both units and buildings.
+     * <p>
+     * NOTE: EntityManager has no removeUnit/removeBuilding methods — it only cleans up
+     * dead entities via removeDeadEntities() on tick cleanup. Since the editor does not
+     * run a game tick loop, takeDamage is used to mark entities as dead so they are
+     * invisible to spatial queries, and removeDeadEntities() is called immediately
+     * to purge them from the maps.
      *
      * @param pos the position to erase
      * @return true if an entity was removed
@@ -186,16 +192,17 @@ public final class EntityPlacer {
             return false;
         }
 
-        // ASSUMPTION: remove by setting HP to -1; cleanup handled by EntityManager.removeDeadEntities()
         Unit unit = entityManager.findUnitAt(pos);
         if (unit != null) {
             unit.takeDamage(unit.getHp() + 1);
+            entityManager.removeDeadEntities();
             return true;
         }
 
         Building building = entityManager.findBuildingAt(pos);
         if (building != null) {
             building.takeDamage(building.getHp() + 1);
+            entityManager.removeDeadEntities();
             return true;
         }
 

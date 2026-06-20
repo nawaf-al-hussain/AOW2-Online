@@ -1,4 +1,7 @@
 {
+  "_deprecated": true,
+  "_comment": "DEPRECATED: This file is NOT loaded at runtime. The authoritative source of truth for all unit stats is StatsRegistry.java (aow2-common). This file is retained for reference only. Do NOT use this file for any runtime logic. Note: This data may be outdated — new unit types (Light Assault, Heavy Assault) are not included here.",
+  "_source_of_truth": "com.aow2.common.config.StatsRegistry",
   "version": 2,
   "units": [
     {

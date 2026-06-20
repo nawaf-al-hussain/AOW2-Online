@@ -10,6 +10,7 @@ import { getLeaderboard } from "@/lib/api";
 
 export function LeaderboardTab() {
   const [players, setPlayers] = useState<any[]>([]);
+  const [isDemo, setIsDemo] = useState(true);
   const [loading, setLoading] = useState(true);
 
   // Demo data for when server is offline
@@ -33,7 +34,10 @@ export function LeaderboardTab() {
 
   useEffect(() => {
     getLeaderboard()
-      .then(setPlayers)
+      .then((data) => {
+        setPlayers(data);
+        setIsDemo(false);
+      })
       .catch(() => setPlayers(demoPlayers))
       .finally(() => setLoading(false));
   }, []);
@@ -56,6 +60,7 @@ export function LeaderboardTab() {
 
   return (
     <div className="space-y-4">
+      {isDemo && <div className="text-xs text-amber-500 bg-amber-900/20 border border-amber-800/30 rounded px-3 py-1 mb-3">Demo Data — Server unavailable</div>}
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold flex items-center gap-2">
           <Trophy className="h-6 w-6 text-amber-500" />

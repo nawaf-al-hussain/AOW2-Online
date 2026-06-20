@@ -210,7 +210,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         }
 
         // Persist the message
-        ChatMessage chatMessage = new ChatMessage(matchId, playerId.intValue(), message);
+        ChatMessage chatMessage = new ChatMessage(matchId, playerId, message);
         chatMessageRepository.save(chatMessage);
 
         // Broadcast to all participants in the match

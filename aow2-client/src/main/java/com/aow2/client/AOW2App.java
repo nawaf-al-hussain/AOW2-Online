@@ -6,12 +6,12 @@ import com.aow2.client.scene.MainMenuScene;
 import com.aow2.client.scene.MapEditorScene;
 import com.aow2.client.scene.ModManagerScene;
 import com.aow2.client.scene.MultiplayerLobbyScene;
+import com.aow2.client.scene.SettingsScene;
 
 import com.almasb.fxgl.app.GameApplication;
 import com.almasb.fxgl.app.GameSettings;
 import com.almasb.fxgl.dsl.FXGL;
 
-import javafx.scene.control.Alert;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 
@@ -52,6 +52,9 @@ public class AOW2App extends GameApplication {
     /** Campaign scene. */
     private CampaignScene campaignScene;
 
+    /** Settings scene. */
+    private SettingsScene settingsScene;
+
     /** Current active scene state. */
     private ActiveScene activeScene;
 
@@ -59,7 +62,7 @@ public class AOW2App extends GameApplication {
      * Enum representing which scene is currently active.
      */
     private enum ActiveScene {
-        MAIN_MENU, GAME, MAP_EDITOR, MULTIPLAYER_LOBBY, MOD_MANAGER, CAMPAIGN
+        MAIN_MENU, GAME, MAP_EDITOR, MULTIPLAYER_LOBBY, MOD_MANAGER, CAMPAIGN, SETTINGS
     }
 
     @Override
@@ -214,6 +217,26 @@ public class AOW2App extends GameApplication {
     }
 
     /**
+     * Shows the settings scene.
+     * FIX (L-NEW-10): Replaces blocking Alert dialog with proper scene.
+     */
+    private void showSettings() {
+        if (settingsScene != null) {
+            FXGL.getGameScene().clearUINodes();
+            settingsScene = null;
+        }
+
+        settingsScene = new SettingsScene();
+        settingsScene.setCallback(this::showMainMenu);
+
+        FXGL.getGameScene().clearUINodes();
+        FXGL.getGameScene().addUINode(settingsScene.getRoot());
+
+        activeScene = ActiveScene.SETTINGS;
+        LOG.info("Settings scene displayed");
+    }
+
+    /**
      * Handles menu actions from the main menu.
      *
      * @param action the action string from MainMenuScene
@@ -243,13 +266,8 @@ public class AOW2App extends GameApplication {
                 showModManager();
             }
             case "settings" -> {
-                LOG.info("Settings scene requested — under construction");
-                Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                alert.setTitle("Settings");
-                alert.setHeaderText("Settings Scene Under Construction");
-                alert.setContentText("The settings menu is not yet implemented. "
-                    + "You will be able to adjust graphics, audio, controls, and gameplay options here.");
-                alert.showAndWait();
+                LOG.info("Opening Settings");
+                showSettings();
             }
             case "quit" -> {
                 LOG.info("Quit requested");

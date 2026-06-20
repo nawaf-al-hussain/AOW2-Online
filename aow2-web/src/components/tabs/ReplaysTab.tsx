@@ -1,9 +1,15 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import { Play, Clock, SwordsIcon } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 export function ReplaysTab() {
+  const [isDemo, setIsDemo] = useState(true);
+  const [replays, setReplays] = useState<any[]>([]);
+
   const demoReplays = [
     { id: 1, player1: "IronCommander", player2: "SteelBlade", winner: "IronCommander", mapName: "Crossroads", duration: "23:45", playedAt: "2 hours ago" },
     { id: 2, player1: "WarEagle", player2: "TacticalNuke", winner: "TacticalNuke", mapName: "Valley of Death", duration: "31:12", playedAt: "4 hours ago" },
@@ -13,8 +19,23 @@ export function ReplaysTab() {
     { id: 6, player1: "IronCommander", player2: "WarEagle", winner: "IronCommander", mapName: "Mountain Pass", duration: "35:17", playedAt: "1 day ago" },
   ];
 
+  useEffect(() => {
+    fetch('/api/replays')
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setReplays(data);
+          setIsDemo(false);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const displayData = replays.length > 0 ? replays : demoReplays;
+
   return (
     <div className="space-y-4">
+      {isDemo && <div className="text-xs text-amber-500 bg-amber-900/20 border border-amber-800/30 rounded px-3 py-1 mb-3">Demo Data — Server unavailable</div>}
       <h2 className="text-2xl font-bold flex items-center gap-2">
         <Play className="h-6 w-6 text-cyan-500" />
         Recent Replays
@@ -23,7 +44,7 @@ export function ReplaysTab() {
       <Card className="bg-[#111827] border-zinc-800">
         <CardContent className="p-0">
           <div className="divide-y divide-zinc-800/50">
-            {demoReplays.map((r) => (
+            {displayData.map((r) => (
               <div key={r.id} className="flex items-center gap-4 px-4 py-3 hover:bg-zinc-800/30 transition-colors">
                 <div className="flex items-center gap-2 flex-1 min-w-0">
                   <span className={`font-semibold ${r.winner === r.player1 ? "text-green-400" : "text-zinc-400"}`}>

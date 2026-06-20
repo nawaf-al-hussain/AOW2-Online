@@ -26,7 +26,7 @@ public class ChatMessage {
     private String matchId;
 
     @Column(name = "player_id", nullable = false)
-    private int playerId;
+    private Long playerId;
 
     @Column(name = "message", nullable = false, length = 500)
     private String message;
@@ -48,7 +48,7 @@ public class ChatMessage {
      * @param playerId the player ID who sent the message
      * @param message  the chat message content
      */
-    public ChatMessage(String matchId, int playerId, String message) {
+    public ChatMessage(String matchId, Long playerId, String message) {
         this.matchId = matchId;
         this.playerId = playerId;
         this.message = message;
@@ -61,8 +61,8 @@ public class ChatMessage {
     public String getMatchId() { return matchId; }
     public void setMatchId(String matchId) { this.matchId = matchId; }
 
-    public int getPlayerId() { return playerId; }
-    public void setPlayerId(int playerId) { this.playerId = playerId; }
+    public Long getPlayerId() { return playerId; }
+    public void setPlayerId(Long playerId) { this.playerId = playerId; }
 
     public String getMessage() { return message; }
     public void setMessage(String message) { this.message = message; }

@@ -11,6 +11,7 @@ import { useAuthStore, useChatStore } from "@/lib/store";
 export function ChatTab() {
   const { messages, addMessage } = useChatStore();
   const [input, setInput] = useState("");
+  const [isDemo, setIsDemo] = useState(true);
   const { username, isLoggedIn } = useAuthStore();
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -23,7 +24,7 @@ export function ChatTab() {
     { id: "5", player: "GhostRecon", message: "Confed or Rebel? I prefer Rebel for the speed advantage", timestamp: Date.now() - 60000 },
   ];
 
-  const allMessages = messages.length > 0 ? messages : demoMessages;
+  const allMessages = messages.length > 0 ? (() => { setIsDemo(false); return messages; })() : demoMessages;
 
   const sendMessage = () => {
     if (!input.trim() || !isLoggedIn) return;
@@ -44,6 +45,7 @@ export function ChatTab() {
 
   return (
     <div className="space-y-4 h-full flex flex-col">
+      {isDemo && <div className="text-xs text-amber-500 bg-amber-900/20 border border-amber-800/30 rounded px-3 py-1 mb-3">Demo Data — Server unavailable</div>}
       <h2 className="text-2xl font-bold flex items-center gap-2">
         <MessageSquare className="h-6 w-6 text-purple-500" />
         Lobby Chat

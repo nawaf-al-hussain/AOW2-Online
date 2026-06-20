@@ -15,6 +15,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.prefs.Preferences;
+import java.util.Set;
 
 /**
  * Accessibility settings for the game client.
@@ -89,6 +91,9 @@ public final class AccessibilitySettings {
     /** The settings panel UI. */
     private final VBox settingsPanel;
 
+    /** Preferences node for persisting settings. */
+    private final Preferences prefs;
+
     /**
      * Constructs AccessibilitySettings with defaults.
      */
@@ -99,10 +104,12 @@ public final class AccessibilitySettings {
         this.screenShakeEnabled = true;
         this.reducedMotion = false;
         this.keyBindings = new HashMap<>(DEFAULT_BINDINGS);
+        this.prefs = Preferences.userNodeForPackage(AccessibilitySettings.class);
         this.settingsPanel = new VBox();
 
+        loadKeyBindings();
         buildUI();
-        LOG.info("AccessibilitySettings initialized");
+        LOG.info("AccessibilitySettings initialized (key bindings loaded from preferences)");
     }
 
     /**
@@ -235,16 +242,35 @@ public final class AccessibilitySettings {
                     // Ignore pure modifier presses (Shift, Ctrl, Alt, Meta)
                     return;
                 } else {
-                    // Apply the new binding
-                    String keyName = code.isLetterKey() || code.isDigitKey()
+                    // FIX (M-NEW-24): Capture modifier keys (Ctrl, Shift, Alt) in binding string
+                    StringBuilder keyName = new StringBuilder();
+                    if (ke.isControlDown()) keyName.append("CTRL+");
+                    if (ke.isShiftDown()) keyName.append("SHIFT+");
+                    if (ke.isAltDown()) keyName.append("ALT+");
+                    keyName.append(code.isLetterKey() || code.isDigitKey()
                         ? code.getName()
-                        : code.toString().replace("KEY_CODE:", "");
-                    keyBindings.put(entry.getKey(), keyName);
-                    keyDisplay.setText(keyName);
+                        : code.toString().replace("KEY_CODE:", ""));
+                    String binding = keyName.toString();
+
+                    // Duplicate binding detection: check if any other action already uses this binding
+                    for (var existing : keyBindings.entrySet()) {
+                        if (!existing.getKey().equals(entry.getKey())
+                                && existing.getValue().equals(binding)) {
+                            LOG.warn("Duplicate key binding detected: '{}' is already bound to action '{}'. "
+                                    + "Rebinding from '{}' to '{}'.",
+                                    binding, existing.getKey(), existing.getKey(), entry.getKey());
+                            // Clear the old binding so only one action is bound to this key
+                            keyBindings.put(existing.getKey(), null);
+                        }
+                    }
+
+                    keyBindings.put(entry.getKey(), binding);
+                    keyDisplay.setText(binding);
                     keyDisplay.setStyle("-fx-text-fill: rgb(210, 200, 160); "
                         + "-fx-background-color: rgb(40, 45, 35); -fx-padding: 3 8 3 8; "
                         + "-fx-border-color: rgb(100, 110, 70); -fx-border-width: 1;");
-                    LOG.info("Key binding changed: {} -> {}", entry.getKey(), keyName);
+                    LOG.info("Key binding changed: {} -> {}", entry.getKey(), binding);
+                    saveKeyBindings();
                 }
                 ke.consume();
             });
@@ -330,7 +356,46 @@ public final class AccessibilitySettings {
     public void resetKeyBindings() {
         keyBindings.clear();
         keyBindings.putAll(DEFAULT_BINDINGS);
+        saveKeyBindings();
         LOG.info("Key bindings reset to defaults");
+    }
+
+    /**
+     * Loads key bindings from java.util.prefs.Preferences.
+     * FIX (L-NEW-11): Persists key bindings across sessions.
+     */
+    private void loadKeyBindings() {
+        try {
+            for (String action : DEFAULT_BINDINGS.keySet()) {
+                String stored = prefs.get("keyBinding." + action, null);
+                if (stored != null) {
+                    keyBindings.put(action, stored);
+                }
+            }
+            LOG.debug("Key bindings loaded from preferences: {} entries", keyBindings.size());
+        } catch (Exception e) {
+            LOG.warn("Failed to load key bindings from preferences, using defaults", e);
+        }
+    }
+
+    /**
+     * Saves current key bindings to java.util.prefs.Preferences.
+     * FIX (L-NEW-11): Persists key bindings across sessions.
+     */
+    private void saveKeyBindings() {
+        try {
+            for (var entry : keyBindings.entrySet()) {
+                if (entry.getValue() != null) {
+                    prefs.put("keyBinding." + entry.getKey(), entry.getValue());
+                } else {
+                    prefs.remove("keyBinding." + entry.getKey());
+                }
+            }
+            prefs.flush();
+            LOG.debug("Key bindings saved to preferences");
+        } catch (Exception e) {
+            LOG.warn("Failed to save key bindings to preferences", e);
+        }
     }
 
     /**

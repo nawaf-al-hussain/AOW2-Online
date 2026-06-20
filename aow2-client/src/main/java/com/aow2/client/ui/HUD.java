@@ -9,6 +9,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.input.MouseButton;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
@@ -63,8 +64,11 @@ public class HUD {
     private Label selectionInfoLabel;
     private Label selectionExtraLabel;
 
-    /** Production queue labels. */
+    /** Production queue labels — clickable for cancel. */
     private final Label[] productionSlots;
+
+    /** The building ID whose production queue is currently displayed. */
+    private int displayedBuildingId = -1;
 
     /** Action buttons. */
     private Button attackButton;
@@ -230,9 +234,16 @@ public class HUD {
         queueBox.getChildren().add(queueTitle);
 
         for (int i = 0; i < productionSlots.length; i++) {
+            final int slotIndex = i;
             productionSlots[i] = new Label("-");
             productionSlots[i].setStyle(TEXT_STYLE + " -fx-font-size: 10px;");
             productionSlots[i].setPrefWidth(80);
+            // FIX (M-NEW-23): Right-click on a queued item to cancel it.
+            productionSlots[i].setOnMouseClicked(e -> {
+                if (e.getButton() == MouseButton.SECONDARY && displayedBuildingId >= 0 && actionCallback != null) {
+                    actionCallback.onAction("cancel_production:" + slotIndex);
+                }
+            });
             queueBox.getChildren().add(productionSlots[i]);
         }
 
@@ -390,12 +401,14 @@ public class HUD {
         for (Label slot : productionSlots) {
             slot.setText("-");
         }
+        displayedBuildingId = -1;
 
         if (selectedIds == null || selectedIds.size() != 1 || entityManager == null) {
             return;
         }
 
         int id = selectedIds.iterator().next();
+        displayedBuildingId = id;
         Building building = entityManager.getBuilding(id);
         if (building == null || !building.getBuildingType().producesUnits()) {
             return;

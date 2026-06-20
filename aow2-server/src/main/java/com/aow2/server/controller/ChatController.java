@@ -70,7 +70,7 @@ public class ChatController {
             return ResponseEntity.badRequest().body(Map.of("error", "message must be 500 characters or less"));
         }
 
-        ChatMessage chatMessage = new ChatMessage(matchId, playerId.intValue(), message);
+        ChatMessage chatMessage = new ChatMessage(matchId, playerId, message);
         chatMessage = chatMessageRepository.save(chatMessage);
 
         log.debug("Chat message saved: player={} match={} msg={}", playerId, matchId, message);
@@ -100,7 +100,7 @@ public class ChatController {
         // in this match (i.e., they are a participant). This prevents users from
         // reading arbitrary match chat histories.
         List<ChatMessage> allMessages = chatMessageRepository.findByMatchIdOrderByTimestampAsc(matchId);
-        boolean isParticipant = allMessages.stream().anyMatch(m -> m.getPlayerId() == playerId.intValue());
+        boolean isParticipant = allMessages.stream().anyMatch(m -> m.getPlayerId().equals(playerId));
 
         if (!isParticipant && !allMessages.isEmpty()) {
             log.warn("Player {} attempted to access chat history for match {} without participation", playerId, matchId);
@@ -112,7 +112,7 @@ public class ChatController {
                         msg.getMatchId(),
                         msg.getPlayerId(),
                         msg.getMessage(),
-                        msg.getTimestamp().toEpochMilli()
+                        msg.getTimestamp()
                 ))
                 .toList();
 

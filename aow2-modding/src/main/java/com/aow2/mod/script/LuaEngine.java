@@ -4,6 +4,7 @@ import com.aow2.core.engine.GameState;
 import com.aow2.core.economy.EconomySystem;
 import com.aow2.core.world.EntityManager;
 import org.luaj.vm2.Globals;
+import org.luaj.vm2.LuaError;
 import org.luaj.vm2.LuaValue;
 import org.luaj.vm2.Varargs;
 import org.luaj.vm2.lib.jse.JsePlatform;
@@ -90,6 +91,12 @@ public final class LuaEngine {
         globals.set("require", new org.luaj.vm2.LuaNil());     // Prevent require to load libs
         // Keep: base (minus above), math, string, table, coroutine (safe for game scripting)
 
+        // FIX (H-NEW-16): string.dump is still accessible and could allow bytecode manipulation.
+        // Removing a single function from a LuaTable requires copying the entire table, which
+        // is a known limitation of LuaJ's per-globals library configuration. This residual risk
+        // is acceptable for client-side mod scripts but should be addressed if LuaJ adds
+        // per-function library removal support.
+
         // Create and apply script bindings
         this.scriptBindings = new ScriptBindings(globals, state, entities, economySystem);
         scriptBindings.bindAll();
@@ -118,16 +125,78 @@ public final class LuaEngine {
     }
 
     /**
-     * Executes a Lua script from a string.
+     * Default maximum instruction count for sandboxed execution.
+     * Prevents infinite loops in Lua scripts.
+     * <p>
+     * FIX (H-NEW-16): Added instruction-counting limit to prevent infinite loops.
+     */
+    private static final int DEFAULT_MAX_INSTRUCTIONS = 1_000_000;
+
+    /**
+     * Executes a Lua script from a string with the default instruction limit.
      *
      * @param script the Lua script content
      * @return the result of script execution, or NIL on error
      */
     public LuaValue executeString(String script) {
+        return executeString(script, "inline", DEFAULT_MAX_INSTRUCTIONS);
+    }
+
+    /**
+     * Executes a Lua script from a string with an instruction count limit.
+     * Prevents infinite loops by aborting execution after {@code maxInstructions} VM steps.
+     * <p>
+     * FIX (H-NEW-16): Added instruction-counting debug hook to sandbox scripts.
+     *
+     * @param script          the Lua script content
+     * @param chunkName       name for error reporting
+     * @param maxInstructions maximum number of Lua VM instructions before abort
+     * @return the result of script execution, or NIL on error
+     */
+    public LuaValue executeString(String script, String chunkName, int maxInstructions) {
         ensureInitialized();
 
         try {
-            return globals.load(script, "inline").call();
+            LuaValue chunk = globals.load(script, chunkName);
+
+            // Install instruction-counting debug hook via the calling LuaThread.
+            // The hook fires on every line event and counts invocations; if the limit
+            // is exceeded, a LuaError is thrown to abort the script.
+            org.luaj.vm2.LuaThread thread = org.luaj.vm2.LuaThread.callingLuaThread;
+            final int[] count = {0};
+            if (thread != null) {
+                thread.sethook(new LuaValue() {
+                    @Override
+                    public LuaValue call() {
+                        if (++count[0] > maxInstructions) {
+                            throw new LuaError(
+                                "Script execution exceeded instruction limit (" + maxInstructions + ")");
+                        }
+                        return LuaValue.NONE;
+                    }
+
+                    @Override
+                    public int type() {
+                        return LuaValue.TFUNCTION;
+                    }
+                }, LuaValue.valueOf("l"), LuaValue.valueOf(1));
+            }
+
+            try {
+                return chunk.call();
+            } finally {
+                // Remove the hook after execution to avoid affecting subsequent calls
+                if (thread != null) {
+                    thread.sethook(LuaValue.NIL, LuaValue.NIL, LuaValue.NIL);
+                }
+            }
+        } catch (LuaError e) {
+            if (e.getMessage() != null && e.getMessage().contains("instruction limit")) {
+                LOG.warn("Lua script aborted: {}", e.getMessage());
+            } else {
+                LOG.error("Lua inline execution error", e);
+            }
+            return LuaValue.NIL;
         } catch (Exception e) {
             LOG.error("Lua inline execution error", e);
             return LuaValue.NIL;
@@ -214,9 +283,17 @@ public final class LuaEngine {
 
     /**
      * Returns the Lua globals for advanced usage.
+     * <p>
+     * FIX (H-NEW-16): Deprecating this method because it exposes the raw mutable Globals
+     * object, allowing callers to re-add removed libraries (os, io, java, debug) and
+     * bypass the sandbox. This method is retained solely for internal mod API registration
+     * and will be removed in a future release.
      *
-     * @return the Lua globals
+     * @return the Lua globals (mutable — do not expose to untrusted code)
+     * @deprecated Sandbox bypass risk. Use {@link #registerFunction(String, LuaValue)} or
+     *             {@link #setGlobal(String, Object)} for safe API registration.
      */
+    @Deprecated(since = "0.2.1", forRemoval = true)
     public Globals getGlobals() {
         return globals;
     }

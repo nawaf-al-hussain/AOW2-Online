@@ -23,6 +23,8 @@ model User {
 
   matchResultsAsP1 MatchResult[] @relation("Player1")
   matchResultsAsP2 MatchResult[] @relation("Player2")
+  chatMessages ChatMessage[]
+  uploadedMaps UploadedMap[]
 }
 
 model MatchResult {
@@ -60,15 +62,19 @@ model UploadedMap {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  author User @relation(fields: [authorId], references: [id])
+
   @@index([authorId])
 }
 
 model ChatMessage {
   id        String   @id @default(cuid())
-  matchId   String
-  playerId  Int
+  matchId   String // TODO: Add @relation to Match model when implemented
+  playerId  String
   message   String
   timestamp DateTime @default(now())
+
+  player User @relation(fields: [playerId], references: [id], name: "ChatMessages")
 
   @@index([matchId])
   @@index([matchId, timestamp])

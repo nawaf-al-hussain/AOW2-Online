@@ -4,7 +4,6 @@ import com.aow2.server.model.Player;
 import com.aow2.server.repository.PlayerRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -138,7 +137,7 @@ public class EloRatingService {
      * Returns the K-factor based on the player's experience level.
      *
      * @param gamesPlayed the number of games the player has played
-     * @return the K-factor (32 for new, 24 for experienced)
+     * @return the K-factor (32 for new, 16 for experienced)
      */
     int getKFactor(int gamesPlayed) {
         return gamesPlayed < EXPERIENCED_THRESHOLD ? K_FACTOR_NEW : K_FACTOR_EXPERIENCED;

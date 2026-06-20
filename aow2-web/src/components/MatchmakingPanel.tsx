@@ -11,6 +11,7 @@ export default function MatchmakingPanel() {
   const { isSearching, searchTime, matchFound, opponent, startSearch, stopSearch, foundMatch } = useMatchmakingStore();
   const [elapsed, setElapsed] = useState(0);
   const [searchKey, setSearchKey] = useState(0); // changes when search starts, resets elapsed
+  const [serverAvailable, setServerAvailable] = useState(false);
 
   useEffect(() => {
     if (!isSearching) return;
@@ -26,22 +27,34 @@ export default function MatchmakingPanel() {
   }, [isSearching, searchKey]);
 
   // Increment key when search starts to reset timer
-  const handleStartSearch = () => {
+  const handleStartSearch = async () => {
     setSearchKey((k) => k + 1);
     startSearch();
+    // Try to join real matchmaking
+    try {
+      const res = await fetch('/api/matchmaking/join', { method: 'POST' });
+      if (res.ok) {
+        setServerAvailable(true);
+      } else {
+        setServerAvailable(false);
+      }
+    } catch {
+      setServerAvailable(false);
+    }
   };
 
-  // Simulate match found after 8 seconds (demo)
+  // Demo fallback: simulate match found after 8 seconds when server is unavailable
   useEffect(() => {
-    if (isSearching && elapsed >= 8 && !matchFound) {
+    if (isSearching && !serverAvailable && elapsed >= 8 && !matchFound) {
       foundMatch("EnemyCommander");
     }
-  }, [elapsed, isSearching, matchFound, foundMatch]);
+  }, [elapsed, isSearching, matchFound, foundMatch, serverAvailable]);
 
   const formatTime = (s: number) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, "0")}`;
 
   return (
     <Card className="bg-[#111827] border-zinc-800">
+      {isSearching && !serverAvailable && <div className="text-xs text-amber-500 bg-amber-900/20 border border-amber-800/30 rounded mx-4 mt-4 px-3 py-1">Demo Mode — Matchmaking server unavailable</div>}
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-lg">
           <Swords className="h-5 w-5 text-red-500" />

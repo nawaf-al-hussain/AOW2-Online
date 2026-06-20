@@ -16,9 +16,6 @@ import javafx.util.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayDeque;
-import java.util.Deque;
-
 /**
  * Simple tutorial overlay that shows tooltips for new players.
  * <p>
@@ -82,9 +79,6 @@ public final class TutorialSystem {
     /** Whether the tutorial has been completed or skipped. */
     private boolean completed;
 
-    /** Queue of steps for sequential playback. */
-    private final Deque<Integer> stepQueue;
-
     /** Callback for tutorial step highlighting. */
     private TutorialCallback callback;
 
@@ -118,7 +112,6 @@ public final class TutorialSystem {
         this.stepIndicator = new Label();
         this.currentStep = 0;
         this.completed = false;
-        this.stepQueue = new ArrayDeque<>();
 
         buildUI();
         LOG.info("TutorialSystem created with {} steps", STEPS.length);

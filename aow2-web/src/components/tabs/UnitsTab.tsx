@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Shield, Flame, Target } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -13,7 +14,11 @@ const REBEL_BG = "bg-red-900/30";
 const REBEL_BORDER = "border-red-700/50";
 
 export function UnitsTab() {
-  const confedUnits = [
+  const [isDemo, setIsDemo] = useState(true);
+  const [confedUnits, setConfedUnits] = useState<any[]>([]);
+  const [rebelUnits, setRebelUnits] = useState<any[]>([]);
+
+  const defaultConfedUnits = [
     { name: "Infantry", hp: 40, damage: 2, speed: 5, armor: 5, range: 4, cost: 10, type: "Infantry" },
     { name: "Grenadier", hp: 40, damage: 2, speed: 6, armor: 5, range: 4, cost: 10, type: "Infantry" },
     { name: "Flame Assault", hp: 60, damage: 6, speed: 4, armor: 3, range: 3, cost: 20, type: "Special" },
@@ -23,7 +28,7 @@ export function UnitsTab() {
     { name: "MLRS Torrent", hp: 80, damage: 3, speed: 4, armor: 4, range: 9, cost: 50, type: "Vehicle" },
   ];
 
-  const rebelUnits = [
+  const defaultRebelUnits = [
     { name: "Infantry", hp: 40, damage: 2, speed: 5, armor: 4, range: 5, cost: 10, type: "Infantry" },
     { name: "Grenadier", hp: 40, damage: 2, speed: 6, armor: 4, range: 5, cost: 10, type: "Infantry" },
     { name: "Sniper", hp: 30, damage: 8, speed: 4, armor: 6, range: 7, cost: 25, type: "Infantry" },
@@ -32,6 +37,22 @@ export function UnitsTab() {
     { name: "Armadillo", hp: 70, damage: 6, speed: 6, armor: 6, range: 7, cost: 35, type: "Vehicle" },
     { name: "Porcupine", hp: 80, damage: 8, speed: 4, armor: 5, range: 8, cost: 55, type: "Vehicle" },
   ];
+
+  useEffect(() => {
+    fetch('/api/units')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && data.confed && data.rebel) {
+          setConfedUnits(data.confed);
+          setRebelUnits(data.rebel);
+          setIsDemo(false);
+        }
+      })
+      .catch(() => {
+        setConfedUnits(defaultConfedUnits);
+        setRebelUnits(defaultRebelUnits);
+      });
+  }, []);
 
   const renderUnitCard = (unit: any, faction: "confed" | "rebel") => {
     const colors = faction === "confed"
@@ -63,6 +84,7 @@ export function UnitsTab() {
 
   return (
     <div className="space-y-6">
+      {isDemo && <div className="text-xs text-amber-500 bg-amber-900/20 border border-amber-800/30 rounded px-3 py-1 mb-3">Demo Data — Server unavailable</div>}
       <h2 className="text-2xl font-bold flex items-center gap-2">
         <Target className="h-6 w-6 text-blue-500" />
         Unit Database
@@ -74,7 +96,7 @@ export function UnitsTab() {
           Global Confederation
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-          {confedUnits.map((u) => renderUnitCard(u, "confed"))}
+          {(confedUnits.length > 0 ? confedUnits : defaultConfedUnits).map((u) => renderUnitCard(u, "confed"))}
         </div>
       </div>
 
@@ -84,7 +106,7 @@ export function UnitsTab() {
           Resistance
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-          {rebelUnits.map((u) => renderUnitCard(u, "rebel"))}
+          {(rebelUnits.length > 0 ? rebelUnits : defaultRebelUnits).map((u) => renderUnitCard(u, "rebel"))}
         </div>
       </div>
     </div>

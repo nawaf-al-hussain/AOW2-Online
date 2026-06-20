@@ -10,6 +10,7 @@ import { getMaps } from "@/lib/api";
 
 export function MapsTab() {
   const [maps, setMaps] = useState<any[]>([]);
+  const [isDemo, setIsDemo] = useState(true);
   const [search, setSearch] = useState("");
 
   const demoMaps = [
@@ -24,7 +25,10 @@ export function MapsTab() {
   ];
 
   useEffect(() => {
-    getMaps().then(setMaps).catch(() => setMaps(demoMaps));
+    getMaps().then((data) => {
+      setMaps(data);
+      setIsDemo(false);
+    }).catch(() => setMaps(demoMaps));
   }, []);
 
   const data = (maps.length > 0 ? maps : demoMaps).filter((m) =>
@@ -33,6 +37,7 @@ export function MapsTab() {
 
   return (
     <div className="space-y-4">
+      {isDemo && <div className="text-xs text-amber-500 bg-amber-900/20 border border-amber-800/30 rounded px-3 py-1 mb-3">Demo Data — Server unavailable</div>}
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold flex items-center gap-2">
           <Map className="h-6 w-6 text-green-500" />
