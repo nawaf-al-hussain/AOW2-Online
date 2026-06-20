@@ -14,7 +14,11 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
+import jakarta.annotation.PostConstruct;
+
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -56,6 +60,37 @@ public class LobbyWebSocketHandler extends TextWebSocketHandler {
         this.jwtUtil = jwtUtil;
     }
 
+    /**
+     * Wires up the background matchmaking callback after bean construction.
+     * This ensures background sweep matches are properly notified via WebSocket.
+     */
+    @PostConstruct
+    public void init() {
+        matchmakingService.setNotificationCallback((player1Id, player2Id, mapName) -> {
+            log.info("Background match callback: player {} vs player {} on map '{}'",
+                    player1Id, player2Id, mapName);
+            try {
+                var gameSession = sessionService.createSession(player1Id, player2Id, mapName);
+                String ws1 = getSessionForPlayer(player1Id);
+                String ws2 = getSessionForPlayer(player2Id);
+
+                Map<String, Object> matchMsg = Map.of(
+                        "type", "match_found",
+                        "sessionUuid", gameSession.getSessionUuid(),
+                        "player1Id", player1Id,
+                        "player2Id", player2Id,
+                        "mapName", gameSession.getMapName()
+                );
+
+                if (ws1 != null) sendToSessionId(ws1, matchMsg);
+                if (ws2 != null) sendToSessionId(ws2, matchMsg);
+            } catch (Exception e) {
+                log.error("Failed to handle background match for {} vs {}", player1Id, player2Id, e);
+            }
+        });
+        log.info("LobbyWebSocketHandler: matchmaking notification callback wired");
+    }
+
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
         sessions.put(session.getId(), session);
@@ -75,9 +110,10 @@ public class LobbyWebSocketHandler extends TextWebSocketHandler {
         String type = payload.has("type") ? payload.get("type").asText() : "";
         switch (type) {
             case "auth" -> handleAuth(session, payload);
-            case "join_queue" -> handleJoinQueue(session);
+            case "join_queue" -> handleJoinQueue(session, payload);
             case "leave_queue" -> handleLeaveQueue(session);
             case "ready" -> handleReady(session);
+            case "map_veto" -> handleMapVeto(session, payload);
             default -> sendError(session, "Unknown message type: " + type);
         }
     }
@@ -115,22 +151,40 @@ public class LobbyWebSocketHandler extends TextWebSocketHandler {
 
     /**
      * Handles a join_queue request.
+     * Accepts an optional "maps" array field containing preferred map names.
      * Adds the player to the matchmaking queue and notifies if a match is found.
      *
      * @param session the WebSocket session
+     * @param payload the JSON payload which may contain a "maps" array
      */
-    private void handleJoinQueue(WebSocketSession session) throws IOException {
+    private void handleJoinQueue(WebSocketSession session, JsonNode payload) throws IOException {
         Long playerId = sessionService.getPlayerForWsSession(session.getId());
         if (playerId == null) {
             sendError(session, "Not authenticated");
             return;
         }
 
-        Map<String, Object> result = matchmakingService.joinQueue(playerId);
+        // Parse optional maps preference from payload
+        List<String> preferredMaps = null;
+        if (payload.has("maps") && payload.get("maps").isArray()) {
+            preferredMaps = new ArrayList<>();
+            for (JsonNode mapNode : payload.get("maps")) {
+                String mapName = mapNode.asText();
+                if (!mapName.isBlank()) {
+                    preferredMaps.add(mapName);
+                }
+            }
+            if (preferredMaps.isEmpty()) {
+                preferredMaps = null;
+            }
+        }
+
+        Map<String, Object> result = matchmakingService.joinQueue(playerId, preferredMaps);
         if ("match_found".equals(result.get("status"))) {
             Long player1Id = (Long) result.get("player1Id");
             Long player2Id = (Long) result.get("player2Id");
-            var gameSession = sessionService.createSession(player1Id, player2Id, "default");
+            String mapName = (String) result.get("mapName");
+            var gameSession = sessionService.createSession(player1Id, player2Id, mapName);
 
             // Notify both players
             String ws1 = getSessionForPlayer(player1Id);
@@ -149,6 +203,32 @@ public class LobbyWebSocketHandler extends TextWebSocketHandler {
         } else {
             sendMessage(session, Map.of("type", "queued", "playerId", playerId));
         }
+    }
+
+    /**
+     * Handles a map_veto request.
+     * Logs the veto for future enhancement (full veto UI is not yet implemented).
+     * The client can send { "type": "map_veto", "mapName": "some_map" } to veto a proposed map.
+     *
+     * @param session the WebSocket session
+     * @param payload the JSON payload containing a "mapName" field
+     */
+    private void handleMapVeto(WebSocketSession session, JsonNode payload) throws IOException {
+        Long playerId = sessionService.getPlayerForWsSession(session.getId());
+        if (playerId == null) {
+            sendError(session, "Not authenticated");
+            return;
+        }
+
+        String mapName = payload.has("mapName") ? payload.get("mapName").asText() : "<unknown>";
+        log.info("Player {} vetoed map '{}' (map_veto phase — full veto UI is a future enhancement)",
+                playerId, mapName);
+        sendMessage(session, Map.of(
+                "type", "map_veto_ack",
+                "playerId", playerId,
+                "vetoedMap", mapName,
+                "message", "Veto recorded. Full map veto system coming soon."
+        ));
     }
 
     /**
