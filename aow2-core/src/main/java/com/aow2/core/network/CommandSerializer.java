@@ -28,6 +28,7 @@ public final class CommandSerializer {
     private static final byte TYPE_SIEGE_MODE = 0x09;
     private static final byte TYPE_STOP = 0x0A;
     private static final byte TYPE_PATROL = 0x0B;
+    private static final byte TYPE_ATTACK_MOVE = 0x0C;
 
     private CommandSerializer() {
         // Utility class, no instantiation
@@ -53,6 +54,7 @@ public final class CommandSerializer {
             case CommandType.SiegeMode s -> serializeSiegeMode(s);
             case CommandType.Stop st -> serializeStop(st);
             case CommandType.Patrol pt -> serializePatrol(pt);
+            case CommandType.AttackMove am -> serializeAttackMove(am);
         };
     }
 
@@ -81,6 +83,7 @@ public final class CommandSerializer {
             case TYPE_SIEGE_MODE -> deserializeSiegeMode(buf, tick, playerId);
             case TYPE_STOP -> deserializeStop(buf, tick, playerId);
             case TYPE_PATROL -> deserializePatrol(buf, tick, playerId);
+            case TYPE_ATTACK_MOVE -> deserializeAttackMove(buf, tick, playerId);
             default -> throw new IllegalArgumentException("Unknown command type ID: " + typeId);
         };
     }
@@ -207,6 +210,19 @@ public final class CommandSerializer {
         return buf.array();
     }
 
+    private static byte[] serializeAttackMove(CommandType.AttackMove am) {
+        int unitIdBytes = 4 + am.unitIds().length * 4;
+        ByteBuffer buf = ByteBuffer.allocate(1 + 8 + 4 + unitIdBytes + 8);
+        buf.put(TYPE_ATTACK_MOVE);
+        buf.putLong(am.tick());
+        buf.putInt(am.playerId());
+        buf.putInt(am.unitIds().length);
+        for (int id : am.unitIds()) buf.putInt(id);
+        buf.putInt(am.target().x());
+        buf.putInt(am.target().y());
+        return buf.array();
+    }
+
     // --- Deserialization helpers ---
 
     private static CommandType.Move deserializeMove(ByteBuffer buf, long tick, int playerId) {
@@ -275,6 +291,15 @@ public final class CommandSerializer {
         int[] unitIds = new int[count];
         for (int i = 0; i < count; i++) unitIds[i] = buf.getInt();
         return new CommandType.Stop(tick, playerId, unitIds);
+    }
+
+    private static CommandType.AttackMove deserializeAttackMove(ByteBuffer buf, long tick, int playerId) {
+        int count = buf.getInt();
+        int[] unitIds = new int[count];
+        for (int i = 0; i < count; i++) unitIds[i] = buf.getInt();
+        int x = buf.getInt();
+        int y = buf.getInt();
+        return new CommandType.AttackMove(tick, playerId, unitIds, new GridPosition(x, y));
     }
 
     private static CommandType.Patrol deserializePatrol(ByteBuffer buf, long tick, int playerId) {

@@ -3,6 +3,7 @@ package com.aow2.core.movement;
 import com.aow2.common.config.GameConstants;
 import com.aow2.common.model.GridPosition;
 import com.aow2.common.model.TerrainType;
+import com.aow2.common.model.UnitCategory;
 import com.aow2.core.world.GameMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,6 +56,8 @@ public final class PathfindingSystem {
     /**
      * Finds the shortest path from start to goal using A*.
      * Does not consider other units as obstacles.
+     * Uses default terrain passability (isPassable()) — does not support per-unit-type
+     * terrain like SHALLOW_WATER for infantry. Use the category-aware overload instead.
      *
      * @param start starting grid position
      * @param goal  target grid position
@@ -67,6 +70,7 @@ public final class PathfindingSystem {
 
     /**
      * Finds path with unit awareness (avoids occupied cells).
+     * Uses default terrain passability (isPassable()).
      * REF: pathfinding.md — isPassable checks bW[y][x] for unit occupancy
      *
      * @param start    starting grid position
@@ -77,20 +81,43 @@ public final class PathfindingSystem {
      */
     public List<GridPosition> findPath(GridPosition start, GridPosition goal, GameMap map,
                                         Set<GridPosition> occupied) {
+        return findPath(start, goal, map, occupied, (UnitCategory) null);
+    }
+
+    /**
+     * Finds path with unit category-aware terrain passability and unit avoidance.
+     * This is the primary pathfinding method that supports per-unit-type terrain rules.
+     * For example, infantry can cross SHALLOW_WATER while vehicles cannot.
+     *
+     * @param start    starting grid position
+     * @param goal     target grid position
+     * @param map      the game map
+     * @param occupied set of grid positions occupied by units (treated as impassable)
+     * @param category the unit category determining terrain passability, or null for default passability
+     * @return list of GridPosition waypoints (excluding start, including goal), or empty list if no path
+     */
+    public List<GridPosition> findPath(GridPosition start, GridPosition goal, GameMap map,
+                                        Set<GridPosition> occupied, UnitCategory category) {
         // Validate inputs
         if (start == null || goal == null || map == null) {
             LOG.warn("Null argument passed to findPath");
             return Collections.emptyList();
         }
 
-        // Check if start or goal is impassable terrain
-        if (!map.isPassable(start.x(), start.y())) {
-            LOG.debug("Start position {} is impassable", start);
+        // Check if start or goal is impassable terrain for this unit category
+        boolean startPassable = category != null
+            ? map.isPassable(start.x(), start.y(), category)
+            : map.isPassable(start.x(), start.y());
+        if (!startPassable) {
+            LOG.debug("Start position {} is impassable for category {}", start, category);
             return Collections.emptyList();
         }
 
-        if (!map.isPassable(goal.x(), goal.y())) {
-            LOG.debug("Goal position {} is impassable", goal);
+        boolean goalPassable = category != null
+            ? map.isPassable(goal.x(), goal.y(), category)
+            : map.isPassable(goal.x(), goal.y());
+        if (!goalPassable) {
+            LOG.debug("Goal position {} is impassable for category {}", goal, category);
             return Collections.emptyList();
         }
 
@@ -161,9 +188,12 @@ public final class PathfindingSystem {
                     continue;
                 }
 
-                // Terrain passability
+                // Terrain passability (category-aware)
                 TerrainType terrain = map.getTile(nx, ny);
-                if (terrain == null || !terrain.isPassable()) {
+                boolean terrainPassable = category != null
+                    ? terrain != null && terrain.isPassableBy(category)
+                    : terrain != null && terrain.isPassable();
+                if (!terrainPassable) {
                     dirIndex++;
                     continue;
                 }
@@ -184,14 +214,20 @@ public final class PathfindingSystem {
                     int adjX2 = current.position().x();
                     int adjY2 = current.position().y() + delta[1];
 
-                    if (!map.isPassable(adjX1, adjY1) || !map.isPassable(adjX2, adjY2)) {
+                    boolean adj1Passable = category != null
+                        ? map.isPassable(adjX1, adjY1, category)
+                        : map.isPassable(adjX1, adjY1);
+                    boolean adj2Passable = category != null
+                        ? map.isPassable(adjX2, adjY2, category)
+                        : map.isPassable(adjX2, adjY2);
+                    if (!adj1Passable || !adj2Passable) {
                         dirIndex++;
                         continue;
                     }
                 }
 
-                // Calculate movement cost
-                int terrainCost = getTerrainCost(terrain);
+                // Calculate movement cost (category-aware)
+                int terrainCost = getTerrainCost(terrain, category);
                 // REF: pathfinding.md — diagonal cost uses lookup table in original game;
                 // approximate with sqrt(2) ≈ 1.41 multiplier for 8-directional A*
                 double moveCost = isDiagonal
@@ -226,8 +262,27 @@ public final class PathfindingSystem {
      * @return movement cost (higher = slower), Integer.MAX_VALUE for impassable
      */
     public int getTerrainCost(TerrainType terrain) {
+        return getTerrainCost(terrain, null);
+    }
+
+    /**
+     * Calculates the terrain movement cost for a given terrain type and unit category.
+     * Returns finite costs for terrain that is passable by the given category,
+     * even if the base cost is Integer.MAX_VALUE (e.g., SHALLOW_WATER for infantry).
+     * REF: pathfinding.md — terrain costs affect pathfinding decisions
+     * REF: map_system.md — SHALLOW_WATER is passable by infantry with cost 3
+     *
+     * @param terrain  the terrain type
+     * @param category the unit category, or null for default passability
+     * @return movement cost (higher = slower), Integer.MAX_VALUE for impassable
+     */
+    public int getTerrainCost(TerrainType terrain, UnitCategory category) {
         if (terrain == null) {
             return Integer.MAX_VALUE;
+        }
+        // SHALLOW_WATER has base cost MAX_VALUE but infantry can cross it (cost 3)
+        if (terrain == TerrainType.SHALLOW_WATER && category == UnitCategory.INFANTRY) {
+            return 3;
         }
         int[] costs = GameConstants.TERRAIN_MOVEMENT_COSTS;
         int ordinal = terrain.ordinal();

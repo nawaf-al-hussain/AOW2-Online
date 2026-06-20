@@ -1,6 +1,7 @@
 package com.aow2.core.combat;
 
 import com.aow2.common.config.GameConstants;
+import com.aow2.common.model.WeaponType;
 import com.aow2.core.ai.DeterministicLCG;
 import com.aow2.core.entity.Building;
 import com.aow2.core.entity.Unit;
@@ -160,6 +161,26 @@ public final class DamageCalculator {
     }
 
     /**
+     * Determine death animation category from attacker's weapon type.
+     * REF: combat_formulas.md - death animation categories per weapon type
+     * <pre>
+     * Category 0: Small arms (infantry bullets) — base 231, range 16
+     * Category 1: Heavy bullets (machine guns) — base 249, range 10
+     * Category 2: Explosives (grenades/rockets) — base 249, range 10
+     * Category 3: Heavy explosives (artillery) — base 259, range 3
+     * Category 4: Mines — base 247, range 2
+     * </pre>
+     */
+    public static int getAttackerCategory(WeaponType weaponType) {
+        return switch (weaponType) {
+            case NONE, BULLET, SNIPER_RIFLE -> 0;  // Small arms
+            case MACHINE_GUN -> 1;   // Heavy bullets
+            case ROCKET, FLAME -> 2; // Explosives
+            case ARTILLERY -> 3;     // Heavy explosives
+        };
+    }
+
+    /**
      * Calculate effective armor for a unit, including research bonuses.
      * REF: combat_formulas.md - "Armour Calculation" section
      */
@@ -211,6 +232,8 @@ public final class DamageCalculator {
      * - Added infantry vs machinery damage reduction
      */
     public static double getTargetMultiplier(Unit attacker, boolean isTargetBuilding, boolean isTargetMachinery) {
+        // FIX(C-3): Guard against null attacker (e.g., source unit died before projectile impact).
+        if (attacker == null) return 1.0;
         if (isTargetBuilding) {
             // ASSUMPTION: 50% damage reduction — RE spec confirms infantry deals reduced damage to buildings but doesn't specify exact multiplier
             // REF: combat_formulas.md lines 456-459

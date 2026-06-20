@@ -95,8 +95,10 @@ public final class Mine extends Entity {
         if (!armed || triggered || !isAlive()) {
             return false;
         }
-        double distance = getPosition().distanceTo(enemyPosition);
-        return distance <= triggerRadius;
+        int dist = GridPosition.distanceClass(
+            getPosition().x() - enemyPosition.x(),
+            getPosition().y() - enemyPosition.y());
+        return dist <= triggerRadius;
     }
 
     /**

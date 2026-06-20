@@ -1,6 +1,7 @@
 package com.aow2.core.combat;
 
 import com.aow2.common.event.BuildingDestroyedEvent;
+import com.aow2.common.model.GridPosition;
 import com.aow2.common.event.DamageAppliedEvent;
 import com.aow2.common.event.UnitKilledEvent;
 import com.aow2.common.model.Faction;
@@ -165,15 +166,17 @@ public final class MineDetonationSystem {
             int dist = Math.max(Math.abs(dx), Math.abs(dy)); // Chebyshev distance
 
             if (dist <= radius) {
-                int actualDamage = DamageCalculator.calculateNuclearDamage(damage, enemy.getStats().armor(), dist);
+                int targetArmor = combatSystem.getArmorCalculator().calculateEffectiveArmor(
+                    enemy, combatSystem.getCompletedResearch(enemy));
+                int actualDamage = DamageCalculator.calculateNuclearDamage(damage, targetArmor, dist);
                 enemy.takeDamage(actualDamage);
                 state.enqueueEvent(new DamageAppliedEvent(
                     state.currentTick(), enemy.getId(), actualDamage, enemy.getHp(), mine.getId()));
 
                 if (!enemy.isAlive()) {
-                    // FIX (L6): Store death anim frame for client rendering
+                    // FIX (L6/C-8): Store death anim frame for client rendering
                     enemy.setDeathAnimFrame(
-                        DamageCalculator.calculateDeathAnimationFrame(enemy, 0));
+                        DamageCalculator.calculateDeathAnimationFrame(enemy, 4));
                     state.enqueueEvent(new UnitKilledEvent(
                         state.currentTick(), enemy.getId(), enemy.getUnitType(), mine.getId()));
                 }
@@ -213,12 +216,14 @@ public final class MineDetonationSystem {
                                     GameState state, Faction enemyFaction) {
         // Find the closest enemy machinery unit within trigger radius
         Unit closest = null;
-        double closestDist = Double.MAX_VALUE;
+        int closestDist = Integer.MAX_VALUE;
 
         for (Unit enemy : entities.getAliveUnitsForPlayer(enemyFaction)) {
             if (!enemy.isVehicle() && !enemy.isMachinery()) continue; // Scorpio = anti-tank only
 
-            double dist = enemy.getPosition().distanceTo(mine.getPosition());
+            int dist = GridPosition.distanceClass(
+                enemy.getPosition().x() - mine.getPosition().x(),
+                enemy.getPosition().y() - mine.getPosition().y());
             if (dist <= mine.getTriggerRadius() && dist < closestDist) {
                 closest = enemy;
                 closestDist = dist;
@@ -226,15 +231,17 @@ public final class MineDetonationSystem {
         }
 
         if (closest != null) {
-            int actualDamage = DamageCalculator.calculateDamage(damage, closest.getStats().armor());
+            int targetArmor = combatSystem.getArmorCalculator().calculateEffectiveArmor(
+                closest, combatSystem.getCompletedResearch(closest));
+            int actualDamage = DamageCalculator.calculateDamage(damage, targetArmor);
             closest.takeDamage(actualDamage);
             state.enqueueEvent(new DamageAppliedEvent(
                 state.currentTick(), closest.getId(), actualDamage, closest.getHp(), mine.getId()));
 
             if (!closest.isAlive()) {
-                // FIX (L6): Store death anim frame for client rendering
+                // FIX (L6/C-8): Store death anim frame for client rendering
                 closest.setDeathAnimFrame(
-                    DamageCalculator.calculateDeathAnimationFrame(closest, 0));
+                    DamageCalculator.calculateDeathAnimationFrame(closest, 4));
                 state.enqueueEvent(new UnitKilledEvent(
                     state.currentTick(), closest.getId(), closest.getUnitType(), mine.getId()));
             }

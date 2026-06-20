@@ -188,7 +188,7 @@ public final class ProjectileSystem {
 
         // REF: combat_formulas.md — artillery uses fixed flight time, not distance-based
         // flightTime = (at[6][59] - at[5][59]) + 1
-        if (weaponType == WeaponType.ARTILLERY || weaponType == WeaponType.ROCKET) {
+        if (weaponType == WeaponType.ARTILLERY) {
             flightTime = ARTILLERY_FIXED_FLIGHT_TIME;
         }
 
@@ -268,6 +268,9 @@ public final class ProjectileSystem {
         // Splash targets use their OWN research for armor (armor is a defensive stat)
         // The attacking faction's research does not affect target armor.
 
+        // FIX(C-3): Look up the source unit to apply target type multiplier for splash damage.
+        Unit sourceUnit = entities.getUnit(projectile.getSourceUnitId());
+
         // Splash damage to units
         for (Unit unit : entities.getAllUnits()) {
             if (!unit.isAlive()) continue;
@@ -281,8 +284,11 @@ public final class ProjectileSystem {
                 int distance = distToImpact;
                 // Use research-adjusted armor for splash targets
                 int effectiveArmor = getEffectiveArmor(unit);
-                int damage = DamageCalculator.calculateSplashDamage(
-                    projectile.getDamage(), effectiveArmor, distance);
+                // FIX(C-3): Apply infantry vs machinery/building multiplier for splash targets.
+                double targetMultiplier = DamageCalculator.getTargetMultiplier(
+                    sourceUnit, false, unit.isMachinery());
+                int damage = (int)(DamageCalculator.calculateSplashDamage(
+                    projectile.getDamage(), effectiveArmor, distance) * targetMultiplier);
                 unit.takeDamage(damage);
 
                 state.enqueueEvent(new com.aow2.common.event.DamageAppliedEvent(
@@ -290,9 +296,10 @@ public final class ProjectileSystem {
                     projectile.getSourceUnitId()));
 
                 if (!unit.isAlive()) {
-                    // FIX (L6): Store death anim frame for client rendering
+                    // FIX (L6/C-8): Store death anim frame for client rendering
                     unit.setDeathAnimFrame(
-                        DamageCalculator.calculateDeathAnimationFrame(unit, 0));
+                        DamageCalculator.calculateDeathAnimationFrame(unit,
+                            DamageCalculator.getAttackerCategory(projectile.getWeaponType())));
                     state.enqueueEvent(new com.aow2.common.event.UnitKilledEvent(
                         state.currentTick(), unit.getId(), unit.getUnitType(),
                         projectile.getSourceUnitId()));
@@ -312,8 +319,11 @@ public final class ProjectileSystem {
                 int distance = bDistToImpact;
                 // Use research-adjusted building armor for splash targets
                 int effectiveBuildingArmor = getEffectiveBuildingArmor(building);
-                int damage = DamageCalculator.calculateSplashDamage(
-                    projectile.getDamage(), effectiveBuildingArmor, distance);
+                // FIX(C-3): Apply infantry vs building multiplier for splash building targets.
+                double buildingTargetMultiplier = DamageCalculator.getTargetMultiplier(
+                    sourceUnit, true, false);
+                int damage = (int)(DamageCalculator.calculateSplashDamage(
+                    projectile.getDamage(), effectiveBuildingArmor, distance) * buildingTargetMultiplier);
                 building.takeDamage(damage);
 
                 state.enqueueEvent(new com.aow2.common.event.DamageAppliedEvent(
@@ -347,14 +357,21 @@ public final class ProjectileSystem {
             return;
         }
 
+        // FIX(C-3): Look up the source unit to apply target type multiplier.
+        // Ranged projectiles (ROCKET/ARTILLERY) previously skipped getTargetMultiplier(),
+        // so infantry dealt full damage to machinery/buildings via ranged attacks.
+        Unit sourceUnit = entities.getUnit(projectile.getSourceUnitId());
+
         if (targetRef > 0) {
             // Target is a unit
             Unit target = entities.getUnit(targetRef);
             if (target != null && target.isAlive()) {
                 // Use research-adjusted armor for direct-fire unit targets (same as splash)
                 int effectiveArmor = getEffectiveArmor(target);
-                int damage = DamageCalculator.calculateDamage(
-                    projectile.getDamage(), effectiveArmor);
+                double targetMultiplier = DamageCalculator.getTargetMultiplier(
+                    sourceUnit, false, target.isMachinery());
+                int damage = (int)(DamageCalculator.calculateDamage(
+                    projectile.getDamage(), effectiveArmor) * targetMultiplier);
                 target.takeDamage(damage);
 
                 state.enqueueEvent(new com.aow2.common.event.DamageAppliedEvent(
@@ -362,9 +379,10 @@ public final class ProjectileSystem {
                     projectile.getSourceUnitId()));
 
                 if (!target.isAlive()) {
-                    // FIX (L6): Store death anim frame for client rendering
+                    // FIX (L6/C-8): Store death anim frame for client rendering
                     target.setDeathAnimFrame(
-                        DamageCalculator.calculateDeathAnimationFrame(target, 0));
+                        DamageCalculator.calculateDeathAnimationFrame(target,
+                            DamageCalculator.getAttackerCategory(projectile.getWeaponType())));
                     state.enqueueEvent(new com.aow2.common.event.UnitKilledEvent(
                         state.currentTick(), target.getId(), target.getUnitType(),
                         projectile.getSourceUnitId()));
@@ -375,7 +393,10 @@ public final class ProjectileSystem {
             int buildingId = -targetRef;
             Building target = entities.getBuilding(buildingId);
             if (target != null && target.isAlive()) {
-                int damage = DamageCalculator.calculateDamage(projectile.getDamage(), 0);
+                double targetMultiplier = DamageCalculator.getTargetMultiplier(
+                    sourceUnit, true, false);
+                int damage = (int)(DamageCalculator.calculateDamage(
+                    projectile.getDamage(), 0) * targetMultiplier);
                 target.takeDamage(damage);
 
                 state.enqueueEvent(new com.aow2.common.event.DamageAppliedEvent(

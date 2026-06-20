@@ -47,6 +47,29 @@ public final class GameConstants {
     public static final double CC_DIMINISHING_RETURNS = 0.30;
     public static final int POWER_UPGRADE_BONUS_PERCENT = 30;
 
+    // Faction income differential
+    // REF: MASTER_DOCUMENTATION.md — "Resistance collects resources faster than Confederation (confirmed by Gear Games)"
+    // ASSUMPTION: Exact multiplier is not documented in RE data; 15% assumed based on typical RTS faction balance.
+    public static final double RESISTANCE_INCOME_MULTIPLIER = 1.15;
+
+    // RE income formula: incomePerCycle = (baseIncome * playerModifier) * 20 / (upgradeBonus + 20)
+    // REF: MASTER_DOCUMENTATION.md Section 4.4 — Credit Generation Formula
+    // ASSUMPTION: Each CC upgrade level contributes this much to upgradeBonus.
+    // The exact per-level bonus is not documented; 2 chosen so max upgrade (level 3) gives bonus 6,
+    // making the factor 20/26 ≈ 0.77. NOTE: In the original game, CC upgrades also reduce the
+    // cycle timer, so the net income RATE may actually increase. This project uses a fixed
+    // cycle timer, so the formula will slightly reduce per-cycle income at higher upgrades.
+    // TODO: When variable cycle time from CC upgrades is implemented, verify the net effect matches RE.
+    public static final int CC_UPGRADE_INCOME_BONUS_PER_LEVEL = 2;
+
+    // Difficulty-based income modifier defaults
+    // REF: MASTER_DOCUMENTATION.md Section 4.5 — AI Difficulty Levels:
+    //   Easy = "lower income", Normal = "standard parameters", Hard = "income bonuses"
+    // ASSUMPTION: Exact multipliers not in RE data; 0.7/1.0/1.3 are reasonable estimates.
+    public static final double EASY_INCOME_MODIFIER = 0.7;
+    public static final double NORMAL_INCOME_MODIFIER = 1.0;
+    public static final double HARD_INCOME_MODIFIER = 1.3;
+
     // Building placement
     // REF: complete_building_stats.json building_power_radius values
     // DUPLICATE: Source of truth is GameConfig.getBuildingPowerRadius()

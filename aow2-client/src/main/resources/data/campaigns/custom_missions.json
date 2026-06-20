@@ -15,7 +15,7 @@
       "triggers": [
         { "type": "time", "triggerId": 50, "triggerTick": 600 }
       ],
-      "scriptFiles": [],
+      "scriptFiles": ["data/scripts/custom_mission1.lua"],
       "difficulty": 1
     },
     {
@@ -32,7 +32,7 @@
         { "type": "area", "triggerId": 51, "centerX": 50, "centerY": 64, "radius": 5, "factionId": 0 },
         { "type": "time", "triggerId": 52, "triggerTick": 1800 }
       ],
-      "scriptFiles": [],
+      "scriptFiles": ["data/scripts/custom_mission2.lua"],
       "difficulty": 2
     },
     {
@@ -48,7 +48,7 @@
       "triggers": [
         { "type": "buildingDestroyed", "triggerId": 53, "buildingType": "REBEL_BUNKER", "faction": "RESISTANCE" }
       ],
-      "scriptFiles": [],
+      "scriptFiles": ["data/scripts/custom_mission3.lua"],
       "difficulty": 2
     },
     {
@@ -65,7 +65,7 @@
       "triggers": [
         { "type": "time", "triggerId": 54, "triggerTick": 1800 }
       ],
-      "scriptFiles": [],
+      "scriptFiles": ["data/scripts/custom_mission4.lua"],
       "difficulty": 3
     },
     {
@@ -83,7 +83,7 @@
         { "type": "time", "triggerId": 56, "triggerTick": 3600 },
         { "type": "time", "triggerId": 57, "triggerTick": 6000 }
       ],
-      "scriptFiles": [],
+      "scriptFiles": ["data/scripts/custom_mission5.lua"],
       "difficulty": 3
     },
     {
@@ -100,7 +100,7 @@
       "triggers": [
         { "type": "time", "triggerId": 58, "triggerTick": 2400 }
       ],
-      "scriptFiles": [],
+      "scriptFiles": ["data/scripts/custom_mission6.lua"],
       "difficulty": 3
     },
     {
@@ -117,7 +117,7 @@
       "triggers": [
         { "type": "area", "triggerId": 59, "centerX": 70, "centerY": 70, "radius": 6, "factionId": 1 }
       ],
-      "scriptFiles": [],
+      "scriptFiles": ["data/scripts/custom_mission7.lua"],
       "difficulty": 2
     },
     {
@@ -136,7 +136,7 @@
         { "type": "time", "triggerId": 61, "triggerTick": 3000 },
         { "type": "time", "triggerId": 62, "triggerTick": 5400 }
       ],
-      "scriptFiles": [],
+      "scriptFiles": ["data/scripts/custom_mission8.lua"],
       "difficulty": 4
     },
     {
@@ -153,7 +153,7 @@
       "triggers": [
         { "type": "buildingDestroyed", "triggerId": 63, "buildingType": "CONFED_GENERATOR", "faction": "CONFEDERATION" }
       ],
-      "scriptFiles": [],
+      "scriptFiles": ["data/scripts/custom_mission9.lua"],
       "difficulty": 3
     },
     {
@@ -172,7 +172,7 @@
         { "type": "time", "triggerId": 65, "triggerTick": 3600 },
         { "type": "time", "triggerId": 66, "triggerTick": 7200 }
       ],
-      "scriptFiles": [],
+      "scriptFiles": ["data/scripts/custom_mission10.lua"],
       "difficulty": 4
     },
     {
@@ -190,7 +190,7 @@
         { "type": "area", "triggerId": 67, "centerX": 64, "centerY": 64, "radius": 10, "factionId": 1 },
         { "type": "time", "triggerId": 68, "triggerTick": 2400 }
       ],
-      "scriptFiles": [],
+      "scriptFiles": ["data/scripts/custom_mission11.lua"],
       "difficulty": 3
     },
     {
@@ -208,7 +208,7 @@
         { "type": "area", "triggerId": 69, "centerX": 50, "centerY": 50, "radius": 5, "factionId": 0 },
         { "type": "buildingDestroyed", "triggerId": 70, "buildingType": "REBEL_HEADQUARTERS", "faction": "RESISTANCE" }
       ],
-      "scriptFiles": [],
+      "scriptFiles": ["data/scripts/custom_mission12.lua"],
       "difficulty": 3
     },
     {
@@ -227,7 +227,7 @@
         { "type": "time", "triggerId": 71, "triggerTick": 1200 },
         { "type": "time", "triggerId": 72, "triggerTick": 3600 }
       ],
-      "scriptFiles": [],
+      "scriptFiles": ["data/scripts/custom_mission13.lua"],
       "difficulty": 4
     },
     {
@@ -247,7 +247,7 @@
         { "type": "time", "triggerId": 75, "triggerTick": 4800 },
         { "type": "time", "triggerId": 76, "triggerTick": 7200 }
       ],
-      "scriptFiles": [],
+      "scriptFiles": ["data/scripts/custom_mission14.lua"],
       "difficulty": 5
     },
     {
@@ -269,7 +269,7 @@
         { "type": "time", "triggerId": 81, "triggerTick": 9000 },
         { "type": "time", "triggerId": 82, "triggerTick": 12000 }
       ],
-      "scriptFiles": [],
+      "scriptFiles": ["data/scripts/custom_mission15.lua"],
       "difficulty": 5
     }
   ]

@@ -1,6 +1,7 @@
 package com.aow2.core.world;
 
 import com.aow2.common.model.TerrainType;
+import com.aow2.common.model.UnitCategory;
 
 /**
  * 2D grid-based game map composed of {@link Tile} objects.
@@ -149,6 +150,22 @@ public class GameMap {
             return false;
         }
         return tiles[x][y].terrain().isPassable();
+    }
+
+    /**
+     * Checks whether the given tile is passable for a specific unit category.
+     * Supports per-unit-type terrain rules (e.g., SHALLOW_WATER is passable for infantry).
+     *
+     * @param x        column index
+     * @param y        row index
+     * @param category the unit category to check passability for
+     * @return true if the tile is in bounds and terrain is passable for this category
+     */
+    public boolean isPassable(int x, int y, UnitCategory category) {
+        if (!isInBounds(x, y)) {
+            return false;
+        }
+        return tiles[x][y].terrain().isPassableBy(category);
     }
 
     /**

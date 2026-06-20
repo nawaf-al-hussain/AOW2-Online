@@ -260,7 +260,9 @@ public final class EconomyAI {
         // Check for VISIBLE enemy units near base
         List<Unit> visibleEnemyUnits = entities.getVisibleEnemyUnitsForPlayer(playerId, fogOfWar);
         for (Unit enemy : visibleEnemyUnits) {
-            if (enemy.getPosition().distanceTo(ccPos) <= DEFENSE_TRIGGER_DISTANCE) {
+            if (GridPosition.distanceClass(
+                    enemy.getPosition().x() - ccPos.x(),
+                    enemy.getPosition().y() - ccPos.y()) <= DEFENSE_TRIGGER_DISTANCE) {
                 return true;
             }
         }

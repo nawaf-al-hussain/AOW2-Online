@@ -3,6 +3,7 @@ package com.aow2.core.ai;
 import com.aow2.common.model.Faction;
 import com.aow2.common.model.GridPosition;
 import com.aow2.common.model.MovementState;
+import com.aow2.common.model.UnitCategory;
 import com.aow2.core.economy.EconomySystem;
 import com.aow2.core.entity.Building;
 import com.aow2.core.entity.Unit;
@@ -59,6 +60,12 @@ public final class MilitaryAI {
 
     /** Distance threshold for base defense. */
     private static final int BASE_DEFENSE_DISTANCE = 20;
+
+    /** Distance threshold for considering siege mode activation (attack range + buffer). */
+    private static final int SIEGE_PROXIMITY_BUFFER = 2;
+
+    /** Distance threshold for considering garrison (units within this range of a bunker). */
+    private static final int GARRISON_DISTANCE = 3;
 
     /**
      * Assess military strength comparison between AI and enemy.
@@ -209,6 +216,154 @@ public final class MilitaryAI {
     }
 
     /**
+     * Score a target preference for an attacker unit vs an enemy unit.
+     * <p>
+     * REF: ai_analysis.md — AI combat preferences:
+     * Infantry (1,2,3) → targets other infantry
+     * Light Machinery (4,21) → scouts/raids, hit-and-run
+     * Heavy Machinery (7,16) → buildings/heavy, siege warfare
+     * Artillery (19,20) → area targets, long-range bombardment
+     *
+     * @param attacker the attacking unit
+     * @param target  the enemy unit to evaluate
+     * @return preference score (higher = more preferred target)
+     */
+    public double scoreTargetPreference(Unit attacker, Unit target) {
+        double score = 100.0; // base score
+
+        // Distance factor: prefer closer targets
+        int distance = GridPosition.distanceClass(
+            attacker.getPosition().x() - target.getPosition().x(),
+            attacker.getPosition().y() - target.getPosition().y());
+        score -= distance * 2.0;
+
+        // Prefer damaged targets (finish off weakened enemies)
+        if (target.getHp() < target.getMaxHp()) {
+            score += 20.0 * (1.0 - (double) target.getHp() / target.getMaxHp());
+        }
+
+        // Per-category targeting preferences (REF: ai_analysis.md)
+        UnitCategory attackerCat = attacker.getUnitType().category();
+        UnitCategory targetCat = target.getUnitType().category();
+
+        if (attackerCat == UnitCategory.INFANTRY) {
+            // Infantry strongly prefer targeting other infantry
+            if (targetCat == UnitCategory.INFANTRY) {
+                score += 50.0;
+            }
+            // Slight preference against heavy vehicles (ineffective)
+            if (targetCat == UnitCategory.VEHICLE) {
+                score -= 15.0;
+            }
+        } else if (attackerCat == UnitCategory.VEHICLE) {
+            // Vehicles (light) prefer targeting infantry (raiding)
+            if (targetCat == UnitCategory.INFANTRY) {
+                score += 30.0;
+            }
+            // Heavy vehicles prefer targeting other vehicles
+            if (isHeavyVehicle(attacker)) {
+                if (targetCat == UnitCategory.VEHICLE) {
+                    score += 40.0;
+                }
+                // Heavy vehicles are good against buildings
+                if (!isHeavyVehicle(target) && targetCat != UnitCategory.INFANTRY) {
+                    score += 10.0;
+                }
+            }
+        } else if (attackerCat == UnitCategory.SPECIAL_MACHINERY) {
+            // Special machinery (artillery-like) prefer buildings and clustered enemies
+            if (targetCat == UnitCategory.INFANTRY) {
+                score += 20.0;
+            }
+        }
+
+        return score;
+    }
+
+    /**
+     * Score a target preference for an attacker unit vs an enemy building.
+     * <p>
+     * REF: ai_analysis.md — Heavy Machinery targets buildings, Artillery bombards.
+     *
+     * @param attacker the attacking unit
+     * @param target   the enemy building to evaluate
+     * @return preference score (higher = more preferred target)
+     */
+    public double scoreTargetPreference(Unit attacker, Building target) {
+        double score = 80.0; // base score for buildings (valuable targets)
+
+        // Distance factor: prefer closer targets
+        int distance = GridPosition.distanceClass(
+            attacker.getPosition().x() - target.getPosition().x(),
+            attacker.getPosition().y() - target.getPosition().y());
+        score -= distance * 2.0;
+
+        // Prefer damaged buildings
+        if (target.getHp() < target.getMaxHp()) {
+            score += 25.0 * (1.0 - (double) target.getHp() / target.getMaxHp());
+        }
+
+        // Heavy vehicles and artillery prefer buildings (siege warfare)
+        UnitCategory attackerCat = attacker.getUnitType().category();
+        if (attackerCat == UnitCategory.VEHICLE && isHeavyVehicle(attacker)) {
+            score += 40.0; // Heavy machinery excels at destroying buildings
+        }
+
+        // Prefer production buildings (economic damage)
+        if (target.getBuildingType().producesUnits()) {
+            score += 15.0;
+        }
+
+        // Prefer HQ over other buildings
+        if (target.getBuildingType().isHQ()) {
+            score += 10.0;
+        }
+
+        return score;
+    }
+
+    /**
+     * Find the best individual target position for a specific unit.
+     * Uses per-unit targeting preferences to pick the optimal enemy.
+     * <p>
+     * FOG OF WAR: Only considers VISIBLE enemy entities.
+     *
+     * @param unit     the unit seeking a target
+     * @param entities the entity manager
+     * @param playerId the AI player ID
+     * @param fogOfWar the fog of war system (may be null for full information)
+     * @return the best target position, or null if no visible targets
+     */
+    public GridPosition findBestTargetForUnit(Unit unit, EntityManager entities,
+                                               int playerId, FogOfWarSystem fogOfWar) {
+        List<Unit> visibleEnemies = entities.getVisibleEnemyUnitsForPlayer(playerId, fogOfWar);
+        List<Building> visibleEnemyBuildings = entities.getVisibleEnemyBuildingsForPlayer(playerId, fogOfWar);
+
+        GridPosition bestPos = null;
+        double bestScore = Double.NEGATIVE_INFINITY;
+
+        for (Unit enemy : visibleEnemies) {
+            if (!enemy.isAlive() || enemy.isGarrisoned()) continue;
+            double score = scoreTargetPreference(unit, enemy);
+            if (score > bestScore) {
+                bestScore = score;
+                bestPos = enemy.getPosition();
+            }
+        }
+
+        for (Building building : visibleEnemyBuildings) {
+            if (!building.isAlive()) continue;
+            double score = scoreTargetPreference(unit, building);
+            if (score > bestScore) {
+                bestScore = score;
+                bestPos = building.getPosition();
+            }
+        }
+
+        return bestPos;
+    }
+
+    /**
      * Select units for an attack group.
      * <p>
      * REF: ai_analysis.md — AI prioritizes: vehicles > infantry, healthy > damaged.
@@ -246,6 +401,7 @@ public final class MilitaryAI {
      * - Buildings have priority based on max HP (bS[bT[53] + unitType])
      * - Closer targets preferred when priorities equal
      * - Search through spatial hash grid
+     * - Unit-type targeting preferences (H-11)
      *
      * @param entities the entity manager
      * @param map      the game map
@@ -254,11 +410,13 @@ public final class MilitaryAI {
      * @return the best target position, or null if no visible targets
      */
     public GridPosition findAttackTarget(EntityManager entities, GameMap map, int playerId, FogOfWarSystem fogOfWar) {
+        Faction aiFaction = EconomySystem.playerFaction(playerId);
+        List<Unit> aiUnits = entities.getAliveUnitsForPlayer(aiFaction);
+
         // Only consider VISIBLE enemy buildings
         List<Building> visibleEnemyBuildings = entities.getVisibleEnemyBuildingsForPlayer(playerId, fogOfWar);
         Building bestTarget = null;
-        int bestPriority = -1;
-        double bestDistance = Double.MAX_VALUE;
+        double bestCompositeScore = -1;
         GridPosition aiBase = findBasePosition(entities, playerId);
 
         for (Building building : visibleEnemyBuildings) {
@@ -266,12 +424,33 @@ public final class MilitaryAI {
 
             // REF: ai_analysis.md — building priority = max HP
             int priority = building.getMaxHp();
-            double distance = aiBase != null ? building.getPosition().distanceTo(aiBase) : 0;
+            int distance = aiBase != null
+                ? GridPosition.distanceClass(
+                    building.getPosition().x() - aiBase.x(),
+                    building.getPosition().y() - aiBase.y()) : 0;
 
-            // Higher priority wins; on tie, closer wins
-            if (priority > bestPriority || (priority == bestPriority && distance < bestDistance)) {
-                bestPriority = priority;
-                bestDistance = distance;
+            // H-11: Compute composite score using per-unit targeting preferences.
+            // Sum up how well this building matches the AI's force composition.
+            double preferenceBonus = 0;
+            for (Unit aiUnit : aiUnits) {
+                if (aiUnit.isAlive() && !aiUnit.isGarrisoned()) {
+                    preferenceBonus += scoreTargetPreference(aiUnit, building);
+                }
+            }
+            // Normalize: only consider preference bonus when multiple units benefit
+            if (!aiUnits.isEmpty()) {
+                preferenceBonus /= aiUnits.size();
+            }
+
+            double compositeScore = priority + preferenceBonus;
+
+            // Distance tiebreaker: prefer closer
+            if (distance > 0) {
+                compositeScore -= distance * 0.5;
+            }
+
+            if (compositeScore > bestCompositeScore) {
+                bestCompositeScore = compositeScore;
                 bestTarget = building;
             }
         }
@@ -283,20 +462,143 @@ public final class MilitaryAI {
         // Only consider VISIBLE enemy units
         List<Unit> visibleEnemyUnits = entities.getVisibleEnemyUnitsForPlayer(playerId, fogOfWar);
         if (!visibleEnemyUnits.isEmpty()) {
-            // Find the centroid of visible enemy units as the attack target
-            double sumX = 0, sumY = 0;
-            for (Unit unit : visibleEnemyUnits) {
-                sumX += unit.getPosition().x();
-                sumY += unit.getPosition().y();
+            // H-11: Find the centroid of visible enemy units weighted by targeting preference.
+            // Units that are better targets for the AI's force get more weight.
+            double sumX = 0, sumY = 0, totalWeight = 0;
+            for (Unit enemy : visibleEnemyUnits) {
+                if (!enemy.isAlive() || enemy.isGarrisoned()) continue;
+
+                // Compute preference weight across all AI units
+                double weight = 1.0; // base weight
+                for (Unit aiUnit : aiUnits) {
+                    if (aiUnit.isAlive() && !aiUnit.isGarrisoned()) {
+                        weight += scoreTargetPreference(aiUnit, enemy) * 0.01;
+                    }
+                }
+                sumX += enemy.getPosition().x() * weight;
+                sumY += enemy.getPosition().y() * weight;
+                totalWeight += weight;
             }
-            int centroidX = (int) (sumX / visibleEnemyUnits.size());
-            int centroidY = (int) (sumY / visibleEnemyUnits.size());
-            centroidX = Math.clamp(centroidX, 0, 127);
-            centroidY = Math.clamp(centroidY, 0, 127);
-            return new GridPosition(centroidX, centroidY);
+            if (totalWeight > 0) {
+                int centroidX = Math.clamp((int) (sumX / totalWeight), 0, 127);
+                int centroidY = Math.clamp((int) (sumY / totalWeight), 0, 127);
+                return new GridPosition(centroidX, centroidY);
+            }
         }
 
         return null;
+    }
+
+    /**
+     * Find siege mode decisions for AI units.
+     * <p>
+     * REF: ai_analysis.md — units with siege capability auto-enter siege mode when enemies are nearby.
+     * - Enable siege mode when enemy is within attack range + SIEGE_PROXIMITY_BUFFER tiles
+     * - Disable siege mode when no enemies within sight range (for movement)
+     *
+     * @param entities the entity manager
+     * @param playerId the AI player ID
+     * @param fogOfWar the fog of war system (may be null for full information)
+     * @return list of SiegeDecision records indicating which units should toggle siege mode
+     */
+    public List<SiegeDecision> findSiegeDecisions(EntityManager entities, int playerId, FogOfWarSystem fogOfWar) {
+        Faction faction = EconomySystem.playerFaction(playerId);
+        List<Unit> aiUnits = entities.getAliveUnitsForPlayer(faction);
+        List<Unit> visibleEnemies = entities.getVisibleEnemyUnitsForPlayer(playerId, fogOfWar);
+        List<SiegeDecision> decisions = new ArrayList<>();
+
+        for (Unit unit : aiUnits) {
+            if (!unit.canSiege() || unit.isGarrisoned()) continue;
+
+            // Find nearest visible enemy
+            int nearestEnemyDist = Integer.MAX_VALUE;
+            for (Unit enemy : visibleEnemies) {
+                if (!enemy.isAlive()) continue;
+                int dist = GridPosition.distanceClass(
+                    unit.getPosition().x() - enemy.getPosition().x(),
+                    unit.getPosition().y() - enemy.getPosition().y());
+                nearestEnemyDist = Math.min(nearestEnemyDist, dist);
+            }
+
+            int siegeRange = unit.getStats().attackRange() + SIEGE_PROXIMITY_BUFFER;
+            int sightRange = unit.getStats().sightRange();
+
+            if (!unit.isSiegeMode()) {
+                // Enable siege mode if enemy within attack range + buffer
+                if (nearestEnemyDist <= siegeRange) {
+                    decisions.add(new SiegeDecision(unit.getId(), true));
+                }
+            } else {
+                // Disable siege mode if no enemies within sight range (allow movement)
+                if (nearestEnemyDist > sightRange) {
+                    decisions.add(new SiegeDecision(unit.getId(), false));
+                }
+            }
+        }
+
+        return decisions;
+    }
+
+    /**
+     * Find garrison decisions for idle AI infantry.
+     * <p>
+     * REF: ai_analysis.md — AI garrisons units in bunkers/towers for defense.
+     * - Only garrison idle infantry (lower priority than combat)
+     * - Only garrison when not actively attacking/defending
+     * - Bunker must be nearby (within GARRISON_DISTANCE tiles) and have capacity
+     *
+     * @param entities the entity manager
+     * @param playerId the AI player ID
+     * @return list of GarrisonDecision records indicating which units should garrison where
+     */
+    public List<GarrisonDecision> findGarrisonDecisions(EntityManager entities, int playerId) {
+        Faction faction = EconomySystem.playerFaction(playerId);
+        List<Unit> aiUnits = entities.getAliveUnitsForPlayer(faction);
+        List<Building> aiBuildings = entities.getBuildingsForPlayer(faction);
+        List<GarrisonDecision> decisions = new ArrayList<>();
+
+        for (Building building : aiBuildings) {
+            if (!building.isAlive() || building.isUnderConstruction()) continue;
+            if (!building.getBuildingType().isDefensive()) continue;
+            // Only bunker-type buildings can garrison (not walls/rocket launchers that lack garrison)
+            if (building.getGarrisonedUnitRef() != null) continue;
+
+            // Find the closest idle infantry within garrison range
+            Unit bestCandidate = null;
+            int bestDist = Integer.MAX_VALUE;
+
+            for (Unit unit : aiUnits) {
+                if (!unit.isAlive() || !unit.isInfantry()) continue;
+                if (unit.isGarrisoned()) continue;
+                if (unit.getMovementState() != MovementState.IDLE) continue;
+
+                int dist = GridPosition.distanceClass(
+                    unit.getPosition().x() - building.getPosition().x(),
+                    unit.getPosition().y() - building.getPosition().y());
+                if (dist <= GARRISON_DISTANCE && dist < bestDist) {
+                    bestDist = dist;
+                    bestCandidate = unit;
+                }
+            }
+
+            if (bestCandidate != null) {
+                decisions.add(new GarrisonDecision(bestCandidate.getId(), building.getId()));
+            }
+        }
+
+        return decisions;
+    }
+
+    /**
+     * Check if a unit is a heavy vehicle (higher HP threshold).
+     * Heavy vehicles target other vehicles and buildings.
+     *
+     * @param unit the unit to check
+     * @return true if this is a heavy vehicle
+     */
+    private boolean isHeavyVehicle(Unit unit) {
+        return unit.getUnitType().category() == UnitCategory.VEHICLE
+            && unit.getStats().hp() >= 60;
     }
 
     /**
@@ -403,7 +705,9 @@ public final class MilitaryAI {
      */
     private boolean isBaseUnderAttack(List<Unit> visibleEnemyUnits, GridPosition basePosition) {
         for (Unit enemy : visibleEnemyUnits) {
-            if (enemy.getPosition().distanceTo(basePosition) <= BASE_DEFENSE_DISTANCE) {
+            if (GridPosition.distanceClass(
+                    enemy.getPosition().x() - basePosition.x(),
+                    enemy.getPosition().y() - basePosition.y()) <= BASE_DEFENSE_DISTANCE) {
                 return true;
             }
         }
@@ -422,7 +726,9 @@ public final class MilitaryAI {
         return aiUnits.stream()
             .sorted(Comparator
                 .comparing((Unit u) -> u.isMachinery() ? 0 : 1) // Machinery (vehicles + SPECIAL_MACHINERY) first
-                .thenComparingDouble(u -> u.getPosition().distanceTo(basePosition)) // Closest first
+                .thenComparingInt(u -> GridPosition.distanceClass(
+                    u.getPosition().x() - basePosition.x(),
+                    u.getPosition().y() - basePosition.y())) // Closest first
             )
             .limit(10) // ASSUMPTION: max 10 defenders
             .map(Unit::getId)
@@ -469,4 +775,18 @@ public final class MilitaryAI {
             .limit(HARASS_GROUP_SIZE)
             .toList();
     }
+
+    // --- Decision record types for siege and garrison ---
+
+    /**
+     * A siege mode decision: which unit should toggle siege mode and in which direction.
+     * Used by {@link #findSiegeDecisions} to communicate decisions to the AISystem.
+     */
+    public record SiegeDecision(int unitId, boolean enableSiege) {}
+
+    /**
+     * A garrison decision: which unit should garrison into which building.
+     * Used by {@link #findGarrisonDecisions} to communicate decisions to the AISystem.
+     */
+    public record GarrisonDecision(int unitId, int buildingId) {}
 }

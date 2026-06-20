@@ -14,11 +14,21 @@ import java.util.List;
 /**
  * Generates resources for players based on their buildings.
  * <p>
- * Credit generation follows the diminishing returns formula where each
- * additional Command Centre produces 30% less than the previous one.
- * Kill rewards are calculated based on unit cost and distance to enemy base.
+ * Credit generation follows the RE formula:
+ * <pre>
+ *   incomePerCycle = (baseIncome * playerModifier * 100 / 100) * 20 / (upgradeBonus + 20)
+ * </pre>
+ * Where:
+ * <ul>
+ *   <li>{@code baseIncome} — sum of per-CC income with diminishing returns (30% less per additional CC)</li>
+ *   <li>{@code playerModifier} — difficulty-based income scaling (0.7 easy, 1.0 normal, 1.3 hard)</li>
+ *   <li>{@code upgradeBonus} — sum of CC upgrade levels × {@link GameConstants#CC_UPGRADE_INCOME_BONUS_PER_LEVEL}</li>
+ * </ul>
+ * Additionally, the Resistance faction receives a 15% income bonus per
+ * {@link GameConstants#RESISTANCE_INCOME_MULTIPLIER}.
  * <p>
- * REF: combat_formulas.md "Credit Generation Formula"
+ * REF: MASTER_DOCUMENTATION.md Section 4.4 — "Credit Generation Formula"
+ * REF: MASTER_DOCUMENTATION.md Section 4.4 — "Resistance collects resources faster than Confederation"
  * REF: combat_formulas.md "Unit Cost & Reward Calculations"
  */
 public final class ResourceGenerator {
@@ -67,38 +77,78 @@ public final class ResourceGenerator {
     }
 
     /**
-     * Calculate total income per cycle for a player.
-     * Uses diminishing returns formula for multiple CCs.
+     * Calculate total income per cycle for a player using the full RE formula.
      * <p>
-     * First CC produces full base income.
-     * Each subsequent CC produces 30% less than the previous one.
+     * Steps:
+     * <ol>
+     *   <li>Compute base income from all CCs with diminishing returns (30% per additional CC)</li>
+     *   <li>Compute upgradeBonus from the sum of all CC upgrade levels</li>
+     *   <li>Apply RE formula: {@code (baseIncome * playerModifier) * 20 / (upgradeBonus + 20)}</li>
+     *   <li>Apply faction multiplier for Resistance</li>
+     * </ol>
      * <p>
-     * REF: combat_formulas.md — income formula:
-     * "income = (baseIncome * playerModifier * 100 / 100) * 20 / (upgradeBonus + 20)"
-     * Simplified: each CC after the first produces (1 - CC_DIMINISHING_RETURNS) * previous
+     * REF: MASTER_DOCUMENTATION.md Section 4.4:
+     *   "incomePerCycle = (baseIncome * playerModifier * 100 / 100) * 20 / (upgradeBonus + 20)"
+     *
+     * @param playerId      the player ID (0 or 1)
+     * @param entities      the entity manager
+     * @param playerModifier difficulty-based income modifier (e.g. 1.0 for normal)
+     * @return the total income per cycle
+     */
+    public int calculateCycleIncome(int playerId, EntityManager entities, double playerModifier) {
+        Faction faction = EconomySystem.playerFaction(playerId);
+        List<Building> buildings = entities.getBuildingsForPlayer(faction);
+
+        // Step 1: Compute base income with diminishing returns, and sum upgrade levels
+        int ccIndex = 0;
+        int totalBaseIncome = 0;
+        int totalUpgradeBonus = 0;
+        double diminishingFactor = 1.0 - GameConstants.CC_DIMINISHING_RETURNS;
+        double currentIncome = BASE_CC_INCOME;
+
+        for (Building building : buildings) {
+            if (building.isAlive() && !building.isUnderConstruction()
+                    && (building.getBuildingType().isHQ() || isIncomeBuilding(building.getBuildingType()))) {
+                // Diminishing returns: each additional CC gives 30% less
+                if (ccIndex > 0) {
+                    currentIncome *= diminishingFactor;
+                }
+                totalBaseIncome += (int) currentIncome;
+                totalUpgradeBonus += building.getUpgradeLevel() * GameConstants.CC_UPGRADE_INCOME_BONUS_PER_LEVEL;
+                ccIndex++;
+            }
+        }
+
+        if (ccIndex == 0) {
+            return 0;
+        }
+
+        // Step 2: Apply RE formula
+        // REF: MASTER_DOCUMENTATION.md Section 4.4
+        // incomePerCycle = (baseIncome * playerModifier * 100 / 100) * 20 / (upgradeBonus + 20)
+        // The "* 100 / 100" is an integer math artifact from the RE; simplified here.
+        int income = (int) ((totalBaseIncome * playerModifier) * 20.0 / (totalUpgradeBonus + 20));
+
+        // Step 3 (H-6): Apply faction income differential
+        // REF: MASTER_DOCUMENTATION.md — "Resistance collects resources faster than Confederation (confirmed by Gear Games)"
+        // ASSUMPTION: Exact multiplier is not documented; 15% assumed.
+        if (faction == Faction.RESISTANCE) {
+            income = (int) (income * GameConstants.RESISTANCE_INCOME_MULTIPLIER);
+        }
+
+        return Math.max(income, 0);
+    }
+
+    /**
+     * Calculate total income per cycle for a player with default playerModifier (1.0).
+     * Convenience overload for callers that don't use difficulty-based modifiers.
      *
      * @param playerId the player ID (0 or 1)
      * @param entities the entity manager
      * @return the total income per cycle
      */
     public int calculateCycleIncome(int playerId, EntityManager entities) {
-        int ccCount = countCommandCentres(playerId, entities);
-        if (ccCount == 0) {
-            return 0;
-        }
-
-        int totalIncome = 0;
-        double currentIncome = BASE_CC_INCOME;
-        // REF: combat_formulas.md — "(baseIncome * 7) / 10" = 70% of base
-        // First CC gives full income; each additional CC gives 30% less
-        double diminishingFactor = 1.0 - GameConstants.CC_DIMINISHING_RETURNS;
-
-        for (int i = 0; i < ccCount; i++) {
-            totalIncome += (int) currentIncome;
-            currentIncome *= diminishingFactor;
-        }
-
-        return totalIncome;
+        return calculateCycleIncome(playerId, entities, GameConstants.NORMAL_INCOME_MODIFIER);
     }
 
     /**

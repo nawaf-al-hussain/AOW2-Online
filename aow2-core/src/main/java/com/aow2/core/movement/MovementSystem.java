@@ -3,6 +3,7 @@ package com.aow2.core.movement;
 import com.aow2.common.config.GameConstants;
 import com.aow2.common.model.GridPosition;
 import com.aow2.common.model.MovementState;
+import com.aow2.common.model.UnitCategory;
 import com.aow2.core.entity.Unit;
 import com.aow2.core.world.EntityManager;
 import com.aow2.core.world.GameMap;
@@ -87,7 +88,8 @@ public final class MovementSystem {
                 if (unit.getTargetPosition() != null) {
                     List<GridPosition> newPath = pathfinding.findPath(
                         unit.getPosition(), unit.getTargetPosition(), map,
-                        getOccupiedCells(entities, unit.getId()));
+                        getOccupiedCells(entities, unit.getId()),
+                        unit.getUnitType().category());
                     if (!newPath.isEmpty()) {
                         unit.setPath(newPath);
                         unit.setMovementState(MovementState.MOVING);
@@ -174,7 +176,9 @@ public final class MovementSystem {
         }
 
         // Check if enemy is in attack range
-        double distance = unit.getPosition().distanceTo(target.getPosition());
+        int distance = GridPosition.distanceClass(
+            unit.getPosition().x() - target.getPosition().x(),
+            unit.getPosition().y() - target.getPosition().y());
         return distance <= unit.getStats().attackRange();
     }
 
@@ -205,12 +209,14 @@ public final class MovementSystem {
             return;
         }
 
-        if (!map.isPassable(target.x(), target.y())) {
-            LOG.debug("Cannot move unit {} to impassable position {}", unit.getId(), target);
+        UnitCategory category = unit.getUnitType().category();
+        if (!map.isPassable(target.x(), target.y(), category)) {
+            LOG.debug("Cannot move unit {} to impassable position {} for category {}",
+                unit.getId(), target, category);
             return;
         }
 
-        List<GridPosition> path = pathfinding.findPath(unit.getPosition(), target, map, occupied);
+        List<GridPosition> path = pathfinding.findPath(unit.getPosition(), target, map, occupied, category);
 
         if (path.isEmpty()) {
             // No path found — maybe target is adjacent or unreachable

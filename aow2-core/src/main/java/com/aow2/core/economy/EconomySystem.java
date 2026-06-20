@@ -12,11 +12,21 @@ import org.slf4j.LoggerFactory;
 /**
  * Manages the game economy: credit generation, spending, and tracking.
  * <p>
- * Each player accumulates credits from Command Centres with diminishing returns
- * for each additional CC. Credits are generated every 128 ticks matching the
- * original game cycle period ((aL.ah & 127) == 127).
+ * Each player accumulates credits from Command Centres. The income per cycle
+ * follows the full RE formula:
+ * <pre>
+ *   incomePerCycle = (baseIncome * playerModifier) * 20 / (upgradeBonus + 20)
+ * </pre>
+ * Where {@code playerModifier} is a per-player difficulty-based scaling factor
+ * (default 1.0 for normal difficulty), and {@code upgradeBonus} is derived
+ * from CC upgrade levels. The Resistance faction receives an additional 15%
+ * income multiplier.
+ * <p>
+ * Credits are generated every 128 ticks matching the original game cycle
+ * period ((aL.ah &amp; 127) == 127).
  * <p>
  * REF: combat_formulas.md "Credit Generation Formula"
+ * REF: MASTER_DOCUMENTATION.md Section 4.4 — Economy System
  * REF: GameConstants.CC_DIMINISHING_RETURNS = 0.30
  */
 public final class EconomySystem {
@@ -48,11 +58,18 @@ public final class EconomySystem {
     /** Per-player income rate cache (recalculated each cycle). */
     private final int[] playerIncomeRates;
 
+    /**
+     * Per-player income modifier (difficulty-based).
+     * REF: MASTER_DOCUMENTATION.md Section 4.4 — "baseIncome * playerModifier"
+     * Default is 1.0 (normal difficulty) for both players.
+     */
+    private final double[] playerIncomeModifiers;
+
     /** Reference to the resource generator for income calculations. */
     private final ResourceGenerator resourceGenerator;
 
     /**
-     * Constructs an EconomySystem with default starting credits.
+     * Constructs an EconomySystem with default starting credits and normal difficulty.
      *
      * @param resourceGenerator the resource generator for income calculations
      */
@@ -60,9 +77,11 @@ public final class EconomySystem {
         this.resourceGenerator = resourceGenerator;
         this.playerCredits = new int[MAX_PLAYERS];
         this.playerIncomeRates = new int[MAX_PLAYERS];
+        this.playerIncomeModifiers = new double[MAX_PLAYERS];
         for (int i = 0; i < MAX_PLAYERS; i++) {
             playerCredits[i] = STARTING_CREDITS;
             playerIncomeRates[i] = 0;
+            playerIncomeModifiers[i] = GameConstants.NORMAL_INCOME_MODIFIER;
         }
     }
 
@@ -99,17 +118,17 @@ public final class EconomySystem {
 
     /**
      * Calculate income for a player based on their Command Centres.
-     * Base income from first CC, 30% less for each additional CC.
+     * Applies the full RE formula including playerModifier (difficulty) and
+     * upgradeBonus (CC upgrade levels), plus the Resistance faction income bonus.
      * <p>
-     * REF: GameConstants.CC_DIMINISHING_RETURNS = 0.30
-     * REF: combat_formulas.md — "income = (baseIncome * 7) / 10" for the 70% modifier
+     * REF: MASTER_DOCUMENTATION.md Section 4.4 — Credit Generation Formula
      *
      * @param playerId the player ID (0 or 1)
      * @param entities the entity manager
      * @return the total income per cycle for this player
      */
     public int calculateIncome(int playerId, EntityManager entities) {
-        return resourceGenerator.calculateCycleIncome(playerId, entities);
+        return resourceGenerator.calculateCycleIncome(playerId, entities, playerIncomeModifiers[playerId]);
     }
 
     /**
@@ -199,6 +218,36 @@ public final class EconomySystem {
             return;
         }
         playerCredits[playerId] = amount;
+    }
+
+    /**
+     * Set the difficulty-based income modifier for a player.
+     * <p>
+     * REF: MASTER_DOCUMENTATION.md Section 4.4 — "baseIncome * playerModifier"
+     * Use {@link com.aow2.core.ai.AIDifficulty#incomeModifier} for AI-controlled players.
+     *
+     * @param playerId      the player ID (0 or 1)
+     * @param incomeModifier the income multiplier (e.g. 0.7 for easy, 1.0 for normal, 1.3 for hard)
+     */
+    public void setPlayerIncomeModifier(int playerId, double incomeModifier) {
+        if (playerId < 0 || playerId >= MAX_PLAYERS) {
+            return;
+        }
+        this.playerIncomeModifiers[playerId] = incomeModifier;
+        LOG.debug("Player {} income modifier set to {}", playerId, incomeModifier);
+    }
+
+    /**
+     * Get the current income modifier for a player.
+     *
+     * @param playerId the player ID (0 or 1)
+     * @return the player's income modifier
+     */
+    public double getPlayerIncomeModifier(int playerId) {
+        if (playerId < 0 || playerId >= MAX_PLAYERS) {
+            return GameConstants.NORMAL_INCOME_MODIFIER;
+        }
+        return playerIncomeModifiers[playerId];
     }
 
     /**

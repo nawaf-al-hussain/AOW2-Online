@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -180,6 +181,20 @@ class CommandSerializerTest {
         assertEquals(original.playerId(), restored.playerId());
         assertArrayEquals(original.unitIds(), restored.unitIds());
         assertEquals(original.waypoint(), restored.waypoint());
+    }
+
+    @Test
+    @DisplayName("AttackMove command round-trip serialization")
+    void attackMoveRoundTrip() {
+        var cmd = new CommandType.AttackMove(100L, 1, new int[]{42, 43}, new GridPosition(15, 20));
+        byte[] data = CommandSerializer.serialize(cmd);
+        CommandType result = CommandSerializer.deserialize(data);
+        assertInstanceOf(CommandType.AttackMove.class, result);
+        var am = (CommandType.AttackMove) result;
+        assertEquals(100L, am.tick());
+        assertEquals(1, am.playerId());
+        assertArrayEquals(new int[]{42, 43}, am.unitIds());
+        assertEquals(new GridPosition(15, 20), am.target());
     }
 
     @Test

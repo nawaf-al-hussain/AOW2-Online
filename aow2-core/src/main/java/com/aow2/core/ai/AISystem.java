@@ -3,6 +3,7 @@ package com.aow2.core.ai;
 import com.aow2.common.model.BuildingType;
 import com.aow2.common.model.Faction;
 import com.aow2.common.model.GridPosition;
+import com.aow2.common.model.MovementState;
 import com.aow2.common.model.UnitType;
 import com.aow2.core.combat.CombatSystem;
 import com.aow2.core.economy.BuildingPlacementSystem;
@@ -173,7 +174,11 @@ public final class AISystem {
         taskCompleted();
         processResearchDecisions(entities, economy, research, currentTick);
         taskCompleted();
-        processMilitaryDecisions(entities, map, movement);
+        processMilitaryDecisions(entities, map, movement, combat);
+        taskCompleted();
+        processSiegeDecisions(entities, combat);
+        taskCompleted();
+        processGarrisonDecisions(entities, map, movement);
         taskCompleted();
     }
 
@@ -253,7 +258,7 @@ public final class AISystem {
      * 4. Retreat when outnumbered
      */
     private void processMilitaryDecisions(EntityManager entities, GameMap map,
-                                           MovementSystem movement) {
+                                           MovementSystem movement, CombatSystem combat) {
         MilitaryAction action = militaryAI.decideAction(entities, map, playerId, fogOfWar);
 
         // Execute the military action using pattern matching
@@ -268,6 +273,9 @@ public final class AISystem {
 
     /**
      * Execute an attack order: move units to the attack target.
+     * H-11: Uses per-unit targeting preferences when possible — each unit
+     * gets the best target for its type rather than all moving to the same position.
+     * Falls back to the group target if per-unit targeting finds no better option.
      * REF: ai_analysis.md — AI attack decision, units move toward target
      */
     private void executeAttack(MilitaryAction.Attack attack, EntityManager entities,
@@ -275,8 +283,15 @@ public final class AISystem {
         for (int unitId : attack.unitIds()) {
             Unit unit = entities.getUnit(unitId);
             if (unit != null && unit.isAlive()) {
-                movement.issueMoveCommand(unit, attack.target(), map, entities);
-                LOG.debug("AI unit {} attacking toward {}", unitId, attack.target());
+                // H-11: Use per-unit targeting preference to find the best target for this unit
+                GridPosition preferredTarget = militaryAI.findBestTargetForUnit(
+                    unit, entities, playerId, fogOfWar);
+                if (preferredTarget == null) {
+                    preferredTarget = attack.target();
+                }
+                movement.issueMoveCommand(unit, preferredTarget, map, entities);
+                LOG.debug("AI unit {} attacking toward {} (preference target)",
+                    unitId, preferredTarget);
             }
         }
     }
@@ -332,6 +347,65 @@ public final class AISystem {
      */
     private void executeHoldPosition(MilitaryAction.HoldPosition holdPosition) {
         LOG.debug("AI holding {} units in position", holdPosition.unitIds().size());
+    }
+
+    /**
+     * Process siege mode decisions for AI units.
+     * <p>
+     * H-12: Units with siege capability auto-enter siege mode when enemies are nearby,
+     * and exit siege mode when no enemies are within sight range (for movement).
+     * REF: ai_analysis.md — siege mode auto-activation for siege-capable units.
+     */
+    private void processSiegeDecisions(EntityManager entities, CombatSystem combat) {
+        List<MilitaryAI.SiegeDecision> decisions = militaryAI.findSiegeDecisions(
+            entities, playerId, fogOfWar);
+        for (MilitaryAI.SiegeDecision decision : decisions) {
+            Unit unit = entities.getUnit(decision.unitId());
+            if (unit != null && unit.isAlive()) {
+                if (decision.enableSiege()) {
+                    combat.enterSiegeMode(unit);
+                } else {
+                    combat.exitSiegeMode(unit);
+                }
+            }
+        }
+    }
+
+    /**
+     * Process garrison decisions for idle AI infantry.
+     * <p>
+     * H-13: Garrisons idle infantry into nearby bunkers with available capacity.
+     * This is a lower-priority action — only garrison when not actively attacking/defending.
+     * REF: ai_analysis.md — AI garrisons units in bunkers/towers.
+     */
+    private void processGarrisonDecisions(EntityManager entities, GameMap map,
+                                            MovementSystem movement) {
+        List<MilitaryAI.GarrisonDecision> decisions = militaryAI.findGarrisonDecisions(
+            entities, playerId);
+        for (MilitaryAI.GarrisonDecision decision : decisions) {
+            Unit unit = entities.getUnit(decision.unitId());
+            Building building = entities.getBuilding(decision.buildingId());
+            if (unit == null || !unit.isAlive()) continue;
+            if (building == null || !building.isAlive()) continue;
+            if (building.getGarrisonedUnitRef() != null) continue;
+
+            // Move unit close to bunker first if not within garrison range (2 tiles)
+            double dist = unit.getPosition().distanceTo(building.getPosition());
+            if (dist > 2) {
+                movement.issueMoveCommand(unit, building.getPosition(), map, entities);
+                LOG.debug("AI unit {} moving toward bunker {} for garrison",
+                    decision.unitId(), decision.buildingId());
+            } else {
+                // Within range — perform garrison directly
+                building.setGarrisonedUnitRef(decision.unitId());
+                unit.setPosition(building.getPosition());
+                unit.setMovementState(MovementState.IDLE);
+                unit.clearPath();
+                unit.setGarrisonedBuildingId(decision.buildingId());
+                LOG.info("AI unit {} garrisoned in bunker {} at {}",
+                    decision.unitId(), decision.buildingId(), building.getPosition());
+            }
+        }
     }
 
     /**

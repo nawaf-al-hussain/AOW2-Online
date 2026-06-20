@@ -2,6 +2,7 @@ package com.aow2.core.movement;
 
 import com.aow2.common.model.GridPosition;
 import com.aow2.common.model.TerrainType;
+import com.aow2.common.model.UnitCategory;
 import com.aow2.core.world.GameMap;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -511,6 +512,242 @@ class PathfindingSystemTest {
             // Then: path should be exactly one step
             assertEquals(1, path.size());
             assertEquals(goal, path.get(0));
+        }
+    }
+
+    @Nested
+    @DisplayName("Per-Unit-Type Terrain Passability (H-8)")
+    class PerUnitTypePassability {
+
+        @Test
+        @DisplayName("Infantry should find path through SHALLOW_WATER")
+        void infantryShouldCrossShallowWater() {
+            // Given: a map with a wall of SHALLOW_WATER separating start and goal
+            GameMap map = new GameMap(10, 10);
+            for (int y = 0; y < 10; y++) {
+                map.setTile(5, y, TerrainType.SHALLOW_WATER);
+            }
+
+            GridPosition start = new GridPosition(2, 5);
+            GridPosition goal = new GridPosition(8, 5);
+
+            // When: finding a path for INFANTRY (category-aware)
+            List<GridPosition> path = pathfinding.findPath(start, goal, map,
+                Collections.emptySet(), UnitCategory.INFANTRY);
+
+            // Then: path should be found through shallow water
+            assertFalse(path.isEmpty(), "Infantry should cross shallow water");
+            assertEquals(goal, path.get(path.size() - 1));
+
+            // Verify the path goes through shallow water
+            boolean usesShallowWater = path.stream()
+                .anyMatch(p -> map.getTile(p.x(), p.y()) == TerrainType.SHALLOW_WATER);
+            assertTrue(usesShallowWater, "Infantry path should include shallow water tiles");
+        }
+
+        @Test
+        @DisplayName("Vehicle should NOT find path through SHALLOW_WATER")
+        void vehicleShouldNotCrossShallowWater() {
+            // Given: a map with a complete wall of SHALLOW_WATER separating start and goal
+            GameMap map = new GameMap(10, 10);
+            for (int y = 0; y < 10; y++) {
+                map.setTile(5, y, TerrainType.SHALLOW_WATER);
+            }
+
+            GridPosition start = new GridPosition(2, 5);
+            GridPosition goal = new GridPosition(8, 5);
+
+            // When: finding a path for VEHICLE (category-aware)
+            List<GridPosition> path = pathfinding.findPath(start, goal, map,
+                Collections.emptySet(), UnitCategory.VEHICLE);
+
+            // Then: no path should exist (shallow water is impassable for vehicles)
+            assertTrue(path.isEmpty(), "Vehicle should not cross shallow water");
+        }
+
+        @Test
+        @DisplayName("SPECIAL_MACHINERY should NOT find path through SHALLOW_WATER")
+        void specialMachineryShouldNotCrossShallowWater() {
+            // Given: a map with a complete wall of SHALLOW_WATER
+            GameMap map = new GameMap(10, 10);
+            for (int y = 0; y < 10; y++) {
+                map.setTile(5, y, TerrainType.SHALLOW_WATER);
+            }
+
+            GridPosition start = new GridPosition(2, 5);
+            GridPosition goal = new GridPosition(8, 5);
+
+            // When: finding a path for SPECIAL_MACHINERY
+            List<GridPosition> path = pathfinding.findPath(start, goal, map,
+                Collections.emptySet(), UnitCategory.SPECIAL_MACHINERY);
+
+            // Then: no path should exist
+            assertTrue(path.isEmpty(), "Special machinery should not cross shallow water");
+        }
+
+        @Test
+        @DisplayName("Backward-compat findPath (no category) should treat SHALLOW_WATER as impassable")
+        void backwardCompatFindPathShouldBlockShallowWater() {
+            // Given: a map with a wall of SHALLOW_WATER
+            GameMap map = new GameMap(10, 10);
+            for (int y = 0; y < 10; y++) {
+                map.setTile(5, y, TerrainType.SHALLOW_WATER);
+            }
+
+            GridPosition start = new GridPosition(2, 5);
+            GridPosition goal = new GridPosition(8, 5);
+
+            // When: using the old findPath without category
+            List<GridPosition> path = pathfinding.findPath(start, goal, map);
+
+            // Then: shallow water should be impassable (backward compat)
+            assertTrue(path.isEmpty(),
+                "Default findPath should treat shallow water as impassable");
+        }
+
+        @Test
+        @DisplayName("Infantry on SHALLOW_WATER start position should find path")
+        void infantryOnShallowWaterStartShouldFindPath() {
+            // Given: infantry starting on shallow water
+            GameMap map = new GameMap(10, 10);
+            map.setTile(0, 5, TerrainType.SHALLOW_WATER);
+            map.setTile(1, 5, TerrainType.SHALLOW_WATER);
+
+            GridPosition start = new GridPosition(0, 5);
+            GridPosition goal = new GridPosition(5, 5);
+
+            // When: finding path for infantry
+            List<GridPosition> path = pathfinding.findPath(start, goal, map,
+                Collections.emptySet(), UnitCategory.INFANTRY);
+
+            // Then: path should be found
+            assertFalse(path.isEmpty(), "Infantry starting on shallow water should find path");
+            assertEquals(goal, path.get(path.size() - 1));
+        }
+
+        @Test
+        @DisplayName("Vehicle should not cross SWAMP")
+        void vehicleShouldNotCrossSwamp() {
+            // Given: a map with a complete wall of SWAMP
+            GameMap map = new GameMap(10, 10);
+            for (int y = 0; y < 10; y++) {
+                map.setTile(5, y, TerrainType.SWAMP);
+            }
+
+            GridPosition start = new GridPosition(2, 5);
+            GridPosition goal = new GridPosition(8, 5);
+
+            // When: finding path for VEHICLE
+            List<GridPosition> path = pathfinding.findPath(start, goal, map,
+                Collections.emptySet(), UnitCategory.VEHICLE);
+
+            // Then: no path (swamp is impassable for vehicles)
+            assertTrue(path.isEmpty(), "Vehicle should not cross swamp");
+        }
+
+        @Test
+        @DisplayName("Infantry should cross SWAMP")
+        void infantryShouldCrossSwamp() {
+            // Given: a map with a complete wall of SWAMP
+            GameMap map = new GameMap(10, 10);
+            for (int y = 0; y < 10; y++) {
+                map.setTile(5, y, TerrainType.SWAMP);
+            }
+
+            GridPosition start = new GridPosition(2, 5);
+            GridPosition goal = new GridPosition(8, 5);
+
+            // When: finding path for INFANTRY
+            List<GridPosition> path = pathfinding.findPath(start, goal, map,
+                Collections.emptySet(), UnitCategory.INFANTRY);
+
+            // Then: path should be found
+            assertFalse(path.isEmpty(), "Infantry should cross swamp");
+            assertEquals(goal, path.get(path.size() - 1));
+        }
+
+        @Test
+        @DisplayName("Infantry should prefer GRASS over SHALLOW_WATER (cost difference)")
+        void infantryShouldPreferGrassOverShallowWater() {
+            // Given: two parallel paths — one through shallow water, one through grass
+            GameMap map = new GameMap(10, 10);
+            // Shallow water column at x=4
+            for (int y = 0; y < 10; y++) {
+                map.setTile(4, y, TerrainType.SHALLOW_WATER);
+            }
+            // Deep water column at x=6 (forces use of shallow water or long detour)
+            for (int y = 0; y < 10; y++) {
+                map.setTile(6, y, TerrainType.DEEP_WATER);
+            }
+
+            GridPosition start = new GridPosition(0, 5);
+            GridPosition goal = new GridPosition(9, 5);
+
+            // When: finding path for infantry
+            List<GridPosition> path = pathfinding.findPath(start, goal, map,
+                Collections.emptySet(), UnitCategory.INFANTRY);
+
+            // Then: path should exist
+            assertFalse(path.isEmpty(), "Infantry should find path across the map");
+            assertEquals(goal, path.get(path.size() - 1));
+        }
+
+        @Test
+        @DisplayName("getTerrainCost should return finite cost for SHALLOW_WATER with INFANTRY")
+        void getTerrainCostShouldReturnFiniteCostForInfantryShallowWater() {
+            // When/Then: shallow water cost for infantry should be finite
+            assertEquals(3, pathfinding.getTerrainCost(TerrainType.SHALLOW_WATER, UnitCategory.INFANTRY),
+                "Shallow water cost for infantry should be 3");
+
+            // Default (no category) should still be MAX_VALUE
+            assertEquals(Integer.MAX_VALUE, pathfinding.getTerrainCost(TerrainType.SHALLOW_WATER),
+                "Default shallow water cost should be MAX_VALUE");
+
+            // Vehicle should also be MAX_VALUE
+            assertEquals(Integer.MAX_VALUE, pathfinding.getTerrainCost(TerrainType.SHALLOW_WATER, UnitCategory.VEHICLE),
+                "Shallow water cost for vehicle should be MAX_VALUE");
+        }
+
+        @Test
+        @DisplayName("No unit type should cross DEEP_WATER")
+        void noUnitTypeShouldCrossDeepWater() {
+            // Given: a map with a complete wall of DEEP_WATER
+            GameMap map = new GameMap(10, 10);
+            for (int y = 0; y < 10; y++) {
+                map.setTile(5, y, TerrainType.DEEP_WATER);
+            }
+
+            GridPosition start = new GridPosition(2, 5);
+            GridPosition goal = new GridPosition(8, 5);
+
+            // Then: no category can cross deep water
+            for (UnitCategory cat : UnitCategory.values()) {
+                List<GridPosition> path = pathfinding.findPath(start, goal, map,
+                    Collections.emptySet(), cat);
+                assertTrue(path.isEmpty(),
+                    cat + " should not cross deep water");
+            }
+        }
+
+        @Test
+        @DisplayName("No unit type should cross MOUNTAIN")
+        void noUnitTypeShouldCrossMountain() {
+            // Given: a map with a complete wall of MOUNTAIN
+            GameMap map = new GameMap(10, 10);
+            for (int y = 0; y < 10; y++) {
+                map.setTile(5, y, TerrainType.MOUNTAIN);
+            }
+
+            GridPosition start = new GridPosition(2, 5);
+            GridPosition goal = new GridPosition(8, 5);
+
+            // Then: no category can cross mountains
+            for (UnitCategory cat : UnitCategory.values()) {
+                List<GridPosition> path = pathfinding.findPath(start, goal, map,
+                    Collections.emptySet(), cat);
+                assertTrue(path.isEmpty(),
+                    cat + " should not cross mountain");
+            }
         }
     }
 

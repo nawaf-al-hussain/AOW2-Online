@@ -321,33 +321,16 @@ public final class ResearchSystem {
      * (ArmorCalculator, CombatSystem, ProductionSystem, etc.) query
      * {@link #hasResearch(int, int)} to apply the actual stat modifications lazily.
      * <p>
-     * REF: combat_formulas.md "Research/Upgrade Effects" — detailed effects per research ID
+     * REF: combat_formulas.md "Research/Upgrade Effects" — 48 research IDs (0-47)
+     * REF: TechTree.java — canonical ID-to-faction mapping
      * <p>
-     * Confederation research IDs 0-7:
+     * <b>Global 48-ID mapping (canonical):</b>
      * <ul>
-     *   <li>ID 0: Energy suit → infantry armor +2 (ArmorCalculator checks hasResearch)</li>
-     *   <li>ID 1: Bio suit → infantry HP recovery x3</li>
-     *   <li>ID 2: Enhanced firing rate → Fortress attack speed reduced by 50%</li>
-     *   <li>ID 3: Armour-piercing bullet → Fortress damage +40%</li>
-     *   <li>ID 4: Heavy shells → Hammer damage +40%</li>
-     *   <li>ID 5: Forced light missiles → unlocks Flame Assault (ProductionSystem checks hasResearch)</li>
-     *   <li>ID 6: Lava flame fuel → Fortress can use flame weapon</li>
-     *   <li>ID 7: Volcano flame gun → Zeus and Hammer damage +25%</li>
-     * </ul>
-     * <p>
-     * Rebels research IDs 8-15:
-     * <ul>
-     *   <li>ID 8: Titanium jacket → infantry armor +1 (ArmorCalculator checks hasResearch)</li>
-     *   <li>ID 9: First-aid kit → infantry HP recovery x3</li>
-     *   <li>ID 10: Enhanced fire rate → infantry firing rate +50%</li>
-     *   <li>ID 11: Doping → infantry speed +1</li>
-     *   <li>ID 12: Snipers → unlocks Sniper unit (ProductionSystem checks hasResearch)</li>
-     *   <li>ID 13: Rifle 'Hornet-10' → Sniper sight+2, range+2, damage+20%</li>
-     *   <li>ID 14: Heavy machine gun → Coyote/Armadillo damage +15%</li>
-     *   <li>ID 15: Reinforced engine → vehicle speed +1, unlocks Rhino (ProductionSystem checks hasResearch)</li>
+     *   <li>Confederation: IDs 0–23 and 43 (25 nodes total)</li>
+     *   <li>Resistance: IDs 24–47 excluding 43 (23 nodes total)</li>
      * </ul>
      *
-     * @param researchId the completed research ID
+     * @param researchId the completed research ID (0-47)
      * @param playerId   the player who completed it
      * @param entities   the entity manager
      */
@@ -360,119 +343,312 @@ public final class ResearchSystem {
         // Research is already stored in completedResearch[playerId] by processTick().
         // Other systems query hasResearch(playerId, researchId) to apply effects lazily.
 
-        // REF: combat_formulas.md — specific effects per research ID
+        // REF: TechTree.java + combat_formulas.md — effects per research ID
+        // Confederation: IDs 0-23, 43 | Resistance: IDs 24-47 (excluding 43)
         switch (researchId) {
-            // === Confederation research (IDs 0-7) ===
+            // =====================================================================
+            // CONFEDERATION research (IDs 0–23)
+            // =====================================================================
+
+            // --- Infantry Chain (Tier 1-2) ---
             case 0 -> {
-                // Energy suit → infantry armor +2
-                // ArmorCalculator.getResearchArmorBonus() checks hasResearch(playerId, 0)
-                LOG.info("Player {} ({}) completed Energy Suit: infantry armor +2", playerId, faction);
+                // Energy Suit — Infantry armour +2, Sniper armour +2, Light armour +2
+                // ArmorCalculator checks hasResearch(playerId, 0)
+                LOG.info("Player {} ({}) completed Energy Suit: infantry armour +2, sniper armour +2, light armour +2", playerId, faction);
             }
             case 1 -> {
-                // Bio suit → infantry HP recovery x3
-                // HP recovery system checks hasResearch(playerId, 1)
-                LOG.info("Player {} ({}) completed Bio Suit: infantry HP recovery x3", playerId, faction);
+                // Advanced Targeting — Enemy attack range reduction /3
+                // CombatSystem checks hasResearch(playerId, 1)
+                LOG.info("Player {} ({}) completed Advanced Targeting: enemy attack range /3", playerId, faction);
             }
             case 2 -> {
-                // Enhanced firing rate → Fortress attack speed reduced by 50%
-                // CombatSystem checks hasResearch(playerId, 2) for Fortress attack speed
-                LOG.info("Player {} ({}) completed Enhanced Firing Rate: Fortress attack speed -50%", playerId, faction);
+                // Rapid Fire — Attack speed -2 (faster) for specific unit types
+                // CombatSystem checks hasResearch(playerId, 2)
+                LOG.info("Player {} ({}) completed Rapid Fire: attack speed -2 (faster) for specific unit types", playerId, faction);
             }
             case 3 -> {
-                // Armour-piercing bullet → Fortress damage +40%
-                // CombatSystem checks hasResearch(playerId, 3) for Fortress damage bonus
-                LOG.info("Player {} ({}) completed Armour-Piercing Bullet: Fortress damage +40%", playerId, faction);
+                // Enhanced Munitions — Attack damage +2, Production damage +2
+                // CombatSystem checks hasResearch(playerId, 3)
+                LOG.info("Player {} ({}) completed Enhanced Munitions: attack damage +2, production damage +2", playerId, faction);
             }
+
+            // --- Building Defence Chain ---
             case 4 -> {
-                // Heavy shells → Hammer damage +40%
-                // CombatSystem checks hasResearch(playerId, 4) for Hammer damage bonus
-                LOG.info("Player {} ({}) completed Heavy Shells: Hammer damage +40%", playerId, faction);
+                // Fortified Structures — Building armour +4, Production armour +4
+                // ArmorCalculator checks hasResearch(playerId, 4)
+                LOG.info("Player {} ({}) completed Fortified Structures: building armour +4, production armour +4", playerId, faction);
             }
+
+            // --- Building Radius / Economy Chain ---
             case 5 -> {
-                // Forced light missiles → unlocks Flame Assault
-                // ProductionSystem checks hasResearch(playerId, 5) for unit availability
-                LOG.info("Player {} ({}) completed Forced Light Missiles: Flame Assault unlocked", playerId, faction);
+                // Power Grid Expansion — Building radius +1
+                // BuildingSystem checks hasResearch(playerId, 5)
+                LOG.info("Player {} ({}) completed Power Grid Expansion: building radius +1", playerId, faction);
             }
+
+            // --- Infantry Chain (Tier 3) ---
             case 6 -> {
-                // Lava flame fuel → Fortress can use flame weapon
-                // CombatSystem checks hasResearch(playerId, 6) for Fortress flame weapon
-                LOG.info("Player {} ({}) completed Lava Flame Fuel: Fortress flame weapon enabled", playerId, faction);
+                // Rhino Mk.II Upgrade — Upgrades Rhino (type 18) → Heavy Assault (type 7)
+                // ProductionSystem checks hasResearch(playerId, 6) for unit upgrade
+                LOG.info("Player {} ({}) completed Rhino Mk.II Upgrade: upgrades Rhino to Heavy Assault variant", playerId, faction);
             }
             case 7 -> {
-                // Volcano flame gun → Zeus and Hammer damage +25%
-                // CombatSystem checks hasResearch(playerId, 7) for Zeus/Hammer damage bonus
-                LOG.info("Player {} ({}) completed Volcano Flame Gun: Zeus & Hammer damage +25%", playerId, faction);
+                // Vehicle Propulsion — Attack speed +5 for type 11, +8 for type 13; Production bonuses
+                // CombatSystem checks hasResearch(playerId, 7)
+                LOG.info("Player {} ({}) completed Vehicle Propulsion: attack speed +5 for type 11, +8 for type 13; production bonuses", playerId, faction);
             }
 
-            // === Rebels research (IDs 8-15) ===
+            // --- Heavy Machinery Chain (Tier 4) ---
             case 8 -> {
-                // Titanium jacket → infantry armor +1
-                // ArmorCalculator.getResearchArmorBonus() checks hasResearch(playerId, 8)
-                LOG.info("Player {} ({}) completed Titanium Jacket: infantry armor +1", playerId, faction);
+                // Heavy Artillery Upgrade — Attack range -1 for types 7,18,9,11,17,13,16; Building radius +1
+                // CombatSystem checks hasResearch(playerId, 8)
+                LOG.info("Player {} ({}) completed Heavy Artillery Upgrade: attack range -1 for heavy units; building radius +1", playerId, faction);
             }
+
+            // --- Heavy Machinery Chain (Tier 5) ---
             case 9 -> {
-                // First-aid kit → infantry HP recovery x3
-                // HP recovery system checks hasResearch(playerId, 9)
-                LOG.info("Player {} ({}) completed First-Aid Kit: infantry HP recovery x3", playerId, faction);
+                // Composite Armour II — Infantry armour +2 for types 7,18,9,11,17,13,16
+                // ArmorCalculator checks hasResearch(playerId, 9)
+                LOG.info("Player {} ({}) completed Composite Armour II: infantry armour +2 for heavy unit types", playerId, faction);
             }
             case 10 -> {
-                // Enhanced fire rate → infantry firing rate +50%
-                // CombatSystem checks hasResearch(playerId, 10) for infantry attack speed
-                LOG.info("Player {} ({}) completed Enhanced Fire Rate: infantry firing rate +50%", playerId, faction);
-            }
-            case 11 -> {
-                // Doping → infantry speed +1
-                // MovementSystem checks hasResearch(playerId, 11) for infantry speed bonus
-                LOG.info("Player {} ({}) completed Doping: infantry speed +1", playerId, faction);
-            }
-            case 12 -> {
-                // Snipers → unlocks Sniper unit
-                // ProductionSystem checks hasResearch(playerId, 12) for unit availability
-                LOG.info("Player {} ({}) completed Snipers: Sniper unit unlocked", playerId, faction);
-            }
-            case 13 -> {
-                // Rifle 'Hornet-10' → Sniper sight+2, range+2, damage+20%
-                // CombatSystem checks hasResearch(playerId, 13) for Sniper stat bonuses
-                LOG.info("Player {} ({}) completed Rifle Hornet-10: Sniper sight+2, range+2, damage+20%", playerId, faction);
-            }
-            case 14 -> {
-                // Heavy machine gun → Coyote/Armadillo damage +15%
-                // CombatSystem checks hasResearch(playerId, 14) for vehicle damage bonus
-                LOG.info("Player {} ({}) completed Heavy Machine Gun: Coyote/Armadillo damage +15%", playerId, faction);
-            }
-            case 15 -> {
-                // Reinforced engine → vehicle speed +1, unlocks Rhino
-                // ProductionSystem checks hasResearch(playerId, 15) for unit availability
-                // MovementSystem checks hasResearch(playerId, 15) for vehicle speed bonus
-                LOG.info("Player {} ({}) completed Reinforced Engine: vehicle speed +1, Rhino unlocked", playerId, faction);
+                // Signal Jamming — Player 1 attack range reduction /3
+                // CombatSystem checks hasResearch(playerId, 10)
+                LOG.info("Player {} ({}) completed Signal Jamming: enemy attack range /3", playerId, faction);
             }
 
-            // === Extended research IDs (16-47) ===
-            // REF: combat_formulas.md — additional research effects for advanced gameplay
+            // --- Heavy Machinery Chain (Tier 6) ---
+            case 11 -> {
+                // Quick Reload — Attack speed -2 (faster) for types 11, 13
+                // CombatSystem checks hasResearch(playerId, 11)
+                LOG.info("Player {} ({}) completed Quick Reload: attack speed -2 (faster) for types 11, 13", playerId, faction);
+            }
+            case 12 -> {
+                // Hammer Mk.II Upgrade — Upgrades Hammer (type 17) → Mine Scorpio (type 11)
+                // ProductionSystem checks hasResearch(playerId, 12) for unit upgrade
+                LOG.info("Player {} ({}) completed Hammer Mk.II Upgrade: upgrades Hammer to Mine Scorpio variant", playerId, faction);
+            }
+
+            // --- Heavy Machinery Chain (Tier 7) ---
+            case 13 -> {
+                // Power Network — Building radius +1
+                // BuildingSystem checks hasResearch(playerId, 13)
+                LOG.info("Player {} ({}) completed Power Network: building radius +1", playerId, faction);
+            }
+
+            // --- Heavy Machinery Chain (Tier 8 - finale) ---
+            case 14 -> {
+                // Siege Artillery — Attack damage +10 for type 21, Range +2; Production +2 for type 16, +5 for type 13
+                // CombatSystem checks hasResearch(playerId, 14)
+                LOG.info("Player {} ({}) completed Siege Artillery: attack damage +10 for type 21, range +2; production bonuses", playerId, faction);
+            }
+
+            // --- Production / Economy Chain ---
+            case 15 -> {
+                // Supply Logistics — Supply cap = 8
+                // EconomySystem checks hasResearch(playerId, 15)
+                LOG.info("Player {} ({}) completed Supply Logistics: supply cap = 8", playerId, faction);
+            }
             case 16 -> {
-                // Player 0 building armor override = 9
-                // ArmorCalculator.calculateEffectiveBuildingArmor() checks hasResearch(playerId, 16)
-                LOG.info("Player {} ({}) completed building armor override = 9", playerId, faction);
+                // Building Armour Override — Building armour override = 9
+                // ArmorCalculator checks hasResearch(playerId, 16)
+                LOG.info("Player {} ({}) completed Building Armour Override: building armour = 9", playerId, faction);
+            }
+            case 17 -> {
+                // Enhanced Economy — Unit limit +2; Production +1 for type 15; Production speed = 20
+                // EconomySystem checks hasResearch(playerId, 17)
+                LOG.info("Player {} ({}) completed Enhanced Economy: unit limit +2; production +1 for type 15; speed = 20", playerId, faction);
+            }
+            case 18 -> {
+                // Advanced Building Radius — Building radius +1
+                // BuildingSystem checks hasResearch(playerId, 18)
+                LOG.info("Player {} ({}) completed Advanced Building Radius: building radius +1", playerId, faction);
+            }
+            case 19 -> {
+                // Fast Infantry Training — Production P[1] = 7
+                // ProductionSystem checks hasResearch(playerId, 19)
+                LOG.info("Player {} ({}) completed Fast Infantry Training: production P[1] = 7", playerId, faction);
+            }
+            case 20 -> {
+                // Upgraded Assembly Line — Production P[2] = 7
+                // ProductionSystem checks hasResearch(playerId, 20)
+                LOG.info("Player {} ({}) completed Upgraded Assembly Line: production P[2] = 7", playerId, faction);
+            }
+            case 21 -> {
+                // Finance Department — Credit limit = 120
+                // EconomySystem checks hasResearch(playerId, 21)
+                LOG.info("Player {} ({}) completed Finance Department: credit limit = 120", playerId, faction);
+            }
+            case 22 -> {
+                // Incentive System — Score bonus = 30
+                // ScoreSystem checks hasResearch(playerId, 22)
+                LOG.info("Player {} ({}) completed Incentive System: score bonus = 30", playerId, faction);
+            }
+            case 23 -> {
+                // Communications System — Display bonus = 25
+                // ScoreSystem checks hasResearch(playerId, 23)
+                LOG.info("Player {} ({}) completed Communications System: display bonus = 25", playerId, faction);
+            }
+
+            // =====================================================================
+            // CONFEDERATION research (ID 43 — out-of-sequence)
+            // =====================================================================
+            case 43 -> {
+                // Advanced Credits — Production P[4] = 7
+                // ProductionSystem checks hasResearch(playerId, 43)
+                LOG.info("Player {} ({}) completed Advanced Credits: production P[4] = 7", playerId, faction);
+            }
+
+            // =====================================================================
+            // RESISTANCE research (IDs 24–47, excluding 43)
+            // =====================================================================
+
+            // --- Infantry Chain (Tier 1) ---
+            case 24 -> {
+                // Titanium Jacket — Infantry armour +1 for types 0, 2, 4, 14
+                // ArmorCalculator checks hasResearch(playerId, 24)
+                LOG.info("Player {} ({}) completed Titanium Jacket: infantry armour +1 for types 0, 2, 4, 14", playerId, faction);
+            }
+            case 25 -> {
+                // Signal Jamming — Enemy attack range reduction /3
+                // CombatSystem checks hasResearch(playerId, 25)
+                LOG.info("Player {} ({}) completed Signal Jamming: enemy attack range /3", playerId, faction);
+            }
+
+            // --- Infantry Chain (Tier 2) ---
+            case 26 -> {
+                // Infantry Combat Drill — Attack speed +1 for types 0, 2, 3; Production +1 for types 0, 4
+                // CombatSystem checks hasResearch(playerId, 26)
+                LOG.info("Player {} ({}) completed Infantry Combat Drill: attack speed +1 for types 0, 2, 3; production +1 for types 0, 4", playerId, faction);
+            }
+            case 27 -> {
+                // Infantry Range Upgrade — Attack range -1 for types 0, 2, 4, 14
+                // CombatSystem checks hasResearch(playerId, 27)
+                LOG.info("Player {} ({}) completed Infantry Range Upgrade: attack range -1 for types 0, 2, 4, 14", playerId, faction);
+            }
+
+            // --- Light Vehicle Chain (Tier 3) ---
+            case 28 -> {
+                // Coyote Range Upgrade — Attack range +1 for type 15; Production +1 for types 2
+                // CombatSystem checks hasResearch(playerId, 28)
+                LOG.info("Player {} ({}) completed Coyote Range Upgrade: attack range +1 for type 15; production +1 for types 2", playerId, faction);
+            }
+
+            // --- Machinery Merge Point (Tier 4) ---
+            case 29 -> {
+                // Building Radius Expansion — Building radius +1
+                // BuildingSystem checks hasResearch(playerId, 29)
+                LOG.info("Player {} ({}) completed Building Radius Expansion: building radius +1", playerId, faction);
+            }
+
+            // --- Machinery Chain A (Tier 5) ---
+            case 30 -> {
+                // Sniper Upgrade — Attack speed +2, Range +2 for Sniper (type 3); Production +2 for types 14, 4
+                // CombatSystem checks hasResearch(playerId, 30)
+                LOG.info("Player {} ({}) completed Sniper Upgrade: attack speed +2, range +2 for Sniper (type 3); production +2 for types 14, 4", playerId, faction);
+            }
+
+            // --- Machinery Chain B (Tier 5) ---
+            case 31 -> {
+                // Light Vehicle Speed Upgrade — Attack speed +1 for types 4, 5; Production +1 for types 6, 8
+                // CombatSystem checks hasResearch(playerId, 31)
+                LOG.info("Player {} ({}) completed Light Vehicle Speed Upgrade: attack speed +1 for types 4, 5; production +1 for types 6, 8", playerId, faction);
+            }
+
+            // --- Heavy Machinery Merge Point (Tier 6) ---
+            case 32 -> {
+                // Heavy Machinery Range Adjust — Attack range -1 for types 6, 8, 10, 15, 12; Building radius +1
+                // CombatSystem checks hasResearch(playerId, 32)
+                LOG.info("Player {} ({}) completed Heavy Machinery Range Adjust: attack range -1 for types 6, 8, 10, 15, 12; building radius +1", playerId, faction);
+            }
+
+            // --- Heavy Machinery Upgrades (Tier 7) ---
+            case 33 -> {
+                // Machinery Armour Upgrade — Infantry armour +1 for types 6, 8, 10, 15, 12
+                // ArmorCalculator checks hasResearch(playerId, 33)
+                LOG.info("Player {} ({}) completed Machinery Armour Upgrade: infantry armour +1 for types 6, 8, 10, 15, 12", playerId, faction);
+            }
+            case 34 -> {
+                // Advanced Signal Jamming — Enemy attack range reduction /3
+                // CombatSystem checks hasResearch(playerId, 34)
+                LOG.info("Player {} ({}) completed Advanced Signal Jamming: enemy attack range /3", playerId, faction);
+            }
+
+            // --- Advanced Weapons (Tier 8) ---
+            case 35 -> {
+                // Rapid Reload — Attack speed -2 (faster) for types 12, 14
+                // CombatSystem checks hasResearch(playerId, 35)
+                LOG.info("Player {} ({}) completed Rapid Reload: attack speed -2 (faster) for types 12, 14", playerId, faction);
+            }
+            case 36 -> {
+                // Mine Lizard Siege Mode — Unit type 10 siege upgrade = 15
+                // ProductionSystem checks hasResearch(playerId, 36)
+                LOG.info("Player {} ({}) completed Mine Lizard Siege Mode: unit type 10 siege upgrade = 15", playerId, faction);
+            }
+
+            // --- Advanced Weapons Merge (Tier 9) ---
+            case 37 -> {
+                // Advanced Building Radius — Building radius +1
+                // BuildingSystem checks hasResearch(playerId, 37)
+                LOG.info("Player {} ({}) completed Advanced Building Radius: building radius +1", playerId, faction);
+            }
+
+            // --- Artillery Finale (Tier 10) ---
+            case 38 -> {
+                // MLRS Torrent Upgrade — Attack damage +2 for type 20, Range +2; Production +2 for type 12
+                // CombatSystem checks hasResearch(playerId, 38)
+                LOG.info("Player {} ({}) completed MLRS Torrent Upgrade: attack damage +2 for type 20, range +2; production +2 for type 12", playerId, faction);
+            }
+
+            // --- Economy Chain ---
+            case 39 -> {
+                // Supply Logistics — Supply cap = 8
+                // EconomySystem checks hasResearch(playerId, 39)
+                LOG.info("Player {} ({}) completed Supply Logistics: supply cap = 8", playerId, faction);
             }
             case 40 -> {
-                // Player 1 building armor override = 9
-                // ArmorCalculator.calculateEffectiveBuildingArmor() checks hasResearch(playerId, 40)
-                LOG.info("Player {} ({}) completed building armor override = 9", playerId, faction);
+                // Building Armour Override — Building armour override = 9
+                // ArmorCalculator checks hasResearch(playerId, 40)
+                LOG.info("Player {} ({}) completed Building Armour Override: building armour = 9", playerId, faction);
             }
-            case 24 -> {
-                // Additional infantry armor +1
-                // ArmorCalculator.getResearchArmorBonus() checks hasResearch(playerId, 24)
-                LOG.info("Player {} ({}) completed additional infantry armor +1", playerId, faction);
+            case 41 -> {
+                // Enhanced Building Radius — Building radius +1
+                // BuildingSystem checks hasResearch(playerId, 41)
+                LOG.info("Player {} ({}) completed Enhanced Building Radius: building radius +1", playerId, faction);
             }
-            case 33 -> {
-                // Additional vehicle armor +1
-                // ArmorCalculator.getResearchArmorBonus() checks hasResearch(playerId, 33)
-                LOG.info("Player {} ({}) completed additional vehicle armor +1", playerId, faction);
+            case 42 -> {
+                // Cumulative Building Radius — Building radius +1 (cumulative)
+                // BuildingSystem checks hasResearch(playerId, 42)
+                LOG.info("Player {} ({}) completed Cumulative Building Radius: building radius +1 (cumulative)", playerId, faction);
             }
+
+            // --- Advanced Production ---
+            case 44 -> {
+                // Advanced Production — Production P[5] = 7
+                // ProductionSystem checks hasResearch(playerId, 44)
+                LOG.info("Player {} ({}) completed Advanced Production: production P[5] = 7", playerId, faction);
+            }
+
+            // --- Scoring Chain ---
+            case 45 -> {
+                // Finance Department — Credit limit = 120
+                // EconomySystem checks hasResearch(playerId, 45)
+                LOG.info("Player {} ({}) completed Finance Department: credit limit = 120", playerId, faction);
+            }
+            case 46 -> {
+                // Incentive System — Score bonus = 30
+                // ScoreSystem checks hasResearch(playerId, 46)
+                LOG.info("Player {} ({}) completed Incentive System: score bonus = 30", playerId, faction);
+            }
+            case 47 -> {
+                // Communications System — Display bonus = 25
+                // ScoreSystem checks hasResearch(playerId, 47)
+                LOG.info("Player {} ({}) completed Communications System: display bonus = 25", playerId, faction);
+            }
+
             default -> {
-                // Other research effects: building radius, power, etc.
-                // These are handled by other systems querying hasResearch()
-                LOG.info("Player {} ({}) completed research ID {}: {}", playerId, faction, researchId, techName);
+                // Unknown research ID — should not happen with valid tech tree data
+                LOG.warn("Player {} ({}) completed unknown research ID {}: {}", playerId, faction, researchId, techName);
             }
         }
     }

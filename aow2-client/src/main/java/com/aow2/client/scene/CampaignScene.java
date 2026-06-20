@@ -8,6 +8,7 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
@@ -47,18 +48,17 @@ public class CampaignScene {
     ) {}
 
     /** Available campaign episodes. REF: campaign_guide.md */
-    // ASSUMPTION (L18): Episode 3 "Arctic Operations" is not in the RE spec's campaign guide.
-    // The RE spec has 29 missions: 7 Ep1 + 7 Ep2 + 15 custom missions.
-    // Episode 3 is a UI grouping for the 15 custom missions, not an original game episode.
-    // REF: campaign_guide.md — only Episode 1 (Global Confederation) and Episode 2 (Liberation of Peru) are documented.
+    // REF: campaign_guide.md — 29 total missions: 7 Ep1 + 7 Ep2 + 15 custom missions.
+    // Episode 1 and Episode 2 are the original game episodes.
+    // Custom Missions is a bonus section, not an "Episode 3".
     private static final List<Episode> EPISODES = List.of(
         new Episode(
             "Episode 1: Global Confederation",
             "The Confederation Strikes Back",
             "The Global Confederation launches a massive counter-offensive against the Resistance. "
-                + "Command the Confederation forces through 5 missions to reclaim territory and crush the rebellion. "
+                + "Command the Confederation forces through 7 missions to reclaim territory and crush the rebellion. "
                 + "Begin with basic infantry and progress to heavy armor and advanced technology.",
-            5, 2, "CONFEDERATION"
+            7, 2, "CONFEDERATION"
         ),
         new Episode(
             "Episode 2: Liberation of Peru",
@@ -66,15 +66,15 @@ public class CampaignScene {
             "The Resistance fights to liberate Peru from Confederation occupation. "
                 + "Use guerrilla tactics, sniper units, and captured equipment to overcome superior numbers. "
                 + "Each mission unlocks new units and technologies for the Resistance arsenal.",
-            5, 3, "RESISTANCE"
+            7, 3, "RESISTANCE"
         ),
         new Episode(
-            "Episode 3: Arctic Operations",
-            "Frozen Frontlines",
-            "Both factions clash in the frozen wastes of Antarctica. "
-                + "Control vital resource points and research facilities in harsh conditions. "
-                + "Limited building space and harsh terrain create unique strategic challenges.",
-            5, 4, "BOTH"
+            "Custom Missions",
+            "Community Challenges",
+            "A collection of 15 standalone custom missions with varying factions, objectives, and difficulty. "
+                + "These missions can be played in any order and do not follow a sequential campaign storyline. "
+                + "Difficulties range from beginner (1 star) to extreme (5 stars).",
+            15, 3, "MIXED"
         )
     );
 
@@ -262,8 +262,10 @@ public class CampaignScene {
         briefingText.setMaxWidth(700);
 
         // Mission buttons generated dynamically based on episode mission count
-        HBox missionButtons = new HBox(10);
+        // Use FlowPane to handle varying mission counts (7 for episodes, 15 for custom)
+        FlowPane missionButtons = new FlowPane(10, 8);
         missionButtons.setAlignment(Pos.CENTER_LEFT);
+        missionButtons.setMaxWidth(700);
         for (int m = 0; m < episode.missionCount(); m++) {
             final int missionIndex = m;
             Button missionBtn = new Button("Start Mission " + (missionIndex + 1));

@@ -13,22 +13,24 @@ package com.aow2.core.ai;
 public enum AIDifficulty {
 
     /**
-     * Easy: slow decisions, 50% optimal choices, max 3 concurrent tasks.
+     * Easy: slow decisions, 50% optimal choices, max 3 concurrent tasks, reduced income.
      * REF: ai_analysis.md — AI difficulty affects y.V[6] (game speed modifier)
+     * REF: MASTER_DOCUMENTATION.md Section 4.5 — Easy: "lower income"
      */
-    EASY(60, 0.5, 3),
+    EASY(60, 0.5, 3, 0.7),
 
     /**
-     * Normal: medium decisions, 75% optimal choices, max 5 concurrent tasks.
+     * Normal: medium decisions, 75% optimal choices, max 5 concurrent tasks, standard income.
      * REF: ai_analysis.md — original AI processes every 30 ticks
      */
-    NORMAL(30, 0.75, 5),
+    NORMAL(30, 0.75, 5, 1.0),
 
     /**
-     * Hard: fast decisions, 100% optimal choices, max 8 concurrent tasks.
+     * Hard: fast decisions, 100% optimal choices, max 8 concurrent tasks, income bonus.
      * REF: ai_analysis.md — y.aU[player][5] (player-specific modifier)
+     * REF: MASTER_DOCUMENTATION.md Section 4.5 — Hard: "income bonuses"
      */
-    HARD(15, 1.0, 8);
+    HARD(15, 1.0, 8, 1.3);
 
     /** Number of ticks between AI decision cycles. */
     public final int tickInterval;
@@ -39,9 +41,16 @@ public enum AIDifficulty {
     /** Maximum number of concurrent AI tasks (build orders, attacks, research). */
     public final int maxConcurrentTasks;
 
-    AIDifficulty(int tickInterval, double strategyQuality, int maxConcurrentTasks) {
+    /** Difficulty-based income multiplier for the RE formula playerModifier.
+     * REF: MASTER_DOCUMENTATION.md Section 4.4 — "baseIncome * playerModifier"
+     * ASSUMPTION: Exact values not in RE data; 0.7/1.0/1.3 are reasonable estimates.
+     */
+    public final double incomeModifier;
+
+    AIDifficulty(int tickInterval, double strategyQuality, int maxConcurrentTasks, double incomeModifier) {
         this.tickInterval = tickInterval;
         this.strategyQuality = strategyQuality;
         this.maxConcurrentTasks = maxConcurrentTasks;
+        this.incomeModifier = incomeModifier;
     }
 }

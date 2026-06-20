@@ -303,7 +303,10 @@ public class CombatSystem {
         if (nearestEnemy != null) {
             // Garrison attacks using its weapon damage
             int weaponDamage = garrison.getStats().damage();
-            int targetArmor = nearestEnemy.getStats().armor();
+            // FIX(H-2): Use research-adjusted armor instead of raw base armor.
+            // Previously bunker attacks ignored target's armor research entirely.
+            int targetArmor = armorCalculator.calculateEffectiveArmor(nearestEnemy,
+                getCompletedResearchForBuilding(bunker));
             int damage = DamageCalculator.calculateDamage(weaponDamage, targetArmor);
 
             nearestEnemy.takeDamage(damage);
@@ -312,9 +315,10 @@ public class CombatSystem {
                 nearestEnemy.getHp(), bunker.getId()));
 
             if (!nearestEnemy.isAlive()) {
-                // FIX (L6): Store death anim frame on unit for client rendering
+                // FIX (L6/C-8): Store death anim frame on unit for client rendering
                 nearestEnemy.setDeathAnimFrame(
-                    DamageCalculator.calculateDeathAnimationFrame(nearestEnemy, 0));
+                    DamageCalculator.calculateDeathAnimationFrame(nearestEnemy,
+                        DamageCalculator.getAttackerCategory(garrison.getStats().weaponType())));
                 gameState.enqueueEvent(new UnitKilledEvent(
                     gameState.currentTick(), nearestEnemy.getId(),
                     nearestEnemy.getUnitType(), bunker.getId()));
@@ -353,9 +357,10 @@ public class CombatSystem {
                 nearestEnemy.getHp(), building.getId()));
 
             if (!nearestEnemy.isAlive()) {
-                // FIX (L6): Store death anim frame on unit for client rendering
+                // FIX (L6/C-8): Store death anim frame on unit for client rendering
                 nearestEnemy.setDeathAnimFrame(
-                    DamageCalculator.calculateDeathAnimationFrame(nearestEnemy, 0));
+                    DamageCalculator.calculateDeathAnimationFrame(nearestEnemy,
+                        DamageCalculator.getAttackerCategory(building.getStats().weaponType())));
                 gameState.enqueueEvent(new UnitKilledEvent(
                     gameState.currentTick(), nearestEnemy.getId(),
                     nearestEnemy.getUnitType(), building.getId()));
@@ -464,16 +469,21 @@ public class CombatSystem {
             // Armor is a defensive stat — the target's research determines their armor, not the attacker's.
             int targetArmor = armorCalculator.calculateEffectiveArmor(target,
                 getCompletedResearch(target));
-            int damage = DamageCalculator.calculateDamage(weaponDamage, targetArmor);
+            // FIX(C-2): Apply infantry vs machinery 0.7x target multiplier for unit-vs-unit combat.
+            // Previously getTargetMultiplier() was dead code — never called in this path.
+            double targetMultiplier = DamageCalculator.getTargetMultiplier(attacker, false, target.isMachinery());
+            int damage = (int)(DamageCalculator.calculateDamage(weaponDamage, targetArmor) * targetMultiplier);
 
             target.takeDamage(damage);
             gameState.enqueueEvent(new DamageAppliedEvent(
                 gameState.currentTick(), target.getId(), damage, target.getHp(), attacker.getId()));
 
             if (!target.isAlive()) {
-                // FIX (L6): Store death anim frame on unit for client rendering
+                // FIX (L6/C-8): Store death anim frame on unit for client rendering
                 target.setDeathAnimFrame(
-                    DamageCalculator.calculateDeathAnimationFrame(target, 0));
+                    DamageCalculator.calculateDeathAnimationFrame(target,
+                        DamageCalculator.getAttackerCategory(weaponType)));
+
                 gameState.enqueueEvent(new UnitKilledEvent(
                     gameState.currentTick(), target.getId(), target.getUnitType(), attacker.getId()));
                 ModEventBridge.fireUnitKilled(target.getId(), target.getUnitType(),
@@ -629,7 +639,7 @@ public class CombatSystem {
      * @param unit the unit
      * @return set of completed research IDs
      */
-    private java.util.Set<Integer> getCompletedResearch(Unit unit) {
+    java.util.Set<Integer> getCompletedResearch(Unit unit) {
         if (researchSystem == null) return java.util.Set.of();
         return researchSystem.getCompletedResearch(EconomySystem.playerId(unit.getFaction()));
     }
