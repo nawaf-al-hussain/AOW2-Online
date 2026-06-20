@@ -83,7 +83,7 @@ public final class BuildingUpgradeSystem {
 
         // REF: building_stats.md — upgrade increases HP cap and production speed
         // Increase HP by 20% per level (applied to base maxHp), accumulated across levels
-        int hpIncrease = (int)(building.getStats().maxHp() * 0.20);
+        int hpIncrease = (int)(building.getStats().hp() * 0.20);
         building.setUpgradeMaxHpBonus(building.getUpgradeMaxHpBonus() + hpIncrease);
         // Cap HP at effective max (base maxHp + upgrade bonus), not base maxHp
         building.setHp(Math.min(building.getHp() + hpIncrease, building.getEffectiveMaxHp()));

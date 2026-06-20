@@ -80,6 +80,7 @@ public final class CommandProcessor {
         switch (command) {
             case CommandType.Move cmd -> moveHandler.handle(cmd, entities, map, movement);
             case CommandType.Attack cmd -> attackHandler.handle(cmd, entities, combat);
+            case CommandType.AttackMove cmd -> handleAttackMove(cmd, entities, map, movement);
             case CommandType.Build cmd -> buildHandler.handle(cmd, entities, map, economy, placement);
             case CommandType.Produce cmd -> produceHandler.handle(cmd, entities, economy, production, research);
             case CommandType.Research cmd -> researchHandler.handle(cmd, entities, economy, research);
@@ -175,6 +176,28 @@ public final class CommandProcessor {
             if (unit != null && unit.isAlive()) {
                 movement.issueMoveCommand(unit, cmd.waypoint(), map, entities);
                 LOG.debug("Unit {} patrolling to {}", unitId, cmd.waypoint());
+            }
+        }
+    }
+
+    /**
+     * Handle an AttackMove command.
+     * Issues a move command toward the target position. Units will engage enemies
+     * encountered along the way via the combat system's auto-targeting.
+     * TODO: Implement full attack-move behavior (engage-then-resume) in MovementSystem.
+     *
+     * @param cmd       the attack-move command
+     * @param entities  the entity manager
+     * @param map       the game map
+     * @param movement  the movement system
+     */
+    private void handleAttackMove(CommandType.AttackMove cmd, EntityManager entities,
+                                   GameMap map, MovementSystem movement) {
+        for (int unitId : cmd.unitIds()) {
+            var unit = entities.getUnit(unitId);
+            if (unit != null && unit.isAlive()) {
+                movement.issueMoveCommand(unit, cmd.target(), map, entities);
+                LOG.debug("Unit {} attack-moving to {}", unitId, cmd.target());
             }
         }
     }

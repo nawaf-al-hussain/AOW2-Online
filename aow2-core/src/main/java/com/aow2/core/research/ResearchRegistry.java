@@ -28,10 +28,10 @@ public final class ResearchRegistry {
     private final Map<Integer, ResearchEffect> researchEffects;
 
     /** Confederation 8-tech simplified tree. */
-    private final List<FactionTech> confederationTechs;
+    private List<FactionTech> confederationTechs;
 
     /** Resistance 8-tech simplified tree. */
-    private final List<FactionTech> rebelTechs;
+    private List<FactionTech> rebelTechs;
 
     /**
      * Represents a single research effect from the 48-effect RE spec.
