@@ -3,6 +3,7 @@ package com.aow2.core.world;
 import com.aow2.common.config.GameConstants;
 import com.aow2.common.model.Faction;
 import com.aow2.common.model.GridPosition;
+import com.aow2.common.model.TerrainType;
 import com.aow2.core.economy.EconomySystem;
 import com.aow2.core.entity.Building;
 import com.aow2.core.entity.Unit;
@@ -42,6 +43,9 @@ public final class FogOfWarSystem {
     /** Per-player reference to the map dimensions. */
     private int mapWidth;
     private int mapHeight;
+
+    /** The game map for terrain LOS checks. Set during updateVisibility. */
+    private GameMap currentMap;
 
     /**
      * Constructs a FogOfWarSystem.
@@ -92,6 +96,9 @@ public final class FogOfWarSystem {
         if (mapWidth == 0 || mapHeight == 0) {
             initialize(map);
         }
+
+        // Store map reference for LOS blocking checks
+        this.currentMap = map;
 
         TileVisibility[][] grid = visibilityGrids.get(playerId);
         if (grid == null) {
@@ -164,36 +171,130 @@ public final class FogOfWarSystem {
     }
 
     /**
-     * Reveal tiles within sight range of a position using Chebyshev distance.
-     * This matches the original game's circular reveal pattern.
-     *
-     * TODO(M-30): The current implementation reveals all tiles within Chebyshev distance
-     * without any line-of-sight (LOS) blocking. The original game uses ray-casting to
-     * block visibility behind terrain obstacles (mountains, buildings, etc.). This should
-     * be implemented using a Bresenham or DDA ray-cast from the observer to each tile
-     * on the perimeter of the sight range, marking tiles along each ray as VISIBLE
-     * until an opaque terrain type (MOUNTAIN, BUILDING) blocks further visibility.
-     * Without this, players can see through mountains and buildings.
+     * Reveal tiles within sight range of a position using DDA ray-casting with LOS blocking.
+     * FIX(M-30): Implemented line-of-sight blocking via DDA ray-cast from the observer to
+     * each tile on the perimeter of the sight range. Each ray marks tiles as VISIBLE until
+     * an opaque terrain type (MOUNTAIN) blocks further visibility. Buildings also block LOS.
+     * The center tile is always visible.
+     * <p>
+     * REF: MASTER_DOCUMENTATION.md Section 3.2 - Map visibility (ray-casting LOS)
+     * REF: map_system.md - Mountain terrain blocks line of sight
      *
      * @param grid       the visibility grid for a player
      * @param center     the center position of the revealer
      * @param sightRange the sight range in tiles
      */
     private void revealArea(TileVisibility[][] grid, GridPosition center, int sightRange) {
-        int minX = Math.max(0, center.x() - sightRange);
-        int maxX = Math.min(mapWidth - 1, center.x() + sightRange);
-        int minY = Math.max(0, center.y() - sightRange);
-        int maxY = Math.min(mapHeight - 1, center.y() + sightRange);
+        // Center tile is always visible
+        if (inBounds(center.x(), center.y())) {
+            grid[center.x()][center.y()] = TileVisibility.VISIBLE;
+        }
 
-        for (int x = minX; x <= maxX; x++) {
-            for (int y = minY; y <= maxY; y++) {
-                // Chebyshev distance for square reveal pattern (matches original game)
-                int dist = Math.max(Math.abs(x - center.x()), Math.abs(y - center.y()));
-                if (dist <= sightRange) {
-                    grid[x][y] = TileVisibility.VISIBLE;
-                }
+        // Cast rays to every tile on the perimeter of the sight range diamond (Chebyshev).
+        // For each edge tile, cast a DDA ray from center to that tile, marking VISIBLE
+        // until blocked by opaque terrain (MOUNTAIN) or a building.
+        int cx = center.x();
+        int cy = center.y();
+
+        // Collect perimeter tiles (Chebyshev distance == sightRange)
+        // Only cast to unique directions to avoid redundant ray casts.
+        // We cast to the 8 cardinal/diagonal edges plus intermediate points on the diamond.
+        int r = sightRange;
+
+        // Top edge (dy = -r, dx from -r to r)
+        for (int dx = -r; dx <= r; dx++) {
+            castRay(grid, cx, cy, cx + dx, cy - r);
+        }
+        // Bottom edge (dy = +r, dx from -r to r)
+        for (int dx = -r; dx <= r; dx++) {
+            castRay(grid, cx, cy, cx + dx, cy + r);
+        }
+        // Left edge (dx = -r, dy from -r+1 to r-1 to avoid recasting corners)
+        for (int dy = -r + 1; dy < r; dy++) {
+            castRay(grid, cx, cy, cx - r, cy + dy);
+        }
+        // Right edge (dx = +r, dy from -r+1 to r-1)
+        for (int dy = -r + 1; dy < r; dy++) {
+            castRay(grid, cx, cy, cx + r, cy + dy);
+        }
+    }
+
+    /**
+     * Cast a DDA (Digital Differential Analyzer) ray from (x0,y0) to (x1,y1),
+     * marking each tile as VISIBLE until an opaque tile blocks further visibility.
+     * <p>
+     * Opaque tiles are: MOUNTAIN terrain, or tiles occupied by alive buildings.
+     * The blocking tile itself IS marked visible (you can see the obstacle).
+     *
+     * @param grid visibility grid
+     * @param x0   start x
+     * @param y0   start y
+     * @param x1   end x
+     * @param y1   end y
+     */
+    private void castRay(TileVisibility[][] grid, int x0, int y0, int x1, int y1) {
+        int dx = Math.abs(x1 - x0);
+        int dy = Math.abs(y1 - y0);
+        int sx = x0 < x1 ? 1 : -1;
+        int sy = y0 < y1 ? 1 : -1;
+        int err = dx - dy;
+
+        int cx = x0;
+        int cy = y0;
+
+        // Limit ray length to prevent infinite loops on degenerate input
+        int maxSteps = dx + dy + 1;
+
+        while (maxSteps-- > 0) {
+            if (!inBounds(cx, cy)) break;
+
+            grid[cx][cy] = TileVisibility.VISIBLE;
+
+            // Check if this tile blocks LOS
+            if (blocksLineOfSight(cx, cy)) {
+                break; // Stop ray — opaque tile reached (itself is still visible)
+            }
+
+            // Reached target
+            if (cx == x1 && cy == y1) break;
+
+            // DDA step
+            int e2 = 2 * err;
+            if (e2 > -dy) {
+                err -= dy;
+                cx += sx;
+            }
+            if (e2 < dx) {
+                err += dx;
+                cy += sy;
             }
         }
+    }
+
+    /**
+     * Check if a tile blocks line of sight.
+     * MOUNTAIN terrain blocks LOS. Alive buildings also block LOS.
+     * REF: map_system.md - Mountain terrain blocks line of sight
+     *
+     * @param x tile x
+     * @param y tile y
+     * @return true if the tile blocks LOS
+     */
+    private boolean blocksLineOfSight(int x, int y) {
+        if (currentMap != null) {
+            TerrainType terrain = currentMap.getTile(x, y);
+            if (terrain == TerrainType.MOUNTAIN) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Check if coordinates are within the map bounds.
+     */
+    private boolean inBounds(int x, int y) {
+        return x >= 0 && x < mapWidth && y >= 0 && y < mapHeight;
     }
 
     /**

@@ -2,6 +2,9 @@ package com.aow2.core.combat;
 
 import com.aow2.common.config.GameConstants;
 import com.aow2.core.entity.Unit;
+import com.aow2.core.economy.EconomySystem;
+import com.aow2.core.economy.PowerSystem;
+import com.aow2.core.world.EntityManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,7 +29,18 @@ public final class HPRegenerationSystem {
     /** Regeneration occurs every CREDIT_GENERATION_CYCLE ticks (128 ticks). */
     private static final int REGEN_CYCLE = GameConstants.CREDIT_GENERATION_CYCLE;
 
+    /** Power system for proximity checks. Set after construction. */
+    private PowerSystem powerSystem;
+
     public HPRegenerationSystem() {
+    }
+
+    /**
+     * Set the power system for power proximity checks.
+     * @param powerSystem the power system
+     */
+    public void setPowerSystem(PowerSystem powerSystem) {
+        this.powerSystem = powerSystem;
     }
 
     /**
@@ -44,7 +58,7 @@ public final class HPRegenerationSystem {
             if (!unit.isAlive()) continue;
 
             if (unit.isInfantry()) {
-                processInfantryRegen(unit);
+                processInfantryRegen(unit, entities);
             }
             // Machinery repair happens at production buildings, handled by ProductionSystem
         }
@@ -52,14 +66,9 @@ public final class HPRegenerationSystem {
 
     /**
      * Process HP regeneration for an infantry unit.
-     * Infantry regenerates when near a powered friendly building.
+     * Infantry regenerates only when near a powered friendly building.
+     * FIX: Added power proximity check using PowerSystem.isPositionPowered().
      * REF: MASTER_DOCUMENTATION.md — "isInfantry && powered"
-     * <p>
-     * TODO: Add power proximity check — infantry should only regenerate when
-     * within range of a friendly powered building. Currently all infantry
-     * regenerate unconditionally on the regeneration cycle tick.
-     * The method accepts the full entity list so that a power-proximity query
-     * can be added here in a future update.
      * <p>
      * NOTE: The original game's 48 research effects (combat_formulas.md IDs 0-47)
      * do not include any HP recovery boost research. The previous implementation
@@ -68,11 +77,18 @@ public final class HPRegenerationSystem {
      * Base recovery rate is used for all infantry until RE data confirms otherwise.
      *
      * @param unit the infantry unit
+     * @param entities the entity manager (for power system queries)
      */
-    private void processInfantryRegen(Unit unit) {
-        // TODO: Check if unit is near a powered friendly building before regenerating.
-        // REF: MASTER_DOCUMENTATION.md — "isInfantry && powered"
+    private void processInfantryRegen(Unit unit, EntityManager entities) {
         if (unit.getHp() >= unit.getMaxHp()) return; // already full
+
+        // FIX: Check if unit is near a powered friendly building before regenerating.
+        // REF: MASTER_DOCUMENTATION.md — "isInfantry && powered"
+        if (powerSystem != null) {
+            int playerId = EconomySystem.playerId(unit.getFaction());
+            boolean powered = powerSystem.isPositionPowered(unit.getPosition(), playerId, entities);
+            if (!powered) return; // No regeneration without power
+        }
 
         int recovery = INFANTRY_BASE_RECOVERY;
 

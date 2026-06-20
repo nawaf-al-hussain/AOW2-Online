@@ -8,6 +8,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 /**
  * Singleton registry that loads and provides access to the tech tree data from tech_tree.json.
  * <p>
@@ -139,6 +142,9 @@ public final class ResearchRegistry {
 
     /**
      * Load tech_tree.json from the classpath and populate the registry.
+     * FIX(M-12): Replaced hand-rolled JSON parser with Jackson ObjectMapper
+     * (already a project dependency). Jackson handles Unicode escapes, error
+     * reporting, and edge cases correctly.
      * Falls back to empty data if the resource is not found.
      */
     @SuppressWarnings("unchecked")
@@ -149,9 +155,8 @@ public final class ResearchRegistry {
                 return;
             }
 
-            // Simple JSON parsing without external dependencies
-            String json = new String(is.readAllBytes());
-            Map<String, Object> root = parseJson(json);
+            ObjectMapper mapper = new ObjectMapper();
+            Map<String, Object> root = mapper.readValue(is, new TypeReference<>() {});
 
             // Parse research_effects array
             List<Object> effectsArray = (List<Object>) root.get("research_effects");
@@ -241,154 +246,5 @@ public final class ResearchRegistry {
         if (val == null) return 0;
         if (val instanceof Number) return ((Number) val).intValue();
         return 0;
-    }
-
-    // =========================================================================
-    // Minimal JSON parser for the known tech_tree.json structure
-    // Avoids external library dependencies. Handles: objects, arrays, strings,
-    // numbers, booleans, null.
-    //
-    // TODO(M-12): This hand-rolled JSON parser is fragile and hard to maintain.
-    // It lacks proper error reporting (throws on malformed JSON), doesn't handle
-    // Unicode escapes, and silently accepts invalid input in edge cases.
-    // Should be replaced with Jackson (ObjectMapper) which is already available
-    // as a project dependency. The data classes (ResearchEffect, FactionTech)
-    // can be annotated with @JsonProperty for deserialization.
-    // =========================================================================
-
-    private static Map<String, Object> parseJson(String json) {
-        return (Map<String, Object>) parseValue(new JsonParser(json.trim()), 0).value();
-    }
-
-    private static record ParseResult(Object value, int endPos) {}
-
-    private static ParseResult parseValue(JsonParser p, int pos) {
-        pos = p.skipWhitespace(pos);
-        char c = p.json.charAt(pos);
-
-        if (c == '{') return parseObject(p, pos);
-        if (c == '[') return parseArray(p, pos);
-        if (c == '"') return parseString(p, pos);
-        if (c == 't' || c == 'f') return parseBoolean(p, pos);
-        if (c == 'n') return parseNull(p, pos);
-        return parseNumber(p, pos);
-    }
-
-    private static ParseResult parseObject(JsonParser p, int pos) {
-        Map<String, Object> map = new HashMap<>();
-        pos++; // skip '{'
-        pos = p.skipWhitespace(pos);
-
-        if (p.json.charAt(pos) == '}') {
-            return new ParseResult(map, pos + 1);
-        }
-
-        while (true) {
-            pos = p.skipWhitespace(pos);
-            ParseResult keyResult = parseString(p, pos);
-            String key = (String) keyResult.value();
-            pos = keyResult.endPos();
-            pos = p.skipWhitespace(pos);
-            pos++; // skip ':'
-            ParseResult valResult = parseValue(p, pos);
-            map.put(key, valResult.value());
-            pos = valResult.endPos();
-            pos = p.skipWhitespace(pos);
-
-            if (p.json.charAt(pos) == ',') {
-                pos++;
-                continue;
-            }
-            if (p.json.charAt(pos) == '}') {
-                return new ParseResult(map, pos + 1);
-            }
-        }
-    }
-
-    private static ParseResult parseArray(JsonParser p, int pos) {
-        java.util.List<Object> list = new java.util.ArrayList<>();
-        pos++; // skip '['
-        pos = p.skipWhitespace(pos);
-
-        if (p.json.charAt(pos) == ']') {
-            return new ParseResult(list, pos + 1);
-        }
-
-        while (true) {
-            ParseResult elemResult = parseValue(p, pos);
-            list.add(elemResult.value());
-            pos = elemResult.endPos();
-            pos = p.skipWhitespace(pos);
-
-            if (p.json.charAt(pos) == ',') {
-                pos++;
-                continue;
-            }
-            if (p.json.charAt(pos) == ']') {
-                return new ParseResult(list, pos + 1);
-            }
-        }
-    }
-
-    private static ParseResult parseString(JsonParser p, int pos) {
-        pos++; // skip opening '"'
-        StringBuilder sb = new StringBuilder();
-        while (pos < p.json.length()) {
-            char c = p.json.charAt(pos);
-            if (c == '\\') {
-                pos++;
-                char esc = p.json.charAt(pos);
-                switch (esc) {
-                    case '"' -> sb.append('"');
-                    case '\\' -> sb.append('\\');
-                    case '/' -> sb.append('/');
-                    case 'n' -> sb.append('\n');
-                    case 'r' -> sb.append('\r');
-                    case 't' -> sb.append('\t');
-                    default -> sb.append(esc);
-                }
-            } else if (c == '"') {
-                return new ParseResult(sb.toString(), pos + 1);
-            } else {
-                sb.append(c);
-            }
-            pos++;
-        }
-        return new ParseResult(sb.toString(), pos);
-    }
-
-    private static ParseResult parseNumber(JsonParser p, int pos) {
-        int start = pos;
-        while (pos < p.json.length()) {
-            char c = p.json.charAt(pos);
-            if (Character.isDigit(c) || c == '-' || c == '.' || c == 'e' || c == 'E' || c == '+') {
-                pos++;
-            } else {
-                break;
-            }
-        }
-        String numStr = p.json.substring(start, pos);
-        if (numStr.contains(".") || numStr.contains("e") || numStr.contains("E")) {
-            return new ParseResult(Double.parseDouble(numStr), pos);
-        }
-        return new ParseResult(Integer.parseInt(numStr), pos);
-    }
-
-    private static ParseResult parseBoolean(JsonParser p, int pos) {
-        if (p.json.startsWith("true", pos)) {
-            return new ParseResult(true, pos + 4);
-        }
-        return new ParseResult(false, pos + 5);
-    }
-
-    private static ParseResult parseNull(JsonParser p, int pos) {
-        return new ParseResult(null, pos + 4);
-    }
-
-    private record JsonParser(String json) {
-        int skipWhitespace(int pos) {
-            while (pos < json.length() && Character.isWhitespace(json.charAt(pos))) pos++;
-            return pos;
-        }
     }
 }

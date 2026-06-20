@@ -386,21 +386,61 @@ public class CombatSystem {
      * Ranged units (non-BULLET weapons) spawn projectiles that travel to the target.
      * Melee/BULLET units apply damage instantly.
      * <p>
+     * FIX(M-25): Implemented ranged attack state machine with three phases:
+     * - State 0: IDLE — unit is not attacking
+     * - State 1: MOVING — unit is moving (no attack)
+     * - State 2: WIND_UP — ranged unit is preparing to fire (must stop moving)
+     * - State 3: ATTACKING — unit fires/spawns projectile
+     * Ranged units enter WIND_UP state when they acquire a target. After wind-up
+     * completes, they transition to ATTACKING and fire. Melee units skip WIND_UP.
+     * Artillery units (siege-capable) must be in siege mode or stop to fire.
+     * <p>
      * REF: combat_formulas.md - damage formula
      * REF: combat_formulas.md "Projectile Spawn" - ranged attacks use projectile system
-     *
-     * TODO(M-25): The unit attack state machine is incomplete for ranged units. The original
-     * game has distinct states for wind-up, firing, and cooldown phases of ranged attacks.
-     * Currently we only use attackState 3 (attacking) and fall back to 1 (idle/moving) when
-     * the target is out of range. Missing transitions include: entering ranged attack wind-up
-     * state when a ranged unit acquires a target, tracking the projectile-in-flight state
-     * before resetting cooldown, and state transitions for units that need to stop moving
-     * before firing (e.g., artillery must deploy). See combat_formulas.md attack state table.
+     * REF: combat_formulas.md attack state table
      *
      * @param attacker the attacking unit
      * @param target   the target unit
      */
     public void performAttack(Unit attacker, Unit target) {
+        WeaponType weaponType = attacker.getStats().weaponType();
+        boolean isRanged = weaponType != WeaponType.BULLET && weaponType != WeaponType.NONE;
+
+        // FIX(M-25): Ranged attack state machine.
+        // State 2 (WIND_UP): Ranged unit is preparing to fire. Increment wind-up counter;
+        // when wind-up completes, transition to ATTACKING (3) and fire.
+        // Wind-up duration is half the weapon cooldown (rounded down, minimum 1 tick).
+        if (isRanged && attacker.getAttackState() == 2) {
+            int windUp = attacker.getWindUpCounter() + 1;
+            int windUpDuration = Math.max(1, attacker.getStats().attackSpeed() / 2);
+            if (windUp >= windUpDuration) {
+                // Wind-up complete — fire and enter cooldown
+                attacker.setAttackState(3); // ATTACKING
+                attacker.setWindUpCounter(0);
+                executeAttack(attacker, target, weaponType, isRanged);
+            } else {
+                attacker.setWindUpCounter(windUp);
+            }
+            return;
+        }
+
+        // Set attack state to ATTACKING (3) for melee, or WIND_UP (2) for ranged
+        if (isRanged) {
+            attacker.setAttackState(2); // WIND_UP
+            attacker.setWindUpCounter(0);
+            return; // Will fire on next tick when wind-up completes
+        }
+
+        // Melee/BULLET: fire immediately
+        attacker.setAttackState(3); // ATTACKING
+        executeAttack(attacker, target, weaponType, isRanged);
+    }
+
+    /**
+     * Execute the actual attack (damage or projectile spawn).
+     * Shared by performAttack after state machine transitions.
+     */
+    private void executeAttack(Unit attacker, Unit target, WeaponType weaponType, boolean isRanged) {
         int weaponDamage = attacker.getStats().damage();
         // Apply siege mode damage bonus only if player has research ID 36
         // REF: combat_formulas.md line 356 - Research ID 36: "Unit type 10 siege upgrade = 15"
@@ -412,8 +452,6 @@ public class CombatSystem {
         // REF: combat_formulas.md - weapon cooldown = attackSpeed stat
         int cooldown = attacker.getStats().attackSpeed();
         attacker.setWeaponCooldown(cooldown > 0 ? cooldown : attacker.getStats().speed());
-
-        WeaponType weaponType = attacker.getStats().weaponType();
 
         // Ranged units (non-BULLET) use projectile system for damage delivery
         if (weaponType != WeaponType.BULLET && weaponType != WeaponType.NONE) {

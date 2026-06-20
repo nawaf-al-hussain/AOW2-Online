@@ -34,6 +34,11 @@ public class Unit extends Entity {
     /** Current attack state machine value. REF: combat_formulas.md — attack state */
     private int attackState;
 
+    /** Wind-up counter for ranged attacks (state 2). Counts ticks during wind-up phase.
+     * REF: combat_formulas.md — ranged units must wind up before firing.
+     * FIX(M-25): Added to support ranged attack state machine. */
+    private int windUpCounter;
+
     /** Counts consecutive ticks where the unit cannot reach its target. */
     private int stuckCounter;
 
@@ -110,6 +115,7 @@ public class Unit extends Entity {
         this.stats = stats;
         this.attackCooldown = 0;
         this.attackState = 0;
+        this.windUpCounter = 0;
         this.stuckCounter = 0;
         this.targetPosition = null;
         this.targetUnitRef = null;
@@ -225,6 +231,22 @@ public class Unit extends Entity {
 
     public void setAttackState(int attackState) {
         this.attackState = attackState;
+    }
+
+    /**
+     * Get the wind-up counter for ranged attacks (FIX M-25).
+     * @return current wind-up tick count
+     */
+    public int getWindUpCounter() {
+        return windUpCounter;
+    }
+
+    /**
+     * Set the wind-up counter for ranged attacks (FIX M-25).
+     * @param windUpCounter wind-up tick count
+     */
+    public void setWindUpCounter(int windUpCounter) {
+        this.windUpCounter = windUpCounter;
     }
 
     public int getStuckCounter() {

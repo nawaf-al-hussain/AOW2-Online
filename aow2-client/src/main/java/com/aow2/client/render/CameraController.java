@@ -126,21 +126,30 @@ public class CameraController {
 
     /**
      * Centers the camera on a specific grid position.
-     * <p>
-     * TODO (H-22): This method does not account for IsometricRenderer's offsetX/offsetY
-     * when computing the target position. If the renderer has non-zero offsets (e.g., to
-     * center the map on screen), the camera will be misaligned. To fix, either:
-     * (a) pass the IsometricRenderer offset values into this method and subtract them, or
-     * (b) have CameraController hold a reference to IsometricRenderer and read its offsets.
+     * Accounts for the IsometricRenderer's offsetX/offsetY to ensure correct alignment.
+     * FIX(H-22): Now reads the IsometricRenderer's centering offsets to prevent
+     * camera misalignment when the renderer offsets the map to center it on screen.
+     *
+     * @param gx grid x coordinate
+     * @param gy grid y coordinate
+     * @param rendererOffsetX the IsometricRenderer's horizontal offset
+     * @param rendererOffsetY the IsometricRenderer's vertical offset
+     */
+    public void centerOnGrid(int gx, int gy, double rendererOffsetX, double rendererOffsetY) {
+        double sx = (gx - gy) * IsometricRenderer.TILE_HALF_WIDTH + rendererOffsetX;
+        double sy = (gx + gy) * IsometricRenderer.TILE_HALF_HEIGHT + rendererOffsetY;
+        targetX = -sx + viewportWidth / 2.0 / zoom;
+        targetY = -sy + viewportHeight / 2.0 / zoom;
+    }
+
+    /**
+     * Centers the camera on a specific grid position (backward-compatible, zero offsets).
      *
      * @param gx grid x coordinate
      * @param gy grid y coordinate
      */
     public void centerOnGrid(int gx, int gy) {
-        double sx = (gx - gy) * IsometricRenderer.TILE_HALF_WIDTH;
-        double sy = (gx + gy) * IsometricRenderer.TILE_HALF_HEIGHT;
-        targetX = -sx + viewportWidth / 2.0 / zoom;
-        targetY = -sy + viewportHeight / 2.0 / zoom;
+        centerOnGrid(gx, gy, 0, 0);
     }
 
     /**

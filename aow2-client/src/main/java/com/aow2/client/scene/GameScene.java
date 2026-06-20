@@ -1,5 +1,6 @@
 package com.aow2.client.scene;
 
+import com.aow2.client.audio.AudioManager;
 import com.aow2.client.input.InputHandler;
 import com.aow2.client.input.SelectionManager;
 import com.aow2.client.render.CameraController;
@@ -152,6 +153,9 @@ public class GameScene {
 
     /** The power system. */
     private PowerSystem powerSystem;
+
+    /** The audio manager for music and SFX. */
+    private AudioManager audioManager;
 
     /** The JavaFX animation timer for rendering. */
     private AnimationTimer renderTimer;
@@ -320,9 +324,11 @@ public class GameScene {
      * Creates a test map with test entities for demonstration.
      */
     public void initializeGame() {
-        // TODO (M-33): Create and wire AudioManager here for background music and SFX playback.
-        // AudioManager needs to be initialized with the game scene's audio context and bound to
-        // game events (unit spawn, combat, building placement, UI interactions).
+        // FIX(M-33): AudioManager initialized and wired for background music and SFX playback.
+        // AudioManager is created on the JavaFX thread. Audio resources are loaded lazily
+        // from /audio/music/ and /audio/sfx/ on the classpath. If audio files are absent,
+        // the manager logs warnings and degrades gracefully (no crash).
+        this.audioManager = new AudioManager();
 
         // Initialize SpriteManager singleton early (must run on JavaFX thread)
         if (!SpriteManager.getInstance().isInitialized()) {
