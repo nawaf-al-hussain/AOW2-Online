@@ -70,22 +70,12 @@ public record ResearchEffect(
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof ResearchEffect that)) return false;
-        return value == that.value
-            && statType == that.statType
-            && affectedUnitTypes.equals(that.affectedUnitTypes);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(statType, value, affectedUnitTypes);
-    }
-
-    @Override
     public String toString() {
         return "ResearchEffect{statType=" + statType + ", value=" + value +
                ", affectedUnitTypes=" + affectedUnitTypes + "}";
     }
+
+    // NOTE (L-NEW-3): equals() and hashCode() are intentionally NOT overridden.
+    // Java records auto-generate correct implementations based on all components.
+    // The previous manual implementations were redundant with the record-derived ones.
 }

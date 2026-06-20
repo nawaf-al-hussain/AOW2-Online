@@ -253,6 +253,17 @@ public class SessionService {
     }
 
     /**
+     * Gets the session by its UUID.
+     * FIX (M-NEW-21): Added for readyPlayers cleanup scheduling in LobbyWebSocketHandler.
+     *
+     * @param sessionUuid the session UUID
+     * @return the session, or empty if not found
+     */
+    public Optional<GameSession> getSessionByUuid(String sessionUuid) {
+        return Optional.ofNullable(activeSessions.get(sessionUuid));
+    }
+
+    /**
      * Gets the session a player is currently participating in.
      *
      * @param playerId the player's ID
@@ -268,12 +279,18 @@ public class SessionService {
 
     /**
      * Registers a WebSocket session for a player.
+     * FIX (M-NEW-22): Logs a warning if a previous session was already registered
+     * for this WebSocket session ID, which may indicate a connection leak.
      *
      * @param wsSessionId the WebSocket session ID
      * @param playerId    the player's ID
      */
     public void registerWebSocketSession(String wsSessionId, Long playerId) {
-        wsSessionToPlayer.put(wsSessionId, playerId);
+        Long previous = wsSessionToPlayer.put(wsSessionId, playerId);
+        if (previous != null && !previous.equals(playerId)) {
+            log.warn("Overwriting WebSocket session {} mapping: was player {}, now player {}",
+                    wsSessionId, previous, playerId);
+        }
         playerToWsSession.put(playerId, wsSessionId);
     }
 

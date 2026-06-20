@@ -36,25 +36,29 @@ public final class MathUtils {
 
     /**
      * Clamp an integer value within the specified range (inclusive).
-     * Convenience wrapper when a non-Java-21 baseline is needed.
+     * FIX (L-NEW-1): Deprecated in favor of Java 21's Math.clamp(int, int, int).
+     * Retained for backward compatibility.
      *
      * @param value the value to clamp
      * @param min   minimum allowed value
      * @param max   maximum allowed value
      * @return the clamped value
      */
+    @Deprecated(since = "2026-06-21", forRemoval = true)
     public static int clamp(int value, int min, int max) {
         return Math.max(min, Math.min(max, value));
     }
 
     /**
      * Clamp a long value within the specified range (inclusive).
+     * FIX (L-NEW-1): Deprecated in favor of Java 21's Math.clamp(long, long, long).
      *
      * @param value the value to clamp
      * @param min   minimum allowed value
      * @param max   maximum allowed value
      * @return the clamped value
      */
+    @Deprecated(since = "2026-06-21", forRemoval = true)
     public static long clamp(long value, long min, long max) {
         return Math.max(min, Math.min(max, value));
     }

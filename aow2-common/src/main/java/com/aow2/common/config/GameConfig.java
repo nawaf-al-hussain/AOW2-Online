@@ -23,6 +23,9 @@ public final class GameConfig {
 
     private static final Logger LOG = LoggerFactory.getLogger(GameConfig.class);
 
+    // FIX (M-NEW-3): Shared ObjectMapper instance — ObjectMapper is thread-safe after configuration.
+    private static final ObjectMapper MAPPER = new ObjectMapper();
+
     /** Turn time settings for different game speeds (slow, normal, fast). */
     private final int[] turnTimeSettings;
 
@@ -209,8 +212,7 @@ public final class GameConfig {
             if (is == null) {
                 throw new IOException("Resource not found: " + resourcePath);
             }
-            ObjectMapper mapper = new ObjectMapper();
-            GameConfig config = mapper.readValue(is, GameConfig.class);
+            GameConfig config = MAPPER.readValue(is, GameConfig.class);
             LOG.info("Loaded GameConfig from resource: {}", resourcePath);
             return config;
         }
@@ -224,8 +226,7 @@ public final class GameConfig {
      * @throws IOException if parsing fails
      */
     public static GameConfig parseJson(String json) throws IOException {
-        ObjectMapper mapper = new ObjectMapper();
-        return mapper.readValue(json, GameConfig.class);
+        return MAPPER.readValue(json, GameConfig.class);
     }
 
     // --- Builder ---
@@ -254,14 +255,14 @@ public final class GameConfig {
 
         private Builder() {}
 
-        public Builder turnTimeSettings(int[] val) { this.turnTimeSettings = val != null ? val.clone() : null; return this; }
-        public Builder buildingFootprintWidths(int[] val) { this.buildingFootprintWidths = val != null ? val.clone() : null; return this; }
-        public Builder buildingFootprintHeights(int[] val) { this.buildingFootprintHeights = val != null ? val.clone() : null; return this; }
-        public Builder buildingPowerRadius(int[] val) { this.buildingPowerRadius = val != null ? val.clone() : null; return this; }
-        public Builder rankExpThresholds(int[] val) { this.rankExpThresholds = val != null ? val.clone() : null; return this; }
-        public Builder rankCreditRewards(int[] val) { this.rankCreditRewards = val != null ? val.clone() : null; return this; }
-        public Builder rankBonusPoints(int[] val) { this.rankBonusPoints = val != null ? val.clone() : null; return this; }
-        public Builder battleTimeLimits(int[] val) { this.battleTimeLimits = val != null ? val.clone() : null; return this; }
+        public Builder turnTimeSettings(int[] val) { this.turnTimeSettings = val; return this; }
+        public Builder buildingFootprintWidths(int[] val) { this.buildingFootprintWidths = val; return this; }
+        public Builder buildingFootprintHeights(int[] val) { this.buildingFootprintHeights = val; return this; }
+        public Builder buildingPowerRadius(int[] val) { this.buildingPowerRadius = val; return this; }
+        public Builder rankExpThresholds(int[] val) { this.rankExpThresholds = val; return this; }
+        public Builder rankCreditRewards(int[] val) { this.rankCreditRewards = val; return this; }
+        public Builder rankBonusPoints(int[] val) { this.rankBonusPoints = val; return this; }
+        public Builder battleTimeLimits(int[] val) { this.battleTimeLimits = val; return this; }
 
         /**
          * Builds a new GameConfig from the builder's state.
@@ -315,6 +316,8 @@ public final class GameConfig {
     public String toString() {
         return "GameConfig{" +
                "turnTimeSettings=" + Arrays.toString(turnTimeSettings) +
+               ", buildingFootprintWidths=" + Arrays.toString(buildingFootprintWidths) +
+               ", buildingFootprintHeights=" + Arrays.toString(buildingFootprintHeights) +
                ", buildingPowerRadius=" + Arrays.toString(buildingPowerRadius) +
                ", rankExpThresholds=" + Arrays.toString(rankExpThresholds) +
                ", rankCreditRewards=" + Arrays.toString(rankCreditRewards) +

@@ -4,7 +4,7 @@ import com.aow2.common.model.Faction;
 
 import java.io.InputStream;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -25,6 +25,8 @@ public final class ResearchRegistry {
     private static final ResearchRegistry INSTANCE = new ResearchRegistry();
 
     /** All 48 research effects indexed by global ID (0-47). */
+    // FIX (M-NEW-8): Changed HashMap to LinkedHashMap for deterministic iteration order.
+    // Lockstep games require deterministic serialization of research effects.
     private final Map<Integer, ResearchEffect> researchEffects;
 
     /** Confederation 8-tech simplified tree. */
@@ -76,7 +78,7 @@ public final class ResearchRegistry {
     ) {}
 
     private ResearchRegistry() {
-        researchEffects = new HashMap<>();
+        researchEffects = new LinkedHashMap<>();
         confederationTechs = List.of();
         rebelTechs = List.of();
         loadFromJson();

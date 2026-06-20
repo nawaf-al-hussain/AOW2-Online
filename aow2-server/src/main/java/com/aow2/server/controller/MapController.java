@@ -6,14 +6,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
@@ -41,6 +37,11 @@ public class MapController {
 
     private final UploadedMapRepository uploadedMapRepository;
 
+    /** Default page size for map listing. FIX (M-NEW-19) */
+    private static final int DEFAULT_PAGE_SIZE = 20;
+    /** Maximum page size to prevent excessive queries. */
+    private static final int MAX_PAGE_SIZE = 100;
+
     /**
      * Constructs the MapController.
      *
@@ -51,16 +52,25 @@ public class MapController {
     }
 
     /**
-     * Lists all community-uploaded maps.
-     * GET /api/maps
+     * Lists community-uploaded maps with pagination.
+     * GET /api/maps?page=0&size=20
      * Returns map metadata without the full map data payload for efficient browsing.
+     * FIX (M-NEW-19): Added pagination to prevent loading all maps at once.
      *
-     * @return 200 with a list of map metadata
+     * @param page zero-based page index (default 0)
+     * @param size page size (default 20, max 100)
+     * @return 200 with a page of map metadata
      */
     @GetMapping
-    public ResponseEntity<List<Map<String, Object>>> listMaps() {
-        List<UploadedMap> maps = uploadedMapRepository.findAllByOrderByCreatedAtDesc();
-        List<Map<String, Object>> summaries = maps.stream().map(m -> Map.<String, Object>of(
+    public ResponseEntity<Map<String, Object>> listMaps(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        size = Math.min(size, MAX_PAGE_SIZE);
+        var pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        var pageResult = uploadedMapRepository.findAll(pageRequest);
+
+        List<Map<String, Object>> summaries = pageResult.getContent().stream().map(m -> Map.<String, Object>of(
                 "id", m.getId(),
                 "name", m.getName(),
                 "description", m.getDescription() != null ? m.getDescription() : "",
@@ -68,7 +78,14 @@ public class MapController {
                 "downloadCount", m.getDownloadCount(),
                 "createdAt", m.getCreatedAt().toString()
         )).toList();
-        return ResponseEntity.ok(summaries);
+
+        return ResponseEntity.ok(Map.of(
+                "maps", summaries,
+                "page", page,
+                "size", size,
+                "totalElements", pageResult.getTotalElements(),
+                "totalPages", pageResult.getTotalPages()
+        ));
     }
 
     /**

@@ -11,7 +11,7 @@ import com.aow2.core.entity.Unit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -38,6 +38,7 @@ public final class FogOfWarSystem {
     public enum TileVisibility { UNEXPLORED, EXPLORED, VISIBLE }
 
     /** Per-player visibility grid: playerId -> (x,y) -> TileVisibility. */
+    // FIX (M-NEW-10): Changed HashMap to LinkedHashMap for deterministic iteration order.
     private final Map<Integer, TileVisibility[][]> visibilityGrids;
 
     /** Per-player reference to the map dimensions. */
@@ -55,7 +56,7 @@ public final class FogOfWarSystem {
      * Visibility grids are initialized lazily when {@link #initialize(GameMap)} is called.
      */
     public FogOfWarSystem() {
-        this.visibilityGrids = new HashMap<>();
+        this.visibilityGrids = new LinkedHashMap<>();
         this.mapWidth = 0;
         this.mapHeight = 0;
     }

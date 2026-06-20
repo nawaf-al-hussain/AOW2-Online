@@ -73,7 +73,10 @@ public record ResearchNode(
      * Returns whether this research node has any prerequisites.
      *
      * @return true if at least one prerequisite research is required
+     * @deprecated FIX (L-NEW-2): Use {@code !prerequisites().isEmpty()} directly — the
+     * record accessor already provides this. This method adds no value.
      */
+    @Deprecated(since = "2026-06-21", forRemoval = true)
     public boolean hasPrerequisite() {
         return !prerequisites.isEmpty();
     }
@@ -83,7 +86,10 @@ public record ResearchNode(
      * Any one of these IDs being completed satisfies the requirement (anyOf semantics).
      *
      * @return list of prerequisite research IDs
+     * @deprecated FIX (L-NEW-2): Use {@code prerequisites()} directly — the record accessor
+     * already returns an unmodifiable list (created via List.copyOf in compact constructor).
      */
+    @Deprecated(since = "2026-06-21", forRemoval = true)
     public List<Integer> getPrerequisites() {
         return prerequisites;
     }

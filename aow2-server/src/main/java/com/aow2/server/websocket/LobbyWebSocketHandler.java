@@ -41,6 +41,14 @@ public class LobbyWebSocketHandler extends TextWebSocketHandler {
     /** Tracks which players have signaled ready, keyed by session UUID */
     private final Map<String, Set<String>> readyPlayers = new ConcurrentHashMap<>();
 
+    /** Scheduled executor for cleaning up stale readyPlayers entries. */
+    private final java.util.concurrent.ScheduledExecutorService readyCleanupExecutor =
+            java.util.concurrent.Executors.newSingleThreadScheduledExecutor(r -> {
+                Thread t = new Thread(r, "ready-cleanup");
+                t.setDaemon(true);
+                return t;
+            });
+
     private final MatchmakingService matchmakingService;
     private final SessionService sessionService;
     private final JwtUtil jwtUtil;
@@ -88,6 +96,24 @@ public class LobbyWebSocketHandler extends TextWebSocketHandler {
                 log.error("Failed to handle background match for {} vs {}", player1Id, player2Id, e);
             }
         });
+        // FIX (M-NEW-21): Periodically clean up stale readyPlayers entries.
+        // If a session stays in WAITING state with partial ready signals for > 5 minutes,
+        // the ready set is removed. This prevents memory accumulation from players who
+        // disconnect before both players signal ready.
+        readyCleanupExecutor.scheduleAtFixedRate(() -> {
+            try {
+                readyPlayers.entrySet().removeIf(entry -> {
+                    var gameSession = sessionService.getSessionByUuid(entry.getKey());
+                    if (gameSession.isEmpty()) {
+                        return true; // Session gone, clean up
+                    }
+                    var gs = gameSession.get();
+                    return gs.getState() != GameSession.SessionState.WAITING;
+                });
+            } catch (Exception e) {
+                log.warn("Error in readyPlayers cleanup", e);
+            }
+        }, 5, 5, java.util.concurrent.TimeUnit.MINUTES);
         log.info("LobbyWebSocketHandler: matchmaking notification callback wired");
     }
 

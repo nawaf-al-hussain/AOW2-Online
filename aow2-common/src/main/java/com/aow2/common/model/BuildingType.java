@@ -64,10 +64,15 @@ public enum BuildingType {
      * Headquarters=6, Bunker=7, RocketLauncher/Tower=8, Wall=9, Locator=10
      *
      * @param relativeId the faction-relative type ID (1-10)
-     * @param faction    the faction context
+     * @param faction    the faction context (must not be null)
      * @return the matching BuildingType, or null if not found
+     * @throws IllegalArgumentException if faction is null
      */
+    // FIX (M-NEW-6): Added explicit null check for faction parameter
     public static BuildingType fromFactionRelativeId(int relativeId, Faction faction) {
+        if (faction == null) {
+            throw new IllegalArgumentException("faction must not be null");
+        }
         int qualifiedId = faction == Faction.CONFEDERATION ? 100 + relativeId : 200 + relativeId;
         return fromTypeId(qualifiedId);
     }
@@ -81,8 +86,13 @@ public enum BuildingType {
     }
     /**
      * Whether this building produces power.
-     * REF: complete_building_stats.json — Command Centre produces powerProduce=6
-     * @return true if this building generates power
+     * REF: complete_building_stats.json — Generator produces powerProduce=6, CC produces powerProduce=6.
+     * FIX (M-NEW-7): Infantry Centre has powerProduce=2 in RE data, but this represents power
+     * consumed to queue production slots, not power generated for the grid. The RE field name
+     * is misleading — only Generator and CC produce power for the building placement radius.
+     * Infantry Centre's powerProduce=2 is consumed internally, not added to the grid surplus.
+     * Therefore, producesPower() correctly excludes INFANTRY_CENTRE/BARRACKS.
+     * @return true if this building generates power for the building placement grid
      */
     public boolean producesPower() {
         return this == CONFED_GENERATOR || this == REBEL_POWERPLANT ||

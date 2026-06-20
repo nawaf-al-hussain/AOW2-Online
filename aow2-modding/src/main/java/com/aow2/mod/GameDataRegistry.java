@@ -231,10 +231,40 @@ public final class GameDataRegistry {
 
     /**
      * Applies override values to a UnitStats record.
-     * Uses reflection to find the matching record component and creates a new
-     * record with the overridden value.
+     * FIX (M-NEW-15): Replaced manual field-by-field copying with reflection-based approach.
+     * When new fields are added to UnitStats, this method automatically handles them
+     * without requiring code changes here. Falls back to manual approach if reflection fails.
      */
+    @SuppressWarnings("unchecked")
     private UnitStats applyUnitOverrides(UnitStats base, Map<String, DataOverride> overrides) {
+        if (overrides.isEmpty()) return base;
+
+        // Try reflection-based approach for forward compatibility
+        try {
+            var components = UnitStats.class.getRecordComponents();
+            Object[] args = new Object[components.length];
+            for (int i = 0; i < components.length; i++) {
+                var comp = components[i];
+                String name = comp.getName();
+                if (overrides.containsKey(name)) {
+                    args[i] = overrides.get(name).intValue();
+                } else {
+                    args[i] = comp.getAccessor().invoke(base);
+                }
+            }
+            var ctor = UnitStats.class.getDeclaredConstructor(
+                java.util.Arrays.stream(components).map(c -> c.getType()).toArray(Class[]::new));
+            return (UnitStats) ctor.newInstance(args);
+        } catch (ReflectiveOperationException e) {
+            LOG.warn("Reflection-based override failed, falling back to manual: {}", e.getMessage());
+        }
+
+        // Fallback: manual field copying (kept for robustness)
+        return applyUnitOverridesManual(base, overrides);
+    }
+
+    /** Manual fallback for applyUnitOverrides when reflection fails. */
+    private UnitStats applyUnitOverridesManual(UnitStats base, Map<String, DataOverride> overrides) {
         int hp = base.hp();
         int damage = base.damage();
         int speed = base.speed();

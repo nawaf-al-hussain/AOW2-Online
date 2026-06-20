@@ -73,8 +73,18 @@ public class GameScene {
     /** Player ID for the local player (always 0 in local play). */
     private static final int LOCAL_PLAYER_ID = 0;
 
-    /** The local player's faction (defaults to CONFEDERATION for local play). */
+    /** The local player's faction. FIX (L-NEW-9): Set from session config instead of hardcoded. */
     private Faction playerFaction = Faction.CONFEDERATION;
+
+    /** Sets the player's faction for this game session. FIX (L-NEW-9): Allows server-assigned faction. */
+    public void setPlayerFaction(Faction faction) {
+        this.playerFaction = faction;
+    }
+
+    /**
+     * @return the local player's faction
+     */
+    public Faction getPlayerFaction() { return playerFaction; }
 
     /** The root pane for this scene. */
     private final StackPane root;

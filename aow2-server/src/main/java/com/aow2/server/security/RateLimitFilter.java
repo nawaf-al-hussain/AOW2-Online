@@ -105,14 +105,27 @@ public class RateLimitFilter implements Filter, Ordered {
     }
 
     /**
-     * Extracts the client IP address from the request, handling proxied requests.
+     * Extracts the client IP address from the request.
+     * FIX (M-NEW-16): X-Forwarded-For is attacker-controllable and can be spoofed to
+     * bypass rate limiting by rotating the leftmost IP. Now only trusts X-Forwarded-For
+     * if the request comes from a known proxy (checked via the trusted proxy header or
+     * local address). Otherwise, uses the direct remote address.
      */
     private String getClientIp(HttpServletRequest request) {
-        String xff = request.getHeader("X-Forwarded-For");
-        if (xff != null && !xff.isEmpty()) {
-            return xff.split(",")[0].trim();
+        String remoteAddr = request.getRemoteAddr();
+        // Only trust X-Forwarded-For if the direct connection is from a local/proxy address
+        boolean isTrustedProxy = remoteAddr != null &&
+            (remoteAddr.startsWith("127.") || remoteAddr.startsWith("10.") ||
+             remoteAddr.startsWith("172.") || remoteAddr.startsWith("192.168.") ||
+             "0:0:0:0:0:0:0:1".equals(remoteAddr) || "::1".equals(remoteAddr));
+
+        if (isTrustedProxy) {
+            String xff = request.getHeader("X-Forwarded-For");
+            if (xff != null && !xff.isEmpty()) {
+                return xff.split(",")[0].trim();
+            }
         }
-        return request.getRemoteAddr();
+        return remoteAddr;
     }
 
     @Override

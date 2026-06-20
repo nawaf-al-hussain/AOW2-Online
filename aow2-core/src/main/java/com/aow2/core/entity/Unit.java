@@ -91,6 +91,10 @@ public class Unit extends Entity {
     /** The final destination for an attack-move command (resume after combat). */
     private GridPosition autoEngageTarget;
 
+    /** The origin position for a patrol command (return after reaching waypoint). */
+    // FIX (M-NEW-12): Stored so MovementSystem can issue return move on patrol completion.
+    private GridPosition patrolOrigin;
+
     /** Death animation frame calculated on kill. FIX (L6): stored for client rendering. */
     private int deathAnimFrame;
 
@@ -524,6 +528,22 @@ public class Unit extends Entity {
      * @param target the target position to resume toward after combat
      */
     public void setAutoEngageTarget(GridPosition target) { this.autoEngageTarget = target; }
+
+    /**
+     * Get the patrol origin position.
+     * FIX (M-NEW-12): Used by MovementSystem to issue return move on patrol completion.
+     *
+     * @return the patrol origin, or null if not patrolling
+     */
+    public GridPosition getPatrolOrigin() { return patrolOrigin; }
+
+    /**
+     * Set the patrol origin position.
+     * FIX (M-NEW-12): Stored when a patrol command is issued.
+     *
+     * @param origin the position to return to after reaching the patrol waypoint
+     */
+    public void setPatrolOrigin(GridPosition origin) { this.patrolOrigin = origin; }
 
     @Override
     public String toString() {

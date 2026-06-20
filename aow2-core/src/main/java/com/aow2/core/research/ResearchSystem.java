@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -40,6 +40,8 @@ public final class ResearchSystem {
     private static final int MAX_PLAYERS = GameConstants.MAX_PLAYERS_PER_MATCH;
 
     /** Per-player completed research tracking. Index = playerId. */
+    // FIX (M-NEW-9): Changed HashSet to LinkedHashSet for deterministic iteration order.
+    // Lockstep games require deterministic serialization of completed research sets.
     private final Set<Integer>[] completedResearch;
 
     /** Per-player accumulated research bonuses. Index = playerId. */
@@ -101,11 +103,11 @@ public final class ResearchSystem {
     @SuppressWarnings("unchecked")
     public ResearchSystem(TechTree techTree) {
         this.techTree = techTree;
-        this.completedResearch = new HashSet[MAX_PLAYERS];
+        this.completedResearch = new LinkedHashSet[MAX_PLAYERS];
         this.bonusTrackers = new ResearchBonusTracker[MAX_PLAYERS];
         this.activeResearchMap = new ConcurrentHashMap<>();
         for (int i = 0; i < MAX_PLAYERS; i++) {
-            completedResearch[i] = new HashSet<>();
+            completedResearch[i] = new LinkedHashSet<>();
             bonusTrackers[i] = new ResearchBonusTracker();
         }
     }

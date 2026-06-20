@@ -367,8 +367,8 @@ public final class ModInstaller {
         Files.createDirectories(targetDir);
 
         try (ZipInputStream zis = new ZipInputStream(Files.newInputStream(zipFile))) {
-            // Detect if all entries share a common prefix directory
-            String prefix = detectCommonPrefix(zis);
+            // FIX (M-NEW-14): Detect prefix using ZipFile (non-consuming) instead of ZipInputStream
+            String prefix = detectCommonPrefix(zipFile);
 
             ZipEntry entry;
             while ((entry = zis.getNextEntry()) != null) {
@@ -400,31 +400,37 @@ public final class ModInstaller {
     /**
      * Detects if all ZIP entries share a common directory prefix.
      * This handles ZIPs where the contents are inside a single root folder.
+     * FIX (M-NEW-14): The old implementation exhausted the ZipInputStream during prefix
+     * detection, leaving no entries for the subsequent extraction loop. Now uses
+     * ZipFile.entries() which can be iterated multiple times without consuming the stream.
      *
+     * @param zipFile the ZIP file to inspect
      * @return the common prefix string (including trailing slash), or null
      */
-    private String detectCommonPrefix(ZipInputStream zis) throws IOException {
-        String commonPrefix = null;
-        boolean allInDir = true;
+    private String detectCommonPrefix(Path zipFile) throws IOException {
+        try (java.util.zip.ZipFile zf = new java.util.zip.ZipFile(zipFile.toFile())) {
+            String commonPrefix = null;
+            boolean allInDir = true;
 
-        ZipEntry entry;
-        while ((entry = zis.getNextEntry()) != null) {
-            String name = entry.getName();
-            int slashIdx = name.indexOf('/');
-            if (slashIdx < 0) {
-                allInDir = false;
-                break;
+            var entries = zf.entries();
+            while (entries.hasMoreElements()) {
+                String name = entries.nextElement().getName();
+                int slashIdx = name.indexOf('/');
+                if (slashIdx < 0) {
+                    allInDir = false;
+                    break;
+                }
+                String prefix = name.substring(0, slashIdx + 1);
+                if (commonPrefix == null) {
+                    commonPrefix = prefix;
+                } else if (!commonPrefix.equals(prefix)) {
+                    allInDir = false;
+                    break;
+                }
             }
-            String prefix = name.substring(0, slashIdx + 1);
-            if (commonPrefix == null) {
-                commonPrefix = prefix;
-            } else if (!commonPrefix.equals(prefix)) {
-                allInDir = false;
-                break;
-            }
+
+            return allInDir ? commonPrefix : null;
         }
-
-        return allInDir ? commonPrefix : null;
     }
 
     /**

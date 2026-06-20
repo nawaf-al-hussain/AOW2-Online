@@ -1,5 +1,7 @@
 package com.aow2.common.config;
 
+import com.aow2.common.model.TerrainType;
+
 /**
  * Global game constants extracted from the reverse-engineered data.
  * REF: MASTER_DOCUMENTATION.md - all constants verified against RE data
@@ -72,7 +74,9 @@ public final class GameConstants {
 
     // Building placement
     // REF: complete_building_stats.json building_power_radius values
-    // DUPLICATE: Source of truth is GameConfig.getBuildingPowerRadius()
+    // FIX (M-NEW-4): Deprecated — use GameConfig.getInstance().getBuildingPowerRadius() as source of truth.
+    // Kept for backward compatibility with existing call sites that haven't migrated.
+    @Deprecated(since = "2026-06-21", forRemoval = true)
     public static final int[] BUILDING_POWER_RADIUS = {10, 20, 30, 40, 60, 127};
 
     // Unit type bitmasks
@@ -84,9 +88,12 @@ public final class GameConstants {
 
     // Rank system
     // REF: complete_building_stats.json rank_exp_thresholds and rank_credit_rewards
-    // DUPLICATE: Source of truth is GameConfig (getRankExpThresholds, getRankCreditRewards, getRankBonusPoints)
+    // FIX (M-NEW-4): Deprecated — use GameConfig.getInstance() getters as source of truth.
+    @Deprecated(since = "2026-06-21", forRemoval = true)
     public static final int[] RANK_EXP_THRESHOLDS = {20, 35, 50};
+    @Deprecated(since = "2026-06-21", forRemoval = true)
     public static final int[] RANK_CREDIT_REWARDS = {10, 25, 51};
+    @Deprecated(since = "2026-06-21", forRemoval = true)
     public static final int[] RANK_BONUS_POINTS = {0, 3, 6};
 
     // Death animation arrays
@@ -110,14 +117,13 @@ public final class GameConstants {
     // REF: pathfinding.md — diagonal costs use a lookup table, not a simple multiplier
     // (REMOVED DIAGONAL_COST_MULTIPLIER — original game uses lookup table approach)
     // Terrain movement costs (indexed by TerrainType ordinal)
-    // WARNING: This array is indexed by TerrainType.ordinal(). Any reordering of the
-    // TerrainType enum will silently break movement cost mapping. Consider migrating
-    // to an EnumMap<TerrainType, Integer> for type-safe lookups.
+    // FIX (M-NEW-5): Migrated to EnumMap for type-safe lookups. The array is retained as a
+    // private fallback for performance-critical hot paths. All new code should use
+    // getTerrainMovementCost(TerrainType) instead of indexing TERRAIN_MOVEMENT_COSTS directly.
     // REF: map_system.md Section 3.1 — terrain IDs corrected to RE spec
-    // FIX: Updated to match new TerrainType enum order after removing DIRT/ICE/RUINS
     // Ordinals: DEEP_WATER(0), SHALLOW_WATER(1), SAND(2), GRASS(3), FOREST(4),
     //           HILLS(5), MOUNTAIN(6), ROAD(7), BRIDGE(8), SWAMP(9), SNOW(10), RESOURCE_DEPOSIT(11)
-    public static final int[] TERRAIN_MOVEMENT_COSTS = {
+    private static final int[] TERRAIN_MOVEMENT_COSTS_RAW = {
         Integer.MAX_VALUE,  // DEEP_WATER (ordinal 0) — impassable
         Integer.MAX_VALUE,  // SHALLOW_WATER (ordinal 1) — impassable except infantry
         2,                  // SAND (ordinal 2)
@@ -131,6 +137,29 @@ public final class GameConstants {
         3,                  // SNOW (ordinal 10) — slow
         1                   // RESOURCE_DEPOSIT (ordinal 11) — same as grass
     };
+
+    /** Type-safe terrain movement cost lookup. FIX (M-NEW-5): Use this instead of TERRAIN_MOVEMENT_COSTS_RAW. */
+    private static final java.util.EnumMap<TerrainType, Integer> TERRAIN_COST_MAP;
+    static {
+        var map = new java.util.EnumMap<TerrainType, Integer>(TerrainType.class);
+        TerrainType[] values = TerrainType.values();
+        for (int i = 0; i < values.length && i < TERRAIN_MOVEMENT_COSTS_RAW.length; i++) {
+            map.put(values[i], TERRAIN_MOVEMENT_COSTS_RAW[i]);
+        }
+        TERRAIN_COST_MAP = map;
+    }
+
+    /** Returns the movement cost for the given terrain type. Returns MAX_VALUE for impassable terrain. */
+    public static int getTerrainMovementCost(TerrainType terrain) {
+        return TERRAIN_COST_MAP.getOrDefault(terrain, 1);
+    }
+
+    /**
+     * @deprecated Use {@link #getTerrainMovementCost(TerrainType)} for type-safe lookups.
+     * FIX (M-NEW-5): Direct ordinal indexing is fragile if the TerrainType enum is reordered.
+     */
+    @Deprecated(since = "2026-06-21", forRemoval = true)
+    public static final int[] TERRAIN_MOVEMENT_COSTS = TERRAIN_MOVEMENT_COSTS_RAW;
 
     // Network
     public static final int DEFAULT_PORT = 47584;

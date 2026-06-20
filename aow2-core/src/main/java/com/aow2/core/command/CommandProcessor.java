@@ -163,6 +163,9 @@ public final class CommandProcessor {
     /**
      * Handle a patrol command.
      * Units will move back and forth between their current position and the waypoint.
+     * FIX (M-NEW-12): Store the origin position so units can return after reaching the waypoint.
+     * The unit's path is set to the waypoint; when it arrives, MovementSystem will issue
+     * a return move command to the patrol origin (stored via setPatrolOrigin on the unit).
      *
      * @param cmd       the patrol command
      * @param entities  the entity manager
@@ -174,8 +177,12 @@ public final class CommandProcessor {
         for (int unitId : cmd.unitIds()) {
             var unit = entities.getUnit(unitId);
             if (unit != null && unit.isAlive()) {
+                // FIX (M-NEW-12): Store patrol origin for return path.
+                // When the unit reaches the waypoint, the MovementSystem (or a patrol
+                // completion check) will issue a move back to this origin position.
+                unit.setPatrolOrigin(unit.getPosition());
                 movement.issueMoveCommand(unit, cmd.waypoint(), map, entities);
-                LOG.debug("Unit {} patrolling to {}", unitId, cmd.waypoint());
+                LOG.debug("Unit {} patrolling from {} to {}", unitId, unit.getPosition(), cmd.waypoint());
             }
         }
     }
@@ -184,7 +191,8 @@ public final class CommandProcessor {
      * Handle an AttackMove command.
      * Issues a move command toward the target position. Units will engage enemies
      * encountered along the way via the combat system's auto-targeting.
-     * TODO: Implement full attack-move behavior (engage-then-resume) in MovementSystem.
+     * FIX (M-NEW-11): Set autoEngage flag so MovementSystem knows to stop and fight
+     * when enemies are encountered, then resume moving after combat.
      *
      * @param cmd       the attack-move command
      * @param entities  the entity manager
@@ -196,8 +204,12 @@ public final class CommandProcessor {
         for (int unitId : cmd.unitIds()) {
             var unit = entities.getUnit(unitId);
             if (unit != null && unit.isAlive()) {
+                // FIX (M-NEW-11): Set autoEngage state so the unit will engage enemies
+                // encountered along the path, then resume movement after combat.
+                unit.setAutoEngage(true);
+                unit.setAutoEngageTarget(cmd.target());
                 movement.issueMoveCommand(unit, cmd.target(), map, entities);
-                LOG.debug("Unit {} attack-moving to {}", unitId, cmd.target());
+                LOG.debug("Unit {} attack-moving to {} (autoEngage=true)", unitId, cmd.target());
             }
         }
     }
