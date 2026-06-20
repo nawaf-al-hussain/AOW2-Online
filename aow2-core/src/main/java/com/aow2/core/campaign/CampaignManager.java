@@ -230,6 +230,25 @@ public final class CampaignManager {
     }
 
     /**
+     * Sets the current mission index within the active campaign.
+     * Used when the player selects a specific mission to play.
+     *
+     * @param index the mission index to set
+     * @throws IllegalStateException if no campaign is active
+     */
+    public void setCurrentMissionIndex(int index) {
+        if (currentCampaign == null) {
+            throw new IllegalStateException("No active campaign to set mission index");
+        }
+        if (index < 0 || index >= currentCampaign.missions().size()) {
+            LOG.warn("Mission index out of range: {} (max {})", index, currentCampaign.missions().size() - 1);
+            return;
+        }
+        this.currentMissionIndex = index;
+        LOG.info("Current mission index set to: {}", index);
+    }
+
+    /**
      * Returns the current campaign episode, or null if none is active.
      *
      * @return current episode

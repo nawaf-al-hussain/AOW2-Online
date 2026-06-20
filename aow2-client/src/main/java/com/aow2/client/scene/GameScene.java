@@ -10,8 +10,14 @@ import com.aow2.client.render.IsometricRenderer;
 import com.aow2.client.render.MinimapRenderer;
 import com.aow2.client.render.SpriteManager;
 import com.aow2.client.ui.HUD;
+import com.aow2.core.campaign.CampaignEpisode;
+import com.aow2.core.campaign.CampaignManager;
+import com.aow2.core.campaign.Mission;
+import com.aow2.core.campaign.Objective;
+
 import com.aow2.common.config.GameConstants;
 import com.aow2.common.config.StatsRegistry;
+import com.aow2.common.model.BuildingType;
 import com.aow2.common.model.CommandType;
 import com.aow2.common.model.Faction;
 import com.aow2.common.model.GridPosition;
@@ -35,10 +41,16 @@ import com.aow2.core.research.ResearchSystem;
 import com.aow2.core.world.EntityManager;
 import com.aow2.core.world.FogOfWarSystem;
 import com.aow2.core.world.GameMap;
+import com.aow2.core.world.MapLoader;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import javafx.animation.AnimationTimer;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.ChoiceDialog;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
@@ -176,6 +188,24 @@ public class GameScene {
     /** Whether the sprite manager has been initialized for this scene. */
     private boolean spritesInitialized;
 
+    /** Campaign manager for objective evaluation, or null if not a campaign mission. */
+    private CampaignManager campaignManager;
+
+    /** Campaign episode index, or -1 if not a campaign mission. */
+    private int campaignEpisodeIndex = -1;
+
+    /** Campaign mission index within the episode, or -1 if not a campaign mission. */
+    private int campaignMissionIndex = -1;
+
+    /** Mutable copy of the current mission's objectives, updated each tick. */
+    private List<Objective> missionObjectives = new ArrayList<>();
+
+    /** Whether the campaign mission result has already been handled. */
+    private boolean campaignResultHandled = false;
+
+    /** Callback invoked when a campaign mission ends (victory or defeat). */
+    private Runnable campaignEndCallback;
+
     /**
      * Constructs a new GameScene with all subsystems initialized.
      */
@@ -310,6 +340,15 @@ public class GameScene {
                 case "stop" -> new CommandType.Stop(tick, LOCAL_PLAYER_ID, selectedIds);
                 case "hold" -> new CommandType.Stop(tick, LOCAL_PLAYER_ID, selectedIds);
                 case "patrol" -> new CommandType.Patrol(tick, LOCAL_PLAYER_ID, selectedIds, targetPos);
+                case "build" -> {
+                    BuildingType buildType = inputHandler.getPendingBuildType();
+                    if (buildType != null) {
+                        yield new CommandType.Build(tick, LOCAL_PLAYER_ID, buildType, targetPos);
+                    } else {
+                        LOG.warn("Build command issued but no building type selected");
+                        yield null;
+                    }
+                }
                 default -> null;
             };
 
@@ -318,6 +357,43 @@ public class GameScene {
                 LOG.info("Enqueued command: {} at ({}, {}), selected: {}",
                     command, targetGx, targetGy, selectionManager.getSelectedIds());
             }
+        });
+
+        // Build type callback — shows a dialog to pick which building to construct
+        inputHandler.setBuildTypeCallback(() -> {
+            // Build the list of available buildings based on player faction
+            List<BuildingType> availableBuildings = switch (playerFaction) {
+                case CONFEDERATION -> List.of(
+                    BuildingType.CONFED_INFANTRY_CENTRE, BuildingType.CONFED_MACHINE_FACTORY,
+                    BuildingType.CONFED_BUNKER, BuildingType.CONFED_TECH_CENTRE,
+                    BuildingType.CONFED_GENERATOR, BuildingType.CONFED_ROCKET_LAUNCHER,
+                    BuildingType.CONFED_LOCATOR
+                );
+                case RESISTANCE -> List.of(
+                    BuildingType.REBEL_BARRACKS, BuildingType.REBEL_FACTORY,
+                    BuildingType.REBEL_BUNKER, BuildingType.REBEL_LABORATORY,
+                    BuildingType.REBEL_POWERPLANT, BuildingType.REBEL_TOWER,
+                    BuildingType.REBEL_WALL
+                );
+                default -> List.of();
+            };
+
+            if (availableBuildings.isEmpty()) {
+                LOG.warn("No buildings available for faction: {}", playerFaction);
+                return;
+            }
+
+            ChoiceDialog<BuildingType> dialog =
+                new ChoiceDialog<>(availableBuildings.get(0), availableBuildings);
+            dialog.setTitle("Build Structure");
+            dialog.setHeaderText("Select building type:");
+            dialog.initOwner(gameCanvas.getScene().getWindow());
+            var result = dialog.showAndWait();
+            result.ifPresent(type -> {
+                inputHandler.setPendingBuildType(type);
+                inputHandler.setCommandMode(InputHandler.CommandMode.BUILD_PLACEMENT);
+                LOG.debug("Build mode: selected {}", type);
+            });
         });
 
         // Minimap click callback
@@ -416,6 +492,101 @@ public class GameScene {
     }
 
     /**
+     * Initializes the game scene with a map loaded from a classpath resource.
+     * Falls back to the test map if the resource is not found.
+     * Still creates test entities (map-specific entities will come with the campaign system).
+     *
+     * @param mapResourcePath classpath resource path (e.g., "data/maps/test_map.json")
+     */
+    public void initializeGame(String mapResourcePath) {
+        // FIX(M-33): AudioManager initialized and wired for background music and SFX playback.
+        this.audioManager = new AudioManager();
+
+        // Initialize SpriteManager singleton early (must run on JavaFX thread)
+        if (!SpriteManager.getInstance().isInitialized()) {
+            SpriteManager.getInstance().initialize();
+            isoRenderer.setSpriteManager(SpriteManager.getInstance());
+            entityRenderer.setSpriteManager(SpriteManager.getInstance());
+            spritesInitialized = true;
+            LOG.info("SpriteManager initialized and wired to renderers");
+        }
+
+        // Load map from resource, fallback to test map
+        try {
+            this.map = MapLoader.loadFromResource(mapResourcePath);
+            LOG.info("Loaded map from resource: {}", mapResourcePath);
+        } catch (Exception e) {
+            LOG.warn("Failed to load map resource '{}': {}. Falling back to test map",
+                mapResourcePath, e.getMessage());
+            this.map = GameMap.createTestMap();
+        }
+
+        this.entityManager = new EntityManager();
+        this.gameState = new GameState();
+
+        // REF: GameConstants.STARTING_CREDITS = 100
+        this.credits = GameConstants.STARTING_CREDITS;
+
+        // --- Instantiate core game systems ---
+
+        // Economy: ResourceGenerator → EconomySystem
+        ResourceGenerator resourceGenerator = new ResourceGenerator();
+        this.economy = new EconomySystem(resourceGenerator);
+
+        // Movement: PathfindingSystem + CollisionSystem → MovementSystem
+        this.pathfinding = new PathfindingSystem();
+        CollisionSystem collision = new CollisionSystem();
+        this.movement = new MovementSystem(pathfinding, collision);
+
+        // Combat: CombatSystem (internally creates ProjectileSystem and ArmorCalculator)
+        this.combat = new CombatSystem(gameState, entityManager);
+        this.projectiles = combat.getProjectileSystem();
+
+        // Production, Research, Placement
+        this.production = new ProductionSystem();
+        this.research = new ResearchSystem();
+        this.placement = new BuildingPlacementSystem();
+
+        // Power system
+        this.powerSystem = new PowerSystem();
+
+        // Tick manager: orchestrates all systems per tick
+        this.tickManager = new TickManager();
+
+        // Connect subsystems to data
+        isoRenderer.setMap(map);
+        isoRenderer.centerOnMap(CANVAS_WIDTH, CANVAS_HEIGHT);
+        cameraController.setMap(map);
+        cameraController.setViewportSize(CANVAS_WIDTH, CANVAS_HEIGHT);
+        cameraController.centerOnGrid(map.getWidth() / 2, map.getHeight() / 2);
+        minimapRenderer.setMap(map);
+        minimapRenderer.setEntityManager(entityManager);
+        entityRenderer.setSelectedEntityIds(selectionManager.getSelectedIds());
+        selectionManager.setEntityManager(entityManager);
+        selectionManager.setPlayerFaction(playerFaction);
+        hud.setEntityManager(entityManager);
+        hud.setPlayerFaction(playerFaction);
+
+        // Initialize fog of war system and connect to renderer and tick manager
+        fogOfWarSystem.initialize(map);
+        fogRenderer.setFogOfWar(fogOfWarSystem);
+        fogRenderer.setPlayerId(LOCAL_PLAYER_ID);
+        tickManager.setFogOfWar(fogOfWarSystem);
+
+        // Create test entities using StatsRegistry
+        createTestEntities();
+
+        // Update power grid for initial buildings
+        powerSystem.updatePowerGrid(entityManager);
+
+        // Create game loop
+        this.gameLoop = new GameLoop(gameState, this::onGameTick);
+
+        LOG.info("Game initialized with map {}x{} (resource: {}), all core systems wired",
+            map.getWidth(), map.getHeight(), mapResourcePath);
+    }
+
+    /**
      * Creates test entities for development and demonstration.
      * Uses StatsRegistry for all unit and building stats instead of hardcoded values.
      */
@@ -497,6 +668,9 @@ public class GameScene {
 
         // Sync credits from EconomySystem for HUD display
         this.credits = economy.getCredits(LOCAL_PLAYER_ID);
+
+        // Check campaign objectives if this is a campaign mission
+        checkCampaignObjectives();
     }
 
     /**
@@ -516,6 +690,10 @@ public class GameScene {
                 if (!building.isUnderConstruction()) {
                     LOG.info("Building {} ({}) construction complete at {}",
                         building.getId(), building.getBuildingType().displayName(), building.getPosition());
+                    // FIX (H-NEW-14): Play build completion SFX
+                    if (audioManager != null) {
+                        audioManager.playSFX("build_complete");
+                    }
                     // Update power grid when a building completes construction
                     if (building.getBuildingType().producesPower()) {
                         powerSystem.updatePowerGrid(entityManager);
@@ -531,6 +709,19 @@ public class GameScene {
     public void start() {
         if (gameLoop != null) {
             gameLoop.start();
+        }
+
+        // FIX (H-NEW-14): Start background music and preload common SFX
+        if (audioManager != null) {
+            audioManager.getMusicPlayer().addTrack("ambient_war");
+            audioManager.getMusicPlayer().play();
+            audioManager.preloadSFX("ui_click");
+            audioManager.preloadSFX("explosion");
+            audioManager.preloadSFX("gunshot");
+            audioManager.preloadSFX("build_complete");
+            audioManager.preloadSFX("unit_produced");
+            audioManager.preloadSFX("research_done");
+            audioManager.preloadSFX("error");
         }
 
         if (renderTimer != null) {
@@ -554,6 +745,10 @@ public class GameScene {
     public void stop() {
         if (gameLoop != null) {
             gameLoop.stop();
+        }
+        // FIX (H-NEW-14): Stop all audio when leaving the game scene
+        if (audioManager != null) {
+            audioManager.stopAll();
         }
         if (renderTimer != null) {
             renderTimer.stop();
@@ -677,11 +872,318 @@ public class GameScene {
     }
 
     /**
+     * Gets the audio manager (for SFX from HUD and other subsystems).
+     * FIX (H-NEW-14): Exposed for UI sound wiring.
+     *
+     * @return the audio manager, or null if not yet initialized
+     */
+    public AudioManager getAudioManager() {
+        return audioManager;
+    }
+
+    /**
      * Gets the economy system (for testing or external access).
      *
      * @return the economy system, or null if not yet initialized
      */
     public EconomySystem getEconomy() {
         return economy;
+    }
+
+    /**
+     * Sets the campaign context for this game session.
+     * When set, the game scene will evaluate campaign objectives each tick
+     * and trigger victory/defeat conditions.
+     *
+     * @param cm           the campaign manager
+     * @param episodeIndex the episode index
+     * @param missionIndex the mission index within the episode
+     */
+    public void setCampaignContext(CampaignManager cm, int episodeIndex, int missionIndex) {
+        this.campaignManager = cm;
+        this.campaignEpisodeIndex = episodeIndex;
+        this.campaignMissionIndex = missionIndex;
+        this.campaignResultHandled = false;
+
+        // Resolve the mission and copy its objectives for live tracking
+        CampaignEpisode episode = switch (episodeIndex) {
+            case 0 -> CampaignEpisode.GLOBAL_CONFEDERATION;
+            case 1 -> CampaignEpisode.LIBERATION_OF_PERU;
+            default -> CampaignEpisode.CUSTOM_MISSIONS;
+        };
+        List<Mission> missions = cm.getMissionsForEpisode(episode);
+        if (missionIndex < missions.size()) {
+            Mission mission = missions.get(missionIndex);
+            this.missionObjectives = new ArrayList<>(mission.objectives());
+            // Set the player faction from the mission definition
+            this.playerFaction = mission.playerFaction();
+            LOG.info("Campaign context set: episode={}, mission='{}', {} objectives, faction={}",
+                episode.title(), mission.name(), missionObjectives.size(), playerFaction);
+        } else {
+            this.missionObjectives = new ArrayList<>();
+            LOG.warn("Campaign context: mission index {} out of range (max {})",
+                missionIndex, missions.size());
+        }
+    }
+
+    /**
+     * Sets the callback invoked when a campaign mission ends.
+     *
+     * @param callback the end-of-mission callback (receives no arguments)
+     */
+    public void setCampaignEndCallback(Runnable callback) {
+        this.campaignEndCallback = callback;
+    }
+
+    /**
+     * Checks campaign objectives against the current game state.
+     * Called each tick when a campaign context is active.
+     * <p>
+     * Evaluates each objective type:
+     * <ul>
+     *   <li>{@link Objective.DestroyObjective} — counts destroyed enemy entities against target</li>
+     *   <li>{@link Objective.DefendObjective} — checks if the defended entity is still alive and ticks duration</li>
+     *   <li>{@link Objective.TimedObjective} — ticks the timer and checks if other objectives are met</li>
+     *   <li>{@link Objective.EscortObjective} — checks if the escorted unit is alive and at destination</li>
+     *   <li>{@link Objective.CaptureObjective} — checks if a friendly unit is at the target position</li>
+     * </ul>
+     * When all non-timed objectives are completed (or all including timed), triggers victory.
+     * When any objective fails, triggers defeat.
+     */
+    private void checkCampaignObjectives() {
+        if (campaignManager == null || campaignResultHandled) {
+            return;
+        }
+        if (entityManager == null || gameState == null) {
+            return;
+        }
+
+        // If there are no scripted objectives, fall back to default win/lose:
+        // Win: all enemy buildings destroyed. Lose: player HQ destroyed.
+        if (missionObjectives.isEmpty()) {
+            checkDefaultWinLoseConditions();
+            return;
+        }
+
+        // Evaluate each objective and build updated list
+        boolean anyFailed = false;
+        boolean allCompleted = true;
+        List<Objective> updated = new ArrayList<>();
+
+        for (Objective obj : missionObjectives) {
+            Objective evaluated = evaluateObjective(obj);
+            updated.add(evaluated);
+
+            if (evaluated.isFailed()) {
+                anyFailed = true;
+                allCompleted = false;
+            } else if (!evaluated.isCompleted()) {
+                allCompleted = false;
+            }
+        }
+
+        missionObjectives = updated;
+
+        if (anyFailed) {
+            handleCampaignDefeat();
+        } else if (allCompleted) {
+            handleCampaignVictory();
+        }
+    }
+
+    /**
+     * Evaluates a single objective against the current game state.
+     *
+     * @param obj the objective to evaluate
+     * @return an updated objective reflecting the current state
+     */
+    private Objective evaluateObjective(Objective obj) {
+        return switch (obj) {
+            case Objective.DestroyObjective destroy -> {
+                // Count enemy entities that have been removed (killed)
+                // We track kills by counting enemy dead: compare initial enemy count
+                // minus current alive enemy count. For simplicity, count total enemy
+                // buildings + units that are no longer alive.
+                // Since dead entities are removed from EntityManager, we use a
+                // score-based approach: count all kills credited so far.
+                // The DestroyObjective.currentCount is incremented externally
+                // (by combat system events or script). For now, we evaluate
+                // by checking enemy entity counts.
+                Faction enemyFaction = (playerFaction == Faction.CONFEDERATION)
+                    ? Faction.RESISTANCE : Faction.CONFEDERATION;
+                int aliveEnemies = entityManager.getAliveUnitsForPlayer(enemyFaction).size()
+                    + (int) entityManager.getBuildingsForPlayer(enemyFaction).stream()
+                        .filter(b -> b.isAlive()).count();
+                // Estimate kills: we track how many are gone from initial count.
+                // Since we don't store initial counts, use currentCount as-is
+                // and rely on the combat system to increment it.
+                // For a working evaluation: if no enemies remain, count = targetCount
+                if (aliveEnemies == 0 && destroy.targetCount() > 0) {
+                    yield new Objective.DestroyObjective(
+                        destroy.name(), destroy.targetCount(), destroy.targetCount());
+                }
+                yield destroy;
+            }
+            case Objective.DefendObjective defend -> {
+                // Check if the defended entity still exists and is alive
+                com.aow2.core.entity.Unit unit = entityManager.getUnit(defend.entityId());
+                com.aow2.core.entity.Building building = entityManager.getBuilding(defend.entityId());
+                boolean entityAlive = (unit != null && unit.isAlive())
+                    || (building != null && building.isAlive());
+
+                if (!entityAlive && defend.elapsedTicks() < defend.durationTicks()) {
+                    // Entity destroyed before duration elapsed — objective failed
+                    yield defend.destroyEntity();
+                }
+                // Tick the duration counter
+                yield defend.tick();
+            }
+            case Objective.TimedObjective timed -> {
+                // Check if other (non-timed) objectives are all completed
+                boolean othersMet = missionObjectives.stream()
+                    .filter(o -> !(o instanceof Objective.TimedObjective))
+                    .allMatch(Objective::isCompleted);
+                yield timed.tick().withOtherObjectivesMet(othersMet);
+            }
+            case Objective.EscortObjective escort -> {
+                // Check if the escorted unit is alive
+                com.aow2.core.entity.Unit unit = entityManager.getUnit(escort.unitId());
+                boolean unitAlive = unit != null && unit.isAlive();
+
+                if (!unitAlive) {
+                    yield escort.killUnit();
+                }
+
+                // Check if the unit has reached the destination
+                if (unitAlive && unit.getPosition().equals(escort.destination())) {
+                    yield escort.arrive();
+                }
+                yield escort;
+            }
+            case Objective.CaptureObjective capture -> {
+                // Check if any friendly alive unit is at the target position
+                boolean captured = entityManager.getAliveUnitsForPlayer(playerFaction).stream()
+                    .anyMatch(u -> u.getPosition().equals(capture.targetPosition()));
+                if (captured) {
+                    yield capture.capture();
+                }
+                yield capture;
+            }
+        };
+    }
+
+    /**
+     * Default win/lose condition when a campaign mission has no scripted objectives.
+     * Win: all enemy buildings destroyed. Lose: player has no buildings.
+     */
+    private void checkDefaultWinLoseConditions() {
+        Faction enemyFaction = (playerFaction == Faction.CONFEDERATION)
+            ? Faction.RESISTANCE : Faction.CONFEDERATION;
+
+        boolean playerHasBuildings = entityManager.getBuildingsForPlayer(playerFaction).stream()
+            .anyMatch(b -> b.isAlive());
+        boolean enemyHasBuildings = entityManager.getBuildingsForPlayer(enemyFaction).stream()
+            .anyMatch(b -> b.isAlive());
+
+        // Also check: lose if player has no units AND no buildings
+        boolean playerHasUnits = !entityManager.getAliveUnitsForPlayer(playerFaction).isEmpty();
+
+        if (!playerHasBuildings && !playerHasUnits) {
+            handleCampaignDefeat();
+        } else if (!enemyHasBuildings) {
+            handleCampaignVictory();
+        }
+    }
+
+    /**
+     * Handles campaign victory: stops the game, marks the mission as complete,
+     * and invokes the campaign end callback on the JavaFX thread.
+     */
+    private void handleCampaignVictory() {
+        if (campaignResultHandled) {
+            return;
+        }
+        campaignResultHandled = true;
+
+        // Mark the mission as completed in the campaign manager
+        campaignManager.completeCurrentMission();
+        LOG.info("Campaign mission VICTORY — episode={}, mission={}, score={}",
+            campaignEpisodeIndex, campaignMissionIndex, campaignManager.getCampaignScore());
+
+        // Stop the game loop to freeze the game state
+        if (gameLoop != null) {
+            gameLoop.stop();
+        }
+        if (renderTimer != null) {
+            renderTimer.stop();
+        }
+
+        // Show victory dialog and return to campaign on the JavaFX thread
+        javafx.application.Platform.runLater(() -> {
+            showCampaignResultDialog(true);
+            if (campaignEndCallback != null) {
+                campaignEndCallback.run();
+            }
+        });
+    }
+
+    /**
+     * Handles campaign defeat: stops the game and invokes the campaign end callback.
+     */
+    private void handleCampaignDefeat() {
+        if (campaignResultHandled) {
+            return;
+        }
+        campaignResultHandled = true;
+
+        LOG.info("Campaign mission DEFEAT — episode={}, mission={}",
+            campaignEpisodeIndex, campaignMissionIndex);
+
+        // Stop the game loop
+        if (gameLoop != null) {
+            gameLoop.stop();
+        }
+        if (renderTimer != null) {
+            renderTimer.stop();
+        }
+
+        // Show defeat dialog and return to campaign on the JavaFX thread
+        javafx.application.Platform.runLater(() -> {
+            showCampaignResultDialog(false);
+            if (campaignEndCallback != null) {
+                campaignEndCallback.run();
+            }
+        });
+    }
+
+    /**
+     * Shows a victory or defeat dialog overlay.
+     *
+     * @param victory true for victory, false for defeat
+     */
+    private void showCampaignResultDialog(boolean victory) {
+        String title = victory ? "MISSION COMPLETE" : "MISSION FAILED";
+        String message = victory
+            ? "Objectives accomplished. Score: " + campaignManager.getCampaignScore()
+            : "You have been defeated.";
+        String color = victory ? "rgb(60, 140, 60)" : "rgb(160, 40, 40)";
+        String textColor = victory ? "rgb(200, 255, 200)" : "rgb(255, 200, 200)";
+
+        javafx.scene.control.Dialog<ButtonType> dialog =
+            new javafx.scene.control.Dialog<>();
+        dialog.setTitle(title);
+        dialog.setHeaderText(title);
+        dialog.setContentText(message);
+
+        if (gameCanvas.getScene() != null && gameCanvas.getScene().getWindow() != null) {
+            dialog.initOwner(gameCanvas.getScene().getWindow());
+        }
+
+        dialog.getDialogPane().setStyle(
+            "-fx-background-color: " + color + "; "
+            + "-fx-text-fill: " + textColor + ";");
+
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK);
+        dialog.showAndWait();
     }
 }

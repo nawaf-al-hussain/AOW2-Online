@@ -2,6 +2,8 @@ package com.aow2.client.scene;
 
 import com.aow2.core.campaign.CampaignEpisode;
 import com.aow2.core.campaign.CampaignManager;
+import com.aow2.core.campaign.Mission;
+import com.aow2.core.campaign.Objective;
 import com.aow2.core.engine.GameState;
 import com.aow2.core.world.EntityManager;
 
@@ -86,6 +88,9 @@ public class CampaignScene {
 
     /** Currently selected episode index. */
     private int selectedEpisode;
+
+    /** Currently selected mission index within the episode, or -1 if none selected. */
+    private int selectedMissionIndex = -1;
 
     /** Callback for scene navigation. */
     private SceneCallback callback;
@@ -292,6 +297,7 @@ public class CampaignScene {
             + "-fx-cursor: hand;"));
         card.setOnMouseClicked(e -> {
             selectedEpisode = index;
+            selectedMissionIndex = -1;
             updateBriefing();
             LOG.info("Selected episode: {}", episode.title());
         });
@@ -369,11 +375,10 @@ public class CampaignScene {
                     + "-fx-padding: 10 30 10 30;");
             }
 
-            final boolean isAvailable = available;
             missionBtn.setOnAction(e -> {
-                if (isAvailable && callback != null) {
-                    callback.onStartMission(selectedEpisode, missionIndex);
-                }
+                // Show the mission briefing detail view
+                selectedMissionIndex = missionIndex;
+                updateBriefing();
             });
             missionButtons.getChildren().add(missionBtn);
         }
@@ -383,12 +388,134 @@ public class CampaignScene {
 
     /**
      * Update the briefing display.
+     * If a mission is selected, shows the mission briefing detail view.
+     * Otherwise shows the episode overview with mission list.
      */
     private void updateBriefing() {
         VBox panel = (VBox) root.lookup("#briefing-panel");
         if (panel != null && selectedEpisode < EPISODES.size()) {
-            updateBriefingPanel(panel, EPISODES.get(selectedEpisode));
+            if (selectedMissionIndex >= 0 && campaignManager != null) {
+                showMissionBriefing(panel);
+            } else {
+                updateBriefingPanel(panel, EPISODES.get(selectedEpisode));
+            }
         }
+    }
+
+    /**
+     * Shows the detailed mission briefing for the currently selected mission.
+     * Displays mission name, briefing text, objectives, and a launch button.
+     *
+     * @param panel the briefing panel VBox
+     */
+    private void showMissionBriefing(VBox panel) {
+        panel.getChildren().clear();
+
+        CampaignEpisode campaignEpisode = toCampaignEpisode(selectedEpisode);
+        List<Mission> missions = campaignManager.getMissionsForEpisode(campaignEpisode);
+        if (selectedMissionIndex >= missions.size()) {
+            selectedMissionIndex = -1;
+            updateBriefingPanel(panel, EPISODES.get(selectedEpisode));
+            return;
+        }
+
+        Mission mission = missions.get(selectedMissionIndex);
+
+        // Episode title (smaller, as header)
+        Label epHeader = new Label(EPISODES.get(selectedEpisode).title());
+        epHeader.setFont(Font.font("Consolas", 12));
+        epHeader.setStyle("-fx-text-fill: rgb(120, 120, 100);");
+
+        // Back button to return to mission list
+        Button backButton = new Button("\u2190 Back to missions");
+        backButton.setStyle("-fx-background-color: transparent; "
+            + "-fx-text-fill: rgb(140, 150, 90); -fx-border-color: transparent; "
+            + "-fx-font-size: 12px; -fx-padding: 4 8 4 8; -fx-cursor: hand;");
+        backButton.setOnAction(e -> {
+            selectedMissionIndex = -1;
+            updateBriefing();
+        });
+
+        HBox headerRow = new HBox(10, backButton, epHeader);
+        headerRow.setAlignment(Pos.CENTER_LEFT);
+
+        // Mission name
+        Label missionName = new Label("Mission " + (selectedMissionIndex + 1) + ": " + mission.name());
+        missionName.setFont(Font.font("Consolas", 22));
+        missionName.setStyle("-fx-text-fill: rgb(210, 200, 160);");
+
+        // Difficulty stars
+        String stars = "\u2605".repeat(mission.difficulty()) + "\u2606".repeat(5 - mission.difficulty());
+        Label diffLabel = new Label("Difficulty: " + stars);
+        diffLabel.setFont(Font.font("Consolas", 12));
+        diffLabel.setStyle("-fx-text-fill: rgb(200, 180, 80);");
+
+        // Faction label
+        Label factionLabel = new Label("Faction: " + mission.playerFaction());
+        factionLabel.setFont(Font.font("Consolas", 12));
+        factionLabel.setStyle("-fx-text-fill: rgb(140, 150, 90);");
+
+        // Mission briefing text
+        TextFlow briefingText = new TextFlow();
+        Text text = new Text(mission.briefing());
+        text.setFont(Font.font("Consolas", 13));
+        text.setFill(Color.rgb(180, 175, 145));
+        briefingText.getChildren().add(text);
+        briefingText.setMaxWidth(700);
+
+        // Objectives list
+        VBox objectivesBox = new VBox(5);
+        objectivesBox.setPadding(new Insets(10, 0, 0, 0));
+        Label objHeader = new Label("OBJECTIVES:");
+        objHeader.setFont(Font.font("Consolas", 13));
+        objHeader.setStyle("-fx-text-fill: rgb(200, 180, 80); -fx-font-weight: bold;");
+        objectivesBox.getChildren().add(objHeader);
+
+        if (!mission.objectives().isEmpty()) {
+            for (Objective obj : mission.objectives()) {
+                Label objLabel = new Label("  \u25B8 " + obj.name());
+                objLabel.setFont(Font.font("Consolas", 12));
+                objLabel.setStyle("-fx-text-fill: rgb(180, 175, 145);");
+                objectivesBox.getChildren().add(objLabel);
+            }
+        } else {
+            Label noObj = new Label("  (No scripted objectives — default: destroy all enemies)");
+            noObj.setFont(Font.font("Consolas", 12));
+            noObj.setStyle("-fx-text-fill: rgb(120, 120, 100);");
+            objectivesBox.getChildren().add(noObj);
+        }
+
+        // Launch Mission button
+        boolean available = campaignManager.isMissionAvailable(campaignEpisode, selectedMissionIndex);
+        Button launchBtn = new Button("\u25B6  LAUNCH MISSION");
+        if (available) {
+            launchBtn.setStyle("-fx-background-color: rgb(60, 100, 45); "
+                + "-fx-text-fill: rgb(240, 255, 200); -fx-border-color: rgb(120, 200, 80); "
+                + "-fx-font-size: 16px; -fx-font-weight: bold; "
+                + "-fx-padding: 14 40 14 40; -fx-cursor: hand;");
+            final int epIdx = selectedEpisode;
+            final int miIdx = selectedMissionIndex;
+            launchBtn.setOnAction(e -> {
+                if (callback != null) {
+                    callback.onStartMission(epIdx, miIdx);
+                }
+            });
+        } else {
+            launchBtn.setText("\uD83D\uDD12  LOCKED");
+            launchBtn.setStyle("-fx-background-color: rgb(60, 60, 60); "
+                + "-fx-text-fill: rgb(120, 120, 120); -fx-border-color: rgb(80, 80, 80); "
+                + "-fx-font-size: 16px; -fx-font-weight: bold; "
+                + "-fx-padding: 14 40 14 40;");
+        }
+
+        panel.getChildren().addAll(
+            headerRow, missionName, diffLabel, factionLabel,
+            new Label(""),  // spacer
+            briefingText,
+            objectivesBox,
+            new Label(""),  // spacer
+            launchBtn
+        );
     }
 
     /**
@@ -416,6 +543,9 @@ public class CampaignScene {
      */
     public void setCampaignManager(CampaignManager campaignManager) {
         this.campaignManager = campaignManager;
+        // Refresh the UI to reflect completion state from the manager
+        this.selectedMissionIndex = -1;
+        updateBriefing();
     }
 
     /**

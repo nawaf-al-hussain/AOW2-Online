@@ -2,6 +2,7 @@ package com.aow2.client.input;
 
 import com.aow2.client.render.CameraController;
 import com.aow2.client.render.IsometricRenderer;
+import com.aow2.common.model.BuildingType;
 
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
@@ -57,6 +58,12 @@ public class InputHandler {
     /** Callback for command execution. */
     private CommandCallback commandCallback;
 
+    /** The building type selected for build placement mode. */
+    private BuildingType pendingBuildType;
+
+    /** Callback invoked when the player presses B to enter build mode. */
+    private BuildTypeCallback buildTypeCallback;
+
     /** Whether the left mouse button is currently pressed. */
     private boolean leftMouseDown;
 
@@ -91,6 +98,17 @@ public class InputHandler {
     }
 
     /**
+     * Callback interface for build mode activation.
+     * Called when the player presses B, allowing the UI layer to show
+     * a building type selection dialog.
+     */
+    @FunctionalInterface
+    public interface BuildTypeCallback {
+        /** Called when the player requests build mode. */
+        void onBuildModeRequested();
+    }
+
+    /**
      * Constructs a new InputHandler.
      *
      * @param selectionManager the selection manager
@@ -116,6 +134,33 @@ public class InputHandler {
      */
     public void setCommandCallback(CommandCallback callback) {
         this.commandCallback = callback;
+    }
+
+    /**
+     * Sets the build type callback, invoked when the player presses B.
+     *
+     * @param callback the build type callback
+     */
+    public void setBuildTypeCallback(BuildTypeCallback callback) {
+        this.buildTypeCallback = callback;
+    }
+
+    /**
+     * Gets the pending building type selected for build placement.
+     *
+     * @return the building type, or null if none selected
+     */
+    public BuildingType getPendingBuildType() {
+        return pendingBuildType;
+    }
+
+    /**
+     * Sets the pending building type for build placement.
+     *
+     * @param buildingType the building type to build
+     */
+    public void setPendingBuildType(BuildingType buildingType) {
+        this.pendingBuildType = buildingType;
     }
 
     /**
@@ -257,8 +302,12 @@ public class InputHandler {
             }
             case B -> {
                 if (selectionManager.hasSelection()) {
-                    commandMode = CommandMode.BUILD_PLACEMENT;
-                    LOG.debug("Build placement mode activated");
+                    if (buildTypeCallback != null) {
+                        buildTypeCallback.onBuildModeRequested();
+                    } else {
+                        commandMode = CommandMode.BUILD_PLACEMENT;
+                        LOG.debug("Build placement mode activated (no callback)");
+                    }
                 }
             }
             case ESCAPE -> {
@@ -394,6 +443,15 @@ public class InputHandler {
      */
     public CommandMode getCommandMode() {
         return commandMode;
+    }
+
+    /**
+     * Sets the current command mode.
+     *
+     * @param mode the command mode
+     */
+    public void setCommandMode(CommandMode mode) {
+        this.commandMode = mode;
     }
 
     /**
