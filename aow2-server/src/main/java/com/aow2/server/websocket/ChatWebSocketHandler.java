@@ -152,6 +152,14 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
             return;
         }
 
+        // FIX (C-NEW-6): Validate that this player is a participant in the match.
+        // Prevents eavesdropping on arbitrary match chats.
+        var gameSession = sessionService.getSessionForPlayer(playerId);
+        if (gameSession.isEmpty() || !gameSession.get().getSessionUuid().equals(matchId)) {
+            sendError(session, "Not a participant in this match");
+            return;
+        }
+
         // Remove from previous match if any
         String prevMatch = sessionToMatch.get(session.getId());
         if (prevMatch != null) {

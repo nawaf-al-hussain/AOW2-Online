@@ -65,6 +65,40 @@ class CommandTypeTest {
         }
     }
 
+    // --- AttackMove command tests ---
+
+    @Nested
+    @DisplayName("AttackMove Command")
+    class AttackMoveCommand {
+
+        @Test
+        @DisplayName("Should create attack-move command with valid parameters")
+        void shouldCreateAttackMoveCommand() {
+            CommandType.AttackMove attackMove = new CommandType.AttackMove(
+                100L, 0, new int[]{1, 2}, new GridPosition(5, 10));
+            assertEquals(100L, attackMove.tick());
+            assertEquals(0, attackMove.playerId());
+            assertArrayEquals(new int[]{1, 2}, attackMove.unitIds());
+            assertEquals(new GridPosition(5, 10), attackMove.target());
+        }
+
+        @Test
+        @DisplayName("Should reject null or empty unitIds in AttackMove")
+        void shouldRejectNullOrEmptyUnitIds() {
+            assertThrows(IllegalArgumentException.class,
+                () -> new CommandType.AttackMove(100L, 0, null, new GridPosition(5, 10)));
+            assertThrows(IllegalArgumentException.class,
+                () -> new CommandType.AttackMove(100L, 0, new int[]{}, new GridPosition(5, 10)));
+        }
+
+        @Test
+        @DisplayName("Should reject null target in AttackMove")
+        void shouldRejectNullTarget() {
+            assertThrows(IllegalArgumentException.class,
+                () -> new CommandType.AttackMove(100L, 0, new int[]{1}, null));
+        }
+    }
+
     // --- Build command tests ---
 
     @Nested
@@ -333,6 +367,7 @@ class CommandTypeTest {
             CommandType cancel = new CommandType.Cancel(1L, 0, 1);
             CommandType siegeMode = new CommandType.SiegeMode(1L, 0, 1, true);
             CommandType stop = new CommandType.Stop(1L, 0, new int[]{1});
+            CommandType attackMove = new CommandType.AttackMove(1L, 0, new int[]{1}, new GridPosition(0, 0));
             CommandType patrol = new CommandType.Patrol(1L, 0, new int[]{1}, new GridPosition(0, 0));
 
             assertEquals("Move", typeName(move));
@@ -345,6 +380,7 @@ class CommandTypeTest {
             assertEquals("Cancel", typeName(cancel));
             assertEquals("SiegeMode", typeName(siegeMode));
             assertEquals("Stop", typeName(stop));
+            assertEquals("AttackMove", typeName(attackMove));
             assertEquals("Patrol", typeName(patrol));
         }
 
@@ -360,6 +396,7 @@ class CommandTypeTest {
                 case CommandType.Cancel c -> "Cancel";
                 case CommandType.SiegeMode s -> "SiegeMode";
                 case CommandType.Stop s -> "Stop";
+                case CommandType.AttackMove am -> "AttackMove";
                 case CommandType.Patrol p -> "Patrol";
             };
         }

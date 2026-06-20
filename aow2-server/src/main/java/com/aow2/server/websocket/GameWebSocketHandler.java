@@ -85,8 +85,13 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
         sessions.remove(session.getId());
-        // Clean up any pending game-over claims for this player's session
         Long playerId = sessionService.getPlayerForWsSession(session.getId());
+        // FIX (H-NEW-10): Clean up any pending game-over claims for this player's session
+        if (playerId != null) {
+            var gameSession = sessionService.getSessionForPlayer(playerId);
+            gameSession.ifPresent(gs ->
+                pendingGameOverClaims.remove(gs.getSessionUuid()));
+        }
         if (playerId != null) {
             // Check if player was in an active session and mark as disconnected
             var gameSession = sessionService.getSessionForPlayer(playerId);
@@ -247,34 +252,37 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
 
         // Phase 2: Confirming an existing claim
         if (isConfirmation) {
+            // FIX (C-NEW-5): The claimant CANNOT confirm their own claim.
+            // Only the opponent is allowed to confirm.
             GameOverClaim claim = pendingGameOverClaims.get(sessionUuid);
             if (claim == null) {
                 sendError(session, "No pending game-over claim to confirm");
                 return;
             }
-            // The confirming player must match the expected opponent
-            if (!claim.claimedBy.equals(opponentId) && !claim.claimedBy.equals(playerId)) {
-                // Only the opponent of the claimant can confirm
-                if (!playerId.equals(opponentId)) {
-                    sendError(session, "Only the opponent can confirm a game-over claim");
-                    return;
-                }
+            if (claim.claimedBy.equals(playerId)) {
+                sendError(session, "Claimant cannot confirm their own game-over claim");
+                return;
             }
-            // Confirm — record the result
-            pendingGameOverClaims.remove(sessionUuid);
-            finalizeGameResult(gs, claim.winnerId, claim.durationSeconds);
+            // FIX (H-NEW-8): Use compute() to atomically remove and prevent double-confirmation.
+            GameOverClaim finalizing = pendingGameOverClaims.computeIfPresent(sessionUuid, (k, v) -> null);
+            if (finalizing == null) {
+                sendError(session, "Claim already confirmed by another player");
+                return;
+            }
+            // Confirm — record the result (claim already atomically removed above)
+            finalizeGameResult(gs, finalizing.winnerId(), finalizing.durationSeconds());
             // Notify both players
             String opponentWs = sessionService.getOpponentWsSession(playerId);
             if (opponentWs != null) {
                 sendToSessionId(opponentWs, Map.of(
                         "type", "game_over_confirmed",
-                        "winnerId", claim.winnerId,
+                        "winnerId", finalizing.winnerId(),
                         "sessionUuid", sessionUuid
                 ));
             }
             sendMessage(session, Map.of(
                     "type", "game_over_confirmed",
-                    "winnerId", claim.winnerId,
+                    "winnerId", finalizing.winnerId(),
                     "sessionUuid", sessionUuid
             ));
             return;

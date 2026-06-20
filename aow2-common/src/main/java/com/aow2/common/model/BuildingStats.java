@@ -11,6 +11,7 @@ import java.util.List;
  * - Renamed `speed` to `attackSpeed` (attack cooldown for defensive buildings, in ticks)
  * - Added `garrisonCapacity` field (0 for non-garrisonable buildings)
  * - Added `weaponType` field (NONE for non-attacking buildings)
+ * - FIX (M-NEW-2): Defensive copy upgradeCosts to prevent external mutation
  */
 public record BuildingStats(
     BuildingType buildingType,
@@ -35,4 +36,9 @@ public record BuildingStats(
     /** Weapon type used by this building for attacks. NONE for non-attacking buildings. */
     WeaponType weaponType,
     List<Integer> upgradeCosts
-) {}
+) {
+    /** Defensive copy to prevent external mutation of the upgrade costs list. */
+    public BuildingStats {
+        upgradeCosts = upgradeCosts == null ? List.of() : List.copyOf(upgradeCosts);
+    }
+}

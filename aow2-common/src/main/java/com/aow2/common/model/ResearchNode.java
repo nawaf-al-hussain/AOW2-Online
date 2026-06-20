@@ -1,6 +1,5 @@
 package com.aow2.common.model;
 
-import java.util.Collections;
 import java.util.List;
 
 /**

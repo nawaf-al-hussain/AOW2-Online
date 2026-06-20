@@ -49,13 +49,14 @@ public record GridPosition(int x, int y) {
      * @return distance class (0-15)
      */
     public static int distanceClass(int dx, int dy) {
-        // Clamp to valid lookup range [-15, 15]
-        int cx = Math.max(-15, Math.min(15, dx));
-        int cy = Math.max(-15, Math.min(15, dy));
+        // REF: RE binary returns 127 (out-of-range sentinel) when |dx| > 15 || |dy| > 15.
+        // This is used by all range checks, fog of war, and target acquisition to mean
+        // "definitely out of range" — no table lookup needed.
+        if (Math.abs(dx) > 15 || Math.abs(dy) > 15) {
+            return 127;
+        }
         // REF: combat_formulas.md — (lookupTable[dy + 15][dx + 15] & 255) >> 3
-        // The upper 5 bits of the lookup table encode Chebyshev-like distance class.
-        // Approximated as: Math.max(Math.abs(dx), Math.abs(dy))
-        return DISTANCE_TABLE[cy + 15][cx + 15];
+        return DISTANCE_TABLE[dy + 15][dx + 15];
     }
 
     /**

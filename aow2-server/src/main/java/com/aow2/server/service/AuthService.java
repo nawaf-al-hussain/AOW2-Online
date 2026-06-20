@@ -58,6 +58,12 @@ public class AuthService {
         if (password == null || password.length() < 6) {
             throw new IllegalArgumentException("Password must be at least 6 characters");
         }
+        // FIX (H-NEW-6): Reject excessively long passwords to prevent bcrypt DoS.
+        // bcrypt processes the first 72 bytes, so anything beyond that is ignored.
+        // But the CPU cost is proportional to length for the initial processing.
+        if (password.length() > 128) {
+            throw new IllegalArgumentException("Password must not exceed 128 characters");
+        }
         if (playerRepository.existsByUsername(username)) {
             throw new IllegalArgumentException("Username already taken: " + username);
         }

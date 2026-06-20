@@ -38,6 +38,18 @@ public class JwtUtil {
             @Value("${aow2.jwt.secret}") String secret,
             @Value("${aow2.jwt.expiration-ms:86400000}") long expirationMs
     ) {
+        // FIX (C-NEW-7): Fail fast if using the default dev secret in a non-dev environment.
+        // The default secret is committed to source control and must NEVER be used in production.
+        String devSecret = "aow2-dev-only-secret-key-that-is-at-least-32-bytes-long-for-hmac";
+        if (secret.equals(devSecret)) {
+            String env = System.getenv("AOW2_JWT_SECRET");
+            if (env == null || env.isBlank()) {
+                throw new IllegalStateException(
+                    "JWT secret is the default dev value. Set AOW2_JWT_SECRET environment variable " +
+                    "to a cryptographically random secret (min 32 bytes) before deploying.");
+            }
+            log.warn("Using default dev JWT secret — this is acceptable ONLY for local development");
+        }
         this.signingKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         this.expirationMs = expirationMs;
     }

@@ -113,13 +113,13 @@ class EloRatingServiceTest {
     @Test
     @DisplayName("K-factor change at 30 games affects rating changes")
     void kFactorChangesAt30Games() {
-        // New player (0 games, K=32) vs experienced player (50 games, K=24)
+        // New player (0 games, K=32) vs experienced player (50 games, K=16)
         int[] mixedRatings = eloRatingService.calculateNewRatings(1000, 1000, 0, 50);
 
         // Winner (K=32): 1000 + 32 * 0.5 = 1016
-        // Loser (K=24): 1000 - 24 * 0.5 = 988
+        // Loser (K=16): 1000 - 16 * 0.5 = 992
         assertEquals(1016, mixedRatings[0], "New player winner gains K=32 amount");
-        assertEquals(988, mixedRatings[1], "Experienced player loser loses K=24 amount");
+        assertEquals(992, mixedRatings[1], "Experienced player loser loses K=16 amount");
     }
 
     @Test
