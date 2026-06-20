@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -40,6 +41,9 @@ public final class ResearchSystem {
 
     /** Per-player completed research tracking. Index = playerId. */
     private final Set<Integer>[] completedResearch;
+
+    /** Per-player accumulated research bonuses. Index = playerId. */
+    private final ResearchBonusTracker[] bonusTrackers;
 
     /** Per-player active research tracking: techCentreId -> active research ID. */
     private final Map<Integer, ActiveResearch> activeResearchMap;
@@ -98,9 +102,11 @@ public final class ResearchSystem {
     public ResearchSystem(TechTree techTree) {
         this.techTree = techTree;
         this.completedResearch = new HashSet[MAX_PLAYERS];
+        this.bonusTrackers = new ResearchBonusTracker[MAX_PLAYERS];
         this.activeResearchMap = new ConcurrentHashMap<>();
         for (int i = 0; i < MAX_PLAYERS; i++) {
             completedResearch[i] = new HashSet<>();
+            bonusTrackers[i] = new ResearchBonusTracker();
         }
     }
 
@@ -284,6 +290,18 @@ public final class ResearchSystem {
     }
 
     /**
+     * Get the bonus tracker for a player, containing all accumulated research
+     * bonuses from completed research.
+     *
+     * @param playerId the player ID (0 or 1)
+     * @return the bonus tracker for the player
+     * @throws IndexOutOfBoundsException if playerId is out of range
+     */
+    public ResearchBonusTracker getBonusTracker(int playerId) {
+        return bonusTrackers[playerId];
+    }
+
+    /**
      * Returns all active research entries across all players.
      *
      * @return unmodifiable collection of active research entries
@@ -317,12 +335,14 @@ public final class ResearchSystem {
      * Apply research effect to the game state.
      * Called when research completes.
      * <p>
-     * Research effects are implemented as "mark as completed" — other systems
-     * (ArmorCalculator, CombatSystem, ProductionSystem, etc.) query
-     * {@link #hasResearch(int, int)} to apply the actual stat modifications lazily.
+     * Reads the raw effects from {@link ResearchRegistry} and mutates the
+     * player's {@link ResearchBonusTracker}. Other systems (ArmorCalculator,
+     * CombatSystem, BuildingSystem, etc.) query the tracker via
+     * {@link #getBonusTracker(int)} to obtain accumulated bonus values.
      * <p>
      * REF: combat_formulas.md "Research/Upgrade Effects" — 48 research IDs (0-47)
      * REF: TechTree.java — canonical ID-to-faction mapping
+     * REF: tech_tree.json — effect key definitions
      * <p>
      * <b>Global 48-ID mapping (canonical):</b>
      * <ul>
@@ -340,323 +360,349 @@ public final class ResearchSystem {
         TechTree.TechTreeNode node = techTree.getTechNode(faction, researchId);
         String techName = node != null ? node.name() : "Research-" + researchId;
 
-        // Research is already stored in completedResearch[playerId] by processTick().
-        // Other systems query hasResearch(playerId, researchId) to apply effects lazily.
+        // Load effects from the ResearchRegistry (tech_tree.json)
+        ResearchRegistry.ResearchEffect registryEffect = ResearchRegistry.getInstance().getResearchEffect(researchId);
+        if (registryEffect == null || registryEffect.effects() == null) {
+            LOG.warn("Player {} ({}) completed research ID {} ({}): no registry effects found",
+                playerId, faction, researchId, techName);
+            return;
+        }
 
-        // REF: TechTree.java + combat_formulas.md — effects per research ID
-        // Confederation: IDs 0-23, 43 | Resistance: IDs 24-47 (excluding 43)
-        switch (researchId) {
-            // =====================================================================
-            // CONFEDERATION research (IDs 0–23)
-            // =====================================================================
+        Map<String, Object> effects = registryEffect.effects();
+        ResearchBonusTracker tracker = bonusTrackers[playerId];
 
-            // --- Infantry Chain (Tier 1-2) ---
-            case 0 -> {
-                // Energy Suit — Infantry armour +2, Sniper armour +2, Light armour +2
-                // ArmorCalculator checks hasResearch(playerId, 0)
-                LOG.info("Player {} ({}) completed Energy Suit: infantry armour +2, sniper armour +2, light armour +2", playerId, faction);
-            }
-            case 1 -> {
-                // Advanced Targeting — Enemy attack range reduction /3
-                // CombatSystem checks hasResearch(playerId, 1)
-                LOG.info("Player {} ({}) completed Advanced Targeting: enemy attack range /3", playerId, faction);
-            }
-            case 2 -> {
-                // Rapid Fire — Attack speed -2 (faster) for specific unit types
-                // UNVERIFIED (H-17): RE description says "Assault's fire rate increases by 50%".
-                // "Assault" is ambiguous — may refer to Fortress (AV-40, RE type 19) or another unit.
-                // Current affectedUnitTypes [2] maps to Grenadier. If RE binary confirms Fortress,
-                // update to [19]. CombatSystem checks hasResearch(playerId, 2).
-                LOG.info("Player {} ({}) completed Rapid Fire: attack speed -2 (faster) for specific unit types", playerId, faction);
-            }
-            case 3 -> {
-                // Enhanced Munitions — Attack damage +2, Production damage +2
-                // UNVERIFIED (H-17): RE description says "Assault's damage increases by 40%".
-                // "Assault" is ambiguous — may refer to Fortress (AV-40, RE type 19) or another unit.
-                // Current mapping applies blanket attackDamageBonus=2 to all attacks. If RE binary
-                // confirms a specific unit type, update affectedUnitTypes accordingly.
-                // CombatSystem checks hasResearch(playerId, 3).
-                LOG.info("Player {} ({}) completed Enhanced Munitions: attack damage +2, production damage +2", playerId, faction);
-            }
+        // --- Armor bonuses ---
+        applyIntBonus(effects, "infantryArmorBonus", tracker::addInfantryArmorBonus);
+        applyIntBonus(effects, "vehicleArmorBonus", tracker::addVehicleArmorBonus);
+        applyIntBonus(effects, "buildingArmorBonus", tracker::addBuildingArmorBonus);
 
-            // --- Building Defence Chain ---
-            case 4 -> {
-                // Fortified Structures — Building armour +4, Production armour +4
-                // ArmorCalculator checks hasResearch(playerId, 4)
-                LOG.info("Player {} ({}) completed Fortified Structures: building armour +4, production armour +4", playerId, faction);
-            }
+        // --- Building armor override ---
+        Object overrideVal = effects.get("buildingArmorOverride");
+        Object isOverrideVal = effects.get("isOverride");
+        if (overrideVal instanceof Number && isOverrideVal instanceof Boolean && (Boolean) isOverrideVal) {
+            tracker.setBuildingArmorOverride(((Number) overrideVal).intValue());
+        }
 
-            // --- Building Radius / Economy Chain ---
-            case 5 -> {
-                // Power Grid Expansion — Building radius +1
-                // BuildingSystem checks hasResearch(playerId, 5)
-                LOG.info("Player {} ({}) completed Power Grid Expansion: building radius +1", playerId, faction);
-            }
+        // --- Building radius bonus ---
+        applyIntBonus(effects, "buildingRadiusBonus", tracker::addBuildingRadiusBonus);
 
-            // --- Infantry Chain (Tier 3) ---
-            case 6 -> {
-                // Rhino Mk.II Upgrade — Upgrades Rhino (type 18) → Heavy Assault (type 7)
-                // ProductionSystem checks hasResearch(playerId, 6) for unit upgrade
-                LOG.info("Player {} ({}) completed Rhino Mk.II Upgrade: upgrades Rhino to Heavy Assault variant", playerId, faction);
+        // --- Attack damage bonus (global or per-type) ---
+        Object dmgVal = effects.get("attackDamageBonus");
+        if (dmgVal instanceof Number dmgNum) {
+            int dmg = dmgNum.intValue();
+            List<Integer> affectedTypes = parseAffectedTypes(effects);
+            if (affectedTypes != null) {
+                for (int type : affectedTypes) {
+                    tracker.addAttackDamageBonusForType(type, dmg);
+                }
+            } else {
+                tracker.addAttackDamageBonus(dmg);
             }
-            case 7 -> {
-                // Vehicle Propulsion — Attack speed +5 for type 11, +8 for type 13; Production bonuses
-                // CombatSystem checks hasResearch(playerId, 7)
-                LOG.info("Player {} ({}) completed Vehicle Propulsion: attack speed +5 for type 11, +8 for type 13; production bonuses", playerId, faction);
-            }
+        }
 
-            // --- Heavy Machinery Chain (Tier 4) ---
-            case 8 -> {
-                // Heavy Artillery Upgrade — Attack range -1 for types 7,18,9,11,17,13,16; Building radius +1
-                // CombatSystem checks hasResearch(playerId, 8)
-                LOG.info("Player {} ({}) completed Heavy Artillery Upgrade: attack range -1 for heavy units; building radius +1", playerId, faction);
+        // --- Attack speed bonus (int, Map, or per-type via affectedUnitTypes) ---
+        Object spdVal = effects.get("attackSpeedBonus");
+        if (spdVal instanceof Number spdNum) {
+            int spd = spdNum.intValue();
+            List<Integer> affectedTypes = parseAffectedTypes(effects);
+            if (affectedTypes != null) {
+                for (int type : affectedTypes) {
+                    tracker.addAttackSpeedBonusForType(type, spd);
+                }
+            } else {
+                tracker.addGlobalAttackSpeedBonus(spd);
             }
+        } else if (spdVal instanceof Map) {
+            // Map of "typeN" -> value (e.g., {"type11": 5, "type13": 8})
+            @SuppressWarnings("unchecked")
+            Map<String, Object> spdMap = (Map<String, Object>) spdVal;
+            for (var entry : spdMap.entrySet()) {
+                String key = entry.getKey();
+                Object val = entry.getValue();
+                if (key.startsWith("type") && val instanceof Number) {
+                    int typeId = Integer.parseInt(key.substring(4));
+                    tracker.addAttackSpeedBonusForType(typeId, ((Number) val).intValue());
+                }
+            }
+        }
 
-            // --- Heavy Machinery Chain (Tier 5) ---
-            case 9 -> {
-                // Composite Armour II — Infantry armour +2 for types 7,18,9,11,17,13,16
-                // ArmorCalculator checks hasResearch(playerId, 9)
-                LOG.info("Player {} ({}) completed Composite Armour II: infantry armour +2 for heavy unit types", playerId, faction);
+        // --- Attack range bonus (per-type via affectedUnitTypes or affectedRangeUnitTypes) ---
+        Object rangeVal = effects.get("attackRangeBonus");
+        if (rangeVal instanceof Number rangeNum) {
+            int range = rangeNum.intValue();
+            // Use affectedRangeUnitTypes first, then fall back to affectedUnitTypes
+            List<Integer> rangeTypes = parseIntList(effects.get("affectedRangeUnitTypes"));
+            if (rangeTypes == null) {
+                rangeTypes = parseAffectedTypes(effects);
             }
-            case 10 -> {
-                // Signal Jamming — Player 1 attack range reduction /3
-                // CombatSystem checks hasResearch(playerId, 10)
-                LOG.info("Player {} ({}) completed Signal Jamming: enemy attack range /3", playerId, faction);
+            if (rangeTypes != null) {
+                for (int type : rangeTypes) {
+                    tracker.addAttackRangeBonusForType(type, range);
+                }
+            } else {
+                // Global range bonus (not per-type) — apply to a special "all" key
+                tracker.addAttackRangeBonusForType(-1, range);
             }
+        }
 
-            // --- Heavy Machinery Chain (Tier 6) ---
-            case 11 -> {
-                // Quick Reload — Attack speed -2 (faster) for types 11, 13
-                // CombatSystem checks hasResearch(playerId, 11)
-                LOG.info("Player {} ({}) completed Quick Reload: attack speed -2 (faster) for types 11, 13", playerId, faction);
-            }
-            case 12 -> {
-                // Hammer Mk.II Upgrade — Upgrades Hammer (type 17) → Mine Scorpio (type 11)
-                // ProductionSystem checks hasResearch(playerId, 12) for unit upgrade
-                LOG.info("Player {} ({}) completed Hammer Mk.II Upgrade: upgrades Hammer to Mine Scorpio variant", playerId, faction);
-            }
+        // --- Player-specific range reduction divisors ---
+        applyRangeReduction(effects, "player0RangeReductionDivisor", 0, tracker);
+        applyRangeReduction(effects, "player1RangeReductionDivisor", 1, tracker);
 
-            // --- Heavy Machinery Chain (Tier 7) ---
-            case 13 -> {
-                // Power Network — Building radius +1
-                // BuildingSystem checks hasResearch(playerId, 13)
-                LOG.info("Player {} ({}) completed Power Network: building radius +1", playerId, faction);
-            }
+        // --- Player-specific economy effects ---
+        applyPlayerIntOverride(effects, "player0SupplyCap", 0, tracker::setSupplyCap);
+        applyPlayerIntOverride(effects, "player1SupplyCap", 1, tracker::setSupplyCap);
+        applyPlayerIntOverride(effects, "player0CreditLimit", 0, tracker::setCreditLimit);
+        applyPlayerIntOverride(effects, "player1CreditLimit", 1, tracker::setCreditLimit);
 
-            // --- Heavy Machinery Chain (Tier 8 - finale) ---
-            case 14 -> {
-                // Siege Artillery — Attack damage +10 for type 21, Range +2; Production +2 for type 16, +5 for type 13
-                // CombatSystem checks hasResearch(playerId, 14)
-                LOG.info("Player {} ({}) completed Siege Artillery: attack damage +10 for type 21, range +2; production bonuses", playerId, faction);
-            }
+        // --- Unit limit bonus ---
+        applyIntBonus(effects, "unitLimitBonus", tracker::addUnitLimitBonus);
 
-            // --- Production / Economy Chain ---
-            case 15 -> {
-                // Supply Logistics — Supply cap = 8
-                // EconomySystem checks hasResearch(playerId, 15)
-                LOG.info("Player {} ({}) completed Supply Logistics: supply cap = 8", playerId, faction);
+        // --- Production speed override (int or Map with "slot"/"value") ---
+        Object prodSpeedVal = effects.get("productionSpeedOverride");
+        if (prodSpeedVal instanceof Number prodSpeedNum) {
+            tracker.setProductionSpeedOverride(prodSpeedNum.intValue());
+        } else if (prodSpeedVal instanceof Map) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> prodSpeedMap = (Map<String, Object>) prodSpeedVal;
+            Object slotObj = prodSpeedMap.get("slot");
+            Object valueObj = prodSpeedMap.get("value");
+            if (slotObj instanceof Number && valueObj instanceof Number) {
+                tracker.setProductionSpeedSlotOverride(((Number) slotObj).intValue(), ((Number) valueObj).intValue());
             }
-            case 16 -> {
-                // Building Armour Override — Building armour override = 9
-                // ArmorCalculator checks hasResearch(playerId, 16)
-                LOG.info("Player {} ({}) completed Building Armour Override: building armour = 9", playerId, faction);
-            }
-            case 17 -> {
-                // Enhanced Economy — Unit limit +2; Production +1 for type 15; Production speed = 20
-                // EconomySystem checks hasResearch(playerId, 17)
-                LOG.info("Player {} ({}) completed Enhanced Economy: unit limit +2; production +1 for type 15; speed = 20", playerId, faction);
-            }
-            case 18 -> {
-                // Advanced Building Radius — Building radius +1
-                // BuildingSystem checks hasResearch(playerId, 18)
-                LOG.info("Player {} ({}) completed Advanced Building Radius: building radius +1", playerId, faction);
-            }
-            case 19 -> {
-                // Fast Infantry Training — Production P[1] = 7
-                // ProductionSystem checks hasResearch(playerId, 19)
-                LOG.info("Player {} ({}) completed Fast Infantry Training: production P[1] = 7", playerId, faction);
-            }
-            case 20 -> {
-                // Upgraded Assembly Line — Production P[2] = 7
-                // ProductionSystem checks hasResearch(playerId, 20)
-                LOG.info("Player {} ({}) completed Upgraded Assembly Line: production P[2] = 7", playerId, faction);
-            }
-            case 21 -> {
-                // Finance Department — Credit limit = 120
-                // EconomySystem checks hasResearch(playerId, 21)
-                LOG.info("Player {} ({}) completed Finance Department: credit limit = 120", playerId, faction);
-            }
-            case 22 -> {
-                // Incentive System — Score bonus = 30
-                // ScoreSystem checks hasResearch(playerId, 22)
-                LOG.info("Player {} ({}) completed Incentive System: score bonus = 30", playerId, faction);
-            }
-            case 23 -> {
-                // Communications System — Display bonus = 25
-                // ScoreSystem checks hasResearch(playerId, 23)
-                LOG.info("Player {} ({}) completed Communications System: display bonus = 25", playerId, faction);
-            }
+        }
 
-            // =====================================================================
-            // CONFEDERATION research (ID 43 — out-of-sequence)
-            // =====================================================================
-            case 43 -> {
-                // Advanced Credits — Production P[4] = 7
-                // ProductionSystem checks hasResearch(playerId, 43)
-                LOG.info("Player {} ({}) completed Advanced Credits: production P[4] = 7", playerId, faction);
+        // --- Production bonuses (per-type production damage) ---
+        Object prodBonusesVal = effects.get("productionBonuses");
+        if (prodBonusesVal instanceof Map) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> prodBonusesMap = (Map<String, Object>) prodBonusesVal;
+            for (var entry : prodBonusesMap.entrySet()) {
+                String key = entry.getKey();
+                Object val = entry.getValue();
+                if (key.startsWith("type") && val instanceof Number) {
+                    int typeId = Integer.parseInt(key.substring(4));
+                    tracker.addProductionDamageBonusForType(typeId, ((Number) val).intValue());
+                }
             }
+        }
 
-            // =====================================================================
-            // RESISTANCE research (IDs 24–47, excluding 43)
-            // =====================================================================
+        // --- Global production damage bonus ---
+        applyIntBonus(effects, "productionDamageBonus", tracker::addGlobalProductionDamageBonus);
 
-            // --- Infantry Chain (Tier 1) ---
-            case 24 -> {
-                // Titanium Jacket — Infantry armour +1 for types 0, 2, 4, 14
-                // ArmorCalculator checks hasResearch(playerId, 24)
-                LOG.info("Player {} ({}) completed Titanium Jacket: infantry armour +1 for types 0, 2, 4, 14", playerId, faction);
-            }
-            case 25 -> {
-                // Signal Jamming — Enemy attack range reduction /3
-                // CombatSystem checks hasResearch(playerId, 25)
-                LOG.info("Player {} ({}) completed Signal Jamming: enemy attack range /3", playerId, faction);
-            }
+        // --- Player-specific scoring effects ---
+        applyPlayerIntBonus(effects, "player0ScoreBonus", 0, tracker::addScoreBonus);
+        applyPlayerIntBonus(effects, "player1ScoreBonus", 1, tracker::addScoreBonus);
+        applyPlayerIntBonus(effects, "player0DisplayBonus", 0, tracker::addDisplayBonus);
+        applyPlayerIntBonus(effects, "player1DisplayBonus", 1, tracker::addDisplayBonus);
 
-            // --- Infantry Chain (Tier 2) ---
-            case 26 -> {
-                // Infantry Combat Drill — Attack speed +1 for types 0, 2, 3; Production +1 for types 0, 4
-                // CombatSystem checks hasResearch(playerId, 26)
-                LOG.info("Player {} ({}) completed Infantry Combat Drill: attack speed +1 for types 0, 2, 3; production +1 for types 0, 4", playerId, faction);
-            }
-            case 27 -> {
-                // Infantry Range Upgrade — Attack range -1 for types 0, 2, 4, 14
-                // CombatSystem checks hasResearch(playerId, 27)
-                LOG.info("Player {} ({}) completed Infantry Range Upgrade: attack range -1 for types 0, 2, 4, 14", playerId, faction);
-            }
+        // --- Unit upgrades (fromType -> toType) ---
+        Object upgradeFrom = effects.get("upgradeUnitType");
+        Object upgradeTo = effects.get("upgradeToType");
+        if (upgradeFrom instanceof Number && upgradeTo instanceof Number) {
+            tracker.setUnitUpgrade(((Number) upgradeFrom).intValue(), ((Number) upgradeTo).intValue());
+        }
 
-            // --- Light Vehicle Chain (Tier 3) ---
-            case 28 -> {
-                // Coyote Range Upgrade — Attack range +1 for type 15; Production +1 for types 2
-                // CombatSystem checks hasResearch(playerId, 28)
-                LOG.info("Player {} ({}) completed Coyote Range Upgrade: attack range +1 for type 15; production +1 for types 2", playerId, faction);
-            }
+        // --- Siege upgrades (unitType -> siegeValue) ---
+        Object siegeVal = effects.get("siegeUpgrade");
+        Object siegeUnitType = effects.get("upgradeUnitType");
+        if (siegeVal instanceof Number && siegeUnitType instanceof Number) {
+            tracker.setSiegeUpgrade(((Number) siegeUnitType).intValue(), ((Number) siegeVal).intValue());
+        }
 
-            // --- Machinery Merge Point (Tier 4) ---
-            case 29 -> {
-                // Building Radius Expansion — Building radius +1
-                // BuildingSystem checks hasResearch(playerId, 29)
-                LOG.info("Player {} ({}) completed Building Radius Expansion: building radius +1", playerId, faction);
-            }
+        LOG.info("Player {} ({}) completed research: {} (id={}) — effects applied to bonus tracker",
+            playerId, faction, techName, researchId);
+    }
 
-            // --- Machinery Chain A (Tier 5) ---
-            case 30 -> {
-                // Sniper Upgrade — Attack speed +2, Range +2 for Sniper (type 3); Production +2 for types 14, 4
-                // CombatSystem checks hasResearch(playerId, 30)
-                LOG.info("Player {} ({}) completed Sniper Upgrade: attack speed +2, range +2 for Sniper (type 3); production +2 for types 14, 4", playerId, faction);
-            }
+    // =========================================================================
+    // Helper methods for reading effects from the registry map
+    // =========================================================================
 
-            // --- Machinery Chain B (Tier 5) ---
-            case 31 -> {
-                // Light Vehicle Speed Upgrade — Attack speed +1 for types 4, 5; Production +1 for types 6, 8
-                // CombatSystem checks hasResearch(playerId, 31)
-                LOG.info("Player {} ({}) completed Light Vehicle Speed Upgrade: attack speed +1 for types 4, 5; production +1 for types 6, 8", playerId, faction);
-            }
+    /**
+     * Apply an integer bonus from the effects map to the tracker via the given consumer.
+     */
+    private static void applyIntBonus(Map<String, Object> effects, String key, java.util.function.IntConsumer consumer) {
+        Object val = effects.get(key);
+        if (val instanceof Number) {
+            consumer.accept(((Number) val).intValue());
+        }
+    }
 
-            // --- Heavy Machinery Merge Point (Tier 6) ---
-            case 32 -> {
-                // Heavy Machinery Range Adjust — Attack range -1 for types 6, 8, 10, 15, 12; Building radius +1
-                // CombatSystem checks hasResearch(playerId, 32)
-                LOG.info("Player {} ({}) completed Heavy Machinery Range Adjust: attack range -1 for types 6, 8, 10, 15, 12; building radius +1", playerId, faction);
-            }
+    /**
+     * Parse affectedUnitTypes from the effects map.
+     *
+     * @return list of unit type IDs, or null if not present
+     */
+    @SuppressWarnings("unchecked")
+    private static List<Integer> parseAffectedTypes(Map<String, Object> effects) {
+        Object obj = effects.get("affectedUnitTypes");
+        return parseIntList(obj);
+    }
 
-            // --- Heavy Machinery Upgrades (Tier 7) ---
-            case 33 -> {
-                // Machinery Armour Upgrade — Infantry armour +1 for types 6, 8, 10, 15, 12
-                // ArmorCalculator checks hasResearch(playerId, 33)
-                LOG.info("Player {} ({}) completed Machinery Armour Upgrade: infantry armour +1 for types 6, 8, 10, 15, 12", playerId, faction);
-            }
-            case 34 -> {
-                // Advanced Signal Jamming — Enemy attack range reduction /3
-                // CombatSystem checks hasResearch(playerId, 34)
-                LOG.info("Player {} ({}) completed Advanced Signal Jamming: enemy attack range /3", playerId, faction);
-            }
+    /**
+     * Parse an object as a list of integers.
+     *
+     * @return list of integers, or null if the object is not a list
+     */
+    @SuppressWarnings("unchecked")
+    private static List<Integer> parseIntList(Object obj) {
+        if (obj instanceof List<?> list) {
+            return list.stream()
+                .filter(Number.class::isInstance)
+                .map(n -> ((Number) n).intValue())
+                .toList();
+        }
+        return null;
+    }
 
-            // --- Advanced Weapons (Tier 8) ---
-            case 35 -> {
-                // Rapid Reload — Attack speed -2 (faster) for types 12, 14
-                // CombatSystem checks hasResearch(playerId, 35)
-                LOG.info("Player {} ({}) completed Rapid Reload: attack speed -2 (faster) for types 12, 14", playerId, faction);
-            }
-            case 36 -> {
-                // Mine Lizard Siege Mode — Unit type 10 siege upgrade = 15
-                // ProductionSystem checks hasResearch(playerId, 36)
-                LOG.info("Player {} ({}) completed Mine Lizard Siege Mode: unit type 10 siege upgrade = 15", playerId, faction);
-            }
+    /**
+     * Apply a range reduction divisor from a player-specific effect key.
+     * Stores in the RESEARCHER's tracker keyed by the target player ID.
+     */
+    private static void applyRangeReduction(Map<String, Object> effects, String key,
+                                             int targetPlayerId, ResearchBonusTracker tracker) {
+        Object val = effects.get(key);
+        if (val instanceof Number) {
+            tracker.setRangeReductionDivisor(targetPlayerId, ((Number) val).intValue());
+        }
+    }
 
-            // --- Advanced Weapons Merge (Tier 9) ---
-            case 37 -> {
-                // Advanced Building Radius — Building radius +1
-                // BuildingSystem checks hasResearch(playerId, 37)
-                LOG.info("Player {} ({}) completed Advanced Building Radius: building radius +1", playerId, faction);
-            }
+    /**
+     * Apply a player-specific override (supply cap, credit limit) to the tracker.
+     * The prefix in the key (player0/player1) identifies the target player whose
+     * stats are affected.
+     */
+    private static void applyPlayerIntOverride(Map<String, Object> effects, String key,
+                                                int keyPlayerId, java.util.function.IntConsumer setter) {
+        Object val = effects.get(key);
+        if (val instanceof Number) {
+            setter.accept(((Number) val).intValue());
+        }
+    }
 
-            // --- Artillery Finale (Tier 10) ---
-            case 38 -> {
-                // MLRS Torrent Upgrade — Attack damage +2 for type 20, Range +2; Production +2 for type 12
-                // CombatSystem checks hasResearch(playerId, 38)
-                LOG.info("Player {} ({}) completed MLRS Torrent Upgrade: attack damage +2 for type 20, range +2; production +2 for type 12", playerId, faction);
-            }
+    /**
+     * Apply a player-specific additive bonus (score, display) to the tracker.
+     * The prefix in the key (player0/player1) identifies the target player whose
+     * stats are affected.
+     */
+    private static void applyPlayerIntBonus(Map<String, Object> effects, String key,
+                                             int keyPlayerId, java.util.function.IntConsumer adder) {
+        Object val = effects.get(key);
+        if (val instanceof Number) {
+            adder.accept(((Number) val).intValue());
+        }
+    }
 
-            // --- Economy Chain ---
-            case 39 -> {
-                // Supply Logistics — Supply cap = 8
-                // EconomySystem checks hasResearch(playerId, 39)
-                LOG.info("Player {} ({}) completed Supply Logistics: supply cap = 8", playerId, faction);
-            }
-            case 40 -> {
-                // Building Armour Override — Building armour override = 9
-                // ArmorCalculator checks hasResearch(playerId, 40)
-                LOG.info("Player {} ({}) completed Building Armour Override: building armour = 9", playerId, faction);
-            }
-            case 41 -> {
-                // Enhanced Building Radius — Building radius +1
-                // BuildingSystem checks hasResearch(playerId, 41)
-                LOG.info("Player {} ({}) completed Enhanced Building Radius: building radius +1", playerId, faction);
-            }
-            case 42 -> {
-                // Cumulative Building Radius — Building radius +1 (cumulative)
-                // BuildingSystem checks hasResearch(playerId, 42)
-                LOG.info("Player {} ({}) completed Cumulative Building Radius: building radius +1 (cumulative)", playerId, faction);
-            }
+    // =========================================================================
+    // ResearchBonusTracker — per-player accumulated research bonuses
+    // =========================================================================
 
-            // --- Advanced Production ---
-            case 44 -> {
-                // Advanced Production — Production P[5] = 7
-                // ProductionSystem checks hasResearch(playerId, 44)
-                LOG.info("Player {} ({}) completed Advanced Production: production P[5] = 7", playerId, faction);
-            }
+    /**
+     * Per-player accumulated research bonuses. Stores the total effect of all
+     * completed research for a player, computed incrementally as research completes.
+     * Other systems query this (e.g., ArmorCalculator, CombatSystem, BuildingSystem).
+     */
+    public static final class ResearchBonusTracker {
+        // Armor bonuses
+        private int infantryArmorBonus;
+        private int vehicleArmorBonus;
+        private Integer buildingArmorOverride; // null = no override
 
-            // --- Scoring Chain ---
-            case 45 -> {
-                // Finance Department — Credit limit = 120
-                // EconomySystem checks hasResearch(playerId, 45)
-                LOG.info("Player {} ({}) completed Finance Department: credit limit = 120", playerId, faction);
-            }
-            case 46 -> {
-                // Incentive System — Score bonus = 30
-                // ScoreSystem checks hasResearch(playerId, 46)
-                LOG.info("Player {} ({}) completed Incentive System: score bonus = 30", playerId, faction);
-            }
-            case 47 -> {
-                // Communications System — Display bonus = 25
-                // ScoreSystem checks hasResearch(playerId, 47)
-                LOG.info("Player {} ({}) completed Communications System: display bonus = 25", playerId, faction);
-            }
+        // Combat bonuses
+        private int attackDamageBonus; // global
+        private final Map<Integer, Integer> attackDamageBonusByType = new HashMap<>(); // typeId -> bonus
+        private final Map<Integer, Integer> attackSpeedBonusByType = new HashMap<>(); // typeId -> bonus
+        private int globalAttackSpeedBonus; // for effects without affectedUnitTypes
+        private final Map<Integer, Integer> attackRangeBonusByType = new HashMap<>();
+        private final Map<Integer, Integer> rangeReductionDivisor = new HashMap<>(); // targetPlayerId -> divisor
 
-            default -> {
-                // Unknown research ID — should not happen with valid tech tree data
-                LOG.warn("Player {} ({}) completed unknown research ID {}: {}", playerId, faction, researchId, techName);
-            }
+        // Building bonuses
+        private int buildingRadiusBonus;
+        private int buildingArmorBonus;
+
+        // Economy
+        private Integer supplyCap; // null = use default
+        private Integer creditLimit; // null = use default
+        private int unitLimitBonus;
+        private Integer productionSpeedOverride; // null = use default; or Map<slot, value>
+        private final Map<Integer, Integer> productionSpeedSlotOverrides = new HashMap<>();
+        private final Map<Integer, Integer> productionDamageBonusByType = new HashMap<>();
+        private int globalProductionDamageBonus;
+
+        // Scoring
+        private int scoreBonus;
+        private int displayBonus;
+
+        // Unit upgrades: fromType -> toType
+        private final Map<Integer, Integer> unitUpgrades = new HashMap<>();
+
+        // Siege upgrades: unitType -> siegeValue
+        private final Map<Integer, Integer> siegeUpgrades = new HashMap<>();
+
+        // ---- Getters (all public) ----
+
+        public int getInfantryArmorBonus() { return infantryArmorBonus; }
+        public int getVehicleArmorBonus() { return vehicleArmorBonus; }
+        public Integer getBuildingArmorOverride() { return buildingArmorOverride; }
+        public int getBuildingArmorBonus() { return buildingArmorBonus; }
+        public int getAttackDamageBonus() { return attackDamageBonus; }
+        public int getAttackDamageBonusForType(int typeId) { return attackDamageBonusByType.getOrDefault(typeId, 0); }
+        public int getAttackSpeedBonusForType(int typeId) { return attackSpeedBonusByType.getOrDefault(typeId, 0); }
+        public int getGlobalAttackSpeedBonus() { return globalAttackSpeedBonus; }
+        public int getAttackRangeBonusForType(int typeId) { return attackRangeBonusByType.getOrDefault(typeId, 0); }
+        public int getRangeReductionDivisor(int targetPlayerId) { return rangeReductionDivisor.getOrDefault(targetPlayerId, 1); }
+        public int getBuildingRadiusBonus() { return buildingRadiusBonus; }
+        public Integer getSupplyCap() { return supplyCap; }
+        public Integer getCreditLimit() { return creditLimit; }
+        public int getUnitLimitBonus() { return unitLimitBonus; }
+        public Integer getProductionSpeedOverride() { return productionSpeedOverride; }
+        public int getProductionSpeedSlotOverride(int slot) { return productionSpeedSlotOverrides.getOrDefault(slot, -1); }
+        public int getProductionDamageBonusForType(int typeId) { return productionDamageBonusByType.getOrDefault(typeId, 0); }
+        public int getGlobalProductionDamageBonus() { return globalProductionDamageBonus; }
+        public int getScoreBonus() { return scoreBonus; }
+        public int getDisplayBonus() { return displayBonus; }
+        public Integer getUnitUpgrade(int fromTypeId) { return unitUpgrades.get(fromTypeId); }
+        public Integer getSiegeUpgrade(int unitTypeId) { return siegeUpgrades.get(unitTypeId); }
+
+        // ---- Package-private mutators (called by ResearchSystem.applyResearchEffect) ----
+
+        void addInfantryArmorBonus(int bonus) { this.infantryArmorBonus += bonus; }
+        void addVehicleArmorBonus(int bonus) { this.vehicleArmorBonus += bonus; }
+        void setBuildingArmorOverride(int value) { this.buildingArmorOverride = value; }
+        void addBuildingArmorBonus(int bonus) { this.buildingArmorBonus += bonus; }
+        void addAttackDamageBonus(int bonus) { this.attackDamageBonus += bonus; }
+        void addAttackDamageBonusForType(int typeId, int bonus) {
+            attackDamageBonusByType.merge(typeId, bonus, Integer::sum);
+        }
+        void addAttackSpeedBonusForType(int typeId, int bonus) {
+            attackSpeedBonusByType.merge(typeId, bonus, Integer::sum);
+        }
+        void addGlobalAttackSpeedBonus(int bonus) { this.globalAttackSpeedBonus += bonus; }
+        void addAttackRangeBonusForType(int typeId, int bonus) {
+            attackRangeBonusByType.merge(typeId, bonus, Integer::sum);
+        }
+        void setRangeReductionDivisor(int targetPlayerId, int divisor) {
+            rangeReductionDivisor.put(targetPlayerId, divisor);
+        }
+        void addBuildingRadiusBonus(int bonus) { this.buildingRadiusBonus += bonus; }
+        void setSupplyCap(int value) { this.supplyCap = value; }
+        void setCreditLimit(int value) { this.creditLimit = value; }
+        void addUnitLimitBonus(int bonus) { this.unitLimitBonus += bonus; }
+        void setProductionSpeedOverride(int value) { this.productionSpeedOverride = value; }
+        void setProductionSpeedSlotOverride(int slot, int value) {
+            productionSpeedSlotOverrides.put(slot, value);
+        }
+        void addProductionDamageBonusForType(int typeId, int bonus) {
+            productionDamageBonusByType.merge(typeId, bonus, Integer::sum);
+        }
+        void addGlobalProductionDamageBonus(int bonus) { this.globalProductionDamageBonus += bonus; }
+        void addScoreBonus(int bonus) { this.scoreBonus += bonus; }
+        void addDisplayBonus(int bonus) { this.displayBonus += bonus; }
+        void setUnitUpgrade(int fromTypeId, int toTypeId) {
+            unitUpgrades.put(fromTypeId, toTypeId);
+        }
+        void setSiegeUpgrade(int unitTypeId, int siegeValue) {
+            siegeUpgrades.put(unitTypeId, siegeValue);
         }
     }
 }

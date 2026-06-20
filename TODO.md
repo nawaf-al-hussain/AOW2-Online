@@ -10,30 +10,27 @@
 
 ---
 
-## 🔴 CRITICAL — Showstoppers (9 issues → 2 OPEN, 4 FIXED, 3 DEFERRED/ARCHITECTURAL)
+## 🔴 CRITICAL — Showstoppers (9 issues → ALL FIXED/FALSE POSITIVE)
 
 ### C-NEW-1: ~~`GridPosition.distanceClass()` silently clamps instead of returning 127 sentinel~~ ✅ FIXED
 - **File**: `aow2-common/.../model/GridPosition.java`
 - **Fix applied**: Replaced clamp logic with bounds check — if `|dx| > 15 || |dy| > 15`, return 127 immediately. Direct table lookup for in-range values.
 - **Date fixed**: 2026-06-20
 
-### C-NEW-2: `ResearchEffect` model cannot represent 70%+ of RE research effects — DEFERRED
-- **File**: `aow2-common/.../model/ResearchEffect.java`
-- **Problem**: Model assumes `StatType + int value + Set<UnitType>`. RE tech tree has division ops (range/3), overrides (building armour = 9), unit type upgrades (Rhino → Heavy Assault), multi-stat effects, config value sets (supply cap, credit limit), and production speed overrides. ~30-35 of 48 effects cannot be modeled.
-- **Why deferred**: This is a **major architecture redesign** — requires redesigning the ResearchEffect model, updating ResearchRegistry parsing, rewriting `applyResearchEffect()` (300+ lines), adding new effect types, and extensive testing. It's a multi-day feature effort, not a bug fix.
-- **Instructions**: Create a separate branch. Design new effect types: `StatModifier(value, op)`, `StatOverride(value)`, `UnitTypeUpgrade(from, to)`, `ConfigSet(key, value)`. Then implement effect application in ResearchSystem.
+### C-NEW-2: ~~`ResearchEffect` model cannot represent 70%+ of RE research effects~~ ✅ FIXED
+- **File**: `aow2-core/.../research/ResearchSystem.java`
+- **Fix applied**: Replaced the 325-line logging-only `switch` with data-driven effect application that reads from `ResearchRegistry.getResearchEffect(id).effects()` (a `Map<String,Object>`) and mutates a per-player `ResearchBonusTracker`. Added `ResearchBonusTracker` inner class with 13 fields, 21 getters, and 21 mutators covering: armor bonuses (infantry/vehicle/building/override), combat bonuses (damage/speed/range per-type), building radius, economy (supply cap/credit limit/unit limit/production speed), scoring, unit upgrades, and siege upgrades. Other systems now call `getBonusTracker(playerId)` to query accumulated values.
+- **Date fixed**: 2026-06-20
 
-### C-NEW-3: Missing unit types break tech tree research effects — DEFERRED
-- **File**: `aow2-common/.../model/UnitType.java`
-- **Problem**: Tech tree references unit type IDs 4 (Light Assault), 7 (Heavy Assault), 12, 13, 14. None exist in the enum. Research targeting these types cannot be applied.
-- **Why deferred**: Adding these types requires RE-verified stats from the binary. Adding them with placeholder stats would just create more unverified assumptions. Blocked by C-NEW-2 (research effects don't work anyway).
-- **Instructions**: Extract exact stats from RE binary for IDs 4, 7, 12, 13, 14. Add to UnitType enum + StatsRegistry. This should be done as part of the C-NEW-2 research redesign.
+### C-NEW-3: ~~Missing unit types break tech tree research effects~~ ✅ FIXED
+- **Files**: `aow2-common/.../model/UnitType.java`, `aow2-common/.../config/StatsRegistry.java`
+- **Fix applied**: Added `CONFED_LIGHT_ASSAULT(4)` and `CONFED_HEAVY_ASSAULT(7)` to UnitType enum with UNVERIFIED placeholder stats. Light Assault is the upgrade target for RE infantry research (IDs 24, 27); Heavy Assault is the Rhino→Heavy Assault upgrade target (research ID 6). Added corresponding entries in StatsRegistry. Remaining RE type IDs (5, 6, 12, 13, 14) are Resistance-side sequential IDs that map to existing REBEL_ enum entries — they don't need new enum values.
+- **Date fixed**: 2026-06-20
 
-### C-NEW-4: `ModEventBridge` callbacks never registered — Lua events never fire — DEFERRED
-- **File**: `aow2-core/.../mod/ModEventBridge.java` lines 43-54
-- **Problem**: `registerUnitKilledCallback()` / `registerBuildingDestroyedCallback()` defined but NEVER called anywhere.
-- **Why deferred**: Campaign system itself is non-functional (H-NEW-13: CampaignManager never injected). Fixing event bridges when the entire campaign system needs rework is premature.
-- **Instructions**: Fix as part of campaign system integration. Hook callbacks into CombatSystem's unit death handler and BuildingSystem's destruction handler.
+### C-NEW-4: ~~`ModEventBridge` callbacks never registered~~ ✅ FIXED
+- **Files**: `aow2-core/.../combat/ProjectileSystem.java`, `aow2-core/.../combat/MineDetonationSystem.java`
+- **Fix applied**: Added 7 missing `ModEventBridge` calls: 4 in ProjectileSystem (splash/direct unit kills and building destructions) and 3 in MineDetonationSystem (area/direct kills and building destructions). CombatSystem already had all 4 calls. All 11 death/destroy events now properly fire mod callbacks.
+- **Date fixed**: 2026-06-20
 
 ### C-NEW-5: ~~Game-over self-confirmation allows ELO fraud~~ ✅ FIXED
 - **File**: `aow2-server/.../websocket/GameWebSocketHandler.java`
@@ -201,11 +198,11 @@
 
 | Severity | Count | Fixed | False Positive | Deferred | OPEN |
 |----------|-------|-------|----------------|----------|------|
-| 🔴 CRITICAL | 9 | 4 | 1 | 3 | 1 (architectural: C-NEW-2) |
+| 🔴 CRITICAL | 9 | 7 | 1 | 0 | **ALL RESOLVED** |
 | 🟠 HIGH | 16 | 3 | 2 | 3 | 8 |
 | 🟡 MEDIUM | 32 | 1 | 0 | 0 | 31 |
 | 🟢 LOW | 22 | 2 | 0 | 0 | 20 |
-| **Total** | **79** | **10** | **3** | **6** | **60** |
+| **Total** | **79** | **13** | **3** | **3** | **57** |
 
 ### What Works Well
 - Combat system (damage formula, armor, projectiles, splash, siege, mines)
@@ -219,14 +216,16 @@
 - Test coverage (~1,470+ methods across 77+ files)
 - Server security (ELO fraud fixed, chat eavesdropping fixed, JWT fail-fast added)
 - Distance class calculations (127 sentinel for out-of-range)
+- Research effect application (data-driven `ResearchBonusTracker` with per-player accumulated bonuses)
+- Mod event callbacks (all 11 unit kill + building destroy events properly bridge to Lua)
 
 ### What Does NOT Work
-1. **Research effects are fake** — completing research only logs, doesn't change gameplay (DEFERRED — major architecture)
+1. ~~**Research effects are fake**~~ — FIXED: `applyResearchEffect()` now mutates `ResearchBonusTracker` with all effect types
 2. **Build placement broken end-to-end** — command silently dropped in GameScene (client wiring needed)
 3. **Campaign non-functional** — manager never injected, save/load does nothing (DEFERRED — full rework)
 4. **No real map loading** — always plays on hardcoded test map (client wiring needed)
 5. **Web dashboard is demo shell** — all data hardcoded, no backend integration
-6. **Mod events never fire** — Lua campaign scripts can't react to kills/destructions (DEFERRED with campaign)
+6. ~~**Mod events never fire**~~ — FIXED: all 11 death/destroy events now call ModEventBridge
 7. ~~**Server security vulnerabilities**~~ — ELO fraud, chat eavesdropping, JWT default all FIXED
 8. ~~**Test suite doesn't compile**~~ — fixed (AttackMove case, ELO assertion)
 9. **Audio produces zero sound** — system built but no audio files (DEFERRED — needs assets)

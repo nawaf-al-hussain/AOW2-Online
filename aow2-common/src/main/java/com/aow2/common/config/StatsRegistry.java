@@ -167,7 +167,28 @@ public final class StatsRegistry {
             5, 10, 200, 6, 255, 0, -1
         ));
 
-        // --- Confederation Vehicles ---
+        // --- Confederation Vehicles (upgrade-only — not base-buildable) ---
+        // FIX (C-NEW-3): Light Assault and Heavy Assault are research upgrade targets.
+        // Light Assault (type 4): upgraded from Infantry, placeholder stats based on Infantry
+        // with improved armor per research ID 24 description.
+        // UNVERIFIED: RE binary should be consulted for exact stats.
+        unitStats.put(UnitType.CONFED_LIGHT_ASSAULT, new UnitStats(
+            UnitType.CONFED_LIGHT_ASSAULT, "Light Assault",
+            60, 2, 5, 5, 0, 4, 4,  // UNVERIFIED — assumed infantry-based with more HP
+            WeaponType.BULLET, 6,    // UNVERIFIED
+            5, 10, 500, 6, 255, 0, -1
+        ));
+
+        // Heavy Assault (type 7): upgraded from Rhino (type 18) via research ID 6.
+        // UNVERIFIED: RE binary should be consulted for exact stats.
+        unitStats.put(UnitType.CONFED_HEAVY_ASSAULT, new UnitStats(
+            UnitType.CONFED_HEAVY_ASSAULT, "Heavy Assault",
+            60, 8, 7, 9, 0, 6, 6,  // UNVERIFIED — assumed Rhino-based with more HP
+            WeaponType.ARTILLERY, 10, // UNVERIFIED
+            11, 40, 400, 8, 14, 1, 10
+        ));
+
+        // --- Confederation Vehicles (base-buildable) ---
         // REF: complete_unit_stats.json — CONFED_FLAME_ASSAULT
         unitStats.put(UnitType.CONFED_FLAME_ASSAULT, new UnitStats(
             UnitType.CONFED_FLAME_ASSAULT, "Flame Assault",

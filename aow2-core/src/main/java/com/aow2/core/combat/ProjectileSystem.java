@@ -1,6 +1,7 @@
 package com.aow2.core.combat;
 
 import com.aow2.common.model.GridPosition;
+import com.aow2.core.mod.ModEventBridge;
 import com.aow2.common.model.WeaponType;
 import com.aow2.core.economy.EconomySystem;
 import com.aow2.core.engine.GameState;
@@ -309,6 +310,7 @@ public final class ProjectileSystem {
                     state.enqueueEvent(new com.aow2.common.event.UnitKilledEvent(
                         state.currentTick(), unit.getId(), unit.getUnitType(),
                         projectile.getSourceUnitId()));
+                    ModEventBridge.fireUnitKilled(unit.getId(), unit.getUnitType(), unit.getOwner(), projectile.getSourceUnitId());
                 }
             }
         }
@@ -340,6 +342,7 @@ public final class ProjectileSystem {
                     state.enqueueEvent(new com.aow2.common.event.BuildingDestroyedEvent(
                         state.currentTick(), building.getId(), building.getBuildingType(),
                         projectile.getSourceUnitId()));
+                    ModEventBridge.fireBuildingDestroyed(building.getId(), building.getBuildingType(), building.getOwner(), projectile.getSourceUnitId());
                 }
             }
         }
@@ -392,6 +395,7 @@ public final class ProjectileSystem {
                     state.enqueueEvent(new com.aow2.common.event.UnitKilledEvent(
                         state.currentTick(), target.getId(), target.getUnitType(),
                         projectile.getSourceUnitId()));
+                    ModEventBridge.fireUnitKilled(target.getId(), target.getUnitType(), target.getOwner(), projectile.getSourceUnitId());
                 }
             }
         } else {
@@ -413,6 +417,7 @@ public final class ProjectileSystem {
                     state.enqueueEvent(new com.aow2.common.event.BuildingDestroyedEvent(
                         state.currentTick(), target.getId(), target.getBuildingType(),
                         projectile.getSourceUnitId()));
+                    ModEventBridge.fireBuildingDestroyed(target.getId(), target.getBuildingType(), target.getOwner(), projectile.getSourceUnitId());
                 }
             }
         }

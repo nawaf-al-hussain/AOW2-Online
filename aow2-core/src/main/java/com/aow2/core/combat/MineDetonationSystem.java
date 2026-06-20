@@ -5,6 +5,7 @@ import com.aow2.common.model.GridPosition;
 import com.aow2.common.event.DamageAppliedEvent;
 import com.aow2.common.event.UnitKilledEvent;
 import com.aow2.common.model.Faction;
+import com.aow2.core.mod.ModEventBridge;
 import com.aow2.common.model.UnitType;
 import com.aow2.core.entity.Building;
 import com.aow2.core.entity.Mine;
@@ -180,6 +181,7 @@ public final class MineDetonationSystem {
                         DamageCalculator.calculateDeathAnimationFrame(enemy, 4));
                     state.enqueueEvent(new UnitKilledEvent(
                         state.currentTick(), enemy.getId(), enemy.getUnitType(), mine.getId()));
+                    ModEventBridge.fireUnitKilled(enemy.getId(), enemy.getUnitType(), enemy.getOwner(), mine.getId());
                 }
             }
         }
@@ -199,6 +201,7 @@ public final class MineDetonationSystem {
                 if (!building.isAlive()) {
                     state.enqueueEvent(new BuildingDestroyedEvent(
                         state.currentTick(), building.getId(), building.getBuildingType(), mine.getId()));
+                    ModEventBridge.fireBuildingDestroyed(building.getId(), building.getBuildingType(), building.getOwner(), mine.getId());
                 }
             }
         }
@@ -245,6 +248,7 @@ public final class MineDetonationSystem {
                     DamageCalculator.calculateDeathAnimationFrame(closest, 4));
                 state.enqueueEvent(new UnitKilledEvent(
                     state.currentTick(), closest.getId(), closest.getUnitType(), mine.getId()));
+                ModEventBridge.fireUnitKilled(closest.getId(), closest.getUnitType(), closest.getOwner(), mine.getId());
             }
         }
     }

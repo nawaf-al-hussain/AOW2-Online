@@ -19,7 +19,13 @@ public enum UnitType {
     CONFED_INFANTRY(1, "Infantry", Faction.CONFEDERATION, UnitCategory.INFANTRY),
     CONFED_GRENADIER(2, "Grenadier", Faction.CONFEDERATION, UnitCategory.INFANTRY),
 
-    // Confederation Vehicles
+    // Confederation Vehicles (upgrade-only — not base-buildable)
+    // RE typeId 4: Light Assault — upgrade target referenced by research IDs 24, 27
+    CONFED_LIGHT_ASSAULT(4, "Light Assault", Faction.CONFEDERATION, UnitCategory.INFANTRY),
+    // RE typeId 7: Heavy Assault — upgrade target for Rhino (type 18) via research ID 6
+    CONFED_HEAVY_ASSAULT(7, "Heavy Assault", Faction.CONFEDERATION, UnitCategory.VEHICLE),
+
+    // Confederation Vehicles (base-buildable)
     // ASSUMPTION (M-20): RE unit_stats.md lists type "infantry" but game_data.json lists
     // "machinery". Treated as SPECIAL_MACHINERY per game_data.json. If RE binary confirms
     // infantry, change to INFANTRY — this would affect damage multipliers (infantry vs machinery).
