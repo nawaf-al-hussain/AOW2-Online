@@ -232,7 +232,8 @@ class LockstepEngineTest {
         // After reconnect, processFrame should advance again
         long frameBefore = disconnectEngine.getLockstepFrame();
         disconnectEngine.processFrame(freshState, freshEntities);
-        assertEquals(frameBefore + 1, disconnectEngine.getLockstepFrame());
+        assertEquals(frameBefore + 1, disconnectEngine.getLockstepFrame(),
+            "After reconnect, frame should advance by 1 from wherever it paused");
     }
 
     @Test

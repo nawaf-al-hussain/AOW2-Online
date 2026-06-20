@@ -283,6 +283,7 @@ public final class LockstepEngine {
         boolean wasPaused = paused;
         paused = false;
         opponentMissedFrames = 0;
+        lastOpponentCommandTick = lockstepFrame; // Reset so disconnect check doesn't re-trigger immediately
         log.info("Opponent reconnected at frame {} (wasPaused={})", lockstepFrame, wasPaused);
         if (wasPaused && resumeCallback != null) {
             resumeCallback.run();

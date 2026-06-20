@@ -335,7 +335,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
     /**
      * Simple record to hold a pending game-over claim.
      */
-    private record GameOverClaim(Long claimedBy, Long winnerId, int durationSeconds) {}/
+    private record GameOverClaim(Long claimedBy, Long winnerId, int durationSeconds) {}
 
     /**
      * Sends a JSON message to the specified WebSocket session ID.
