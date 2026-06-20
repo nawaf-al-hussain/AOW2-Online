@@ -31,6 +31,7 @@ public final class BuildingPlacementSystem {
 
     private static final Logger LOG = LoggerFactory.getLogger(BuildingPlacementSystem.class);
 
+    // UNVERIFIED (L-9): CC placement radius of 20 tiles is assumed — RE says CC constrains placement but no exact radius.
     // ASSUMPTION (L7): 20-tile placement radius from Command Centre — RE spec confirms CC constrains placement radius but doesn't specify exact value
     // The original game may use a different radius. This value affects how far from a CC players can build.
     // REF: MASTER_DOCUMENTATION.md Section 4 — Building placement rules

@@ -39,7 +39,7 @@ public class EntityManager {
     private final Map<Integer, Projectile> projectiles;
 
     /** All mines in the game world. */
-    private final List<Mine> mines = new ArrayList<>();
+    private final List<Mine> mines = new java.util.concurrent.CopyOnWriteArrayList<>();
 
     /** Counter for allocating unique entity IDs. */
     private final AtomicInteger nextEntityId;

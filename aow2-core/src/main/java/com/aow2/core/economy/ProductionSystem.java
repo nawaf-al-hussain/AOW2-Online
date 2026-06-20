@@ -32,6 +32,7 @@ public final class ProductionSystem {
 
     private static final Logger LOG = LoggerFactory.getLogger(ProductionSystem.class);
 
+    // UNVERIFIED (L-10): 50% refund on production cancel — no RE documentation of the actual refund rate.
     // ASSUMPTION (L9): 50% refund on production cancel — RE spec doesn't document exact refund percentage
     // REF: MASTER_DOCUMENTATION.md — production cancellation exists but no refund rate specified
     // The original game may have a different refund rate or no refund at all.
@@ -209,6 +210,7 @@ public final class ProductionSystem {
         // The upgradeLevel is tracked on the Building entity (0 = base, 1-3 = upgraded).
         // REF: combat_formulas.md — "(baseBuildTime * productionModifier) / 10 * 20 / (upgradeBonus + 20)"
         int upgradeLevel = producer.getUpgradeLevel();
+        // UNVERIFIED (L-11): +5 per upgrade level — RE formula has (upgradeBonus + 20) but no per-level increment spec.
         int upgradeBonus = upgradeLevel * 5; // ASSUMPTION: +5 per upgrade level
 
         int effectiveBuildTime = (baseBuildTime * productionModifier) / 10 * 20 / (upgradeBonus + 20);

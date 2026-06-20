@@ -36,6 +36,7 @@ public final class MineDetonationSystem {
     /** Mine Lizard multi-charge count. REF: unit_stats.md — "Fragments and additional charges" */
     private static final int LIZARD_CHARGES = 2;
 
+    // UNVERIFIED (L-3): Arm delay of 10 ticks is assumed — RE confirms arm delay exists but not the exact tick count.
     // ASSUMPTION (L10): 10-tick arm delay — RE spec confirms mines have an arm delay but doesn't specify exact tick count
     // The original game's arm delay could be shorter or longer. This affects how quickly mines become active after placement.
     // REF: unit_stats.md lines 258-272 — mine trigger mechanics

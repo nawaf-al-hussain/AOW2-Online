@@ -3,9 +3,9 @@ package com.aow2.core.engine;
 import com.aow2.common.event.GameEvent;
 import com.aow2.common.model.Faction;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Holds the complete game state for a single match.
@@ -18,14 +18,14 @@ public class GameState {
     private static final int MAX_PROCESSED_EVENTS = 10_000;
 
     private long currentTick;
-    private final CopyOnWriteArrayList<GameEvent> eventQueue;
-    private final CopyOnWriteArrayList<GameEvent> processedEvents;
+    private final ArrayDeque<GameEvent> eventQueue;
+    private final ArrayDeque<GameEvent> processedEvents;
     private boolean running;
 
     public GameState() {
         this.currentTick = 0;
-        this.eventQueue = new CopyOnWriteArrayList<>();
-        this.processedEvents = new CopyOnWriteArrayList<>();
+        this.eventQueue = new ArrayDeque<>();
+        this.processedEvents = new ArrayDeque<>();
         this.running = false;
     }
 
@@ -48,7 +48,7 @@ public class GameState {
         // FIX(M-15): Cap processed events list to prevent unbounded memory growth.
         // Remove oldest events when the cap is exceeded.
         while (processedEvents.size() > MAX_PROCESSED_EVENTS) {
-            processedEvents.remove(0);
+            processedEvents.pollFirst();
         }
         return events;
     }

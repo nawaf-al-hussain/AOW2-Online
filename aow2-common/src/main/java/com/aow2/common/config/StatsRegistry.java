@@ -354,6 +354,7 @@ public final class StatsRegistry {
         ));
 
         // REF: complete_building_stats.json — CONFED_BUNKER
+        // UNVERIFIED (L-12): Bunker garrison capacity of 5 — not present in RE data.
         buildingStats.put(BuildingType.CONFED_BUNKER, new BuildingStats(
             BuildingType.CONFED_BUNKER,
             120, 50, 7, 8, 4, 7, 30, 6, 16,
@@ -386,7 +387,7 @@ public final class StatsRegistry {
         // --- Resistance Buildings ---
         // REF: complete_building_stats.json — symmetrical to Confederation
 
-        // ASSUMPTION: REBEL_HEADQUARTERS stats copied from CONFED_COMMAND_CENTRE — RE only provides upgrade_costs for rebel buildings
+        // UNVERIFIED (L-13): REBEL_HEADQUARTERS stats copied from CONFED_COMMAND_CENTRE — RE only provides upgrade_costs for rebel buildings
         buildingStats.put(BuildingType.REBEL_HEADQUARTERS, new BuildingStats(
             BuildingType.REBEL_HEADQUARTERS,
             120, 22, 0, 7, 4, 2, 20, 7, 8,
@@ -396,7 +397,7 @@ public final class StatsRegistry {
             List.of(300, 200, 200)
         ));
 
-        // ASSUMPTION: REBEL_POWERPLANT stats copied from CONFED_GENERATOR — RE only provides upgrade_costs for rebel buildings
+        // UNVERIFIED (L-13): REBEL_POWERPLANT stats copied from CONFED_GENERATOR — RE only provides upgrade_costs for rebel buildings
         buildingStats.put(BuildingType.REBEL_POWERPLANT, new BuildingStats(
             BuildingType.REBEL_POWERPLANT,
             100, 14, 0, 7, 3, 6, 8, 7, 8,
@@ -406,7 +407,7 @@ public final class StatsRegistry {
             List.of(300, 350, 250)
         ));
 
-        // ASSUMPTION: REBEL_BARRACKS stats copied from CONFED_INFANTRY_CENTRE — RE only provides upgrade_costs for rebel buildings
+        // UNVERIFIED (L-13): REBEL_BARRACKS stats copied from CONFED_INFANTRY_CENTRE — RE only provides upgrade_costs for rebel buildings
         buildingStats.put(BuildingType.REBEL_BARRACKS, new BuildingStats(
             BuildingType.REBEL_BARRACKS,
             100, 28, 0, 7, 3, 6, 18, 11, 12,
@@ -416,7 +417,7 @@ public final class StatsRegistry {
             List.of(300, 500, 500)
         ));
 
-        // ASSUMPTION: REBEL_FACTORY stats copied from CONFED_MACHINE_FACTORY — RE only provides upgrade_costs for rebel buildings
+        // UNVERIFIED (L-13): REBEL_FACTORY stats copied from CONFED_MACHINE_FACTORY — RE only provides upgrade_costs for rebel buildings
         buildingStats.put(BuildingType.REBEL_FACTORY, new BuildingStats(
             BuildingType.REBEL_FACTORY,
             110, 36, 0, 8, 4, 6, 25, 3, 2,
@@ -426,7 +427,7 @@ public final class StatsRegistry {
             List.of(500, 400, 500)
         ));
 
-        // ASSUMPTION: REBEL_LABORATORY stats copied from CONFED_TECH_CENTRE — RE only provides upgrade_costs for rebel buildings
+        // UNVERIFIED (L-13): REBEL_LABORATORY stats copied from CONFED_TECH_CENTRE — RE only provides upgrade_costs for rebel buildings
         buildingStats.put(BuildingType.REBEL_LABORATORY, new BuildingStats(
             BuildingType.REBEL_LABORATORY,
             120, 65, 0, 8, 4, 7, 30, 6, 16,
@@ -436,7 +437,7 @@ public final class StatsRegistry {
             List.of(600, 800, 700)
         ));
 
-        // ASSUMPTION: REBEL_BUNKER stats copied from CONFED_BUNKER — RE only provides upgrade_costs for rebel buildings
+        // UNVERIFIED (L-13): REBEL_BUNKER stats copied from CONFED_BUNKER — RE only provides upgrade_costs for rebel buildings
         buildingStats.put(BuildingType.REBEL_BUNKER, new BuildingStats(
             BuildingType.REBEL_BUNKER,
             120, 50, 7, 8, 4, 7, 30, 6, 16,
@@ -448,7 +449,8 @@ public final class StatsRegistry {
 
         // REBEL_TOWER: Same as CONFED_ROCKET_LAUNCHER but type=REBEL, weaponType=MACHINE_GUN
         // FIX: upgrade_costs corrected to [400, 300, 500] per RE spec (was incorrectly [1000, 700, 350] which is Wall's costs)
-        // ASSUMPTION: REBEL_TOWER stats copied from CONFED_ROCKET_LAUNCHER — RE only provides upgrade_costs for rebel buildings
+        // UNVERIFIED (L-14): REBEL_TOWER weapon type MACHINE_GUN is assumed — RE has no weapon data for Rebel buildings.
+        // UNVERIFIED (L-13): REBEL_TOWER stats copied from CONFED_ROCKET_LAUNCHER — RE only provides upgrade_costs for rebel buildings
         buildingStats.put(BuildingType.REBEL_TOWER, new BuildingStats(
             BuildingType.REBEL_TOWER,
             50, 4, 7, 12, 1, 9, 12, 8, 16,
@@ -458,7 +460,11 @@ public final class StatsRegistry {
             List.of(400, 300, 500)
         ));
 
-        // ASSUMPTION: REBEL_WALL stats fabricated — RE only provides upgrade_costs [1000, 700, 350]
+        // UNVERIFIED (H-16): ALL stats below are assumptions — RE only provides upgrade_costs [1000, 700, 350].
+        // HP, armor, cost, buildTime, power, sightRange, sizeX/Y, etc. are educated guesses based on
+        // Confed Wall equivalents. Extract actual values from RE binary to verify.
+        // Key unverified values: hp=200 (assume high for wall), armor=15 (assume same as Confed Wall),
+        // cost=10 (assume same as Confed Wall), buildTime=10 (assume same as Confed Wall).
         buildingStats.put(BuildingType.REBEL_WALL, new BuildingStats(
             BuildingType.REBEL_WALL,
             200, 10, 0, 15, 0, 0, 10, 0, 20,

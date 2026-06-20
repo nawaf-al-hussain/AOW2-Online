@@ -10,6 +10,7 @@ package com.aow2.core.ai;
  * The original AI processes every 30 ticks at normal speed.
  * Difficulty scaling modifies production speed, build time, and credit generation.
  */
+// UNVERIFIED (L-6): Tick intervals (60/30/15) are plausible but not confirmed by RE documentation.
 public enum AIDifficulty {
 
     /**

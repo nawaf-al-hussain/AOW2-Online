@@ -363,12 +363,19 @@ public final class ResearchSystem {
             }
             case 2 -> {
                 // Rapid Fire — Attack speed -2 (faster) for specific unit types
-                // CombatSystem checks hasResearch(playerId, 2)
+                // UNVERIFIED (H-17): RE description says "Assault's fire rate increases by 50%".
+                // "Assault" is ambiguous — may refer to Fortress (AV-40, RE type 19) or another unit.
+                // Current affectedUnitTypes [2] maps to Grenadier. If RE binary confirms Fortress,
+                // update to [19]. CombatSystem checks hasResearch(playerId, 2).
                 LOG.info("Player {} ({}) completed Rapid Fire: attack speed -2 (faster) for specific unit types", playerId, faction);
             }
             case 3 -> {
                 // Enhanced Munitions — Attack damage +2, Production damage +2
-                // CombatSystem checks hasResearch(playerId, 3)
+                // UNVERIFIED (H-17): RE description says "Assault's damage increases by 40%".
+                // "Assault" is ambiguous — may refer to Fortress (AV-40, RE type 19) or another unit.
+                // Current mapping applies blanket attackDamageBonus=2 to all attacks. If RE binary
+                // confirms a specific unit type, update affectedUnitTypes accordingly.
+                // CombatSystem checks hasResearch(playerId, 3).
                 LOG.info("Player {} ({}) completed Enhanced Munitions: attack damage +2, production damage +2", playerId, faction);
             }
 

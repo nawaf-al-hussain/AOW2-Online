@@ -61,6 +61,7 @@ public class CombatSystem {
      * Siege mode deploy/undeploy timer in ticks.
      * Separate from building attack cooldown.
      */
+    // UNVERIFIED (M-14): Deploy time of 5 ticks is assumed — RE confirms siege mode exists but not the exact deploy duration.
     private static final int SIEGE_DEPLOY_TICKS = 5;
 
     /** Bunker garrison range bonus added to garrisoned unit's attack range. */
@@ -400,6 +401,12 @@ public class CombatSystem {
      * completes, they transition to ATTACKING and fire. Melee units skip WIND_UP.
      * Artillery units (siege-capable) must be in siege mode or stop to fire.
      * <p>
+     * UNVERIFIED (M-17): RE only documents states 0 (idle), 1 (moving), 3 (attacking).
+     * State 2 (WIND_UP) and its duration (attackSpeed/2) are an assumption not found
+     * in RE documentation. This effectively adds ~50% attack delay for all ranged units.
+     * If RE binary analysis confirms no wind-up phase exists, remove state 2 and have
+     * ranged units fire immediately on target acquisition (same as melee).
+     * <p>
      * REF: combat_formulas.md - damage formula
      * REF: combat_formulas.md "Projectile Spawn" - ranged attacks use projectile system
      * REF: combat_formulas.md attack state table
@@ -460,7 +467,8 @@ public class CombatSystem {
 
         // Ranged units (non-BULLET) use projectile system for damage delivery
         if (weaponType != WeaponType.BULLET && weaponType != WeaponType.NONE) {
-            boolean splash = weaponType == WeaponType.ROCKET || weaponType == WeaponType.ARTILLERY;
+            // FIX(M-3): Added FLAME to splash weapon types — splashRadius=1 was defined but unreachable
+            boolean splash = weaponType == WeaponType.ROCKET || weaponType == WeaponType.ARTILLERY || weaponType == WeaponType.FLAME;
             int splashRadius = splash ? ProjectileSystem.getSplashRadiusForWeapon(weaponType) : 0;
             spawnProjectile(attacker, target, weaponType, weaponDamage, splash, splashRadius);
         } else {
@@ -518,13 +526,25 @@ public class CombatSystem {
 
         // Ranged units (non-BULLET) use projectile system for damage delivery
         if (weaponType != WeaponType.BULLET && weaponType != WeaponType.NONE) {
-            boolean splash = weaponType == WeaponType.ROCKET || weaponType == WeaponType.ARTILLERY;
+            // FIX(M-3): Added FLAME to splash weapon types — splashRadius=1 was defined but unreachable
+            boolean splash = weaponType == WeaponType.ROCKET || weaponType == WeaponType.ARTILLERY || weaponType == WeaponType.FLAME;
             int splashRadius = splash ? ProjectileSystem.getSplashRadiusForWeapon(weaponType) : 0;
             spawnProjectile(attacker, target, weaponType, weaponDamage, splash, splashRadius);
         } else {
             // Instant damage for BULLET weapons
-            int buildingArmorBonus = armorCalculator.getBuildingArmorBonus(target.getFaction());
-            int targetArmor = DamageCalculator.calculateEffectiveArmor(target, buildingArmorBonus);
+            // FIX(M-1): Use armorCalculator.calculateEffectiveBuildingArmor() for melee building
+            // attacks, same as ranged projectile path. RE spec says buildings have 0 base armor;
+            // armor comes only from research N[] array. Previously used DamageCalculator which
+            // added building.getStats().armor() (e.g., Bunker=7), giving inconsistent behavior
+            // between melee and ranged attacks on the same building.
+            int targetArmor;
+            if (researchSystem != null) {
+                int playerId = EconomySystem.playerId(target.getFaction());
+                targetArmor = armorCalculator.calculateEffectiveBuildingArmor(
+                    target, researchSystem.getCompletedResearch(playerId));
+            } else {
+                targetArmor = 0; // No research system — use RE-correct 0 base
+            }
             double targetMultiplier = DamageCalculator.getTargetMultiplier(attacker, true);
             int damage = (int)(DamageCalculator.calculateDamage(weaponDamage, targetArmor) * targetMultiplier);
 

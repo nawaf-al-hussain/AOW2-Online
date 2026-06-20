@@ -20,6 +20,9 @@ public enum UnitType {
     CONFED_GRENADIER(2, "Grenadier", Faction.CONFEDERATION, UnitCategory.INFANTRY),
 
     // Confederation Vehicles
+    // ASSUMPTION (M-20): RE unit_stats.md lists type "infantry" but game_data.json lists
+    // "machinery". Treated as SPECIAL_MACHINERY per game_data.json. If RE binary confirms
+    // infantry, change to INFANTRY — this would affect damage multipliers (infantry vs machinery).
     CONFED_FLAME_ASSAULT(8, "Flame Assault", Faction.CONFEDERATION, UnitCategory.SPECIAL_MACHINERY),
     CONFED_FORTRESS(19, "AV-40 Fortress", Faction.CONFEDERATION, UnitCategory.VEHICLE),
     CONFED_HAMMER(17, "T-21 Hammer", Faction.CONFEDERATION, UnitCategory.VEHICLE),

@@ -49,9 +49,11 @@ public final class MilitaryAI {
 
     private static final Logger LOG = LoggerFactory.getLogger(MilitaryAI.class);
 
+    // UNVERIFIED (L-7): Attack advantage threshold of 1.5 — RE confirms AI attacks when stronger but not exact ratio.
     /** Military advantage threshold to trigger attack. REF: ai_analysis.md — advantage > 1.5x */
     private static final double ATTACK_ADVANTAGE_THRESHOLD = 1.5;
 
+    // UNVERIFIED (L-7): Retreat disadvantage threshold of 0.5 — RE confirms AI retreats when outnumbered but not exact ratio.
     /** Military disadvantage threshold to trigger retreat. ASSUMPTION: retreat when ratio < 0.5 */
     private static final double RETREAT_DISADVANTAGE_THRESHOLD = 0.5;
 

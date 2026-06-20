@@ -13,7 +13,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Plays back recorded replays by re-executing commands.
@@ -39,6 +41,12 @@ public final class ReplayPlayer {
 
     /** Callback for command execution during playback. */
     private CommandCallback commandCallback;
+
+    /** Interval between state snapshots for efficient seeking. */
+    private static final long SNAPSHOT_INTERVAL = 1000;
+
+    /** State snapshots: tick -> command index. Used for efficient backward seeking. */
+    private final Map<Long, Integer> snapshots = new LinkedHashMap<>();
 
     /**
      * Callback interface for executing commands during replay playback.
@@ -72,6 +80,7 @@ public final class ReplayPlayer {
         this.currentTick = 0;
         this.nextCommandIndex = 0;
         this.playing = false;
+        this.snapshots.clear();
 
         LOG.info("Loaded replay: {} ({} ticks, {} commands)",
             replay.mapName(), replay.totalTicks(), replay.commandCount());
@@ -125,6 +134,7 @@ public final class ReplayPlayer {
 
         currentTick++;
         processCommandsForTick(currentTick);
+        recordSnapshotIfNeeded();
 
         // Check if playback has ended
         if (currentTick >= replay.totalTicks()) {
@@ -135,7 +145,7 @@ public final class ReplayPlayer {
 
     /**
      * Seeks to a specific tick.
-     * If the target is before the current position, rebuilds from start.
+     * If the target is before the current position, rebuilds from the nearest snapshot.
      * If the target is after, fast-forwards by executing commands.
      *
      * @param tick target tick to seek to
@@ -152,19 +162,43 @@ public final class ReplayPlayer {
         }
 
         if (tick < currentTick) {
-            // Need to rebuild from start
-            LOG.debug("Seeking backward to tick {}: rebuilding from start", tick);
-            currentTick = 0;
-            nextCommandIndex = 0;
+            // Find the most recent snapshot before the target tick
+            long bestSnapshotTick = 0;
+            int bestCommandIndex = 0;
+            for (Map.Entry<Long, Integer> entry : snapshots.entrySet()) {
+                if (entry.getKey() <= tick) {
+                    bestSnapshotTick = entry.getKey();
+                    bestCommandIndex = entry.getValue();
+                } else {
+                    break;
+                }
+            }
+            // Seek back to nearest snapshot instead of tick 0
+            LOG.debug("Seeking backward to tick {}: using snapshot at tick {} (saving {} ticks of replay)",
+                tick, bestSnapshotTick, currentTick - bestSnapshotTick);
+            currentTick = bestSnapshotTick;
+            nextCommandIndex = bestCommandIndex;
         }
 
         // Fast-forward to target tick
         while (currentTick < tick) {
             currentTick++;
             processCommandsForTick(currentTick);
+            recordSnapshotIfNeeded();
         }
 
         LOG.info("Seeked to tick {}", currentTick);
+    }
+
+    /**
+     * Records a state snapshot at the current tick if the snapshot interval has elapsed.
+     * Should be called after processing commands for a tick.
+     */
+    private void recordSnapshotIfNeeded() {
+        if (currentTick > 0 && currentTick % SNAPSHOT_INTERVAL == 0) {
+            snapshots.put(currentTick, nextCommandIndex);
+            LOG.debug("Replay snapshot recorded at tick {} (command index {})", currentTick, nextCommandIndex);
+        }
     }
 
     /**

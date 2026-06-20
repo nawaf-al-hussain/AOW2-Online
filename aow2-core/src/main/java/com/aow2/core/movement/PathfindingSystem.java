@@ -10,8 +10,10 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Set;
 
@@ -137,9 +139,11 @@ public final class PathfindingSystem {
         // A* search
         PriorityQueue<PathNode> openSet = new PriorityQueue<>();
         Set<GridPosition> closedSet = new HashSet<>();
+        Map<GridPosition, PathNode> openMap = new HashMap<>();
 
         PathNode startNode = new PathNode(start, 0, heuristic(start, goal), null, false);
         openSet.add(startNode);
+        openMap.put(start, startNode);
 
         int stepsExplored = 0;
 
@@ -228,6 +232,7 @@ public final class PathfindingSystem {
 
                 // Calculate movement cost (category-aware)
                 int terrainCost = getTerrainCost(terrain, category);
+                // UNVERIFIED (L-5): 1.41 approximation — RE uses a terrain-cost lookup table with direction+terrain combined cost.
                 // REF: pathfinding.md — diagonal cost uses lookup table in original game;
                 // approximate with sqrt(2) ≈ 1.41 multiplier for 8-directional A*
                 double moveCost = isDiagonal
@@ -239,11 +244,14 @@ public final class PathfindingSystem {
                 PathNode neighborNode = new PathNode(neighbor, tentativeG,
                     tentativeG + heuristic(neighbor, goal), current, isDiagonal);
 
-                // Check if this position already has a better path in the open set
-                // Avoid unbounded growth by only adding if we found a better or equal path
-                if (!isBetterPathInSet(neighborNode, openSet)) {
-                    openSet.add(neighborNode);
+                // Check if this position already has a better path in the open map (O(1) lookup)
+                PathNode existing = openMap.get(neighbor);
+                if (existing != null && existing.g() <= tentativeG) {
+                    dirIndex++;
+                    continue;
                 }
+                openSet.add(neighborNode);
+                openMap.put(neighbor, neighborNode);
                 dirIndex++;
             }
         }
@@ -290,23 +298,6 @@ public final class PathfindingSystem {
             return costs[ordinal];
         }
         return Integer.MAX_VALUE;
-    }
-
-    /**
-     * Checks if a better path to the same position already exists in the open set.
-     * If so, we skip adding the duplicate to avoid unbounded openSet growth.
-     *
-     * @param newNode  the candidate node
-     * @param openSet  the current open set
-     * @return true if a better path already exists in the set
-     */
-    private boolean isBetterPathInSet(PathNode newNode, java.util.PriorityQueue<PathNode> openSet) {
-        for (PathNode existing : openSet) {
-            if (existing.position().equals(newNode.position()) && existing.g() <= newNode.g()) {
-                return true;
-            }
-        }
-        return false;
     }
 
     /**

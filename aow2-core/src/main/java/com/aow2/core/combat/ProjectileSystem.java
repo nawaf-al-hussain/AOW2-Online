@@ -36,7 +36,7 @@ public final class ProjectileSystem {
     /**
      * Fixed flight time for artillery projectiles.
      * REF: combat_formulas.md — flightTime = (at[6][59] - at[5][59]) + 1 (fixed, not distance-based)
-     * ASSUMPTION: 15 ticks based on typical artillery delay in the original game.
+     * UNVERIFIED (M-15): ASSUMPTION: 15 ticks based on typical artillery delay in the original game.
      */
     private static final int ARTILLERY_FIXED_FLIGHT_TIME = 15;
 
@@ -59,8 +59,9 @@ public final class ProjectileSystem {
     };
 
     /**
-     * Splash radius by weapon type. Only ROCKET and ARTILLERY have splash.
+     * Splash radius by weapon type. ROCKET, ARTILLERY, and FLAME have splash.
      * REF: combat_formulas.md - "Splash Damage (Artillery)" section
+     * FIX(M-3): FLAME splash was defined but unreachable — now enabled.
      */
     private static final int[] SPLASH_RADIUS = {
         0,  // BULLET
@@ -179,6 +180,10 @@ public final class ProjectileSystem {
         // Calculate flight time based on distance and projectile speed
         // FIX(M-26): Use Chebyshev distance (distanceClass) for consistency with
         // all other gameplay distance calculations (range checks, splash, etc.).
+        // UNVERIFIED (M-2): RE uses distanceTable[abs(dy)*21 + abs(dx)] / speedTable[projectileType]
+        // — a lookup table with a different indexing scheme. Our approximation uses
+        // Chebyshev distance / speed which may produce slightly different flight times.
+        // Extract exact distanceTable from RE binary for parity if needed.
         int dx = Math.abs(targetPos.x() - startPos.x());
         int dy = Math.abs(targetPos.y() - startPos.y());
         int chebyshevDist = Math.max(dx, dy);
@@ -227,7 +232,8 @@ public final class ProjectileSystem {
     public Projectile spawnProjectile(Unit attacker, Entity target, WeaponType weaponType,
                                       int damage, EntityManager entities) {
         int weaponIndex = weaponType.ordinal();
-        boolean splash = weaponType == WeaponType.ROCKET || weaponType == WeaponType.ARTILLERY;
+        // FIX(M-3): Added FLAME to splash weapon types — splashRadius=1 was defined but unreachable
+        boolean splash = weaponType == WeaponType.ROCKET || weaponType == WeaponType.ARTILLERY || weaponType == WeaponType.FLAME;
         int splashRadius = splash ? SPLASH_RADIUS[Math.min(weaponIndex, SPLASH_RADIUS.length - 1)] : 0;
         return spawnProjectile(attacker, target, weaponType, damage, splash, splashRadius, entities);
     }

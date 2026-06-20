@@ -1,16 +1,19 @@
 package com.aow2.client.scene;
 
+import com.aow2.core.campaign.CampaignEpisode;
+import com.aow2.core.campaign.CampaignManager;
+import com.aow2.core.engine.GameState;
+import com.aow2.core.world.EntityManager;
+
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
@@ -87,6 +90,15 @@ public class CampaignScene {
     /** Callback for scene navigation. */
     private SceneCallback callback;
 
+    /** Campaign manager for checking mission state and save/load. */
+    private CampaignManager campaignManager;
+
+    /** Game state reference needed for saving. */
+    private GameState gameState;
+
+    /** Entity manager reference needed for saving. */
+    private EntityManager entityManager;
+
     /**
      * Callback interface for scene transitions.
      */
@@ -157,9 +169,11 @@ public class CampaignScene {
         VBox briefingPanel = createBriefingPanel();
         content.setCenter(briefingPanel);
 
-        // Bottom bar with back button
-        HBox bottomBar = new HBox();
-        bottomBar.setAlignment(Pos.BOTTOM_LEFT);
+        // Bottom bar with back button and save/load slots
+        HBox bottomBar = new HBox(10);
+        bottomBar.setAlignment(Pos.CENTER_LEFT);
+        bottomBar.setPadding(new Insets(5, 0, 0, 0));
+
         Button backButton = new Button("← Back to Menu");
         backButton.setStyle("-fx-background-color: rgb(40, 45, 35); "
             + "-fx-text-fill: rgb(210, 200, 160); -fx-border-color: rgb(100, 110, 70); "
@@ -170,6 +184,66 @@ public class CampaignScene {
             }
         });
         bottomBar.getChildren().add(backButton);
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+        bottomBar.getChildren().add(spacer);
+
+        // Save slot buttons
+        Label saveLabel = new Label("Save/Load:");
+        saveLabel.setFont(Font.font("Consolas", 12));
+        saveLabel.setStyle("-fx-text-fill: rgb(120, 120, 100);");
+        saveLabel.setAlignment(Pos.CENTER);
+        bottomBar.getChildren().add(saveLabel);
+
+        for (int slot = 0; slot < 3; slot++) {
+            final int saveSlot = slot;
+            HBox slotBox = new HBox(4);
+            slotBox.setAlignment(Pos.CENTER);
+
+            Button saveBtn = new Button("Save " + (slot + 1));
+            saveBtn.setStyle("-fx-background-color: rgb(50, 60, 40); "
+                + "-fx-text-fill: rgb(200, 200, 160); -fx-border-color: rgb(100, 110, 70); "
+                + "-fx-font-size: 11px; -fx-padding: 6 12 6 12; -fx-cursor: hand;");
+            saveBtn.setOnAction(e -> {
+                if (campaignManager != null && gameState != null && entityManager != null) {
+                    boolean ok = campaignManager.saveGame(saveSlot, gameState, entityManager);
+                    LOG.info("Save to slot {}: {}", saveSlot + 1, ok ? "OK" : "FAILED");
+                } else {
+                    LOG.warn("Cannot save: campaignManager={}, gameState={}, entityManager={}",
+                        campaignManager != null, gameState != null, entityManager != null);
+                }
+            });
+
+            Button loadBtn = new Button("Load " + (slot + 1));
+            loadBtn.setStyle("-fx-background-color: rgb(50, 50, 60); "
+                + "-fx-text-fill: rgb(160, 180, 220); -fx-border-color: rgb(80, 90, 120); "
+                + "-fx-font-size: 11px; -fx-padding: 6 12 6 12; -fx-cursor: hand;");
+            loadBtn.setOnAction(e -> {
+                if (campaignManager != null) {
+                    boolean ok = campaignManager.loadGame(saveSlot);
+                    LOG.info("Load from slot {}: {}", saveSlot + 1, ok ? "OK" : "NO SAVE");
+                    if (ok) {
+                        updateBriefing();
+                    }
+                }
+            });
+
+            Button delBtn = new Button("X");
+            delBtn.setStyle("-fx-background-color: rgb(80, 35, 35); "
+                + "-fx-text-fill: rgb(220, 160, 160); -fx-border-color: rgb(120, 60, 60); "
+                + "-fx-font-size: 10px; -fx-padding: 6 8 6 8; -fx-cursor: hand;");
+            delBtn.setOnAction(e -> {
+                if (campaignManager != null) {
+                    boolean ok = campaignManager.getSaveManager().deleteSave(saveSlot);
+                    LOG.info("Delete slot {}: {}", saveSlot + 1, ok ? "OK" : "FAILED");
+                }
+            });
+
+            slotBox.getChildren().addAll(saveBtn, loadBtn, delBtn);
+            bottomBar.getChildren().add(slotBox);
+        }
+
         content.setBottom(bottomBar);
 
         root.getChildren().add(content);
@@ -266,15 +340,38 @@ public class CampaignScene {
         FlowPane missionButtons = new FlowPane(10, 8);
         missionButtons.setAlignment(Pos.CENTER_LEFT);
         missionButtons.setMaxWidth(700);
+        CampaignEpisode campaignEpisode = toCampaignEpisode(selectedEpisode);
         for (int m = 0; m < episode.missionCount(); m++) {
             final int missionIndex = m;
-            Button missionBtn = new Button("Start Mission " + (missionIndex + 1));
-            missionBtn.setStyle("-fx-background-color: rgb(60, 70, 45); "
-                + "-fx-text-fill: rgb(240, 230, 180); -fx-border-color: rgb(140, 150, 90); "
-                + "-fx-font-size: 14px; -fx-font-weight: bold; "
-                + "-fx-padding: 10 30 10 30; -fx-cursor: hand;");
+            boolean completed = campaignManager != null
+                && campaignManager.isMissionCompleted(campaignEpisode, missionIndex);
+            boolean available = campaignManager == null
+                || campaignManager.isMissionAvailable(campaignEpisode, missionIndex);
+
+            Button missionBtn = new Button();
+            if (completed) {
+                missionBtn.setText("\u2713 Mission " + (missionIndex + 1) + " - Completed");
+                missionBtn.setStyle("-fx-background-color: rgb(35, 80, 40); "
+                    + "-fx-text-fill: rgb(140, 255, 140); -fx-border-color: rgb(80, 180, 80); "
+                    + "-fx-font-size: 14px; -fx-font-weight: bold; "
+                    + "-fx-padding: 10 30 10 30; -fx-cursor: hand;");
+            } else if (available) {
+                missionBtn.setText("Start Mission " + (missionIndex + 1));
+                missionBtn.setStyle("-fx-background-color: rgb(60, 70, 45); "
+                    + "-fx-text-fill: rgb(240, 230, 180); -fx-border-color: rgb(140, 150, 90); "
+                    + "-fx-font-size: 14px; -fx-font-weight: bold; "
+                    + "-fx-padding: 10 30 10 30; -fx-cursor: hand;");
+            } else {
+                missionBtn.setText("\uD83D\uDD12 Mission " + (missionIndex + 1) + " - Locked");
+                missionBtn.setStyle("-fx-background-color: rgb(40, 40, 40); "
+                    + "-fx-text-fill: rgb(90, 90, 90); -fx-border-color: rgb(60, 60, 60); "
+                    + "-fx-font-size: 14px; -fx-font-weight: bold; "
+                    + "-fx-padding: 10 30 10 30;");
+            }
+
+            final boolean isAvailable = available;
             missionBtn.setOnAction(e -> {
-                if (callback != null) {
+                if (isAvailable && callback != null) {
                     callback.onStartMission(selectedEpisode, missionIndex);
                 }
             });
@@ -310,5 +407,46 @@ public class CampaignScene {
      */
     public void setCallback(SceneCallback callback) {
         this.callback = callback;
+    }
+
+    /**
+     * Set the campaign manager for mission state tracking and save/load.
+     *
+     * @param campaignManager the campaign manager
+     */
+    public void setCampaignManager(CampaignManager campaignManager) {
+        this.campaignManager = campaignManager;
+    }
+
+    /**
+     * Set the game state reference needed for saving.
+     *
+     * @param gameState the current game state
+     */
+    public void setGameState(GameState gameState) {
+        this.gameState = gameState;
+    }
+
+    /**
+     * Set the entity manager reference needed for saving.
+     *
+     * @param entityManager the current entity manager
+     */
+    public void setEntityManager(EntityManager entityManager) {
+        this.entityManager = entityManager;
+    }
+
+    /**
+     * Map the UI episode index to a CampaignEpisode enum.
+     *
+     * @param episodeIndex the 0-based episode index
+     * @return the corresponding CampaignEpisode
+     */
+    private static CampaignEpisode toCampaignEpisode(int episodeIndex) {
+        return switch (episodeIndex) {
+            case 0 -> CampaignEpisode.GLOBAL_CONFEDERATION;
+            case 1 -> CampaignEpisode.LIBERATION_OF_PERU;
+            default -> CampaignEpisode.CUSTOM_MISSIONS;
+        };
     }
 }

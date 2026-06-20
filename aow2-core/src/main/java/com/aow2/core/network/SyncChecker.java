@@ -82,7 +82,7 @@ public class SyncChecker {
         long hash = 17L;
 
         // Include tick count
-        hash = hash * 31 + state.currentTick();
+        hash = Long.rotateLeft(hash, 17) ^ state.currentTick();
 
         // Include all living unit positions and health
         // FIX (P1-H7): Sort entities by ID before hashing to ensure deterministic order
@@ -92,11 +92,11 @@ public class SyncChecker {
         sortedUnits.sort(Comparator.comparingInt(Unit::getId));
         for (var unit : sortedUnits) {
             if (!unit.isAlive()) continue;
-            hash = hash * 31 + unit.getId();
-            hash = hash * 31 + unit.getPosition().x();
-            hash = hash * 31 + unit.getPosition().y();
-            hash = hash * 31 + unit.getHp();
-            hash = hash * 31 + unit.getFaction().ordinal();
+            hash = Long.rotateLeft(hash, 17) ^ unit.getId();
+            hash = Long.rotateLeft(hash, 17) ^ unit.getPosition().x();
+            hash = Long.rotateLeft(hash, 17) ^ unit.getPosition().y();
+            hash = Long.rotateLeft(hash, 17) ^ unit.getHp();
+            hash = Long.rotateLeft(hash, 17) ^ unit.getFaction().ordinal();
         }
 
         // Include all living building positions and health
@@ -105,20 +105,20 @@ public class SyncChecker {
         sortedBuildings.sort(Comparator.comparingInt(Building::getId));
         for (var building : sortedBuildings) {
             if (!building.isAlive()) continue;
-            hash = hash * 31 + building.getId();
-            hash = hash * 31 + building.getPosition().x();
-            hash = hash * 31 + building.getPosition().y();
-            hash = hash * 31 + building.getHp();
-            hash = hash * 31 + building.getFaction().ordinal();
+            hash = Long.rotateLeft(hash, 17) ^ building.getId();
+            hash = Long.rotateLeft(hash, 17) ^ building.getPosition().x();
+            hash = Long.rotateLeft(hash, 17) ^ building.getPosition().y();
+            hash = Long.rotateLeft(hash, 17) ^ building.getHp();
+            hash = Long.rotateLeft(hash, 17) ^ building.getFaction().ordinal();
         }
 
         // Include projectile count
-        hash = hash * 31 + entities.projectileCount();
+        hash = Long.rotateLeft(hash, 17) ^ entities.projectileCount();
 
         // Include economy state (credits per player)
         if (economy != null) {
             for (int playerId = 0; playerId < 2; playerId++) {
-                hash = hash * 31 + economy.getCredits(playerId);
+                hash = Long.rotateLeft(hash, 17) ^ economy.getCredits(playerId);
             }
         }
 
@@ -127,14 +127,14 @@ public class SyncChecker {
             // Completed research IDs per player
             for (int playerId = 0; playerId < 2; playerId++) {
                 for (int researchId : research.getCompletedResearch(playerId)) {
-                    hash = hash * 31 + researchId;
+                    hash = Long.rotateLeft(hash, 17) ^ researchId;
                 }
             }
             // Active research progress
             for (var active : research.getActiveResearchEntries()) {
-                hash = hash * 31 + active.researchId();
-                hash = hash * 31 + active.playerId();
-                hash = hash * 31 + active.progress();
+                hash = Long.rotateLeft(hash, 17) ^ active.researchId();
+                hash = Long.rotateLeft(hash, 17) ^ active.playerId();
+                hash = Long.rotateLeft(hash, 17) ^ active.progress();
             }
         }
 

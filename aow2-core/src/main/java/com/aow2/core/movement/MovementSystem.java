@@ -113,6 +113,7 @@ public final class MovementSystem {
 
         // Speed check: unit moves one cell per N ticks, where N = MAX_SPEED_RATING - speed + 1
         // REF: complete_unit_stats.json — speed is a rating where higher = faster movement
+        // UNVERIFIED (L-4): Speed-to-ticks formula and MAX_SPEED_RATING=10 are assumed — RE provides speed ratings but not the exact conversion formula.
         // ASSUMPTION: MAX_SPEED_RATING = 10, formula: ticksPerCell = 10 - speed + 1
         // So speed 5 → ticksPerCell 6, speed 7 → ticksPerCell 4, speed 9 → ticksPerCell 2, speed 1 → ticksPerCell 10
         int ticksPerCell = Math.max(1, 10 - unit.getStats().speed() + 1);

@@ -64,6 +64,9 @@ public final class CampaignManager {
     private final List<Integer> completedEpisode2Missions;
     private final List<Integer> completedCustomMissions;
 
+    /** Score accumulated in the current campaign. */
+    private int campaignScore;
+
     /**
      * Constructs a new CampaignManager with the specified save directory
      * and an externally-provided script engine.
@@ -83,6 +86,7 @@ public final class CampaignManager {
         this.completedEpisode1Missions = new ArrayList<>();
         this.completedEpisode2Missions = new ArrayList<>();
         this.completedCustomMissions = new ArrayList<>();
+        this.campaignScore = 0;
 
         loadAllCampaignData();
     }
@@ -104,6 +108,7 @@ public final class CampaignManager {
         this.completedEpisode1Missions = new ArrayList<>();
         this.completedEpisode2Missions = new ArrayList<>();
         this.completedCustomMissions = new ArrayList<>();
+        this.campaignScore = 0;
 
         loadAllCampaignData();
     }
@@ -151,6 +156,7 @@ public final class CampaignManager {
         List<Mission> missions = getMissionsForEpisode(episode);
         this.currentCampaign = new Campaign(episode, missions);
         this.currentMissionIndex = 0;
+        this.campaignScore = 0;
         this.scriptEngine.reset();
         LOG.info("Started campaign: {} with {} missions", episode.title(), missions.size());
     }
@@ -189,8 +195,11 @@ public final class CampaignManager {
             completed.add(currentMissionIndex);
         }
 
+        // REF: campaign_guide.md — base mission completion bonus
+        this.campaignScore += 100;
         LOG.info("Completed mission {} in {} (total completed: {})",
             currentMissionIndex, episode.title(), completed.size());
+        LOG.info("Mission completed — base score +100 (total campaign score: {})", campaignScore);
 
         currentMissionIndex++;
 
@@ -341,6 +350,32 @@ public final class CampaignManager {
      */
     public ScriptEngine getScriptEngine() {
         return scriptEngine;
+    }
+
+    /**
+     * Adds score for the current campaign.
+     * REF: campaign_guide.md — +200 for enemy building destroyed, -100 for own unit/building loss
+     *
+     * @param points score points to add (can be negative for penalties)
+     */
+    public void addScore(int points) {
+        this.campaignScore += points;
+    }
+
+    /**
+     * Returns the current campaign score.
+     *
+     * @return current score
+     */
+    public int getCampaignScore() {
+        return campaignScore;
+    }
+
+    /**
+     * Resets the campaign score to zero.
+     */
+    public void resetScore() {
+        this.campaignScore = 0;
     }
 
     // --- Private helpers ---

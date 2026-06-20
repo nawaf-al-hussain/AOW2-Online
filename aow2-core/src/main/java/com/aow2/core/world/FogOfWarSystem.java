@@ -47,6 +47,9 @@ public final class FogOfWarSystem {
     /** The game map for terrain LOS checks. Set during updateVisibility. */
     private GameMap currentMap;
 
+    /** Whether fog of war is disabled entirely (e.g., for campaign scenarios). */
+    private boolean fogDisabled;
+
     /**
      * Constructs a FogOfWarSystem.
      * Visibility grids are initialized lazily when {@link #initialize(GameMap)} is called.
@@ -105,6 +108,15 @@ public final class FogOfWarSystem {
             return;
         }
 
+        if (fogDisabled) {
+            for (int x = 0; x < mapWidth; x++) {
+                for (int y = 0; y < mapHeight; y++) {
+                    grid[x][y] = TileVisibility.VISIBLE;
+                }
+            }
+            return;
+        }
+
         // Step 1: Downgrade all VISIBLE tiles to EXPLORED
         for (int x = 0; x < mapWidth; x++) {
             for (int y = 0; y < mapHeight; y++) {
@@ -130,6 +142,32 @@ public final class FogOfWarSystem {
     }
 
     /**
+     * Disable fog of war entirely. All tiles become VISIBLE for all players.
+     * Used for campaign scenarios where the RE specifies fog should be off.
+     * REF: campaign_guide.md — campaign flag y.Z[side][16] == 0 disables fog
+     */
+    public void disableFog() {
+        this.fogDisabled = true;
+        LOG.info("Fog of war disabled");
+    }
+
+    /**
+     * Enable fog of war. Restores normal visibility behavior.
+     */
+    public void enableFog() {
+        this.fogDisabled = false;
+        LOG.info("Fog of war enabled");
+    }
+
+    /**
+     * Check if fog of war is currently disabled.
+     * @return true if fog is disabled
+     */
+    public boolean isFogDisabled() {
+        return fogDisabled;
+    }
+
+    /**
      * Get visibility state of a tile for a player.
      *
      * @param playerId the player ID (0 or 1)
@@ -137,6 +175,7 @@ public final class FogOfWarSystem {
      * @return the tile visibility state, or UNEXPLORED if out of bounds
      */
     public TileVisibility getVisibility(int playerId, GridPosition pos) {
+        if (fogDisabled) return TileVisibility.VISIBLE;
         TileVisibility[][] grid = visibilityGrids.get(playerId);
         if (grid == null) {
             return TileVisibility.UNEXPLORED;
@@ -155,6 +194,7 @@ public final class FogOfWarSystem {
      * @return true if the tile is VISIBLE
      */
     public boolean isVisible(int playerId, GridPosition pos) {
+        if (fogDisabled) return true;
         return getVisibility(playerId, pos) == TileVisibility.VISIBLE;
     }
 
@@ -174,7 +214,7 @@ public final class FogOfWarSystem {
      * Reveal tiles within sight range of a position using DDA ray-casting with LOS blocking.
      * FIX(M-30): Implemented line-of-sight blocking via DDA ray-cast from the observer to
      * each tile on the perimeter of the sight range. Each ray marks tiles as VISIBLE until
-     * an opaque terrain type (MOUNTAIN) blocks further visibility. Buildings also block LOS.
+     * an opaque terrain type (MOUNTAIN) blocks further visibility. Only MOUNTAIN terrain blocks LOS per current implementation (RE ambiguity on building LOS blocking).
      * The center tile is always visible.
      * <p>
      * REF: MASTER_DOCUMENTATION.md Section 3.2 - Map visibility (ray-casting LOS)
@@ -223,7 +263,7 @@ public final class FogOfWarSystem {
      * Cast a DDA (Digital Differential Analyzer) ray from (x0,y0) to (x1,y1),
      * marking each tile as VISIBLE until an opaque tile blocks further visibility.
      * <p>
-     * Opaque tiles are: MOUNTAIN terrain, or tiles occupied by alive buildings.
+     * Opaque tiles are: MOUNTAIN terrain. Building LOS blocking is not implemented due to RE ambiguity.
      * The blocking tile itself IS marked visible (you can see the obstacle).
      *
      * @param grid visibility grid
@@ -273,7 +313,7 @@ public final class FogOfWarSystem {
 
     /**
      * Check if a tile blocks line of sight.
-     * MOUNTAIN terrain blocks LOS. Alive buildings also block LOS.
+     * MOUNTAIN terrain blocks LOS. Building LOS blocking is not implemented due to RE ambiguity — REF: map_system.md is ambiguous on this point.
      * REF: map_system.md - Mountain terrain blocks line of sight
      *
      * @param x tile x

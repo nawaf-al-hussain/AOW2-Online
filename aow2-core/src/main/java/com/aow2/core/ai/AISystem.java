@@ -152,6 +152,11 @@ public final class AISystem {
 
         // Strategy quality check: skip this decision cycle randomly based on difficulty
         // REF: ai_analysis.md — difficulty affects decision quality
+        // UNVERIFIED (L-8): No RE basis for random decision skipping. The original AI
+        // processes every cycle. This probabilistic skip is a common game AI pattern
+        // but is fabricated. Uses DeterministicLCG so it IS lockstep-safe. Consider
+        // removing and relying solely on deterministic difficulty scaling (tick interval,
+        // task limits) if this causes issues.
         if (random.nextDouble() > difficulty.strategyQuality) {
             LOG.debug("AI player {} skipping decision (strategy quality check)", playerId);
             return;

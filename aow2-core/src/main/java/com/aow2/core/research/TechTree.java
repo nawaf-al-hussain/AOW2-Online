@@ -121,6 +121,8 @@ public final class TechTree {
      * REF: combat_formulas.md "Research/Upgrade Effects" — research IDs 0-23, 43
      * REF: tech_tree_confederation.md — full tree structure with prerequisites
      * <p>
+     * UNVERIFIED (M-18): All research costs and durations are hardcoded assumptions. RE provides a cost formula but not all parameter values.
+     * <p>
      * Confederation has 25 research nodes forming multiple chains:
      * <ul>
      *   <li>Infantry chain: R0 → R1, R2, R3 → R6, R7 → R8 → R9, R10 → R11, R12 → R13 → R14</li>

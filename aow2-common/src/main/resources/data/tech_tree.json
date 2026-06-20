@@ -575,7 +575,7 @@
     {"localId": 1, "name": "Bio suit", "effect": "Health recovery for infantry increases 3 times", "globalEffectId": -1, "prerequisiteLocalId": 0, "cost": 75, "duration": 400},
     {"localId": 2, "name": "Enhanced firing rate", "effect": "Assault's fire rate increases by 50%", "globalEffectId": 2, "prerequisiteLocalId": -1, "cost": 60, "duration": 350},
     {"localId": 3, "name": "Armour-piercing bullet", "effect": "Assault's damage increases by 40%", "globalEffectId": 3, "prerequisiteLocalId": -1, "cost": 80, "duration": 400},
-    {"localId": 4, "name": "Heavy shells", "effect": "Heavy Assault's damage increases by 40%", "globalEffectId": 14, "prerequisiteLocalId": -1, "cost": 100, "duration": 450},
+    {"localId": 4, "name": "Heavy shells", "effect": "Heavy Assault's damage increases by 40%", "globalEffectId": -1, "prerequisiteLocalId": -1, "cost": 100, "duration": 450},
     {"localId": 5, "name": "Forced light missiles", "effect": "Allows you to train Flame Assaults", "globalEffectId": -1, "prerequisiteLocalId": -1, "cost": 60, "duration": 300},
     {"localId": 6, "name": "Lava flame fuel", "effect": "Heavy flamethrower installs on AV-40", "globalEffectId": -1, "prerequisiteLocalId": 3, "cost": 120, "duration": 500},
     {"localId": 7, "name": "Volcano flame gun", "effect": "Increases damage for Zeus and Hammer tanks by 25%", "globalEffectId": -1, "prerequisiteLocalId": -1, "cost": 100, "duration": 450}
