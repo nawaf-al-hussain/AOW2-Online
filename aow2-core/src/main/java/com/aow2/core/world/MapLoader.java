@@ -13,6 +13,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -47,6 +48,14 @@ public class MapLoader {
         int width;
         int height;
         List<TileData> tiles;
+        /** 2D terrain array format: terrain[row][col] = "GRASS", "FOREST", etc.
+         *  FIX(PLAYTEST-4): Added support for the dense 2D terrain array format used
+         *  by all campaign and custom mission maps. Previously only the sparse
+         *  tiles:[{x,y,terrain}] format was supported. */
+        List<List<String>> terrain;
+        /** Starting positions from the map JSON. Not yet wired to spawn logic
+         *  but preserved for future use. */
+        List<StartingPositionData> startingPositions;
 
         @JsonProperty("width")
         public void setWidth(int width) { this.width = width; }
@@ -56,6 +65,28 @@ public class MapLoader {
 
         @JsonProperty("tiles")
         public void setTiles(List<TileData> tiles) { this.tiles = tiles; }
+
+        @JsonProperty("terrain")
+        public void setTerrain(List<List<String>> terrain) { this.terrain = terrain; }
+
+        @JsonProperty("startingPositions")
+        public void setStartingPositions(List<StartingPositionData> sp) { this.startingPositions = sp; }
+    }
+
+    /** DTO for starting position entries in map JSON. */
+    static final class StartingPositionData {
+        int x;
+        int y;
+        String faction;
+
+        @JsonProperty("x")
+        public void setX(int x) { this.x = x; }
+
+        @JsonProperty("y")
+        public void setY(int y) { this.y = y; }
+
+        @JsonProperty("faction")
+        public void setFaction(String faction) { this.faction = faction; }
     }
 
     /**
@@ -127,26 +158,61 @@ public class MapLoader {
 
         GameMap map = new GameMap(mapData.width, mapData.height);
 
-        if (mapData.tiles == null || mapData.tiles.isEmpty()) {
-            LOG.warn("No tiles array found in map JSON, returning empty GRASS map");
-            return map;
-        }
-
         int tileOverrides = 0;
-        for (TileData tileData : mapData.tiles) {
-            try {
-                TerrainType terrain = parseTerrainType(tileData.terrain);
-                if (map.isInBounds(tileData.x, tileData.y)) {
-                    map.setTile(tileData.x, tileData.y, terrain);
-                    tileOverrides++;
-                } else {
-                    LOG.warn("Tile ({}, {}) out of bounds for map {}x{}, skipping",
-                        tileData.x, tileData.y, mapData.width, mapData.height);
+
+        // FIX(PLAYTEST-4): Support the dense 2D "terrain" array format used by all
+        // campaign and custom mission maps. Convert it to the same tile-setting
+        // logic as the sparse "tiles" format.
+        if ((mapData.tiles == null || mapData.tiles.isEmpty())
+                && mapData.terrain != null && !mapData.terrain.isEmpty()) {
+            List<TileData> convertedTiles = new ArrayList<>();
+            for (int row = 0; row < mapData.terrain.size() && row < mapData.height; row++) {
+                List<String> rowData = mapData.terrain.get(row);
+                for (int col = 0; col < rowData.size() && col < mapData.width; col++) {
+                    String terrainStr = rowData.get(col);
+                    if (terrainStr != null && !terrainStr.isEmpty()) {
+                        TileData td = new TileData();
+                        td.x = col;
+                        td.y = row;
+                        td.terrain = terrainStr;
+                        convertedTiles.add(td);
+                    }
                 }
-            } catch (IllegalArgumentException e) {
-                LOG.warn("Failed to parse tile entry at ({}, {}): unknown terrain '{}'",
-                    tileData.x, tileData.y, tileData.terrain);
             }
+            LOG.info("Converted 2D terrain array ({}x{}) to {} tile entries",
+                mapData.height, mapData.width, convertedTiles.size());
+            // Process the converted tiles using the same logic as the sparse format
+            for (TileData tileData : convertedTiles) {
+                try {
+                    TerrainType terrain = parseTerrainType(tileData.terrain);
+                    if (map.isInBounds(tileData.x, tileData.y)) {
+                        map.setTile(tileData.x, tileData.y, terrain);
+                        tileOverrides++;
+                    }
+                } catch (IllegalArgumentException e) {
+                    LOG.warn("Failed to parse terrain at ({}, {}): unknown terrain '{}'",
+                        tileData.x, tileData.y, tileData.terrain);
+                }
+            }
+        } else if (mapData.tiles != null && !mapData.tiles.isEmpty()) {
+            // Original sparse tiles format (used by test_map.json)
+            for (TileData tileData : mapData.tiles) {
+                try {
+                    TerrainType terrain = parseTerrainType(tileData.terrain);
+                    if (map.isInBounds(tileData.x, tileData.y)) {
+                        map.setTile(tileData.x, tileData.y, terrain);
+                        tileOverrides++;
+                    } else {
+                        LOG.warn("Tile ({}, {}) out of bounds for map {}x{}, skipping",
+                            tileData.x, tileData.y, mapData.width, mapData.height);
+                    }
+                } catch (IllegalArgumentException e) {
+                    LOG.warn("Failed to parse tile entry at ({}, {}): unknown terrain '{}'",
+                        tileData.x, tileData.y, tileData.terrain);
+                }
+            }
+        } else {
+            LOG.warn("No tiles or terrain array found in map JSON, returning empty GRASS map");
         }
 
         LOG.info("Loaded map {}x{} with {} tile overrides", mapData.width, mapData.height, tileOverrides);

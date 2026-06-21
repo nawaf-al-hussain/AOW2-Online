@@ -19,7 +19,7 @@ function onTick()
 
     if tick == 400 and not wave1Spawned then
         wave1Spawned = true
-        aow2.spawnUnit("RESISTANCE", "REBEL_SNIPER", 30, 15)
+        aow2.spawnUnit("RESISTANCE", "REBEL_SNIPER", 28, 15)
         aow2.spawnUnit("RESISTANCE", "REBEL_INFANTRY", 28, 18)
         aow2.showMessage("Sniper fire from the treeline! Take cover!")
     end
@@ -27,7 +27,7 @@ function onTick()
     if tick == 700 and not wave2Spawned then
         wave2Spawned = true
         aow2.spawnUnit("RESISTANCE", "REBEL_INFANTRY", 26, 12)
-        aow2.spawnUnit("RESISTANCE", "REBEL_INFANTRY", 32, 16)
+        aow2.spawnUnit("RESISTANCE", "REBEL_INFANTRY", 27, 16)
         aow2.spawnUnit("RESISTANCE", "REBEL_GRENADIER", 29, 20)
         aow2.showMessage("Guerrillas emerging from multiple directions!")
     end
@@ -35,18 +35,18 @@ function onTick()
     if tick == 1100 and not wave3Spawned then
         wave3Spawned = true
         aow2.spawnUnit("RESISTANCE", "REBEL_COYOTE", 25, 14)
-        aow2.spawnUnit("RESISTANCE", "REBEL_SNIPER", 33, 11)
+        aow2.spawnUnit("RESISTANCE", "REBEL_SNIPER", 27, 11)
         aow2.spawnUnit("RESISTANCE", "REBEL_INFANTRY", 27, 19)
-        aow2.spawnUnit("RESISTANCE", "REBEL_INFANTRY", 31, 17)
+        aow2.spawnUnit("RESISTANCE", "REBEL_INFANTRY", 28, 17)
         aow2.showMessage("Enemy vehicles pushing through the jungle!")
     end
 
     if tick == 1600 and not wave4Spawned then
         wave4Spawned = true
         aow2.spawnUnit("RESISTANCE", "REBEL_ARMADILLO", 24, 16)
-        aow2.spawnUnit("RESISTANCE", "REBEL_COYOTE", 34, 13)
+        aow2.spawnUnit("RESISTANCE", "REBEL_COYOTE", 28, 13)
         aow2.spawnUnit("RESISTANCE", "REBEL_GRENADIER", 28, 21)
-        aow2.spawnUnit("RESISTANCE", "REBEL_SNIPER", 32, 10)
+        aow2.spawnUnit("RESISTANCE", "REBEL_SNIPER", 28, 10)
         aow2.showMessage("Main guerrilla force engaged! Watch for ambushes!")
     end
 

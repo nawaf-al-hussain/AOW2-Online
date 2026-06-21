@@ -56,6 +56,7 @@ function onTick()
 end
 
 function onBlockadeUnitKilled()
+    fortressKilled = fortressKilled + 1
     local remaining = aow2.getUnitCount("CONFEDERATION")
     if remaining > 0 then
         aow2.showMessage("Enemy unit destroyed! " .. remaining .. " remaining.")

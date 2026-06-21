@@ -28,7 +28,7 @@ function onTick()
         aow2.spawnUnit("RESISTANCE", "REBEL_COYOTE", 20, 6)
         aow2.spawnUnit("RESISTANCE", "REBEL_COYOTE", 21, 9)
         aow2.spawnUnit("RESISTANCE", "REBEL_INFANTRY", 23, 4)
-        aow2.spawnUnit("RESISTANCE", "REBEL_SNIPER", 25, 10)
+        aow2.spawnUnit("RESISTANCE", "REBEL_SNIPER", 23, 10)
         aow2.showMessage("Enemy counter-attack from the flanks!")
     end
 

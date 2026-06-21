@@ -4,7 +4,7 @@
 local ridgeDefenders = false
 local reinforcementWave = false
 local ridgeCaptured = false
-local enemiesOnRidge = 10
+-- enemiesOnRidge tracking handled by getUnitCount() in victory check
 
 function onStart()
     aow2.showMessage("The Resistance holds a strategic ridge overlooking the valley.")

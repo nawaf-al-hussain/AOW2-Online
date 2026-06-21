@@ -64,13 +64,20 @@ combat with projectiles and splash damage, and view replays. Everything else has
 - [x] Three difficulties, deterministic, fog-of-war aware
 - [x] Sealed interface MilitaryAction
 
-## Phase 7: Campaign System ⚠️ ARCHITECTURE EXISTS, NEEDS PLAYTESTING
+## Phase 7: Campaign System ✅ PLAYTESTED AND FIXED
 - [x] Mission scripting system (Lua 5.2 via LuaJ)
 - [x] 29 Lua scripts (7+7 campaign + 15 custom)
 - [x] Save/load system, briefing screen, campaign manager
 - [x] ModEventBridge callbacks wired (C-NEW-4 fixed)
 - [x] CampaignManager injected into CampaignScene (H-NEW-13 fixed)
 - [x] GameAPI event hooks fire (M-NEW-17 fixed)
+- [x] MapLoader supports 2D terrain array format (PLAYTEST-4)
+- [x] Lua onStart() properly called from Java (PLAYTEST-3)
+- [x] EventDispatcher + ModEventBridge wired for Lua events (PLAYTEST-5)
+- [x] All 30 maps: invalid DIRT/RUINS terrain types replaced (PLAYTEST-10)
+- [x] 17 OOB spawnUnit coordinates fixed across 4 missions (PLAYTEST-11)
+- [x] ep2_mission4 victory condition bug fixed (PLAYTEST-7)
+- [x] spawnUnit uses dynamic map dimensions, not hardcoded 128 (PLAYTEST-6)
 
 ## Phase 8: Multiplayer ✅ COMPLETE
 - [x] Spring Boot server, JWT auth, matchmaking, lockstep networking

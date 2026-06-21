@@ -923,6 +923,24 @@ public class GameScene {
     }
 
     /**
+     * FIX(PLAYTEST-6): Returns the current map width in tiles.
+     *
+     * @return map width, or 0 if no map is loaded
+     */
+    public int getMapWidth() {
+        return map != null ? map.getWidth() : 0;
+    }
+
+    /**
+     * FIX(PLAYTEST-6): Returns the current map height in tiles.
+     *
+     * @return map height, or 0 if no map is loaded
+     */
+    public int getMapHeight() {
+        return map != null ? map.getHeight() : 0;
+    }
+
+    /**
      * Gets the game state (for campaign script loading).
      * FIX(CAMP-5): Expose for AOW2App script loading.
      */

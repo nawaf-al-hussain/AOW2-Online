@@ -4,7 +4,8 @@
 local facilityRevealed = false
 local alarmRaised = false
 local techDestroyed = false
-local extractionPoint = {x = 10, y = 10}
+-- TODO(PLAYTEST): extractionPoint and infiltrator tracking require engine-level
+-- unit-by-ID monitoring. Currently victory reduces to destroying the Tech Centre.
 local infiltratorAlive = true
 
 function onStart()

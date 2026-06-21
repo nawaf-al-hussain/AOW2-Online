@@ -17,16 +17,16 @@ function onTick()
 
     if tick == 600 and not wave1Spawned then
         wave1Spawned = true
-        aow2.spawnUnit("RESISTANCE", "REBEL_INFANTRY", 20, 5)
-        aow2.spawnUnit("RESISTANCE", "REBEL_INFANTRY", 21, 7)
+        aow2.spawnUnit("RESISTANCE", "REBEL_INFANTRY", 17, 5)
+        aow2.spawnUnit("RESISTANCE", "REBEL_INFANTRY", 18, 7)
         aow2.showMessage("Enemy landing craft spotted on the eastern shore!")
     end
 
     if tick == 1200 and not wave2Spawned then
         wave2Spawned = true
         aow2.spawnUnit("RESISTANCE", "REBEL_INFANTRY", 18, 6)
-        aow2.spawnUnit("RESISTANCE", "REBEL_GRENADIER", 20, 8)
-        aow2.spawnUnit("RESISTANCE", "REBEL_INFANTRY", 22, 4)
+        aow2.spawnUnit("RESISTANCE", "REBEL_GRENADIER", 17, 8)
+        aow2.spawnUnit("RESISTANCE", "REBEL_INFANTRY", 16, 4)
         aow2.showMessage("Second wave approaching! Hold the line!")
     end
 

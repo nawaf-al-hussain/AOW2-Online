@@ -48,6 +48,10 @@ public final class GameAPI {
     /** Economy system reference for credit queries. */
     private static EconomySystem economySystem;
 
+    /** FIX(PLAYTEST-6): Cached map dimensions for spawn coordinate clamping. */
+    private static int mapWidth = 128;
+    private static int mapHeight = 128;
+
     /** Objective status map. Key = objective name, Value = status string.
      *  FIX (P1-M1): Changed to ConcurrentHashMap for thread-safety between
      *  game loop thread and Lua scripting thread. */
@@ -82,6 +86,18 @@ public final class GameAPI {
         economySystem = economy;
     }
 
+    /**
+     * FIX(PLAYTEST-6): Sets the map dimensions for spawn coordinate clamping.
+     * Called by MissionScriptEngine when the game scene is initialized with a map.
+     *
+     * @param width  map width in tiles
+     * @param height map height in tiles
+     */
+    public static void setMapDimensions(int width, int height) {
+        mapWidth = Math.max(1, width);
+        mapHeight = Math.max(1, height);
+    }
+
     // --- Spawn / Destroy ---
 
     /**
@@ -99,9 +115,11 @@ public final class GameAPI {
         try {
             Faction f = resolveFaction(faction);
             UnitType type = UnitType.valueOf(unitType);
+            // FIX(PLAYTEST-6): Clamp spawn coordinates to actual map dimensions
+            // instead of hardcoded 127. Uses dimensions set via setMapDimensions().
             GridPosition pos = new GridPosition(
-                Math.clamp(x, 0, 127),
-                Math.clamp(y, 0, 127)
+                Math.clamp(x, 0, mapWidth - 1),
+                Math.clamp(y, 0, mapHeight - 1)
             );
 
             // Look up unit stats from StatsRegistry instead of hardcoded dummy values
@@ -279,7 +297,12 @@ public final class GameAPI {
      */
     public static int getUnitCount(String faction) {
         if (entityManager == null) return 0;
-        return entityManager.getAliveUnitsForPlayer(resolveFaction(faction)).size();
+        try {
+            return entityManager.getAliveUnitsForPlayer(resolveFaction(faction)).size();
+        } catch (IllegalArgumentException e) {
+            LOG.warn("getUnitCount: {}", e.getMessage());
+            return 0;
+        }
     }
 
     /**
@@ -290,7 +313,12 @@ public final class GameAPI {
      */
     public static int getBuildingCount(String faction) {
         if (entityManager == null) return 0;
-        return entityManager.getBuildingsForPlayer(resolveFaction(faction)).size();
+        try {
+            return entityManager.getBuildingsForPlayer(resolveFaction(faction)).size();
+        } catch (IllegalArgumentException e) {
+            LOG.warn("getBuildingCount: {}", e.getMessage());
+            return 0;
+        }
     }
 
     /**
@@ -409,5 +437,7 @@ public final class GameAPI {
         timers.clear();
         eventHooks.clear();
         messageQueue.clear();
+        mapWidth = 128;
+        mapHeight = 128;
     }
 }

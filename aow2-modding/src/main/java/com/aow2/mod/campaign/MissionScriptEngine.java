@@ -3,6 +3,7 @@ package com.aow2.mod.campaign;
 import com.aow2.core.campaign.ScriptEngine;
 import com.aow2.core.engine.GameState;
 import com.aow2.core.economy.EconomySystem;
+import com.aow2.core.mod.ModEventBridge;
 import com.aow2.core.world.EntityManager;
 import com.aow2.mod.script.GameAPI;
 import com.aow2.mod.script.LuaEngine;
@@ -12,6 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Executes mission scripts using LuaJ for campaign missions.
@@ -33,13 +35,31 @@ public final class MissionScriptEngine implements ScriptEngine {
     /** Whether a mission script is currently loaded. */
     private boolean scriptActive;
 
+    /** Whether ModEventBridge callbacks have been registered this session. */
+    private final AtomicBoolean bridgeRegistered = new AtomicBoolean(false);
+
     /**
      * Constructs a new MissionScriptEngine.
+     * FIX(PLAYTEST-5): Wires the GameAPI EventDispatcher so that fireEvent()
+     * can invoke Lua callbacks. Without this, onUnitKilled/onBuildingDestroyed
+     * hooks registered in Lua are never dispatched.
      */
     public MissionScriptEngine() {
         this.luaEngine = new LuaEngine();
         this.triggerCallbacks = new ConcurrentHashMap<>();
         this.scriptActive = false;
+
+        GameAPI.setEventDispatcher((callbackName, args) -> {
+            try {
+                LuaValue[] luaArgs = new LuaValue[args.length];
+                for (int i = 0; i < args.length; i++) {
+                    luaArgs[i] = LuaEngine.javaToLua(args[i]);
+                }
+                luaEngine.callFunction(callbackName, luaArgs);
+            } catch (Exception e) {
+                LOG.error("Error dispatching event to Lua: {}", callbackName, e);
+            }
+        });
     }
 
     /**
@@ -78,6 +98,7 @@ public final class MissionScriptEngine implements ScriptEngine {
             boolean loaded = luaEngine.loadScript(scriptFile);
             if (loaded) {
                 scriptActive = true;
+                wireModEventBridge();
                 LOG.info("Mission script loaded: {}", scriptFile);
             } else {
                 LOG.warn("Failed to load mission script: {}", scriptFile);
@@ -125,12 +146,49 @@ public final class MissionScriptEngine implements ScriptEngine {
             boolean loaded = luaEngine.loadScriptFromString(scriptContent, scriptName);
             if (loaded) {
                 scriptActive = true;
+                wireModEventBridge();
                 LOG.info("Mission script loaded from string: {}", scriptName);
             }
             return loaded;
         } catch (Exception e) {
             LOG.error("Error loading mission script from string: {}", scriptName, e);
             return false;
+        }
+    }
+
+    /**
+     * FIX(PLAYTEST-3): Calls the Lua onStart() function to initialize the mission.
+     * All 29 mission scripts define onStart() to register event hooks, show
+     * briefing messages, and set initial objectives. Previously this was never
+     * called — processTick() was invoked instead, which only calls onTick().
+     */
+    public void callStartFunction() {
+        if (!scriptActive) {
+            return;
+        }
+        try {
+            luaEngine.callFunction("onStart");
+            LOG.info("Lua onStart() executed successfully");
+        } catch (Exception e) {
+            LOG.error("Error calling Lua onStart()", e);
+        }
+    }
+
+    /**
+     * FIX(PLAYTEST-5): Registers ModEventBridge callbacks that forward combat
+     * events (unit killed, building destroyed) to GameAPI.fireEvent(). This connects
+     * the core combat system to the Lua scripting layer. Registration is idempotent
+     * — callbacks are only wired once per session.
+     */
+    private void wireModEventBridge() {
+        if (bridgeRegistered.compareAndSet(false, true)) {
+            ModEventBridge.registerUnitKilledCallback(
+                (unitId, type, faction, killerPlayerId) ->
+                    GameAPI.fireEvent("unitKilled", unitId));
+            ModEventBridge.registerBuildingDestroyedCallback(
+                (buildingId, type, faction, destroyerPlayerId) ->
+                    GameAPI.fireEvent("buildingDestroyed", buildingId));
+            LOG.info("ModEventBridge callbacks registered for Lua event dispatch");
         }
     }
 

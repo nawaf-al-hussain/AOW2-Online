@@ -32,6 +32,8 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import com.aow2.core.economy.EconomySystem;
+import com.aow2.mod.script.GameAPI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -222,7 +224,10 @@ public class AOW2App extends GameApplication {
             // FIX(CAMP-5+6): Use real MissionScriptEngine instead of NoOpScriptEngine.
             // This enables Lua script loading, processTick(), and trigger firing.
             MissionScriptEngine scriptEngine = new MissionScriptEngine();
-            campaignManager = new CampaignManager(scriptEngine);
+            // FIX(PLAYTEST-1): CampaignManager requires a save directory Path.
+            // Use a 'saves' subdirectory under the user's home for campaign save data.
+            Path saveDir = Paths.get(System.getProperty("user.home"), ".aow2", "saves");
+            campaignManager = new CampaignManager(saveDir, scriptEngine);
         }
         campaignScene.setCampaignManager(campaignManager);
 
@@ -250,6 +255,9 @@ public class AOW2App extends GameApplication {
                 showGame(mapPath);
                 // Wire campaign context into the newly created GameScene
                 if (gameScene != null) {
+                    // FIX(PLAYTEST-6): Set map dimensions in GameAPI so spawnUnit
+                    // clamps to the actual map size instead of hardcoded 128x128.
+                    GameAPI.setMapDimensions(gameScene.getMapWidth(), gameScene.getMapHeight());
                     gameScene.setCampaignContext(campaignManager, episodeIndex, missionIndex);
                     gameScene.setCampaignEndCallback(() -> {
                         LOG.info("Campaign mission ended, returning to campaign scene");
@@ -261,14 +269,29 @@ public class AOW2App extends GameApplication {
                         Mission mission = missions.get(missionIndex);
                         var se = campaignManager.getScriptEngine();
                         se.reset();
-                        for (String scriptFile : mission.scriptFiles()) {
-                            boolean loaded = se.loadScript(scriptFile,
-                                gameScene.getGameState(), gameScene.getEntityManager(),
-                                gameScene.getEconomySystem());
-                            LOG.info("Loaded mission script {}: {}", scriptFile, loaded);
+                        // FIX(PLAYTEST-2): Cast to MissionScriptEngine for the 4-param
+                        // loadScript overload that accepts EconomySystem.
+                        if (se instanceof MissionScriptEngine mse) {
+                            EconomySystem economy = gameScene.getEconomy();
+                            for (String scriptFile : mission.scriptFiles()) {
+                                boolean loaded = mse.loadScript(scriptFile,
+                                    gameScene.getGameState(), gameScene.getEntityManager(),
+                                    economy);
+                                LOG.info("Loaded mission script {}: {}", scriptFile, loaded);
+                            }
+                            // FIX(PLAYTEST-3): Call Lua onStart() to initialize the mission.
+                            // Previously processTick() was called here which only invokes onTick(),
+                            // meaning onStart() (which registers event hooks and shows briefing
+                            // messages) was never executed.
+                            mse.callStartFunction();
+                        } else {
+                            // Fallback for non-Lua script engines (e.g., NoOpScriptEngine)
+                            for (String scriptFile : mission.scriptFiles()) {
+                                boolean loaded = se.loadScript(scriptFile,
+                                    gameScene.getGameState(), gameScene.getEntityManager());
+                                LOG.info("Loaded mission script {}: {}", scriptFile, loaded);
+                            }
                         }
-                        // Call Lua onStart() to initialize the mission
-                        se.processTick(gameScene.getGameState(), gameScene.getEntityManager());
                     }
                 }
             }

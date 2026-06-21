@@ -67,7 +67,7 @@
     {"x": 6, "y": 12, "terrain": "SAND"},
     {"x": 5, "y": 13, "terrain": "SAND"},
     {"x": 6, "y": 13, "terrain": "SAND"},
-    {"x": 3, "y": 14, "terrain": "RUINS"},
-    {"x": 4, "y": 14, "terrain": "RUINS"}
+    {"x": 3, "y": 14, "terrain": "FOREST"},
+    {"x": 4, "y": 14, "terrain": "FOREST"}
   ]
 }

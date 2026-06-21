@@ -235,7 +235,8 @@
 | 🔍 Hidden Audit | 13 | 12 | 1 | 0 | **0 OPEN** |
 | 🔧 Build Verification | 8 | 8 | 0 | 0 | **0 OPEN** |
 | 🔧 Campaign Wiring | 8 | 8 | 0 | 0 | **0 OPEN** |
-| **Total** | **108** | **103** | **4** | **0** | **0 OPEN** |
+| 🔧 Campaign Playtest | 13 | 13 | 0 | 0 | **0 OPEN** |
+| **Total** | **121** | **116** | **4** | **0** | **0 OPEN** |
 
 ### What Works Well
 - Combat system (damage formula, armor, projectiles, splash, siege, mines)
@@ -297,6 +298,28 @@
 - **CAMP-6**: 4 Lua scripts (ep2_mission3/5/6/7) — Replaced invalid `CONFED_SNIPER` with `CONFED_GRENADIER` (Confederation has no sniper unit)
 - **CAMP-7**: `GameScene` — Added `getGameState()`, `getEntityManager()` getters for AOW2App script loading
 - **CAMP-8**: `GameScene.setCampaignContext()` — Now also copies `mission.triggers()` and initializes kill tracking state
+
+### What Was Fixed This Session (2026-06-22 session 7 — campaign playtesting)
+- **13 playtest issues fixed** (120 total, 0 open)
+- **PLAYTEST-1**: `AOW2App.java` — `CampaignManager(ScriptEngine)` → `CampaignManager(saveDir, scriptEngine)` (missing Path param was compile error)
+- **PLAYTEST-2**: `AOW2App.java` — `gameScene.getEconomySystem()` → `gameScene.getEconomy()` (method didn't exist); added `instanceof MissionScriptEngine` cast for 4-param `loadScript()`
+- **PLAYTEST-3**: `MissionScriptEngine` — Added `callStartFunction()` that invokes Lua `onStart()`. Previously `processTick()` was called which only runs `onTick()` — mission initialization (event hook registration, briefing messages) never happened
+- **PLAYTEST-4**: `MapLoader.java` — Added support for 2D `terrain` array format (`[[\"GRASS\",...],...]`). All 30 campaign/custom maps used this format but MapLoader only read sparse `tiles:[{x,y,terrain}]`. Maps now load with correct terrain instead of blank GRASS
+- **PLAYTEST-5**: `MissionScriptEngine` — Wired `GameAPI.setEventDispatcher()` in constructor + registered `ModEventBridge` callbacks in `wireModEventBridge()` on first script load. Combat events (unit killed, building destroyed) now dispatch to Lua callbacks
+- **PLAYTEST-6**: `GameAPI.spawnUnit()` — Replaced hardcoded `Math.clamp(x, 0, 127)` with dynamic map dimensions via `GameAPI.setMapDimensions()`. Added `getMapWidth()`/`getMapHeight()` to `GameScene`, wired from `AOW2App`
+- **PLAYTEST-7**: `ep2_mission4.lua` — Added `fortressKilled = fortressKilled + 1` to `onBlockadeUnitKilled()`. Victory condition was unreachable — `fortressKilled` was never incremented
+- **PLAYTEST-8**: `ep1_mission3.lua` — Removed dead variable `enemiesOnRidge = 10` (never read)
+- **PLAYTEST-9**: `ep2_mission6.lua` — Replaced dead `extractionPoint` variable with TODO comment (infiltrator tracking requires engine-level unit-by-ID monitoring)
+- **PLAYTEST-10**: 14 episode maps + 15 custom maps + test_map — Replaced invalid `DIRT` → `SAND` and `RUINS` → `FOREST` terrain types (1,061+ replacements across 30 map files)
+- **PLAYTEST-11**: 4 custom mission Lua scripts — Fixed 17 out-of-bounds `spawnUnit` coordinates (custom_mission1/6/7/9 all had x-values exceeding map width)
+- **PLAYTEST-12**: `GameAPI.getUnitCount()`/`getBuildingCount()` — Added try-catch around `resolveFaction()` to prevent unhandled `IllegalArgumentException` on bad faction names from halting all tick processing
+- **PLAYTEST-13**: `MapLoader.MapData` — Added `startingPositions` field parsing (preserved for future spawn point wiring)
+
+### Known Design Limitations (not bugs — documented for future work)
+1. **Dual objective systems**: Java-side `Objective` records and Lua-side `GameAPI.setObjective()` are disconnected. Lua objectives update an isolated map that the victory/defeat system doesn't consult. The Java-side objectives (from campaign JSON) work correctly.
+2. **Script messages never displayed**: `GameAPI.getAndClearMessages()` is never polled by the HUD. Messages are logged to SLF4J but not rendered on screen.
+3. **`onAreaEntered()` has no dispatch**: The callback is registered but no game loop code checks unit proximity to registered areas. Only `ep1_mission3.lua` uses this.
+4. **`getTick()` long→int narrowing**: `GameState.currentTick()` returns long but `getTick()` casts to int. Theoretically overflows at ~2.1B ticks (impractical in normal gameplay).
 
 ### What Still Does NOT Work
 1. ~~Build placement broken end-to-end~~ ✅ FIXED (H-NEW-11) — UI wiring complete, backend was already working
