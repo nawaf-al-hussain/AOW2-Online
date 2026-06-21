@@ -234,7 +234,8 @@
 | 🟢 LOW | 22 | 22 | 0 | 0 | **0 OPEN** |
 | 🔍 Hidden Audit | 13 | 12 | 1 | 0 | **0 OPEN** |
 | 🔧 Build Verification | 8 | 8 | 0 | 0 | **0 OPEN** |
-| **Total** | **100** | **95** | **4** | **0** | **0 OPEN** |
+| 🔧 Campaign Wiring | 8 | 8 | 0 | 0 | **0 OPEN** |
+| **Total** | **108** | **103** | **4** | **0** | **0 OPEN** |
 
 ### What Works Well
 - Combat system (damage formula, armor, projectiles, splash, siege, mines)
@@ -285,6 +286,17 @@
 - **BUILD-6**: `SessionService.java` — Removed duplicate `@PostConstruct` from `recoverActiveSessions()` (already called from `startCleanupScheduler()`)
 - **BUILD-7**: `ResearchRegistry.java` — Removed redundant `e.printStackTrace()` (message already logged via `System.err.println`)
 - **BUILD-8**: `MainMenuScene.java` + `DataOverride.java` — Removed 3 unused imports (`javafx.scene.Parent`, `javafx.scene.effect.Glow`, `JsonCreator`)
+
+### What Was Fixed This Session (2026-06-22 session 6 — campaign playtest audit)
+- **12 campaign wiring issues fixed** (107 total, 0 open)
+- **CAMP-1**: `GameScene` — DestroyObjective now uses tracked `enemyKillCount` (via `trackEnemyKills()` comparing alive enemy count tick-over-tick) instead of relying on never-incremented `currentCount`
+- **CAMP-2**: `GameScene` — Added `processCampaignTriggers()` that calls `Trigger.check()` each tick and fires `scriptEngine.fireTrigger()` for newly activated triggers
+- **CAMP-3**: `GameScene.onGameTick()` — Now calls `scriptEngine.processTick()` each tick in campaign mode (Lua `onTick()` finally executes)
+- **CAMP-4**: `AOW2App` — Changed `CampaignManager` from `NoOpScriptEngine` to real `MissionScriptEngine`; loads mission `.lua` scripts on mission start via `se.loadScript()`
+- **CAMP-5**: `GameScene` — `createTestEntities()` skipped in campaign mode (campaign map JSONs define their own entities)
+- **CAMP-6**: 4 Lua scripts (ep2_mission3/5/6/7) — Replaced invalid `CONFED_SNIPER` with `CONFED_GRENADIER` (Confederation has no sniper unit)
+- **CAMP-7**: `GameScene` — Added `getGameState()`, `getEntityManager()` getters for AOW2App script loading
+- **CAMP-8**: `GameScene.setCampaignContext()` — Now also copies `mission.triggers()` and initializes kill tracking state
 
 ### What Still Does NOT Work
 1. ~~Build placement broken end-to-end~~ ✅ FIXED (H-NEW-11) — UI wiring complete, backend was already working

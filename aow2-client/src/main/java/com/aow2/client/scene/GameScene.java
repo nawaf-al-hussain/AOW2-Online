@@ -14,6 +14,8 @@ import com.aow2.core.campaign.CampaignEpisode;
 import com.aow2.core.campaign.CampaignManager;
 import com.aow2.core.campaign.Mission;
 import com.aow2.core.campaign.Objective;
+import com.aow2.core.campaign.ScriptEngine;
+import com.aow2.core.campaign.Trigger;
 
 import com.aow2.common.config.GameConstants;
 import com.aow2.common.config.StatsRegistry;
@@ -205,6 +207,18 @@ public class GameScene {
 
     /** Callback invoked when a campaign mission ends (victory or defeat). */
     private Runnable campaignEndCallback;
+
+    /** Mutable copy of the current mission's triggers, updated each tick. FIX(CAMP-2) */
+    private List<Trigger> missionTriggers = new ArrayList<>();
+
+    /** Whether this is a campaign mission (skip test entities). FIX(CAMP-5) */
+    private boolean isCampaignMission = false;
+
+    /** Tracks the enemy kill count for DestroyObjectives. FIX(CAMP-1) */
+    private int enemyKillCount = 0;
+
+    /** Tracks previous tick's alive enemy count for kill detection. FIX(CAMP-1) */
+    private int previousAliveEnemyCount = -1;
 
     /**
      * Constructs a new GameScene with all subsystems initialized.
@@ -479,8 +493,11 @@ public class GameScene {
         fogRenderer.setPlayerId(LOCAL_PLAYER_ID);
         tickManager.setFogOfWar(fogOfWarSystem);
 
-        // Create test entities using StatsRegistry
-        createTestEntities();
+        // FIX(CAMP-5): Only create test entities for non-campaign games.
+        // Campaign maps define their own entities in the map JSON.
+        if (!isCampaignMission) {
+            createTestEntities();
+        }
 
         // Update power grid for initial buildings
         powerSystem.updatePowerGrid(entityManager);
@@ -573,8 +590,11 @@ public class GameScene {
         fogRenderer.setPlayerId(LOCAL_PLAYER_ID);
         tickManager.setFogOfWar(fogOfWarSystem);
 
-        // Create test entities using StatsRegistry
-        createTestEntities();
+        // FIX(CAMP-5): Only create test entities for non-campaign games.
+        // Campaign maps define their own entities in the map JSON.
+        if (!isCampaignMission) {
+            createTestEntities();
+        }
 
         // Update power grid for initial buildings
         powerSystem.updatePowerGrid(entityManager);
@@ -669,8 +689,20 @@ public class GameScene {
         // Sync credits from EconomySystem for HUD display
         this.credits = economy.getCredits(LOCAL_PLAYER_ID);
 
+        // FIX(CAMP-1): Track enemy kills for DestroyObjectives
+        trackEnemyKills();
+
         // Check campaign objectives if this is a campaign mission
         checkCampaignObjectives();
+
+        // FIX(CAMP-2+3): Process triggers and script engine each tick in campaign mode
+        if (isCampaignMission && campaignManager != null) {
+            processCampaignTriggers();
+            ScriptEngine se = campaignManager.getScriptEngine();
+            if (se.isScriptActive()) {
+                se.processTick(gameState, entityManager);
+            }
+        }
     }
 
     /**
@@ -891,6 +923,22 @@ public class GameScene {
     }
 
     /**
+     * Gets the game state (for campaign script loading).
+     * FIX(CAMP-5): Expose for AOW2App script loading.
+     */
+    public GameState getGameState() {
+        return gameState;
+    }
+
+    /**
+     * Gets the entity manager (for campaign script loading).
+     * FIX(CAMP-5): Expose for AOW2App script loading.
+     */
+    public EntityManager getEntityManager() {
+        return entityManager;
+    }
+
+    /**
      * Sets the campaign context for this game session.
      * When set, the game scene will evaluate campaign objectives each tick
      * and trigger victory/defeat conditions.
@@ -915,12 +963,17 @@ public class GameScene {
         if (missionIndex < missions.size()) {
             Mission mission = missions.get(missionIndex);
             this.missionObjectives = new ArrayList<>(mission.objectives());
+            this.missionTriggers = new ArrayList<>(mission.triggers());
             // Set the player faction from the mission definition
             this.playerFaction = mission.playerFaction();
-            LOG.info("Campaign context set: episode={}, mission='{}', {} objectives, faction={}",
-                episode.title(), mission.name(), missionObjectives.size(), playerFaction);
+            this.isCampaignMission = true;
+            this.enemyKillCount = 0;
+            this.previousAliveEnemyCount = -1;
+            LOG.info("Campaign context set: episode={}, mission='{}', {} objectives, {} triggers, faction={}",
+                episode.title(), mission.name(), missionObjectives.size(), missionTriggers.size(), playerFaction);
         } else {
             this.missionObjectives = new ArrayList<>();
+            this.missionTriggers = new ArrayList<>();
             LOG.warn("Campaign context: mission index {} out of range (max {})",
                 missionIndex, missions.size());
         }
@@ -933,6 +986,53 @@ public class GameScene {
      */
     public void setCampaignEndCallback(Runnable callback) {
         this.campaignEndCallback = callback;
+    }
+
+    /**
+     * FIX(CAMP-1): Tracks enemy kills by comparing alive enemy count to previous tick.
+     * Increments enemyKillCount when the alive enemy count decreases.
+     */
+    private void trackEnemyKills() {
+        if (!isCampaignMission || entityManager == null) {
+            return;
+        }
+        Faction enemyFaction = (playerFaction == Faction.CONFEDERATION)
+            ? Faction.RESISTANCE : Faction.CONFEDERATION;
+        int aliveEnemies = entityManager.getAliveUnitsForPlayer(enemyFaction).size()
+            + (int) entityManager.getBuildingsForPlayer(enemyFaction).stream()
+                .filter(b -> b.isAlive()).count();
+
+        if (previousAliveEnemyCount >= 0 && aliveEnemies < previousAliveEnemyCount) {
+            int killed = previousAliveEnemyCount - aliveEnemies;
+            enemyKillCount += killed;
+        }
+        previousAliveEnemyCount = aliveEnemies;
+    }
+
+    /**
+     * FIX(CAMP-2): Processes campaign triggers each tick.
+     * Checks all triggers and fires the script engine's fireTrigger() for any newly activated.
+     */
+    private void processCampaignTriggers() {
+        if (missionTriggers.isEmpty() || gameState == null) {
+            return;
+        }
+        List<Trigger> updated = new ArrayList<>();
+        for (Trigger t : missionTriggers) {
+            Trigger checked = t.check(gameState, entityManager);
+            if (!checked.isActivated() && t.isActivated()) {
+                // Already activated — keep as-is
+                updated.add(checked);
+            } else if (checked.isActivated() && !t.isActivated()) {
+                // Just activated — fire trigger in script engine
+                LOG.info("Campaign trigger activated: triggerId={}", checked.triggerId());
+                campaignManager.getScriptEngine().fireTrigger(checked.triggerId());
+                updated.add(checked);
+            } else {
+                updated.add(checked);
+            }
+        }
+        missionTriggers = updated;
     }
 
     /**
@@ -1000,29 +1100,16 @@ public class GameScene {
     private Objective evaluateObjective(Objective obj) {
         return switch (obj) {
             case Objective.DestroyObjective destroy -> {
-                // Count enemy entities that have been removed (killed)
-                // We track kills by counting enemy dead: compare initial enemy count
-                // minus current alive enemy count. For simplicity, count total enemy
-                // buildings + units that are no longer alive.
-                // Since dead entities are removed from EntityManager, we use a
-                // score-based approach: count all kills credited so far.
-                // The DestroyObjective.currentCount is incremented externally
-                // (by combat system events or script). For now, we evaluate
-                // by checking enemy entity counts.
-                Faction enemyFaction = (playerFaction == Faction.CONFEDERATION)
-                    ? Faction.RESISTANCE : Faction.CONFEDERATION;
-                int aliveEnemies = entityManager.getAliveUnitsForPlayer(enemyFaction).size()
-                    + (int) entityManager.getBuildingsForPlayer(enemyFaction).stream()
-                        .filter(b -> b.isAlive()).count();
-                // Estimate kills: we track how many are gone from initial count.
-                // Since we don't store initial counts, use currentCount as-is
-                // and rely on the combat system to increment it.
-                // For a working evaluation: if no enemies remain, count = targetCount
-                if (aliveEnemies == 0 && destroy.targetCount() > 0) {
+                // FIX(CAMP-1): Use tracked enemyKillCount instead of relying on external increments.
+                // trackEnemyKills() runs each tick and counts enemies that disappeared.
+                int currentCount = enemyKillCount;
+                if (currentCount >= destroy.targetCount()) {
                     yield new Objective.DestroyObjective(
                         destroy.name(), destroy.targetCount(), destroy.targetCount());
+                } else {
+                    yield new Objective.DestroyObjective(
+                        destroy.name(), destroy.targetCount(), currentCount);
                 }
-                yield destroy;
             }
             case Objective.DefendObjective defend -> {
                 // Check if the defended entity still exists and is alive
