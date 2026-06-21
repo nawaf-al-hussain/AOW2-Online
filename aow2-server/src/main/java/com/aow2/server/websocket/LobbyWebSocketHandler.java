@@ -41,6 +41,9 @@ public class LobbyWebSocketHandler extends TextWebSocketHandler {
     /** Tracks which players have signaled ready, keyed by session UUID */
     private final Map<String, Set<String>> readyPlayers = new ConcurrentHashMap<>();
 
+    /** Lock for atomic ready-check to prevent duplicate session starts. */
+    private final Object readyLock = new Object();
+
     /** Tracks map vetoes per session, keyed by session UUID. Value is the set of vetoed map names. */
     private final Map<String, Set<String>> mapVetoes = new ConcurrentHashMap<>();
 
@@ -327,43 +330,50 @@ public class LobbyWebSocketHandler extends TextWebSocketHandler {
 
         // Track ready state per session UUID
         String sessionUuid = gs.getSessionUuid();
-        Set<String> ready = readyPlayers.computeIfAbsent(sessionUuid, k -> ConcurrentHashMap.newKeySet());
-        ready.add(playerId.toString());
+        boolean shouldStart;
+        synchronized (readyLock) {
+            Set<String> ready = readyPlayers.computeIfAbsent(sessionUuid, k -> ConcurrentHashMap.newKeySet());
+            ready.add(playerId.toString());
 
-        // Send acknowledgement to the player who just readied
-        sendMessage(session, Map.of(
-                "type", "ready_ack",
-                "playerId", playerId,
-                "sessionUuid", sessionUuid
-        ));
+            // Send acknowledgement to the player who just readied
+            sendMessage(session, Map.of(
+                    "type", "ready_ack",
+                    "playerId", playerId,
+                    "sessionUuid", sessionUuid
+            ));
 
-        // Only transition when BOTH players have signaled ready
-        if (ready.size() < 2) {
-            log.info("Player {} ready for session {}, waiting for opponent", playerId, sessionUuid);
-            return;
+            // Only transition when BOTH players have signaled ready
+            if (ready.size() < 2) {
+                log.info("Player {} ready for session {}, waiting for opponent", playerId, sessionUuid);
+                return;
+            }
+
+            // Both players ready — clean up ready tracking
+            readyPlayers.remove(sessionUuid);
+            shouldStart = true;
         }
 
-        // Both players ready — clean up ready tracking and start the session
-        readyPlayers.remove(sessionUuid);
-        sessionService.startSession(sessionUuid);
+        if (shouldStart) {
+            sessionService.startSession(sessionUuid);
 
-        // Notify both players that the game is starting
-        String ws1 = getSessionForPlayer(gs.getPlayer1Id());
-        String ws2 = getSessionForPlayer(gs.getPlayer2Id());
+            // Notify both players that the game is starting
+            String ws1 = getSessionForPlayer(gs.getPlayer1Id());
+            String ws2 = getSessionForPlayer(gs.getPlayer2Id());
 
-        Map<String, Object> startMsg = Map.of(
-                "type", "game_start",
-                "sessionUuid", sessionUuid,
-                "player1Id", gs.getPlayer1Id(),
-                "player2Id", gs.getPlayer2Id()
-        );
+            Map<String, Object> startMsg = Map.of(
+                    "type", "game_start",
+                    "sessionUuid", sessionUuid,
+                    "player1Id", gs.getPlayer1Id(),
+                    "player2Id", gs.getPlayer2Id()
+            );
 
-        if (ws1 != null) sendToSessionId(ws1, startMsg);
-        if (ws2 != null) sendToSessionId(ws2, startMsg);
+            if (ws1 != null) sendToSessionId(ws1, startMsg);
+            if (ws2 != null) sendToSessionId(ws2, startMsg);
 
-        // Link players for P2P relay
-        if (ws1 != null && ws2 != null) {
-            sessionService.linkPlayers(gs.getPlayer1Id(), gs.getPlayer2Id(), ws1, ws2);
+            // Link players for P2P relay
+            if (ws1 != null && ws2 != null) {
+                sessionService.linkPlayers(gs.getPlayer1Id(), gs.getPlayer2Id(), ws1, ws2);
+            }
         }
     }
 

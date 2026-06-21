@@ -217,7 +217,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         long timestamp = chatMessage.getTimestamp().toEpochMilli();
         Map<String, Object> broadcastMsg = Map.of(
                 "type", "chat",
-                "playerId", playerId.intValue(),
+                "playerId", playerId,
                 "message", message,
                 "timestamp", timestamp
         );

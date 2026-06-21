@@ -194,7 +194,6 @@ public final class ResearchRegistry {
 
         } catch (Exception e) {
             System.err.println("WARNING: Failed to load tech_tree.json: " + e.getMessage());
-            e.printStackTrace();
         }
     }
 

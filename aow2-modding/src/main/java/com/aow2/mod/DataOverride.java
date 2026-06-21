@@ -1,6 +1,5 @@
 package com.aow2.mod;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**

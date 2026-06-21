@@ -11,8 +11,6 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 
-import com.google.common.annotations.VisibleForTesting;
-
 /**
  * Centralized registry for all unit and building stats loaded from reverse-engineered data.
  * Replaces all hardcoded stat tables scattered across ProductionSystem, BuildingPlacementSystem,
@@ -58,7 +56,7 @@ public final class StatsRegistry {
      * Resets the singleton instance. Package-private for test access.
      * Allows tests to get a fresh StatsRegistry with clean state.
      */
-    @VisibleForTesting
+    @SuppressWarnings("unused") // Used by tests via reflection or same-package access
     static void resetInstance() {
         INSTANCE = null;
     }

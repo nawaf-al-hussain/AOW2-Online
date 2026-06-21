@@ -243,7 +243,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         }
 
         // Validate winnerId is one of the actual players
-        if (winnerId != null && winnerId != gs.getPlayer1Id() && winnerId != gs.getPlayer2Id()) {
+        if (winnerId != null && !winnerId.equals(gs.getPlayer1Id()) && !winnerId.equals(gs.getPlayer2Id())) {
             sendError(session, "Invalid winnerId: must be one of the session players");
             return;
         }
@@ -259,7 +259,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                 sendError(session, "No pending game-over claim to confirm");
                 return;
             }
-            if (claim.claimedBy.equals(playerId)) {
+            if (claim.claimedBy().equals(playerId)) {
                 sendError(session, "Claimant cannot confirm their own game-over claim");
                 return;
             }
@@ -291,13 +291,13 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         // Phase 1: Initial game-over claim
         // Check if there's already a pending claim from the opponent
         GameOverClaim existingClaim = pendingGameOverClaims.get(sessionUuid);
-        if (existingClaim != null && !existingClaim.claimedBy.equals(playerId)) {
+        if (existingClaim != null && !existingClaim.claimedBy().equals(playerId)) {
             // Opponent already claimed — treat this as confirmation
             handleGameOver(session, objectMapper.readTree(
                 objectMapper.writeValueAsString(Map.of(
                     "sessionUuid", sessionUuid,
-                    "winnerId", existingClaim.winnerId,
-                    "durationSeconds", existingClaim.durationSeconds,
+                    "winnerId", existingClaim.winnerId(),
+                    "durationSeconds", existingClaim.durationSeconds(),
                     "confirm", true
                 ))));
             return;

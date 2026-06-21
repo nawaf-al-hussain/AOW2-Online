@@ -2,6 +2,7 @@ package com.aow2.server.controller;
 
 import com.aow2.server.model.ChatMessage;
 import com.aow2.server.repository.ChatMessageRepository;
+import com.aow2.server.service.SessionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -32,13 +33,16 @@ class ChatControllerTest {
     private ChatMessageRepository chatMessageRepository;
 
     @Mock
+    private SessionService sessionService;
+
+    @Mock
     private org.springframework.security.core.Authentication authentication;
 
     private ChatController chatController;
 
     @BeforeEach
     void setUp() {
-        chatController = new ChatController(chatMessageRepository);
+        chatController = new ChatController(chatMessageRepository, sessionService);
     }
 
     @Test
@@ -115,8 +119,10 @@ class ChatControllerTest {
         when(chatMessageRepository.findByMatchIdOrderByTimestampAsc("match-uuid-1"))
                 .thenReturn(List.of(msg1, msg2));
 
+        when(sessionService.getSessionByUuid("match-uuid-1")).thenReturn(java.util.Optional.empty());
+
         ResponseEntity<List<com.aow2.common.model.ChatMessageRecord>> response =
-                chatController.getChatHistory("match-uuid-1");
+                chatController.getChatHistory(authentication, "match-uuid-1");
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
@@ -131,8 +137,10 @@ class ChatControllerTest {
         when(chatMessageRepository.findByMatchIdOrderByTimestampAsc("empty-match"))
                 .thenReturn(List.of());
 
+        when(sessionService.getSessionByUuid("empty-match")).thenReturn(java.util.Optional.empty());
+
         ResponseEntity<List<com.aow2.common.model.ChatMessageRecord>> response =
-                chatController.getChatHistory("empty-match");
+                chatController.getChatHistory(authentication, "empty-match");
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());

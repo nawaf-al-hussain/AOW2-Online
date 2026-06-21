@@ -3,6 +3,7 @@ package com.aow2.server.controller;
 import com.aow2.common.model.ChatMessageRecord;
 import com.aow2.server.model.ChatMessage;
 import com.aow2.server.repository.ChatMessageRepository;
+import com.aow2.server.service.SessionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -31,13 +32,18 @@ public class ChatController {
 
     private final ChatMessageRepository chatMessageRepository;
 
+    private final SessionService sessionService;
+
     /**
      * Constructs the ChatController.
      *
      * @param chatMessageRepository repository for chat message persistence
+     * @param sessionService        for verifying session participation
      */
-    public ChatController(ChatMessageRepository chatMessageRepository) {
+    public ChatController(ChatMessageRepository chatMessageRepository,
+                           SessionService sessionService) {
         this.chatMessageRepository = chatMessageRepository;
+        this.sessionService = sessionService;
     }
 
     /**
@@ -96,17 +102,24 @@ public class ChatController {
             Authentication authentication, @PathVariable String matchId) {
         Long playerId = (Long) authentication.getPrincipal();
 
-        // Authorization: Only return messages if the player has sent at least one message
-        // in this match (i.e., they are a participant). This prevents users from
-        // reading arbitrary match chat histories.
-        List<ChatMessage> allMessages = chatMessageRepository.findByMatchIdOrderByTimestampAsc(matchId);
-        boolean isParticipant = allMessages.stream().anyMatch(m -> m.getPlayerId().equals(playerId));
+        // Authorization: Verify the player is a participant in this session,
+        // not just that they've sent a message (which fails for silent observers).
+        boolean isParticipant = sessionService.getSessionByUuid(matchId)
+                .map(session -> playerId.equals(session.getPlayer1Id()) || playerId.equals(session.getPlayer2Id()))
+                .orElse(false);
 
-        if (!isParticipant && !allMessages.isEmpty()) {
-            log.warn("Player {} attempted to access chat history for match {} without participation", playerId, matchId);
-            return ResponseEntity.status(403).body(List.of());
+        if (!isParticipant) {
+            // If the session doesn't exist or player is not a participant, deny access
+            // (unless there are genuinely no messages — allow empty result in that case)
+            List<ChatMessage> probe = chatMessageRepository.findByMatchIdOrderByTimestampAsc(matchId);
+            if (!probe.isEmpty()) {
+                log.warn("Player {} attempted to access chat history for session {} without participation", playerId, matchId);
+                return ResponseEntity.status(403).body(List.of());
+            }
+            return ResponseEntity.ok(List.of());
         }
 
+        List<ChatMessage> allMessages = chatMessageRepository.findByMatchIdOrderByTimestampAsc(matchId);
         List<ChatMessageRecord> records = allMessages.stream()
                 .map(msg -> new ChatMessageRecord(
                         msg.getMatchId(),

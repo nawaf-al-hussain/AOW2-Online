@@ -127,6 +127,31 @@ public class SelectionManager {
     }
 
     /**
+     * Selects units by their entity IDs, replacing the current selection.
+     * Only IDs that correspond to alive units belonging to the player's faction
+     * are actually added (invalid or dead IDs are silently skipped).
+     * Selection is capped at {@link #MAX_SELECTION}.
+     *
+     * @param ids the entity IDs to select
+     */
+    public void selectUnitsByIds(List<Integer> ids) {
+        selectedIds.clear();
+        if (entityManager == null || ids == null) {
+            return;
+        }
+        for (int id : ids) {
+            if (selectedIds.size() >= MAX_SELECTION) {
+                break;
+            }
+            Unit unit = entityManager.getUnit(id);
+            if (unit != null && unit.isAlive() && unit.getFaction() == playerFaction) {
+                selectedIds.add(id);
+            }
+        }
+        LOG.debug("selectUnitsByIds: requested={}, actually selected={}", ids.size(), selectedIds.size());
+    }
+
+    /**
      * Starts a drag selection box at the given screen coordinates.
      *
      * @param screenX screen X coordinate
@@ -337,6 +362,16 @@ public class SelectionManager {
             return null;
         }
         return new double[]{dragStartX, dragStartY, dragCurrentX, dragCurrentY};
+    }
+
+    /**
+     * Gets the currently selected IDs as a mutable list.
+     * Used by InputHandler for control group assignment.
+     *
+     * @return list of selected entity IDs
+     */
+    public List<Integer> getSelectedIdsList() {
+        return new ArrayList<>(selectedIds);
     }
 
     /**

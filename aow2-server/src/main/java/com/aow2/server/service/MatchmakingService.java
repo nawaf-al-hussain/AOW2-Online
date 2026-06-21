@@ -46,6 +46,9 @@ public class MatchmakingService {
     /** In-memory matchmaking queue: playerId → queue entry */
     private final Map<Long, QueueEntry> queue = new ConcurrentHashMap<>();
 
+    /** Lock for atomic matchmaking queue operations (find+remove). */
+    private final Object queueLock = new Object();
+
     private final PlayerRepository playerRepository;
 
     /** Callback for notifying matched players via WebSocket. */
@@ -123,6 +126,7 @@ public class MatchmakingService {
             return;
         }
 
+        synchronized (queueLock) {
         List<QueueEntry> entries = new ArrayList<>(queue.values());
         List<Long> matched = new ArrayList<>();
 
@@ -158,6 +162,7 @@ public class MatchmakingService {
                 }
             }
         }
+        } // end synchronized(queueLock)
     }
 
     /**
@@ -181,6 +186,7 @@ public class MatchmakingService {
      * @return a match result if an opponent was found, or a queue status
      */
     public Map<String, Object> joinQueue(Long playerId, List<String> preferredMaps) {
+        synchronized (queueLock) {
         if (queue.containsKey(playerId)) {
             return Map.of("status", "already_queued", "playerId", playerId);
         }
@@ -216,6 +222,7 @@ public class MatchmakingService {
                 playerId, player.getEloRating(), maps);
 
         return Map.of("status", "queued", "playerId", playerId, "eloRating", player.getEloRating());
+        } // end synchronized(queueLock)
     }
 
     /**
@@ -331,11 +338,12 @@ public class MatchmakingService {
         List<String> maps1 = (entry1 != null) ? entry1.preferredMaps() : List.of();
         List<String> maps2 = (entry2 != null) ? entry2.preferredMaps() : List.of();
 
-        // If either player has no preference, use default
+        // If either player has no preference, use "test_map" (the only bundled map)
         if (maps1.isEmpty() || maps2.isEmpty()) {
-            log.info("Map selection: player {} maps={}, player {} maps={} → using 'default'",
-                    player1Id, maps1, player2Id, maps2);
-            return "default";
+            String fallback = "test_map";
+            log.info("Map selection: player {} maps={}, player {} maps={} → using '{}' (no preference)",
+                    player1Id, maps1, player2Id, maps2, fallback);
+            return fallback;
         }
 
         // Find intersection of preferred maps
@@ -344,9 +352,10 @@ public class MatchmakingService {
                 .toList();
 
         if (intersection.isEmpty()) {
-            log.info("Map selection: no overlap between player {} maps={} and player {} maps={} → using 'default'",
-                    player1Id, maps1, player2Id, maps2);
-            return "default";
+            String fallback = "test_map";
+            log.info("Map selection: no overlap between player {} maps={} and player {} maps={} → using '{}' (no overlap)",
+                    player1Id, maps1, player2Id, maps2, fallback);
+            return fallback;
         }
 
         // Pick a random map from the intersection

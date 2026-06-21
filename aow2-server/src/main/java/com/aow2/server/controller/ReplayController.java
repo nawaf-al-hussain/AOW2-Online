@@ -34,6 +34,9 @@ public class ReplayController {
 
     private static final Logger log = LoggerFactory.getLogger(ReplayController.class);
 
+    /** Maximum Base64-encoded replay data size: 10 MB raw (Base64 ~1.37x overhead, so ~14 MB encoded). */
+    private static final int MAX_REPLAY_DATA_SIZE = 14 * 1024 * 1024;
+
     private final MatchResultRepository matchResultRepository;
     private final ReplayStorageService replayStorageService;
 
@@ -68,6 +71,11 @@ public class ReplayController {
 
         if (matchIdStr == null || replayData == null) {
             return ResponseEntity.badRequest().body(Map.of("error", "matchId and replayData are required"));
+        }
+
+        if (replayData.length() > MAX_REPLAY_DATA_SIZE) {
+            return ResponseEntity.badRequest().body(Map.of("error",
+                    "replayData too large: " + replayData.length() + " bytes (max " + MAX_REPLAY_DATA_SIZE + ")"));
         }
 
         try {

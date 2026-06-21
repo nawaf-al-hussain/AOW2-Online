@@ -36,6 +36,14 @@ public class SessionService {
     /** Active game sessions indexed by session UUID */
     private final Map<String, GameSession> activeSessions = new ConcurrentHashMap<>();
 
+    /** Per-session locks to serialize state transitions and sync hash updates. */
+    private final ConcurrentHashMap<String, Object> sessionLocks = new ConcurrentHashMap<>();
+
+    /** Returns the lock object for a given session UUID, creating it if needed. */
+    private Object getSessionLock(String sessionUuid) {
+        return sessionLocks.computeIfAbsent(sessionUuid, k -> new Object());
+    }
+
     /** Player ID to session UUID mapping for quick lookups */
     private final Map<Long, String> playerSessions = new ConcurrentHashMap<>();
 
@@ -95,6 +103,7 @@ public class SessionService {
                 Instant completedAt = session.getCompletedAt();
                 if (completedAt != null && (now - completedAt.toEpochMilli()) > expiryMs) {
                     it.remove();
+                    sessionLocks.remove(entry.getKey());
                     playerSessions.values().remove(entry.getKey());
                     playerToOpponentWs.remove(session.getPlayer1Id());
                     playerToOpponentWs.remove(session.getPlayer2Id());
@@ -146,15 +155,17 @@ public class SessionService {
      */
     @Transactional
     public Optional<GameSession> startSession(String sessionUuid) {
-        GameSession session = activeSessions.get(sessionUuid);
-        if (session == null || session.getState() != GameSession.SessionState.WAITING) {
-            return Optional.empty();
+        synchronized (getSessionLock(sessionUuid)) {
+            GameSession session = activeSessions.get(sessionUuid);
+            if (session == null || session.getState() != GameSession.SessionState.WAITING) {
+                return Optional.empty();
+            }
+            session.setState(GameSession.SessionState.STARTING);
+            session.setStartedAt(Instant.now());
+            sessionRepository.save(session);
+            log.info("Session starting: {}", sessionUuid);
+            return Optional.of(session);
         }
-        session.setState(GameSession.SessionState.STARTING);
-        session.setStartedAt(Instant.now());
-        sessionRepository.save(session);
-        log.info("Session starting: {}", sessionUuid);
-        return Optional.of(session);
     }
 
     /**
@@ -166,14 +177,16 @@ public class SessionService {
      */
     @Transactional
     public Optional<GameSession> activateSession(String sessionUuid) {
-        GameSession session = activeSessions.get(sessionUuid);
-        if (session == null || session.getState() != GameSession.SessionState.STARTING) {
-            return Optional.empty();
+        synchronized (getSessionLock(sessionUuid)) {
+            GameSession session = activeSessions.get(sessionUuid);
+            if (session == null || session.getState() != GameSession.SessionState.STARTING) {
+                return Optional.empty();
+            }
+            session.setState(GameSession.SessionState.ACTIVE);
+            sessionRepository.save(session);
+            log.info("Session active: {}", sessionUuid);
+            return Optional.of(session);
         }
-        session.setState(GameSession.SessionState.ACTIVE);
-        sessionRepository.save(session);
-        log.info("Session active: {}", sessionUuid);
-        return Optional.of(session);
     }
 
     /**
@@ -187,18 +200,21 @@ public class SessionService {
      */
     @Transactional
     public Optional<GameSession> completeSession(String sessionUuid, Long winnerId, int durationSeconds) {
-        GameSession session = activeSessions.get(sessionUuid);
-        if (session == null) {
-            return Optional.empty();
+        synchronized (getSessionLock(sessionUuid)) {
+            GameSession session = activeSessions.get(sessionUuid);
+            if (session == null || session.getState() == GameSession.SessionState.COMPLETED) {
+                // Already completed — idempotent guard prevents double ELO recording
+                return session != null ? Optional.of(session) : Optional.empty();
+            }
+            session.setState(GameSession.SessionState.COMPLETED);
+            session.setWinnerId(winnerId);
+            session.setDurationSeconds(durationSeconds);
+            session.setCompletedAt(Instant.now());
+            sessionRepository.save(session);
+            log.info("Session completed: {} (winner: {}, duration: {}s)",
+                    sessionUuid, winnerId, durationSeconds);
+            return Optional.of(session);
         }
-        session.setState(GameSession.SessionState.COMPLETED);
-        session.setWinnerId(winnerId);
-        session.setDurationSeconds(durationSeconds);
-        session.setCompletedAt(Instant.now());
-        sessionRepository.save(session);
-        log.info("Session completed: {} (winner: {}, duration: {}s)",
-                sessionUuid, winnerId, durationSeconds);
-        return Optional.of(session);
     }
 
     /**
@@ -211,18 +227,20 @@ public class SessionService {
      */
     @Transactional
     public Optional<GameSession> disconnectSession(String sessionUuid, Long disconnectedId) {
-        GameSession session = activeSessions.get(sessionUuid);
-        if (session == null) {
-            return Optional.empty();
+        synchronized (getSessionLock(sessionUuid)) {
+            GameSession session = activeSessions.get(sessionUuid);
+            if (session == null || session.getState() == GameSession.SessionState.DISCONNECTED) {
+                return session != null ? Optional.of(session) : Optional.empty();
+            }
+            session.setState(GameSession.SessionState.DISCONNECTED);
+            Long winnerId = session.getOpponentId(disconnectedId);
+            session.setWinnerId(winnerId);
+            session.setCompletedAt(Instant.now());
+            sessionRepository.save(session);
+            log.info("Session disconnected: {} (disconnected: {}, winner: {})",
+                    sessionUuid, disconnectedId, winnerId);
+            return Optional.of(session);
         }
-        session.setState(GameSession.SessionState.DISCONNECTED);
-        Long winnerId = session.getOpponentId(disconnectedId);
-        session.setWinnerId(winnerId);
-        session.setCompletedAt(Instant.now());
-        sessionRepository.save(session);
-        log.info("Session disconnected: {} (disconnected: {}, winner: {})",
-                sessionUuid, disconnectedId, winnerId);
-        return Optional.of(session);
     }
 
     /**
@@ -238,42 +256,44 @@ public class SessionService {
      * @return true if a desync was detected between players at the same tick
      */
     public boolean reportSyncHash(String sessionUuid, Long playerId, long tick, long syncHash) {
-        GameSession session = activeSessions.get(sessionUuid);
-        if (session == null) {
+        synchronized (getSessionLock(sessionUuid)) {
+            GameSession session = activeSessions.get(sessionUuid);
+            if (session == null) {
+                return false;
+            }
+
+            // Only accept hashes for the current tracked tick to avoid cross-tick false comparisons
+            if (session.getLastSyncTick() != null && session.getLastSyncTick() != tick) {
+                // New tick — reset both hashes to compare fresh
+                session.setPlayer1SyncHash(null);
+                session.setPlayer2SyncHash(null);
+            }
+            session.setLastSyncTick(tick);
+
+            if (playerId.equals(session.getPlayer1Id())) {
+                session.setPlayer1SyncHash(syncHash);
+            } else {
+                session.setPlayer2SyncHash(syncHash);
+            }
+
+            // Check for desync if both hashes are present for the same tick
+            if (session.getPlayer1SyncHash() != null && session.getPlayer2SyncHash() != null) {
+                boolean desync = !session.getPlayer1SyncHash().equals(session.getPlayer2SyncHash());
+                if (desync) {
+                    session.setDesyncDetected(true);
+                    // FIX (H-NEW-9): Persist desync state to DB for audit trail.
+                    try {
+                        sessionRepository.save(session);
+                    } catch (Exception e) {
+                        log.warn("Failed to persist desync state for session {}: {}", sessionUuid, e.getMessage());
+                    }
+                    log.warn("Desync detected in session {} at tick {} (p1: {}, p2: {})",
+                            sessionUuid, tick, session.getPlayer1SyncHash(), session.getPlayer2SyncHash());
+                }
+                return desync;
+            }
             return false;
         }
-
-        // Only accept hashes for the current tracked tick to avoid cross-tick false comparisons
-        if (session.getLastSyncTick() != null && session.getLastSyncTick() != tick) {
-            // New tick — reset both hashes to compare fresh
-            session.setPlayer1SyncHash(null);
-            session.setPlayer2SyncHash(null);
-        }
-        session.setLastSyncTick(tick);
-
-        if (playerId.equals(session.getPlayer1Id())) {
-            session.setPlayer1SyncHash(syncHash);
-        } else {
-            session.setPlayer2SyncHash(syncHash);
-        }
-
-        // Check for desync if both hashes are present for the same tick
-        if (session.getPlayer1SyncHash() != null && session.getPlayer2SyncHash() != null) {
-            boolean desync = !session.getPlayer1SyncHash().equals(session.getPlayer2SyncHash());
-            if (desync) {
-                session.setDesyncDetected(true);
-                // FIX (H-NEW-9): Persist desync state to DB for audit trail.
-                try {
-                    sessionRepository.save(session);
-                } catch (Exception e) {
-                    log.warn("Failed to persist desync state for session {}: {}", sessionUuid, e.getMessage());
-                }
-                log.warn("Desync detected in session {} at tick {} (p1: {}, p2: {})",
-                        sessionUuid, tick, session.getPlayer1SyncHash(), session.getPlayer2SyncHash());
-            }
-            return desync;
-        }
-        return false;
     }
 
     /**
@@ -380,8 +400,8 @@ public class SessionService {
      * Sessions that were ACTIVE when the server crashed are marked as DISCONNECTED.
      * Sessions that were STARTING are reset to WAITING for re-matching.
      * FIX (H-NEW-9): Enables crash recovery for in-progress games.
+     * NOTE: Called by startCleanupScheduler() — not annotated with @PostConstruct to avoid double execution.
      */
-    @PostConstruct
     public void recoverActiveSessions() {
         try {
             var active = sessionRepository.findByState(GameSession.SessionState.ACTIVE);

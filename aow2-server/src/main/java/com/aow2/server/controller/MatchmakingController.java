@@ -57,7 +57,7 @@ public class MatchmakingController {
         if ("match_found".equals(result.get("status"))) {
             Long player1Id = (Long) result.get("player1Id");
             Long player2Id = (Long) result.get("player2Id");
-            var session = sessionService.createSession(player1Id, player2Id, "default");
+            var session = sessionService.createSession(player1Id, player2Id, result.get("mapName").toString());
             result = Map.of(
                     "status", "match_found",
                     "sessionUuid", session.getSessionUuid(),

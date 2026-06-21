@@ -338,7 +338,7 @@ public class InputHandler {
                 if (groupNumber < 0) break;
                 if (event.isControlDown() || event.isMetaDown()) {
                     // Assign current selection to control group
-                    List<Integer> selectedIds = new ArrayList<>(selectionManager.getSelectedIds());
+                    List<Integer> selectedIds = selectionManager.getSelectedIdsList();
                     if (!selectedIds.isEmpty()) {
                         controlGroups.put(groupNumber, selectedIds);
                         LOG.debug("Control group {} assigned: {} units", groupNumber, selectedIds.size());
@@ -347,14 +347,8 @@ public class InputHandler {
                     // Recall control group
                     List<Integer> groupIds = controlGroups.get(groupNumber);
                     if (groupIds != null && !groupIds.isEmpty()) {
-                        selectionManager.clearSelection();
-                        // NOTE: SelectionManager does not yet have selectUnitsByIds(List<Integer>);
-                        // This requires adding that method to SelectionManager for full functionality.
-                        for (int id : groupIds) {
-                            // TODO (L-NEW-17): Call selectionManager.selectUnitsByIds(groupIds) once available
-                            LOG.debug("Control group {} recalled: {} units (selection API pending)",
-                                groupNumber, groupIds.size());
-                        }
+                        selectionManager.selectUnitsByIds(groupIds);
+                        LOG.debug("Control group {} recalled: {} units", groupNumber, groupIds.size());
                     }
                 }
             }
