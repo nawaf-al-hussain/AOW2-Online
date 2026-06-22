@@ -27,6 +27,21 @@ public final class ArmorCalculator {
      * - ID 9: Confederation Composite Armour, +2 infantry armour (heavy types 7,18,9,11,17,13,16)
      * - ID 24: Rebel Titanium Jacket, +1 infantry armour (types 0,2,4,14)
      * - ID 33: Rebel additional infantry armour, +1 (types 6,8,10,15,12)
+     * <p>
+     * VERIFIED (M4 from CRITICAL_ANALYSIS_REPORT.md): The RE spec for research IDs 9 and 33 lists
+     * unit type IDs that include BOTH infantry types (7, 8) AND machinery types (16, 17, 18, 15, etc.).
+     * The original game applies these bonuses via the Z[player][4] infantry-armor slot ONLY when
+     * the target unit's bitmask matches the infantry bitmask (16447). For machinery units in the
+     * affected-type list (e.g., type 16 Zeus, type 18 Rhino), the bonus is silently ignored because
+     * the armor lookup method l(int i) checks isInfantry before applying Z[player][4].
+     * <p>
+     * REF: s1/y.java line 1673 — byte b = this.cf[2][this.ca[i + 2323]]; (base armor)
+     * REF: combat_formulas.md "Armour Calculation" — baseArmour += Z[player][((isInfantry ? 0 : 1) + 4)]
+     * <p>
+     * Conclusion: the VEHICLE_ARMOR_RESEARCH map below is empty because NO research IDs add
+     * vehicle armor through the Z[] array in the original game. Vehicle armor upgrades come
+     * exclusively from per-unit upgrade levels (Building.upgradeLevel), which is a separate
+     * mechanism not yet implemented (see ProjectProgress.md Phase 13).
      */
     private static final Map<Integer, Integer> INFANTRY_ARMOR_RESEARCH = Map.of(
         0, 2,
@@ -37,9 +52,16 @@ public final class ArmorCalculator {
 
     /**
      * Research IDs that add vehicle armor bonuses.
-     * REF: combat_formulas.md - Z[player][5] vehicle armor slot
-     * No research IDs in the RE spec directly add vehicle armor through the Z[] array.
-     * Vehicle armor may come from other mechanisms (e.g., upgrade levels).
+     * <p>
+     * VERIFIED (M4 from CRITICAL_ANALYSIS_REPORT.md): Confirmed EMPTY — no research IDs in the RE
+     * spec add vehicle armor through the Z[player][5] vehicle-armor slot. The original game's
+     * research IDs 9 and 33 affect unit type lists that include both infantry and machinery types,
+     * but the armor-lookup code only applies Z[player][4] (infantry slot) when isInfantry is true,
+     * and Z[player][5] (vehicle slot) is never written by any research effect.
+     * <p>
+     * Vehicle armor upgrades in the original game come from per-unit upgrade levels
+     * (cf[2][unitType] is overridden by cg[2][...] when an upgrade is active), which is a
+     * separate mechanism tracked in Building.upgradeLevel — not yet wired in this project.
      */
     private static final Map<Integer, Integer> VEHICLE_ARMOR_RESEARCH = Map.of();
 

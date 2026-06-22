@@ -244,7 +244,16 @@ public final class StatsRegistry {
 
         // --- Confederation Mines ---
         // REF: complete_unit_stats.json — CONFED_MINE_SCORPIO
-        // ASSUMPTION: attackRange = sightRange (8) for mines; not explicitly in RE data
+        // REF: decrypted_data.json a_file_data.byte_sections — slot 15:
+        //   unit_hp[15]=110, unit_damage[15]=60, unit_speed[15]=6, unit_armor[15]=9,
+        //   unit_sight_range[15]=8, unit_build_time[15]=10, unit_cost[15]=36
+        // REF: mine_trigger_type=[3,4,5], mine_damage_type=[1,0,2], mine_type_ids=[1,0,2,0,1,2]
+        //   Mine Scorpio = trigger_type 3 (anti-tank, detonates only when machinery rides on it)
+        //   Mine Scorpio = damage_type 1 (heavy anti-machinery)
+        // ASSUMPTION: attackRange = sightRange (8) for mines; the RE binary stores mine trigger
+        //   radius in mine_trigger_type as a TYPE CODE (3/4/5), not a direct tile count. The
+        //   sight_range (8 for Scorpio, 13 for Frog, 7 for Lizard) is used as the trigger radius
+        //   proxy since mines detect enemies within their sight range.
         unitStats.put(UnitType.CONFED_MINE_SCORPIO, new UnitStats(
             UnitType.CONFED_MINE_SCORPIO, "Mine Scorpio",
             110, 60, 6, 9, 0, 8, 8,
@@ -253,7 +262,11 @@ public final class StatsRegistry {
         ));
 
         // REF: complete_unit_stats.json — CONFED_MINE_FROG
-        // ASSUMPTION: attackRange = sightRange (13) for mines; not explicitly in RE data
+        // REF: decrypted_data.json a_file_data.byte_sections — slot 16:
+        //   unit_hp[16]=100, unit_damage[16]=80, unit_speed[16]=9, unit_armor[16]=12,
+        //   unit_sight_range[16]=13, unit_build_time[16]=13, unit_cost[16]=55
+        // REF: mine_trigger_type — Mine Frog = trigger_type 4 (jump mine, jumps before detonation)
+        // REF: mine_damage_type — Mine Frog = damage_type 0 (anti-personnel with fragments)
         unitStats.put(UnitType.CONFED_MINE_FROG, new UnitStats(
             UnitType.CONFED_MINE_FROG, "Mine Frog",
             100, 80, 9, 12, 0, 13, 13,
@@ -262,7 +275,11 @@ public final class StatsRegistry {
         ));
 
         // REF: complete_unit_stats.json — CONFED_MINE_LIZARD
-        // ASSUMPTION: attackRange = sightRange (7) for mines; not explicitly in RE data
+        // REF: decrypted_data.json a_file_data.byte_sections — slot 17:
+        //   unit_hp[17]=120, unit_damage[17]=90, unit_speed[17]=8, unit_armor[17]=8,
+        //   unit_sight_range[17]=7, unit_build_time[17]=24, unit_cost[17]=60
+        // REF: mine_trigger_type — Mine Lizard = trigger_type 5 (multi-charge, scatters fragments)
+        // REF: mine_damage_type — Mine Lizard = damage_type 2 (multi-charge area denial)
         unitStats.put(UnitType.CONFED_MINE_LIZARD, new UnitStats(
             UnitType.CONFED_MINE_LIZARD, "Mine Lizard",
             120, 90, 8, 8, 0, 7, 7,
@@ -271,7 +288,11 @@ public final class StatsRegistry {
         ));
 
         // --- Resistance Infantry ---
-        // REF: complete_unit_stats.json — REBEL_INFANTRY
+        // REF: complete_unit_stats.json — REBEL_INFANTRY (sight=9, range=5, armor=4)
+        // REF: decrypted_data.json a_file_data.byte_sections.unit_hp/damage/speed — slot 0 (Infantry)
+        // VERIFIED (M1 from CRITICAL_ANALYSIS_REPORT.md): Rebel Infantry reuses the SHARED /a file's
+        // slot 0 stats (hp=40, dmg=2, spd=5, build=4, cost=1) — the /a file is shared between factions.
+        // Only sight_range/attack_range/armor are Rebel-specific (from /d0 byte_arrays).
         unitStats.put(UnitType.REBEL_INFANTRY, new UnitStats(
             UnitType.REBEL_INFANTRY, "Infantry",
             40, 2, 5, 4, 0, 9, 5,
@@ -279,7 +300,9 @@ public final class StatsRegistry {
             4, 10, 650, 6, 255, 0, -1
         ));
 
-        // REF: complete_unit_stats.json — REBEL_GRENADIER
+        // REF: complete_unit_stats.json — REBEL_GRENADIER (sight=10, range=5, armor=4)
+        // REF: decrypted_data.json a_file_data.byte_sections.unit_hp/damage/speed — slot 1 (Grenadier)
+        // VERIFIED (M1): Rebel Grenadier reuses /a slot 1 (hp=40, dmg=2, spd=6, build=5, cost=1).
         unitStats.put(UnitType.REBEL_GRENADIER, new UnitStats(
             UnitType.REBEL_GRENADIER, "Grenadier",
             40, 2, 6, 4, 0, 10, 5,
@@ -288,7 +311,15 @@ public final class StatsRegistry {
         ));
 
         // --- Resistance Vehicles ---
-        // REF: complete_unit_stats.json — REBEL_SNIPER
+        // REF: complete_unit_stats.json — REBEL_SNIPER (sight=15, range=7, armor=6)
+        // UNVERIFIED (M1): Sniper is Rebel-only — no direct Confederate analog in the shared /a file's
+        // 19-slot cf table. The hp/damage/speed/build_time/cost values below are design choices
+        // informed by the unit's role (long-range infantry, low HP, high damage, slow). The RE binary
+        // does not separately store these stats for Rebel-only units (Sniper, Coyote, Armadillo, Rhino,
+        // Porcupine) — they reuse the shared /a file's slot values indexed by their internal slot
+        // mapping, which is faction-specific and not directly extractable from the binary without
+        // running the original game's deserialization code.
+        // The existing values (hp=35, dmg=8, spd=4) are kept as reasonable design choices.
         unitStats.put(UnitType.REBEL_SNIPER, new UnitStats(
             UnitType.REBEL_SNIPER, "Sniper",
             35, 8, 4, 6, 0, 15, 7,
@@ -296,7 +327,8 @@ public final class StatsRegistry {
             8, 25, 300, 8, 255, 0, -1
         ));
 
-        // REF: complete_unit_stats.json — REBEL_COYOTE
+        // REF: complete_unit_stats.json — REBEL_COYOTE (sight=25, range=7, armor=6)
+        // UNVERIFIED (M1): Coyote is Rebel-only. hp/damage/speed below are design choices.
         unitStats.put(UnitType.REBEL_COYOTE, new UnitStats(
             UnitType.REBEL_COYOTE, "Coyote",
             45, 4, 8, 6, 0, 25, 7,
@@ -304,7 +336,8 @@ public final class StatsRegistry {
             9, 20, 350, 7, 255, 0, -1
         ));
 
-        // REF: complete_unit_stats.json — REBEL_ARMADILLO
+        // REF: complete_unit_stats.json — REBEL_ARMADILLO (sight=18, range=10, armor=6)
+        // UNVERIFIED (M1): Armadillo is Rebel-only. hp/damage/speed below are design choices.
         unitStats.put(UnitType.REBEL_ARMADILLO, new UnitStats(
             UnitType.REBEL_ARMADILLO, "Armadillo",
             50, 4, 7, 6, 1, 18, 10,
@@ -312,7 +345,10 @@ public final class StatsRegistry {
             10, 20, 350, 12, 255, 0, -1
         ));
 
-        // REF: complete_unit_stats.json — REBEL_RHINO
+        // REF: complete_unit_stats.json — REBEL_RHINO (sight=11, range=7, armor=4)
+        // UNVERIFIED (M1): Rhino is Rebel-only. hp/damage/speed below are design choices
+        // informed by the Confederate T-21 Hammer (slot 4: hp=50, dmg=8, spd=7) which is the
+        // closest functional analog (medium tank with siege mode).
         unitStats.put(UnitType.REBEL_RHINO, new UnitStats(
             UnitType.REBEL_RHINO, "Rhino",
             50, 8, 7, 4, 0, 11, 7,
@@ -320,7 +356,10 @@ public final class StatsRegistry {
             11, 40, 350, 8, 14, 1, -1
         ));
 
-        // REF: complete_unit_stats.json — REBEL_PORCUPINE
+        // REF: complete_unit_stats.json — REBEL_PORCUPINE (sight=35, range=12, armor=6)
+        // UNVERIFIED (M1): Porcupine is Rebel-only. hp/damage/speed below are design choices
+        // informed by the Confederate MLRS Torrent (slot 6: hp=80, dmg=15, spd=4) which is the
+        // closest functional analog (mobile missile system).
         unitStats.put(UnitType.REBEL_PORCUPINE, new UnitStats(
             UnitType.REBEL_PORCUPINE, "MMC Porcupine",
             80, 15, 4, 6, 2, 35, 12,

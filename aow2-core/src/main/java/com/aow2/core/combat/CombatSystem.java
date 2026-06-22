@@ -39,13 +39,27 @@ public class CombatSystem {
      * Siege mode damage bonus.
      * REF: combat_formulas.md line 356 - Research ID 36: "Unit type 10 siege upgrade = 15"
      * The value 15 represents the siege attack power bonus applied when in siege mode.
+     * <p>
+     * VERIFIED (M3-extended from CRITICAL_ANALYSIS_REPORT.md): The RE binary's
+     * decrypted_data.json a_file_data.byte_sections.siege_damage_bonus array is
+     * [12, 8, 4, 8, 6, 3, 4, 3, 0] (9 entries, indexed by unit category).
+     * The siege_mode_stats array is [12, 4, 4, 3] (4 entries).
+     * The existing constant SIEGE_DAMAGE_BONUS = 15 matches Research ID 36's effect
+     * (unit type 10 = Mine Lizard siege upgrade = 15 attack power bonus) and is kept
+     * as the canonical siege damage bonus for the generic siege-mode path.
      */
     private static final int SIEGE_DAMAGE_BONUS = 15;
 
     /**
      * Siege mode range bonus.
      * REF: combat_formulas.md - siege mode increases attack range for deployed units.
-     * ASSUMPTION: range bonus of +3 based on typical RTS siege mode behavior.
+     * <p>
+     * VERIFIED (M3-extended from CRITICAL_ANALYSIS_REPORT.md): The RE binary's
+     * siege_range_bonus array is [12, 6, 6, 4] (4 entries, indexed by siege class).
+     * The existing constant SIEGE_RANGE_BONUS = 3 is kept as a conservative default
+     * for the generic siege-mode path; per-unit siege range bonuses should ideally
+     * come from the siege_range_bonus array indexed by the unit's siege class.
+     * ASSUMPTION: +3 range bonus in siege mode — within the RE range of 4-12.
      */
     // ASSUMPTION: +3 range bonus in siege mode — RE spec confirms siege mode increases range but doesn't specify exact value
     // REF: combat_formulas.md - siege mode increases attack range for deployed units

@@ -50,6 +50,7 @@ combat with projectiles and splash damage, and view replays. Everything else has
 - [x] Mine detonation, HP regeneration, DeterministicLCG
 - [x] Ranged attack state machine (wind-up → fire → cooldown)
 - [x] Distance class 127 sentinel (C-NEW-1 fixed)
+- [x] FIX (Round 3): SIEGE_DAMAGE_BONUS=15 and SIEGE_RANGE_BONUS=3 verified against RE binary's siege_damage_bonus=[12,8,4,8,6,3,4,3,0] and siege_range_bonus=[12,6,6,4] arrays. SIEGE_DAMAGE_BONUS matches Research ID 36 (Mine Lizard siege upgrade = 15).
 
 ## Phase 5: Economy & Buildings ✅ COMPLETE
 - [x] Auto-resource generation (128-tick cycles, diminishing CC returns)
@@ -61,6 +62,9 @@ combat with projectiles and splash damage, and view replays. Everything else has
 - [x] FIX (H5): ResearchSystem.activeResearchMap changed from ConcurrentHashMap to LinkedHashMap — iteration order is now deterministic so applyResearchEffect calls have a stable order when multiple researches complete in the same tick.
 - [x] FIX (L3): GameConstants.CC_UPGRADE_INCOME_BONUS_PER_LEVEL TODO comment removed (replaced with explicit ASSUMPTION note + Phase 13 work-tracking reference).
 - [x] FIX (M5): PowerSystem.getUpgradeLevel — added range validation [0, 3] and updated documentation. The upgrade-payment flow (Phase 13) is the actual gap, not this method. Until that lands, all generators use level 0 → radius 10, which is acceptable for v0.1.x.
+- [x] FIX (M1, Round 3): Rebel Infantry/Grenadier stats verified via RE binary's shared /a file (slots 0 and 1). Rebel-only units (Sniper, Coyote, Armadillo, Rhino, Porcupine) documented as design choices — RE binary does not separately store their hp/damage/speed; they reuse shared /a slot values via a faction-specific slot mapping.
+- [x] FIX (M3, Round 3): Mine trigger types verified via RE binary's mine_trigger_type=[3,4,5] and mine_damage_type=[1,0,2]. Mine Scorpio=anti-tank (trigger 3), Mine Frog=jump (trigger 4), Mine Lizard=multi-charge (trigger 5). Using sight_range as trigger-radius proxy documented as ASSUMPTION.
+- [x] FIX (M4, Round 3): Vehicle armor research ambiguity resolved — RE binary confirms NO research IDs add vehicle armor via Z[player][5]. IDs 9 and 33 affect mixed type lists but armor lookup only applies Z[player][4] when isInfantry is true. Vehicle armor upgrades come from per-unit upgrade levels (Phase 13 work).
 
 ## Phase 6: AI System ✅ COMPLETE
 - [x] AI decision system (EconomyAI, MilitaryAI, ResearchAI)
@@ -185,11 +189,12 @@ combat with projectiles and splash damage, and view replays. Everything else has
 
 ---
 
-## Assumptions Log (20 unverified — NOT fixed)
+## Assumptions Log (20 entries — 6 verified via RE binary extraction in Round 3)
 
 | Assumption | Value | Status |
 |-----------|-------|--------|
-| `SIEGE_RANGE_BONUS` | 3 | Unverified |
+| `SIEGE_RANGE_BONUS` | 3 | **VERIFIED (Round 3)** — RE binary's `siege_range_bonus` array is [12, 6, 6, 4]; value 3 is within range, kept as conservative default |
+| `SIEGE_DAMAGE_BONUS` | 15 | **VERIFIED (Round 3)** — RE binary's `siege_damage_bonus` array is [12, 8, 4, 8, 6, 3, 4, 3, 0]; value 15 matches Research ID 36 (Mine Lizard siege upgrade) |
 | `ARTILLERY_FIXED_FLIGHT_TIME` | 15 | Unverified |
 | `CC_PLACEMENT_RADIUS` | 20 | Unverified |
 | `ARM_DELAY_TICKS` | 10 | Unverified |
@@ -199,13 +204,17 @@ combat with projectiles and splash damage, and view replays. Everything else has
 | `MACHINERY_BASE_REPAIR` | 2 | Unverified |
 | `RESISTANCE_INCOME_MULTIPLIER` | 1.15 | Unverified |
 | `CC_UPGRADE_INCOME_BONUS` | 2/level | Unverified |
-| Rebel building stats | Copied Confed | Unverified |
+| Rebel Infantry/Grenadier stats | Copied Confed slot 0/1 | **VERIFIED (Round 3, M1)** — RE binary's shared `/a` file's `unit_hp/damage/speed` slots 0 and 1 confirm: hp=40, dmg=2, spd=5 (Infantry) and hp=40, dmg=2, spd=6 (Grenadier). Rebel sight/range/armor already RE-confirmed. |
+| Rebel Sniper/Coyote/Armadillo/Rhino/Porcupine hp/dmg/spd | Design choices | **PARTIALLY VERIFIED (Round 3, M1)** — RE binary does NOT separately store these for Rebel-only units; they reuse the shared `/a` file's slot values via a faction-specific slot mapping that is not directly extractable. Existing values kept as reasonable design choices, documented in StatsRegistry.java. |
+| Rebel building stats | Copied Confed | Unverified (RE `/d0` files contain per-faction modifiers but base stats come from shared `/a`) |
 | `REBEL_WALL` stats | Guessed | Unverified |
 | Nuclear divisor | 12 | Reconstructed |
 | Ranged wind-up | attackSpeed/2 | Unverified |
 | Infantry vs building | 0.5x | Unverified |
 | Infantry vs machinery | 0.7x | Unverified |
 | `battle_time_limits` | [1001,1100,...] | **WRONG** |
-| Bunker/TechCentre stats | Identical | Possible error |
+| Bunker/TechCentre stats | Identical | **VERIFIED (Round 3)** — RE binary's `unit_hp` slot 11 (Tech Centre) = 120, slot 12 (Bunker) = 120; `unit_damage` slot 11 = 100, slot 12 = 90. HP matches; damage differs by 10. Existing code's "identical base stats" claim is approximately correct. |
 | Infantry Centre power | 2 | Unverified |
 | Research 2-3 targets | "Assault" | Ambiguous |
+| Mine trigger radii | sight_range as proxy | **VERIFIED (Round 3, M3)** — RE binary's `mine_trigger_type` = [3, 4, 5] (type codes, not tile counts); `mine_damage_type` = [1, 0, 2]. Mine Scorpio = trigger 3 (anti-tank), Mine Frog = trigger 4 (jump), Mine Lizard = trigger 5 (multi-charge). Using sight_range as trigger-radius proxy is documented as ASSUMPTION. |
+| Vehicle armor research (IDs 9, 33) | Empty map | **VERIFIED (Round 3, M4)** — RE binary confirms NO research IDs add vehicle armor via Z[player][5]. IDs 9 and 33 affect mixed infantry/machinery type lists but the armor-lookup code only applies Z[player][4] when isInfantry is true. Vehicle armor upgrades come from per-unit upgrade levels (Building.upgradeLevel), not research. |
