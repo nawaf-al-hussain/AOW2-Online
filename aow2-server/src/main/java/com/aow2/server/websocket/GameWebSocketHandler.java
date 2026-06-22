@@ -137,6 +137,13 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         log.info("Game WebSocket authenticated: player {} on session {}", playerId, session.getId());
     }
 
+    /** Maximum accepted size for a relayed command payload (4 KB).
+     *  FIX (M8 from CRITICAL_ANALYSIS_REPORT.md): The previous handler relayed any
+     *  payload size unmodified, allowing a malicious or buggy client to crash the
+     *  opponent's deserializer. 4 KB is comfortably above the largest legitimate
+     *  CommandType serialization (Build with full GridPosition) which is ~32 bytes. */
+    private static final int MAX_COMMAND_PAYLOAD_BYTES = 4 * 1024;
+
     /**
      * Relays a player command to their opponent.
      * Commands are forwarded unmodified to ensure lockstep determinism.
@@ -158,11 +165,27 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             return;
         }
 
+        // FIX (M8 from CRITICAL_ANALYSIS_REPORT.md): Sanity-check the command payload
+        // size before relaying. Reject oversized payloads to prevent memory-exhaustion
+        // attacks against the opponent's deserializer.
+        JsonNode commandNode = payload.get("command");
+        if (commandNode == null) {
+            sendError(session, "Missing 'command' field");
+            return;
+        }
+        String commandJson = commandNode.toString();
+        if (commandJson.length() > MAX_COMMAND_PAYLOAD_BYTES) {
+            log.warn("Rejecting oversized command from player {}: {} bytes (max {})",
+                playerId, commandJson.length(), MAX_COMMAND_PAYLOAD_BYTES);
+            sendError(session, "Command payload too large");
+            return;
+        }
+
         // Relay the command to the opponent with the sender's player ID
         Map<String, Object> relayMsg = Map.of(
                 "type", "command",
                 "fromPlayerId", playerId,
-                "command", payload.get("command")
+                "command", commandNode
         );
         sendToSessionId(opponentWs, relayMsg);
     }

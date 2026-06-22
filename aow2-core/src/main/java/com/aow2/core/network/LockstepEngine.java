@@ -11,6 +11,7 @@ import com.aow2.core.movement.MovementSystem;
 import com.aow2.core.research.ResearchSystem;
 import com.aow2.core.world.EntityManager;
 import com.aow2.core.world.GameMap;
+import com.aow2.core.entity.Unit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -232,8 +233,13 @@ public final class LockstepEngine {
         lockstepFrame++;
 
         // Check for desync at sync interval
+        // FIX (C1 from CRITICAL_ANALYSIS_REPORT.md): Pass economySystem and
+        // researchSystem to the 4-arg overload so credits and research state are
+        // included in the hash. The previous 2-arg call silently omitted them,
+        // meaning credit divergence or research progress divergence between
+        // clients would go undetected until entity state differed.
         if (syncChecker.shouldCheck(lockstepFrame)) {
-            long hash = syncChecker.computeStateHash(state, entities);
+            long hash = syncChecker.computeStateHash(state, entities, economySystem, researchSystem);
             syncChecker.setLocalHash(hash);
         }
 
@@ -344,6 +350,24 @@ public final class LockstepEngine {
     }
 
     /**
+     * Determines whether the given unit is owned by the specified player.
+     * <p>
+     * FIX (C6 from CRITICAL_ANALYSIS_REPORT.md): Replaces the previous
+     * {@code unit.getFaction().ordinal() == m.playerId()} check which silently
+     * coupled player IDs to enum ordinals. The explicit helper makes the
+     * player-id-to-faction mapping discoverable and survives enum reordering.
+     * <p>
+     * REF: EconomySystem.playerId(Faction) — player 0 = CONFEDERATION, player 1 = RESISTANCE.
+     *
+     * @param unit     the unit to check; may be null (returns false)
+     * @param playerId the claiming player ID
+     * @return true if the unit exists and belongs to the given player
+     */
+    private static boolean owns(Unit unit, int playerId) {
+        return unit != null && EconomySystem.playerId(unit.getFaction()) == playerId;
+    }
+
+    /**
      * Applies a single command to the game state.
      * Commands are dispatched by type and applied to the appropriate entities/systems.
      * All command types are routed through CommandProcessor for system-level commands,
@@ -358,7 +382,9 @@ public final class LockstepEngine {
             case CommandType.Move m -> {
                 for (int unitId : m.unitIds()) {
                     var unit = entities.getUnit(unitId);
-                    if (unit != null && unit.getFaction().ordinal() == m.playerId()) {
+                    // FIX (C6 from CRITICAL_ANALYSIS_REPORT.md): use owns() helper
+                    // instead of fragile enum ordinal coupling.
+                    if (owns(unit, m.playerId())) {
                         // REF: pathfinding.md — compute path via MovementSystem instead of just setting target
                         if (movementSystem != null && gameMap != null) {
                             movementSystem.issueMoveCommand(unit, m.target(), gameMap, entities);
@@ -372,9 +398,11 @@ public final class LockstepEngine {
                 }
             }
             case CommandType.Attack a -> {
+                // FIX (C4 from CRITICAL_ANALYSIS_REPORT.md): Add ownership check.
+                // Previously any client could set targets on opponent units.
                 for (int unitId : a.unitIds()) {
                     var unit = entities.getUnit(unitId);
-                    if (unit != null) {
+                    if (owns(unit, a.playerId())) {
                         unit.setTargetUnitRef(a.targetId());
                     }
                 }
@@ -383,7 +411,8 @@ public final class LockstepEngine {
                 // Attack-move: move units toward target, auto-engaging enemies along the way
                 for (int unitId : am.unitIds()) {
                     var unit = entities.getUnit(unitId);
-                    if (unit != null && unit.isAlive() && unit.getFaction().ordinal() == am.playerId()) {
+                    // FIX (C6 from CRITICAL_ANALYSIS_REPORT.md): use owns() helper
+                    if (owns(unit, am.playerId()) && unit.isAlive()) {
                         if (movementSystem != null && gameMap != null) {
                             movementSystem.issueMoveCommand(unit, am.target(), gameMap, entities);
                         } else {
@@ -398,16 +427,18 @@ public final class LockstepEngine {
                 }
             }
             case CommandType.Stop s -> {
+                // FIX (C4 from CRITICAL_ANALYSIS_REPORT.md): Add ownership check.
                 for (int unitId : s.unitIds()) {
                     var unit = entities.getUnit(unitId);
-                    if (unit != null) {
+                    if (owns(unit, s.playerId())) {
                         unit.clearPath();
                     }
                 }
             }
             case CommandType.SiegeMode sm -> {
+                // FIX (C4 from CRITICAL_ANALYSIS_REPORT.md): Add ownership check.
                 var unit = entities.getUnit(sm.unitId());
-                if (unit != null) {
+                if (owns(unit, sm.playerId())) {
                     unit.setSiegeMode(sm.enabled());
                 }
             }
@@ -467,7 +498,8 @@ public final class LockstepEngine {
                 // Patrol: move units to the patrol waypoint via MovementSystem
                 for (int unitId : pt.unitIds()) {
                     var unit = entities.getUnit(unitId);
-                    if (unit != null && unit.isAlive()) {
+                    // FIX (C4 from CRITICAL_ANALYSIS_REPORT.md): Add ownership check.
+                    if (owns(unit, pt.playerId()) && unit.isAlive()) {
                         if (movementSystem != null && gameMap != null) {
                             movementSystem.issueMoveCommand(unit, pt.waypoint(), gameMap, entities);
                         } else {

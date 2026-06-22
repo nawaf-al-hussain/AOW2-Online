@@ -11,11 +11,10 @@ import { useAuthStore, useChatStore } from "@/lib/store";
 export function ChatTab() {
   const { messages, addMessage } = useChatStore();
   const [input, setInput] = useState("");
-  const [isDemo, setIsDemo] = useState(true);
   const { username, isLoggedIn } = useAuthStore();
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Demo messages
+  // Demo messages — shown only when no real messages have been received.
   const demoMessages = [
     { id: "1", player: "IronCommander", message: "Anyone up for a 1v1?", timestamp: Date.now() - 300000 },
     { id: "2", player: "SteelBlade", message: "Just finished a 45 min match. Intense!", timestamp: Date.now() - 240000 },
@@ -24,7 +23,11 @@ export function ChatTab() {
     { id: "5", player: "GhostRecon", message: "Confed or Rebel? I prefer Rebel for the speed advantage", timestamp: Date.now() - 60000 },
   ];
 
-  const allMessages = messages.length > 0 ? (() => { setIsDemo(false); return messages; })() : demoMessages;
+  // FIX (H4 from CRITICAL_ANALYSIS_REPORT.md): Derive `isDemo` from messages.length
+  // instead of calling setIsDemo(false) inside a render-time ternary, which is a
+  // React anti-pattern that triggers a re-render warning and can loop in strict mode.
+  const isDemo = messages.length === 0;
+  const allMessages = isDemo ? demoMessages : messages;
 
   const sendMessage = () => {
     if (!input.trim() || !isLoggedIn) return;

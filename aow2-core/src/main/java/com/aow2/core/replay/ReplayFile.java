@@ -15,6 +15,7 @@ import java.util.List;
  * [4 bytes]  Number of players
  * [N bytes]  Player faction data
  * [8 bytes]  Total ticks
+ * [8 bytes]  recordedAt (epoch millis; v2+ only — absent in v1, reader falls back to file mtime)
  * [Variable] Command entries: [tick(8)] [type(1)] [playerId(1)] [payload(variable)]
  * </pre>
  * <p>
@@ -35,8 +36,18 @@ public record ReplayFile(
     long recordedAt,
     int formatVersion
 ) {
-    /** Current replay format version. */
-    public static final int FORMAT_VERSION = 1;
+    /** Current replay format version.
+     *  <p>
+     *  Version history:
+     *  <ul>
+     *    <li>1 — original format (no recordedAt in file; loaded from file mtime)</li>
+     *    <li>2 — FIX (H6 from CRITICAL_ANALYSIS_REPORT.md): adds recordedAt (8 bytes)
+     *           after totalTicks so the original recording timestamp survives
+     *           load/save round-trips.</li>
+     *  </ul>
+     *  Writers always emit the latest version; readers accept 1 and 2.
+     */
+    public static final int FORMAT_VERSION = 2;
 
     /** Magic bytes identifying an AOW2 replay file. */
     public static final String MAGIC = "AOW2";

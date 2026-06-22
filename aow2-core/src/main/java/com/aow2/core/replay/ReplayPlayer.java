@@ -50,8 +50,12 @@ public final class ReplayPlayer {
 
     /**
      * Callback interface for executing commands during replay playback.
+     * <p>
+     * FIX (C5 from CRITICAL_ANALYSIS_REPORT.md): Added {@link #resetToInitialState()}
+     * so that backward seeking can ask the consumer to wipe game state back to
+     * tick 0 before commands are re-executed. Without this, replayed commands
+     * pile on top of advanced state and produce invalid replays.
      */
-    @FunctionalInterface
     public interface CommandCallback {
         /**
          * Called when a command should be executed during playback.
@@ -59,6 +63,23 @@ public final class ReplayPlayer {
          * @param command the command to execute
          */
         void onCommand(CommandType command);
+
+        /**
+         * Called when the replay player needs to reset game state to tick 0.
+         * <p>
+         * Implementations must clear all entities, credits, research state, and
+         * any other simulation data, then re-initialize the map as it was at
+         * the start of the recorded game. The player will then re-execute
+         * commands from the beginning (or the nearest snapshot) up to the
+         * target tick.
+         * <p>
+         * May be a no-op for consumers that maintain their own state cache,
+         * but the default contract requires a full reset.
+         */
+        default void resetToInitialState() {
+            // Default no-op for backward compatibility with existing lambda consumers.
+            // Production callers should override this to perform an actual reset.
+        }
     }
 
     /**
@@ -162,6 +183,15 @@ public final class ReplayPlayer {
         }
 
         if (tick < currentTick) {
+            // FIX (C5 from CRITICAL_ANALYSIS_REPORT.md): Ask the consumer to reset
+            // game state to tick 0 before re-executing commands. Previously the
+            // snapshots only stored command indices, so re-executed commands piled
+            // on top of advanced state and produced invalid replays.
+            if (commandCallback != null) {
+                commandCallback.resetToInitialState();
+            } else {
+                LOG.warn("Backward seek requested but no commandCallback set — game state will not be reset");
+            }
             // Find the most recent snapshot before the target tick
             long bestSnapshotTick = 0;
             int bestCommandIndex = 0;
@@ -287,6 +317,21 @@ public final class ReplayPlayer {
             // Total ticks
             long totalTicks = dis.readLong();
 
+            // FIX (H6 from CRITICAL_ANALYSIS_REPORT.md): Read recordedAt from the
+            // file footer if present (format version 2+). For v1 files, fall back
+            // to file modification time so the original recording timestamp is
+            // preserved instead of being overwritten with the load time.
+            long recordedAt;
+            if (formatVersion >= 2) {
+                recordedAt = dis.readLong();
+            } else {
+                try {
+                    recordedAt = Files.getLastModifiedTime(filePath).toMillis();
+                } catch (IOException ignored) {
+                    recordedAt = 0L;
+                }
+            }
+
             // Commands
             int commandCount = dis.readInt();
             List<ReplayEntry> commands = new ArrayList<>(commandCount);
@@ -302,7 +347,7 @@ public final class ReplayPlayer {
 
             ReplayFile replay = new ReplayFile(
                 mapName, factions, totalTicks,
-                List.copyOf(commands), System.currentTimeMillis(), formatVersion
+                List.copyOf(commands), recordedAt, formatVersion
             );
 
             LOG.info("Loaded replay from {} ({}x{} ticks, {} commands)",

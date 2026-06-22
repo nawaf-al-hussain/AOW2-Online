@@ -79,8 +79,13 @@ public class ModLoader {
 
                     loadedMods.add(manifest);
                     LOG.info("Loaded mod: {} v{} by {}", manifest.name(), manifest.version(), manifest.author());
-                } catch (IOException e) {
-                    LOG.error("Failed to load mod manifest: {}", manifestPath, e);
+                } catch (Exception e) {
+                    // FIX (H-MOD from CRITICAL_ANALYSIS_REPORT.md §Modding System):
+                    // Broad catch — ModManifest's compact constructor throws IllegalArgumentException
+                    // for blank/null required fields (a RuntimeException). Under some Jackson
+                    // configurations this propagates uncaught and terminates the entire mod
+                    // discovery loop, preventing subsequent valid mods from loading.
+                    LOG.error("Failed to load mod manifest: {} — {}", manifestPath, e.getMessage());
                 }
             }
         } catch (IOException e) {

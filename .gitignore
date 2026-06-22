@@ -24,6 +24,13 @@ logs/
 # Runtime
 *.h2.db
 
+# Node / Bun (aow2-web)
+node_modules/
+.next/
+*.tsbuildinfo
+bun.lockb
+.bun/
+
 # RE assets (large binary files — keep the JSON/MD docs, exclude sprites/pngs/binaries)
 docs/RE/assets_processed/
 docs/RE/assets_raw/

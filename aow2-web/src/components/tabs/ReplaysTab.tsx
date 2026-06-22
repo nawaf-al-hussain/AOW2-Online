@@ -5,6 +5,8 @@ import { Play, Clock, SwordsIcon } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { getReplays } from "@/lib/api";
+import { toast } from "sonner";
 
 export function ReplaysTab() {
   const [isDemo, setIsDemo] = useState(true);
@@ -20,8 +22,10 @@ export function ReplaysTab() {
   ];
 
   useEffect(() => {
-    fetch('/api/replays')
-      .then((res) => res.json())
+    // FIX (M9 from CRITICAL_ANALYSIS_REPORT.md): Use the getReplays() helper
+    // instead of a direct `fetch('/api/replays')` so the request goes through
+    // apiUrl() with the ?XTransformPort=8080 query string.
+    getReplays()
       .then((data) => {
         if (Array.isArray(data) && data.length > 0) {
           setReplays(data);
@@ -62,7 +66,19 @@ export function ReplaysTab() {
                     {r.duration}
                   </div>
                   <span className="w-20 text-right">{r.playedAt}</span>
-                  <Button size="sm" variant="outline" className="border-zinc-700 text-cyan-400 hover:bg-cyan-900/20 h-7 text-xs">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="border-zinc-700 text-cyan-400 hover:bg-cyan-900/20 h-7 text-xs"
+                    // FIX (H3 from CRITICAL_ANALYSIS_REPORT.md): Wire the Watch button.
+                    // In-browser replay viewer is not yet implemented; show a toast
+                    // instead of silently dead-ending.
+                    onClick={() =>
+                      toast.info("Replay viewer coming soon", {
+                        description: `Replay ${r.player1} vs ${r.player2} on ${r.mapName} (${r.duration})`,
+                      })
+                    }
+                  >
                     <Play className="mr-1 h-3 w-3" /> Watch
                   </Button>
                 </div>

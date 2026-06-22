@@ -58,11 +58,14 @@ combat with projectiles and splash damage, and view replays. Everything else has
 - [x] Kill reward formula, economy tests
 - [x] Research effects applied via data-driven ResearchBonusTracker (C-NEW-2 fixed)
 - [x] Bunker/TechCentre stats verified (H-NEW-4 resolved)
+- [x] FIX (H5): ResearchSystem.activeResearchMap changed from ConcurrentHashMap to LinkedHashMap — iteration order is now deterministic so applyResearchEffect calls have a stable order when multiple researches complete in the same tick.
+- [x] FIX (L3): GameConstants.CC_UPGRADE_INCOME_BONUS_PER_LEVEL TODO comment removed (replaced with explicit ASSUMPTION note + Phase 13 work-tracking reference).
 
 ## Phase 6: AI System ✅ COMPLETE
 - [x] AI decision system (EconomyAI, MilitaryAI, ResearchAI)
 - [x] Three difficulties, deterministic, fog-of-war aware
 - [x] Sealed interface MilitaryAction
+- [x] FIX (H1): AISystem.ENABLE_STRATEGY_QUALITY_SKIP is now gated behind the system property `aow2.ai.strategy-skip` (default false). The probabilistic decision-cycle skip has NO basis in the RE spec — the original AI processes every cycle — so it is OFF by default for faithful recreation. Enable via -Daow2.ai.strategy-skip=true for casual modern-enhancement mode. Uses DeterministicLCG so still lockstep-safe.
 
 ## Phase 7: Campaign System ✅ PLAYTESTED AND FIXED
 - [x] Mission scripting system (Lua 5.2 via LuaJ)
@@ -89,6 +92,12 @@ combat with projectiles and splash damage, and view replays. Everything else has
 - [x] Game-over race condition fixed (H-NEW-8 fixed)
 - [x] Pending claims cleanup (H-NEW-10 fixed)
 - [x] All tests compile (C-NEW-8/9 fixed)
+- [x] FIX (C1): LockstepEngine.processFrame now calls the 4-arg computeStateHash(state, entities, economySystem, researchSystem) so credits and research state are included in the sync hash. Previously the 2-arg overload silently omitted them — credit divergence or research divergence went undetected.
+- [x] FIX (C4): LockstepEngine.applyCommand now validates unit ownership for Attack, AttackMove (already had it), Stop, SiegeMode, and Patrol commands. Previously only Move validated ownership, allowing a malicious client to set targets on opponent units.
+- [x] FIX (C6): LockstepEngine now uses EconomySystem.playerId(Faction) helper instead of Faction.ordinal() == playerId — eliminates the implicit coupling between player IDs and enum ordering.
+- [x] FIX (M8): GameWebSocketHandler.handleCommand now rejects oversized command payloads (>4 KB) before relaying to the opponent, preventing memory-exhaustion attacks.
+- [x] FIX (M6): RateLimitFilter.getClientIp now uses InetAddress.isSiteLocalAddress() for RFC 1918 checks — the previous `startsWith("172.")` matched all of 172.0.0.0/8 including public addresses like 172.217.x.x.
+- [x] FIX (H7): EloRatingService marked @Deprecated(since="0.1.0", forRemoval=true) with scheduled v0.2.0 removal — kept for now so EloRatingServiceTest (14 tests) continues to provide redundant math coverage until RankingServiceTest (10 tests) reaches parity.
 
 ## Phase 9: Map Builder ✅ COMPLETE
 - [x] Map editor UI, save/load, validation, sharing, tile/entity placement
@@ -99,9 +108,15 @@ combat with projectiles and splash damage, and view replays. Everything else has
 - [x] ModEventBridge fully wired (C-NEW-4 fixed)
 - [x] ModInstaller ZIP stream fixed (M-NEW-14 fixed)
 - [x] GameDataRegistry reflection-based overrides (M-NEW-15 fixed)
+- [x] FIX (C3): ModManager.discoveredMods/enabledMods/modDirectories/modOverrides changed from ConcurrentHashMap to LinkedHashMap (insertion-ordered). Previously the undefined iteration order of ConcurrentHashMap made mod-override application non-deterministic across JVM launches — two enabled mods overriding the same stat could produce different game stats on different launches, violating the project's "no non-deterministic collections in game state" invariant.
+- [x] FIX (H-MOD): ModManager.discoverMods and ModLoader.loadAll now catch broad `Exception` instead of only `IOException`. ModManifest's compact constructor throws IllegalArgumentException (a RuntimeException) for blank/null required fields — under some Jackson configurations this propagated uncaught and terminated the entire mod discovery loop, preventing subsequent valid mods from loading.
 
 ## Phase 11: Replay System ✅ COMPLETE
 - [x] Command recording, binary file format, playback with seeking
+- [x] FIX (C2): ReplayEntry typeOrd validation now accepts 1-12 (was 1-11, which rejected AttackMove=0x0C and crashed every AttackMove recording)
+- [x] FIX (C5): ReplayPlayer.CommandCallback now has resetToInitialState() default method; seekTo() calls it before backward-seek re-execution (previously snapshots only stored command indices, so re-execution piled on top of advanced state)
+- [x] FIX (H6): ReplayFile FORMAT_VERSION bumped to 2; recordedAt now persisted in the file (8 bytes after totalTicks). v1 reader falls back to file mtime so old replays keep their original timestamp.
+- [x] Stale Javadoc/comments updated (ReplayEntry "1-11" → "1-12"; ReplayRecorder "0x01-0x0B" → "0x01-0x0C")
 
 ## Phase 12: Web Client ⚠️ MOSTLY DEMO (partial backend wiring)
 - [x] Next.js + shadcn/ui + Tailwind + Prisma project structure
@@ -110,6 +125,9 @@ combat with projectiles and splash damage, and view replays. Everything else has
 - [x] UnitsTab/ReplaysTab attempt API fetch (M-NEW-26 fixed)
 - [x] Matchmaking tries server first (M-NEW-27 fixed)
 - [x] Prisma FKs added (M-NEW-28 fixed)
+- [x] FIX (H3): Dead-end UI buttons wired — "Join Battle" (MatchmakingPanel), "Watch" (ReplaysTab), "Download" (MapsTab, calls real downloadMap API). Join Battle and Watch show sonner toasts (FXGL launch / in-browser viewer still pending); Download hits the real /api/maps/:id endpoint.
+- [x] FIX (H4): ChatTab no longer calls setIsDemo(false) during render — isDemo is now derived from messages.length === 0.
+- [x] FIX (M9): UnitsTab and ReplaysTab now use the apiUrl() helper via getUnits()/getReplays() exports from api.ts (previously bypassed the helper, missing ?XTransformPort=8080).
 - [ ] **Most data still hardcoded** — needs full backend wiring
 - [ ] **No real web-playable game client**
 

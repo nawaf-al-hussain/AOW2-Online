@@ -1,7 +1,10 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
-// Helper to build API URL with optional port transform
-function apiUrl(path: string, port?: number): string {
+// Helper to build API URL with optional port transform.
+// FIX (M9 from CRITICAL_ANALYSIS_REPORT.md): Exported so that components that
+// previously called `fetch('/api/...')` directly (bypassing the helper and
+// missing the ?XTransformPort=8080 query string used elsewhere) can be migrated.
+export function apiUrl(path: string, port?: number): string {
   const base = API_BASE || "";
   if (port) {
     return `${base}${path}?XTransformPort=${port}`;
@@ -67,6 +70,14 @@ export async function downloadMap(mapId: number) {
 export async function getReplays() {
   const res = await fetch(apiUrl("/api/replays", 8080));
   if (!res.ok) throw new Error("Failed to fetch replays");
+  return res.json();
+}
+
+// Units API (FIX (M9 from CRITICAL_ANALYSIS_REPORT.md): added so UnitsTab doesn't
+// bypass the apiUrl helper with a direct `fetch('/api/units')`.)
+export async function getUnits() {
+  const res = await fetch(apiUrl("/api/units", 8080));
+  if (!res.ok) throw new Error("Failed to fetch units");
   return res.json();
 }
 

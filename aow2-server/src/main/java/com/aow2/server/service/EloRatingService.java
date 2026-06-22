@@ -18,8 +18,14 @@ import org.springframework.transaction.annotation.Transactional;
  *             <p>
  *             FIX (P3-L1): Removed @Service annotation — this bean is no longer registered
  *             in the Spring application context. All callers should use RankingService.
+ *             <p>
+ *             FIX (H7 from CRITICAL_ANALYSIS_REPORT.md): Scheduled for removal in v0.2.0.
+ *             The class is retained in v0.1.x so that {@code EloRatingServiceTest} (which
+ *             exercises the canonical ELO math) continues to provide redundancy coverage
+ *             until {@code RankingServiceTest} reaches the same level. Do not add new
+ *             callers — new code must use {@link RankingService}.
  */
-@Deprecated
+@Deprecated(since = "0.1.0", forRemoval = true)
 // @Service — REMOVED (P3-L1): No longer a Spring bean; use RankingService instead.
 public class EloRatingService {
 

@@ -14,11 +14,11 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Manages the technology research system.
@@ -47,7 +47,16 @@ public final class ResearchSystem {
     /** Per-player accumulated research bonuses. Index = playerId. */
     private final ResearchBonusTracker[] bonusTrackers;
 
-    /** Per-player active research tracking: techCentreId -> active research ID. */
+    /** Per-player active research tracking: techCentreId -> active research ID.
+     *  <p>
+     *  FIX (H5 from CRITICAL_ANALYSIS_REPORT.md): Use LinkedHashMap (insertion-ordered)
+     *  instead of ConcurrentHashMap. The latter has undefined iteration order, which
+     *  made the order of {@link #applyResearchEffect} calls non-deterministic when
+     *  multiple researches completed in the same tick — risking lockstep desyncs if
+     *  two researches affect the same unit type's armor additively.
+     *  <p>
+     *  The research system is only mutated from the single game-loop thread, so
+     *  ConcurrentHashMap wasn't providing useful thread-safety. */
     private final Map<Integer, ActiveResearch> activeResearchMap;
 
     /** The technology tree definition. */
@@ -105,7 +114,8 @@ public final class ResearchSystem {
         this.techTree = techTree;
         this.completedResearch = new LinkedHashSet[MAX_PLAYERS];
         this.bonusTrackers = new ResearchBonusTracker[MAX_PLAYERS];
-        this.activeResearchMap = new ConcurrentHashMap<>();
+        // FIX (H5 from CRITICAL_ANALYSIS_REPORT.md): LinkedHashMap for deterministic iteration.
+        this.activeResearchMap = new LinkedHashMap<>();
         for (int i = 0; i < MAX_PLAYERS; i++) {
             completedResearch[i] = new LinkedHashSet<>();
             bonusTrackers[i] = new ResearchBonusTracker();

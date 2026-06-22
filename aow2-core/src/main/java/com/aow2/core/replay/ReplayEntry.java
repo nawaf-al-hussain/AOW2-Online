@@ -8,7 +8,7 @@ package com.aow2.core.replay;
  * REF: phases.md Phase 11 - replay entry format
  *
  * @param tick     the game tick when the command was issued
- * @param typeOrd  ordinal of the CommandType variant (1-11, matching CommandSerializer type IDs)
+ * @param typeOrd  ordinal of the CommandType variant (1-12, matching CommandSerializer type IDs)
  * @param playerId the player who issued the command (0 or 1)
  * @param payload  full serialized command data from CommandSerializer (variable length)
  */
@@ -25,8 +25,12 @@ public record ReplayEntry(
         if (tick < 0) {
             throw new IllegalArgumentException("tick must not be negative, got: " + tick);
         }
-        if (typeOrd < 0 || typeOrd > 11) {
-            throw new IllegalArgumentException("typeOrd must be 0-11, got: " + typeOrd);
+        // FIX (C2 from CRITICAL_ANALYSIS_REPORT.md): Validate against 12, not 11.
+        // TYPE_ATTACK_MOVE = 0x0C = 12 — the previous bound of 11 caused every AttackMove
+        // command to throw IllegalArgumentException, crashing the replay recorder.
+        // REF: ReplayRecorder.java TYPE_ATTACK_MOVE = 0x0C
+        if (typeOrd < 0 || typeOrd > 12) {
+            throw new IllegalArgumentException("typeOrd must be 0-12, got: " + typeOrd);
         }
         if (playerId < 0 || playerId > 1) {
             throw new IllegalArgumentException("playerId must be 0 or 1, got: " + playerId);

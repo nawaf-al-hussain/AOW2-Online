@@ -5,6 +5,7 @@ import { Shield, Flame, Target } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import StatBar from "@/components/StatBar";
+import { getUnits } from "@/lib/api";
 
 const CONFED_COLOR = "from-blue-600 to-blue-800";
 const CONFED_BG = "bg-blue-900/30";
@@ -39,8 +40,10 @@ export function UnitsTab() {
   ];
 
   useEffect(() => {
-    fetch('/api/units')
-      .then((res) => res.json())
+    // FIX (M9 from CRITICAL_ANALYSIS_REPORT.md): Use the getUnits() helper instead
+    // of a direct `fetch('/api/units')` so the request goes through apiUrl() and
+    // includes the ?XTransformPort=8080 query string used by the rest of the app.
+    getUnits()
       .then((data) => {
         if (data && data.confed && data.rebel) {
           setConfedUnits(data.confed);

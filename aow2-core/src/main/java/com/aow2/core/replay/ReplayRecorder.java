@@ -26,7 +26,7 @@ public final class ReplayRecorder {
 
     private static final Logger LOG = LoggerFactory.getLogger(ReplayRecorder.class);
 
-    /** Command type IDs matching CommandSerializer wire protocol (0x01-0x0B). */
+    /** Command type IDs matching CommandSerializer wire protocol (0x01-0x0C). */
     private static final int TYPE_MOVE = 0x01;
     private static final int TYPE_ATTACK = 0x02;
     private static final int TYPE_BUILD = 0x03;
@@ -140,6 +140,7 @@ public final class ReplayRecorder {
      * [4 bytes]  Number of players
      * [N bytes]  Player faction ordinals (1 byte each)
      * [8 bytes]  Total ticks
+     * [8 bytes]  recordedAt (epoch millis; v2+ only)
      * [4 bytes]  Number of commands
      * [Variable] Command entries
      * </pre>
@@ -176,6 +177,11 @@ public final class ReplayRecorder {
 
             // Total ticks
             dos.writeLong(replay.totalTicks());
+
+            // FIX (H6 from CRITICAL_ANALYSIS_REPORT.md): Persist recordedAt so the
+            // original recording timestamp survives load/save round-trips.
+            // v2 files include this field; v1 files did not.
+            dos.writeLong(replay.recordedAt());
 
             // Commands
             dos.writeInt(replay.commands().size());

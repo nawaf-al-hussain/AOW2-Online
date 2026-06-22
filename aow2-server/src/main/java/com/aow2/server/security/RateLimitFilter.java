@@ -14,6 +14,7 @@ import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -110,14 +111,31 @@ public class RateLimitFilter implements Filter, Ordered {
      * bypass rate limiting by rotating the leftmost IP. Now only trusts X-Forwarded-For
      * if the request comes from a known proxy (checked via the trusted proxy header or
      * local address). Otherwise, uses the direct remote address.
+     * <p>
+     * FIX (M6 from CRITICAL_ANALYSIS_REPORT.md): The previous check used
+     * {@code remoteAddr.startsWith("172.")} which matches all of 172.0.0.0/8 —
+     * including public addresses like 172.217.x.x (Google DNS) — instead of just
+     * the private 172.16.0.0/12 range. Now uses {@link InetAddress#isSiteLocalAddress()}
+     * which performs the correct RFC 1918 check.
      */
     private String getClientIp(HttpServletRequest request) {
         String remoteAddr = request.getRemoteAddr();
-        // Only trust X-Forwarded-For if the direct connection is from a local/proxy address
-        boolean isTrustedProxy = remoteAddr != null &&
-            (remoteAddr.startsWith("127.") || remoteAddr.startsWith("10.") ||
-             remoteAddr.startsWith("172.") || remoteAddr.startsWith("192.168.") ||
-             "0:0:0:0:0:0:0:1".equals(remoteAddr) || "::1".equals(remoteAddr));
+        // Use InetAddress.isSiteLocalAddress() for RFC 1918 private-range check:
+        //   10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16 — and loopback.
+        // This avoids the previous bug where 172.217.x.x (Google public DNS) was
+        // falsely treated as a trusted proxy.
+        boolean isTrustedProxy = false;
+        if (remoteAddr != null) {
+            try {
+                InetAddress addr = InetAddress.getByName(remoteAddr);
+                isTrustedProxy = addr.isSiteLocalAddress()
+                    || addr.isLoopbackAddress()
+                    || addr.isAnyLocalAddress();
+            } catch (java.net.UnknownHostException ignored) {
+                // Should not happen for a remote-addr string, but be defensive.
+                isTrustedProxy = false;
+            }
+        }
 
         if (isTrustedProxy) {
             String xff = request.getHeader("X-Forwarded-For");

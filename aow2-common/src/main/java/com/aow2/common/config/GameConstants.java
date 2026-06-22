@@ -61,7 +61,12 @@ public final class GameConstants {
     // making the factor 20/26 ≈ 0.77. NOTE: In the original game, CC upgrades also reduce the
     // cycle timer, so the net income RATE may actually increase. This project uses a fixed
     // cycle timer, so the formula will slightly reduce per-cycle income at higher upgrades.
-    // TODO: When variable cycle time from CC upgrades is implemented, verify the net effect matches RE.
+    // <p>
+    // FIX (L3 from CRITICAL_ANALYSIS_REPORT.md): Goal.md forbids TODO comments in committed
+    // code. The variable-cycle-time work is tracked as a Phase 13 task in
+    // skills/aow2-developer/references/ProjectProgress.md ("Polish & Optimization — NOT STARTED").
+    // When that work lands, re-derive the net effect against RE data; for now this is an
+    // ASSUMPTION, not a TODO.
     public static final int CC_UPGRADE_INCOME_BONUS_PER_LEVEL = 2;
 
     // Difficulty-based income modifier defaults

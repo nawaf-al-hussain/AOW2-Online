@@ -11,9 +11,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Manages mod lifecycle: loading, enabling, disabling, and hot-reload.
@@ -31,10 +31,18 @@ public final class ModManager {
     private final ObjectMapper objectMapper;
     private final GameDataRegistry registry;
 
-    /** All discovered mods keyed by mod ID. */
+    /** All discovered mods keyed by mod ID.
+     *  <p>
+     *  FIX (C3 from CRITICAL_ANALYSIS_REPORT.md): Use LinkedHashMap (insertion-ordered)
+     *  instead of ConcurrentHashMap. The latter has undefined iteration order,
+     *  which made mod-override application non-deterministic across JVM launches —
+     *  violating the project's "no non-deterministic collections in game state" invariant.
+     *  The mod manager is single-threaded (called from game setup / UI), so concurrent
+     *  maps were unnecessary anyway.
+     */
     private final Map<String, ModManifest> discoveredMods;
 
-    /** Set of currently enabled mod IDs. */
+    /** Set of currently enabled mod IDs (insertion-ordered for deterministic override application). */
     private final Map<String, Boolean> enabledMods;
 
     /** Mod directories keyed by mod ID for file access. */
@@ -51,10 +59,10 @@ public final class ModManager {
     public ModManager(GameDataRegistry registry) {
         this.objectMapper = new ObjectMapper();
         this.registry = registry;
-        this.discoveredMods = new ConcurrentHashMap<>();
-        this.enabledMods = new ConcurrentHashMap<>();
-        this.modDirectories = new ConcurrentHashMap<>();
-        this.modOverrides = new ConcurrentHashMap<>();
+        this.discoveredMods = new LinkedHashMap<>();
+        this.enabledMods = new LinkedHashMap<>();
+        this.modDirectories = new LinkedHashMap<>();
+        this.modOverrides = new LinkedHashMap<>();
     }
 
     /**
@@ -95,8 +103,14 @@ public final class ModManager {
                     LOG.info("Discovered mod: {} v{} by {} [{} overrides]",
                         manifest.name(), manifest.version(), manifest.author(),
                         modOverrides.getOrDefault(manifest.id(), List.of()).size());
-                } catch (IOException e) {
-                    LOG.error("Failed to load mod manifest: {}", manifestPath, e);
+                } catch (Exception e) {
+                    // FIX (H-MOD from CRITICAL_ANALYSIS_REPORT.md §Modding System):
+                    // Catch broad Exception, not just IOException. ModManifest's
+                    // compact constructor throws IllegalArgumentException for blank/null
+                    // required fields, which is a RuntimeException. Under some Jackson
+                    // configurations this propagates uncaught and terminates the entire
+                    // mod discovery loop — preventing subsequent valid mods from loading.
+                    LOG.error("Failed to load mod manifest: {} — {}", manifestPath, e.getMessage());
                 }
             }
         } catch (IOException e) {

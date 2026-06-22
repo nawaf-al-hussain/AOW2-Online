@@ -46,6 +46,26 @@ public final class AISystem {
 
     private static final Logger LOG = LoggerFactory.getLogger(AISystem.class);
 
+    /**
+     * Master toggle for the "strategy-quality skip" — a probabilistic decision-cycle
+     * skip gated by {@link AIDifficulty#strategyQuality}.
+     * <p>
+     * FIX (H1 from CRITICAL_ANALYSIS_REPORT.md): This behavior was previously
+     * unconditional but, per the inline comment, has NO basis in the reverse-engineered
+     * spec — the original AI processes every cycle. It IS deterministic (uses
+     * DeterministicLCG) so it cannot cause lockstep desyncs, but it is a fabricated
+     * modern enhancement rather than a faithful recreation.
+     * <p>
+     * Default: {@code false} — the project's Goal.md prioritizes faithful RE recreation.
+     * Set to {@code true} via system property {@code aow2.ai.strategy-skip=true} to
+     * re-enable the modern-enhancement behavior (e.g., for casual skirmish mode).
+     * <p>
+     * REF: skills/aow2-developer/references/anti_hallucination.md — Rule 1: never
+     * invent game data. This toggle makes the design-choice explicit instead of silent.
+     */
+    private static final boolean ENABLE_STRATEGY_QUALITY_SKIP =
+        Boolean.getBoolean("aow2.ai.strategy-skip");
+
     /** The AI difficulty level. */
     private final AIDifficulty difficulty;
 
@@ -150,14 +170,14 @@ public final class AISystem {
         }
         lastDecisionTick = currentTick;
 
-        // Strategy quality check: skip this decision cycle randomly based on difficulty
-        // REF: ai_analysis.md — difficulty affects decision quality
-        // UNVERIFIED (L-8): No RE basis for random decision skipping. The original AI
-        // processes every cycle. This probabilistic skip is a common game AI pattern
-        // but is fabricated. Uses DeterministicLCG so it IS lockstep-safe. Consider
-        // removing and relying solely on deterministic difficulty scaling (tick interval,
-        // task limits) if this causes issues.
-        if (random.nextDouble() > difficulty.strategyQuality) {
+        // Strategy quality check: skip this decision cycle randomly based on difficulty.
+        // FIX (H1 from CRITICAL_ANALYSIS_REPORT.md): Gated behind ENABLE_STRATEGY_QUALITY_SKIP.
+        // The probabilistic skip has no RE basis — the original AI processes every cycle —
+        // so it is OFF by default for faithful recreation. Enable via -Daow2.ai.strategy-skip=true
+        // for a casual modern-enhancement mode.
+        // UNVERIFIED (L-8): When enabled, this is fabricated game design. Uses DeterministicLCG
+        // so it IS lockstep-safe.
+        if (ENABLE_STRATEGY_QUALITY_SKIP && random.nextDouble() > difficulty.strategyQuality) {
             LOG.debug("AI player {} skipping decision (strategy quality check)", playerId);
             return;
         }

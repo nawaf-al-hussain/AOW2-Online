@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getMaps } from "@/lib/api";
+import { toast } from "sonner";
 
 export function MapsTab() {
   const [maps, setMaps] = useState<any[]>([]);
@@ -72,7 +73,26 @@ export function MapsTab() {
                   {map.downloadCount}
                 </div>
               </div>
-              <Button size="sm" className="mt-3 w-full bg-green-700/50 hover:bg-green-700 text-green-100 border border-green-800/50">
+              <Button
+                size="sm"
+                className="mt-3 w-full bg-green-700/50 hover:bg-green-700 text-green-100 border border-green-800/50"
+                // FIX (H3 from CRITICAL_ANALYSIS_REPORT.md): Wire the Download button.
+                // Calls the existing downloadMap() API helper and shows a toast on
+                // success or failure. Previously the button had no onClick at all.
+                onClick={async () => {
+                  try {
+                    const { downloadMap } = await import("@/lib/api");
+                    await downloadMap(map.id);
+                    toast.success(`Downloaded "${map.name}"`, {
+                      description: "Map saved to your local maps directory.",
+                    });
+                  } catch (err) {
+                    toast.error("Download failed", {
+                      description: err instanceof Error ? err.message : "Server unavailable.",
+                    });
+                  }
+                }}
+              >
                 <Download className="mr-1 h-3 w-3" /> Download
               </Button>
             </CardContent>

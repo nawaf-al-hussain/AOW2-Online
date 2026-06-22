@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useMatchmakingStore } from "@/lib/store";
+import { toast } from "sonner";
 
 export default function MatchmakingPanel() {
   const { isSearching, searchTime, matchFound, opponent, startSearch, stopSearch, foundMatch } = useMatchmakingStore();
@@ -66,7 +67,17 @@ export default function MatchmakingPanel() {
           <div className="text-center space-y-4 py-4">
             <div className="text-2xl font-bold text-green-400 animate-pulse">Match Found!</div>
             <p className="text-zinc-400">Opponent: <span className="text-white font-semibold">{opponent}</span></p>
-            <Button className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-500 hover:to-green-600 text-white font-bold w-full">
+            <Button
+              className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-500 hover:to-green-600 text-white font-bold w-full"
+              // FIX (H3 from CRITICAL_ANALYSIS_REPORT.md): Wire the Join Battle button.
+              // Launching the FXGL client from the browser is not yet implemented; for now
+              // show a toast that explains the next step instead of dead-ending silently.
+              onClick={() =>
+                toast.info("Game client launch coming soon", {
+                  description: "Launch the AOW2 desktop client to start the match.",
+                })
+              }
+            >
               <Swords className="mr-2 h-4 w-4" /> Join Battle
             </Button>
           </div>
