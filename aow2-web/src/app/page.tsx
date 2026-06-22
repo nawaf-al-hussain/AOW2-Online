@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Shield, Swords, Map, Trophy, MessageSquare, Target,
   Play, Zap, Flame
@@ -17,6 +17,9 @@ import { MapsTab } from "@/components/tabs/MapsTab";
 import { ChatTab } from "@/components/tabs/ChatTab";
 import { ReplaysTab } from "@/components/tabs/ReplaysTab";
 import { UnitsTab } from "@/components/tabs/UnitsTab";
+// FIX (H8 from CRITICAL_ANALYSIS_REPORT.md): Fetch live server stats instead of
+// the previously hardcoded 1,247 / 89 / 342 / 56 numbers on the landing page.
+import { getStats, type ServerStats } from "@/lib/api";
 
 // ─── Faction Colors ─────────────────────────────────────────────
 const CONFED_COLOR = "from-blue-600 to-blue-800";
@@ -30,6 +33,28 @@ const REBEL_BORDER = "border-red-700/50";
 export default function Home() {
   const { isLoggedIn } = useAuthStore();
   const [activeTab, setActiveTab] = useState("home");
+  // FIX (H8 from CRITICAL_ANALYSIS_REPORT.md): Live server stats for the Quick Stats panel.
+  // `null` while loading or when the server is unreachable; the panel renders "—" in that case.
+  const [stats, setStats] = useState<ServerStats | null>(null);
+  const [statsLoading, setStatsLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    getStats()
+      .then((data) => {
+        if (!cancelled) {
+          setStats(data);
+          setStatsLoading(false);
+        }
+      })
+      .catch(() => {
+        // Server unavailable — leave stats null; the panel will show "—" placeholders.
+        if (!cancelled) setStatsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col relative">
@@ -167,23 +192,37 @@ export default function Home() {
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-2 gap-4">
+                    {/* FIX (H8 from CRITICAL_ANALYSIS_REPORT.md): Live server stats. */}
                     <div className="text-center">
-                      <p className="text-3xl font-bold text-amber-400">1,247</p>
-                      <p className="text-xs text-zinc-500">Active Players</p>
+                      <p className="text-3xl font-bold text-amber-400">
+                        {statsLoading ? "…" : stats ? stats.totalPlayers.toLocaleString() : "—"}
+                      </p>
+                      <p className="text-xs text-zinc-500">Total Players</p>
                     </div>
                     <div className="text-center">
-                      <p className="text-3xl font-bold text-green-400">89</p>
-                      <p className="text-xs text-zinc-500">Matches In Progress</p>
+                      <p className="text-3xl font-bold text-green-400">
+                        {statsLoading ? "…" : stats ? stats.matchesToday.toLocaleString() : "—"}
+                      </p>
+                      <p className="text-xs text-zinc-500">Matches Today</p>
                     </div>
                     <div className="text-center">
-                      <p className="text-3xl font-bold text-blue-400">342</p>
+                      <p className="text-3xl font-bold text-blue-400">
+                        {statsLoading ? "…" : stats ? stats.totalMaps.toLocaleString() : "—"}
+                      </p>
                       <p className="text-xs text-zinc-500">Community Maps</p>
                     </div>
                     <div className="text-center">
-                      <p className="text-3xl font-bold text-purple-400">56</p>
-                      <p className="text-xs text-zinc-500">Active Mods</p>
+                      <p className="text-3xl font-bold text-purple-400">
+                        {statsLoading ? "…" : stats ? stats.totalMatches.toLocaleString() : "—"}
+                      </p>
+                      <p className="text-xs text-zinc-500">Total Matches Played</p>
                     </div>
                   </div>
+                  {stats === null && !statsLoading && (
+                    <p className="text-xs text-amber-500 mt-3 text-center">
+                      Server unavailable — showing placeholders.
+                    </p>
+                  )}
                 </CardContent>
               </Card>
             </div>

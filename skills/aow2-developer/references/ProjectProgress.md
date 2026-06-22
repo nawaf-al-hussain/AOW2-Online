@@ -60,12 +60,14 @@ combat with projectiles and splash damage, and view replays. Everything else has
 - [x] Bunker/TechCentre stats verified (H-NEW-4 resolved)
 - [x] FIX (H5): ResearchSystem.activeResearchMap changed from ConcurrentHashMap to LinkedHashMap — iteration order is now deterministic so applyResearchEffect calls have a stable order when multiple researches complete in the same tick.
 - [x] FIX (L3): GameConstants.CC_UPGRADE_INCOME_BONUS_PER_LEVEL TODO comment removed (replaced with explicit ASSUMPTION note + Phase 13 work-tracking reference).
+- [x] FIX (M5): PowerSystem.getUpgradeLevel — added range validation [0, 3] and updated documentation. The upgrade-payment flow (Phase 13) is the actual gap, not this method. Until that lands, all generators use level 0 → radius 10, which is acceptable for v0.1.x.
 
 ## Phase 6: AI System ✅ COMPLETE
 - [x] AI decision system (EconomyAI, MilitaryAI, ResearchAI)
 - [x] Three difficulties, deterministic, fog-of-war aware
 - [x] Sealed interface MilitaryAction
 - [x] FIX (H1): AISystem.ENABLE_STRATEGY_QUALITY_SKIP is now gated behind the system property `aow2.ai.strategy-skip` (default false). The probabilistic decision-cycle skip has NO basis in the RE spec — the original AI processes every cycle — so it is OFF by default for faithful recreation. Enable via -Daow2.ai.strategy-skip=true for casual modern-enhancement mode. Uses DeterministicLCG so still lockstep-safe.
+- [x] FIX (M10): AISystem.processTick now calls `resetTaskCount()` at the start of each decision cycle instead of the previous dance of `taskCompleted()` after each subsystem. The old pattern decremented the counter even when no task was started, making the maxConcurrentTasks limit a no-op. The new pattern is clearer and matches the original intent (per-cycle throttle). Long-running task tracking (across cycles) is deferred to a future round.
 
 ## Phase 7: Campaign System ✅ PLAYTESTED AND FIXED
 - [x] Mission scripting system (Lua 5.2 via LuaJ)
@@ -98,6 +100,8 @@ combat with projectiles and splash damage, and view replays. Everything else has
 - [x] FIX (M8): GameWebSocketHandler.handleCommand now rejects oversized command payloads (>4 KB) before relaying to the opponent, preventing memory-exhaustion attacks.
 - [x] FIX (M6): RateLimitFilter.getClientIp now uses InetAddress.isSiteLocalAddress() for RFC 1918 checks — the previous `startsWith("172.")` matched all of 172.0.0.0/8 including public addresses like 172.217.x.x.
 - [x] FIX (H7): EloRatingService marked @Deprecated(since="0.1.0", forRemoval=true) with scheduled v0.2.0 removal — kept for now so EloRatingServiceTest (14 tests) continues to provide redundant math coverage until RankingServiceTest (10 tests) reaches parity.
+- [x] FIX (H2): LockstepEngine now tracks `lastOpponentActivityTick` (updated by both commands AND heartbeats) instead of `lastOpponentCommandTick`. Added `receiveHeartbeat(long)` and `sendHeartbeat()` methods. GameWebSocketHandler relays `heartbeat` messages between players. Previously an idle but still-connected opponent would falsely trigger the disconnect pause after 14 seconds.
+- [x] FIX (M7): MatchmakingService.selectMatchMap now uses a deterministic seed `Math.floorMod(player1Id + player2Id, intersection.size())` instead of ThreadLocalRandom. Server-side only (doesn't affect lockstep) but improves audit reproducibility.
 
 ## Phase 9: Map Builder ✅ COMPLETE
 - [x] Map editor UI, save/load, validation, sharing, tile/entity placement
@@ -128,7 +132,8 @@ combat with projectiles and splash damage, and view replays. Everything else has
 - [x] FIX (H3): Dead-end UI buttons wired — "Join Battle" (MatchmakingPanel), "Watch" (ReplaysTab), "Download" (MapsTab, calls real downloadMap API). Join Battle and Watch show sonner toasts (FXGL launch / in-browser viewer still pending); Download hits the real /api/maps/:id endpoint.
 - [x] FIX (H4): ChatTab no longer calls setIsDemo(false) during render — isDemo is now derived from messages.length === 0.
 - [x] FIX (M9): UnitsTab and ReplaysTab now use the apiUrl() helper via getUnits()/getReplays() exports from api.ts (previously bypassed the helper, missing ?XTransformPort=8080).
-- [ ] **Most data still hardcoded** — needs full backend wiring
+- [x] FIX (H8): Quick Stats panel on the dashboard landing page now fetches live data from the new `/api/stats` endpoint (StatsController). Shows `…` while loading, `—` when server is unavailable, and real numbers (totalPlayers, matchesToday, totalMaps, totalMatches) otherwise. Previously the panel showed hardcoded 1,247 / 89 / 342 / 56.
+- [ ] **Most data still hardcoded** — needs full backend wiring (Quick Stats is now real, but faction comparison card text and other panels are still static)
 - [ ] **No real web-playable game client**
 
 ## Phase 13: Polish & Optimization ❌ NOT STARTED

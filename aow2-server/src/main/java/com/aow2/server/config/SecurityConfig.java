@@ -46,8 +46,8 @@ public class SecurityConfig {
 
     /**
      * Configures the security filter chain with JWT authentication.
-     * Public endpoints: /api/auth/**, /ws/**
-     * Protected endpoints: /api/matchmaking/**, /api/maps/**, /api/replays/**, /api/leaderboard/**
+     * Public endpoints: /api/auth/**, /ws/**, /api/leaderboard/**, /api/stats/**
+     * Protected endpoints: /api/matchmaking/**, /api/maps/**, /api/replays/**, /api/chat/**
      *
      * @param http the HttpSecurity builder
      * @return the configured SecurityFilterChain
@@ -67,6 +67,10 @@ public class SecurityConfig {
                         .requestMatchers("/api/maps/**").authenticated()
                         .requestMatchers("/api/replays/**").authenticated()
                         .requestMatchers("/api/leaderboard/**").permitAll()
+                        // FIX (H8 from CRITICAL_ANALYSIS_REPORT.md): Expose /api/stats/**
+                        // publicly so unauthenticated visitors see live server counts on
+                        // the dashboard landing page.
+                        .requestMatchers("/api/stats/**").permitAll()
                         .requestMatchers("/api/chat/**").authenticated()
                         .anyRequest().authenticated()
                 )

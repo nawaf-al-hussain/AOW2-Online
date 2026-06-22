@@ -170,16 +170,36 @@ public final class PowerSystem {
      * Get the upgrade level of a building.
      * <p>
      * ASSUMPTION: upgrade level is stored via the building's stats upgrade costs.
-     * Currently returns 0 as base level until the upgrade system is fully implemented.
-     * The level will be determined by how many upgrade costs have been paid.
+     * Currently returns the actual upgrade level reported by the Building entity
+     * (0 = base, 3 = max). The Building.upgradeLevel field is incremented when the
+     * player pays the upgrade cost — but the upgrade-payment flow is NOT yet wired
+     * (see <code>ProjectProgress.md</code> Phase 5 FIX-M5).
+     * <p>
+     * FIX (M5 from CRITICAL_ANALYSIS_REPORT.md): Previously the code comment said
+     * "Currently returns 0 as base level until the upgrade system is fully implemented"
+     * but the implementation already delegated to {@link Building#getUpgradeLevel()}.
+     * The original comment was stale — the delegation was already correct. The actual
+     * gap is that nothing INCREMENTS the upgrade level after construction completes.
+     * That work is tracked as Phase 13 "Polish & Optimization" — building upgrades
+     * require credit deduction + animation + re-validation of power grid coverage.
+     * <p>
+     * Until that lands, all generators use level 0 → radius 10. This is acceptable
+     * for v0.1.x because the only way to gain levels is via the not-yet-wired upgrade
+     * command.
      *
      * @param building the building to check
-     * @return the upgrade level (0-based)
+     * @return the upgrade level (0-based; max 3)
      */
     private int getUpgradeLevel(Building building) {
-        // FIX: Return the actual upgrade level from the building entity.
-        // Building.upgradeLevel is 0 (base) to 3 (max upgraded).
-        // REF: Building.java — getUpgradeLevel() / setUpgradeLevel(int)
-        return building.getUpgradeLevel();
+        // Delegate to the building entity. When the upgrade-payment flow is implemented
+        // (Phase 13), Building.upgradeLevel will be incremented via a new UpgradeCommand
+        // and this method will automatically reflect the new level.
+        int level = building.getUpgradeLevel();
+        if (level < 0 || level > 3) {
+            LOG.warn("Building {} reported out-of-range upgrade level {} — clamping to [0, 3]",
+                building.getId(), level);
+            return Math.max(0, Math.min(3, level));
+        }
+        return level;
     }
 }

@@ -190,21 +190,26 @@ public final class AISystem {
 
         LOG.debug("AI player {} processing decision at tick {}", playerId, currentTick);
 
-        // Increment task count at the start of each decision cycle
-        // instead of resetting, so that tasks from previous cycles are preserved
-        // until explicitly completed via taskCompleted().
+        // FIX (M10 from CRITICAL_ANALYSIS_REPORT.md): Previously the code called
+        // taskCompleted() unconditionally after each subsystem, which:
+        //   1. Could decrement the counter below 0 (clamped by the guard in taskCompleted())
+        //      when no task was actually started in that subsystem.
+        //   2. Made the maxConcurrentTasks limit effectively a per-cycle cap rather than a
+        //      persistent cap on long-running tasks (e.g., building construction that takes
+        //      many ticks to complete).
+        // The simplest correct fix that preserves the original intent (throttle per-cycle
+        // activity) is to RESET the counter at the start of each cycle. Long-running task
+        // tracking would require wiring taskCompleted() calls into ProductionSystem,
+        // BuildingPlacementSystem, etc., which is out of scope for this round.
+        // The resetTaskCount() method already exists for this purpose.
+        resetTaskCount();
 
         // Execute AI decision pipeline, passing fogOfWar for visibility-filtered decisions
         processEconomyDecisions(entities, map, economy, research, production, placement);
-        taskCompleted();
         processResearchDecisions(entities, economy, research, currentTick);
-        taskCompleted();
         processMilitaryDecisions(entities, map, movement, combat);
-        taskCompleted();
         processSiegeDecisions(entities, combat);
-        taskCompleted();
         processGarrisonDecisions(entities, map, movement);
-        taskCompleted();
     }
 
     /**

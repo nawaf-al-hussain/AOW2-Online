@@ -17,7 +17,6 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -358,9 +357,17 @@ public class MatchmakingService {
             return fallback;
         }
 
-        // Pick a random map from the intersection
-        String selected = intersection.get(ThreadLocalRandom.current().nextInt(intersection.size()));
-        log.info("Map selection: overlap {} → picked '{}'", intersection, selected);
+        // Pick a map from the intersection.
+        // FIX (M7 from CRITICAL_ANALYSIS_REPORT.md): Previously used
+        // ThreadLocalRandom.current().nextInt(intersection.size()), which made the
+        // map selection non-deterministic. While this is server-side only (doesn't
+        // affect lockstep determinism), reproducibility matters for debugging and
+        // for tournament audits. Now seeded from the two player IDs so the same
+        // pair of players always gets the same map for the same intersection set.
+        int seed = Math.floorMod(player1Id + player2Id, intersection.size());
+        String selected = intersection.get(seed);
+        log.info("Map selection: overlap {} → picked '{}' (seed={} from playerIds {}+{})",
+            intersection, selected, seed, player1Id, player2Id);
         return selected;
     }
 

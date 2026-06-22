@@ -97,6 +97,25 @@ export async function getPlayerInfo(token: string) {
   return res.json();
 }
 
+// Server stats API
+// FIX (H8 from CRITICAL_ANALYSIS_REPORT.md): Replaces the hardcoded Quick Stats
+// numbers on the dashboard landing page with real server counts.
+export interface ServerStats {
+  totalPlayers: number;
+  matchesToday: number;
+  matchesThisWeek: number;
+  totalMatches: number;
+  totalMaps: number;
+  newPlayersToday: number;
+  serverTime: number;
+}
+
+export async function getStats(): Promise<ServerStats> {
+  const res = await fetch(apiUrl("/api/stats", 8080));
+  if (!res.ok) throw new Error("Failed to fetch server stats");
+  return res.json();
+}
+
 // Types
 export interface Player {
   id: number;

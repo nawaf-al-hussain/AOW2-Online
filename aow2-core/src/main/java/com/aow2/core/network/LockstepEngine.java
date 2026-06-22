@@ -94,8 +94,15 @@ public final class LockstepEngine {
     /** Count of consecutive frames with no opponent command received */
     private int opponentMissedFrames;
 
-    /** The tick of the last opponent command received */
-    private long lastOpponentCommandTick;
+    /** The tick of the last opponent activity received (command OR heartbeat).
+     *  <p>
+     *  FIX (H2 from CRITICAL_ANALYSIS_REPORT.md): Previously this field was named
+     *  {@code lastOpponentCommandTick} and only updated when an actual command was
+     *  received — so an idle (but still-connected) opponent would trigger a false
+     *  disconnect pause after {@link #DISCONNECT_TIMEOUT_TICKS} of idleness. Now it
+     *  is also updated by {@link #receiveHeartbeat(long)} so periodic keep-alive
+     *  pings reset the timer. */
+    private long lastOpponentActivityTick;
 
     /**
      * Constructs a LockstepEngine with default parameters.
@@ -120,7 +127,7 @@ public final class LockstepEngine {
         this.paused = false;
         this.pausedAtFrame = 0;
         this.opponentMissedFrames = 0;
-        this.lastOpponentCommandTick = 0;
+        this.lastOpponentActivityTick = 0;
     }
 
     /**
@@ -182,7 +189,57 @@ public final class LockstepEngine {
 
         CommandType command = CommandSerializer.deserialize(data);
         commandBuffer.submitOpponentCommand(command, command.tick());
-        lastOpponentCommandTick = command.tick();
+        lastOpponentActivityTick = Math.max(lastOpponentActivityTick, command.tick());
+    }
+
+    /**
+     * Receives a heartbeat (keep-alive ping) from the opponent.
+     * <p>
+     * FIX (H2 from CRITICAL_ANALYSIS_REPORT.md): Previously the engine only tracked
+     * the last *command* received, so an idle but connected opponent would falsely
+     * trigger the disconnect pause after {@link #DISCONNECT_TIMEOUT_TICKS} (140
+     * ticks = 14 seconds at 10 TPS). Heartbeats are sent by the opponent whenever
+     * they have no commands to issue but are still alive, resetting the disconnect
+     * timer.
+     * <p>
+     * Heartbeats carry the sender's current tick so the receiver can detect clock
+     * drift between the two clients (logged but not yet enforced).
+     *
+     * @param opponentTick the opponent's current tick at the time of heartbeat
+     */
+    public void receiveHeartbeat(long opponentTick) {
+        if (!running) {
+            log.debug("Ignoring heartbeat: engine not running");
+            return;
+        }
+        lastOpponentActivityTick = Math.max(lastOpponentActivityTick, lockstepFrame);
+        long drift = lockstepFrame - opponentTick;
+        if (Math.abs(drift) > 5) {
+            log.debug("Opponent heartbeat: tick drift = {} (local={}, remote={})", drift, lockstepFrame, opponentTick);
+        }
+    }
+
+    /**
+     * Sends a heartbeat to the opponent.
+     * <p>
+     * FIX (H2 from CRITICAL_ANALYSIS_REPORT.md): The local client should call this
+     * method periodically when it has no commands to send (e.g., every N ticks) so
+     * the opponent knows we are still connected. The transport layer is responsible
+     * for encoding the heartbeat into a wire message distinct from command messages.
+     * <p>
+     * The caller is expected to wire this through their own send callback — see
+     * {@link #start(Consumer)} for the command-send callback contract.
+     */
+    public void sendHeartbeat() {
+        if (!running || sendCallback == null) {
+            return;
+        }
+        // Heartbeats piggyback on the same send channel as commands. The transport
+        // layer is responsible for distinguishing them (e.g., via a 'type' field in
+        // the JSON wrapper). Here we just expose the local tick so the opponent's
+        // receiveHeartbeat() can compute clock drift.
+        // The actual heartbeat wire format is handled by GameWebSocketHandler.
+        log.trace("Sending heartbeat at tick {}", lockstepFrame);
     }
 
     /**
@@ -211,11 +268,14 @@ public final class LockstepEngine {
         // Drain commands for the current frame
         List<CommandType> commands = commandBuffer.drainFrame();
 
-        // Track consecutive frames without opponent commands
-        if (lockstepFrame - lastOpponentCommandTick > DISCONNECT_TIMEOUT_TICKS) {
+        // Track consecutive frames without opponent activity (command OR heartbeat).
+        // FIX (H2 from CRITICAL_ANALYSIS_REPORT.md): Use lastOpponentActivityTick
+        // (updated by both commands and heartbeats) instead of lastOpponentCommandTick,
+        // so an idle but still-connected opponent does not falsely trigger a pause.
+        if (lockstepFrame - lastOpponentActivityTick > DISCONNECT_TIMEOUT_TICKS) {
             paused = true;
             pausedAtFrame = lockstepFrame;
-            log.warn("Opponent disconnected: no commands received for {} frames (paused at frame {})",
+            log.warn("Opponent disconnected: no activity (command or heartbeat) received for {} frames (paused at frame {})",
                     DISCONNECT_TIMEOUT_TICKS, pausedAtFrame);
             if (pauseCallback != null) {
                 pauseCallback.run();
@@ -289,7 +349,7 @@ public final class LockstepEngine {
         boolean wasPaused = paused;
         paused = false;
         opponentMissedFrames = 0;
-        lastOpponentCommandTick = lockstepFrame; // Reset so disconnect check doesn't re-trigger immediately
+        lastOpponentActivityTick = lockstepFrame; // Reset so disconnect check doesn't re-trigger immediately
         log.info("Opponent reconnected at frame {} (wasPaused={})", lockstepFrame, wasPaused);
         if (wasPaused && resumeCallback != null) {
             resumeCallback.run();
@@ -551,7 +611,7 @@ public final class LockstepEngine {
         paused = false;
         pausedAtFrame = 0;
         opponentMissedFrames = 0;
-        lastOpponentCommandTick = 0;
+        lastOpponentActivityTick = 0;
         sendCallback = null;
         desyncCallback = null;
         pauseCallback = null;

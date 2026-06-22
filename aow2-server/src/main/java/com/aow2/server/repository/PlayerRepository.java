@@ -6,6 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
 import java.util.Optional;
 
 /**
@@ -57,4 +58,15 @@ public interface PlayerRepository extends JpaRepository<Player, Long> {
      * @return count of players with a higher ELO rating
      */
     long countByEloRatingGreaterThan(int eloRating);
+
+    /**
+     * Counts players who registered at or after the given timestamp.
+     * <p>
+     * FIX (H8 from CRITICAL_ANALYSIS_REPORT.md): Used by StatsController to compute
+     * "new players today / this week" for the web dashboard.
+     *
+     * @param after the inclusive lower-bound timestamp
+     * @return number of players whose createdAt is at or after {@code after}
+     */
+    long countByCreatedAtAfter(Instant after);
 }

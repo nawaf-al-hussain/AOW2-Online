@@ -4,6 +4,7 @@ import com.aow2.server.model.MatchResult;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
 import java.util.List;
 
 /**
@@ -37,4 +38,15 @@ public interface MatchResultRepository extends JpaRepository<MatchResult, Long> 
      * @return the count of matches won
      */
     long countByWinnerId(Long winnerId);
+
+    /**
+     * Counts matches played at or after the given timestamp.
+     * <p>
+     * FIX (H8 from CRITICAL_ANALYSIS_REPORT.md): Used by StatsController to compute
+     * the "matches played today" / "this week" metric for the web dashboard.
+     *
+     * @param after the inclusive lower-bound timestamp
+     * @return number of matches played at or after {@code after}
+     */
+    long countByPlayedAtAfter(Instant after);
 }

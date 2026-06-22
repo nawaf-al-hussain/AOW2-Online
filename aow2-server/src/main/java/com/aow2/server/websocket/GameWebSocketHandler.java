@@ -78,8 +78,47 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             case "sync_hash" -> handleSyncHash(session, payload);
             case "game_over" -> handleGameOver(session, payload);
             case "ping" -> sendMessage(session, Map.of("type", "pong"));
+            case "heartbeat" -> handleHeartbeat(session, payload);
             default -> sendError(session, "Unknown message type: " + type);
         }
+    }
+
+    /**
+     * Forwards a heartbeat (keep-alive ping) from one player to their opponent.
+     * <p>
+     * FIX (H2 from CRITICAL_ANALYSIS_REPORT.md): Without a heartbeat, the lockstep
+     * engine's disconnect timer would falsely pause the game after 14 seconds of
+     * opponent idleness. The heartbeat carries the sender's current tick so the
+     * receiver can compute clock drift and reset its disconnect timer.
+     * <p>
+     * The server does NOT track heartbeats itself — it just relays them to the
+     * opponent. The opponent's LockstepEngine.receiveHeartbeat(long) is responsible
+     * for updating the activity timer.
+     *
+     * @param session the sending player's WebSocket session
+     * @param payload contains a "tick" field (sender's current game tick)
+     */
+    private void handleHeartbeat(WebSocketSession session, JsonNode payload) throws IOException {
+        Long playerId = sessionService.getPlayerForWsSession(session.getId());
+        if (playerId == null) {
+            sendError(session, "Not authenticated");
+            return;
+        }
+
+        String opponentWs = sessionService.getOpponentWsSession(playerId);
+        if (opponentWs == null) {
+            // No opponent connected — silently drop. The local engine's own
+            // disconnect timer will eventually pause the simulation.
+            return;
+        }
+
+        long tick = payload.has("tick") ? payload.get("tick").asLong() : 0;
+        Map<String, Object> relayMsg = Map.of(
+                "type", "heartbeat",
+                "fromPlayerId", playerId,
+                "tick", tick
+        );
+        sendToSessionId(opponentWs, relayMsg);
     }
 
     @Override
