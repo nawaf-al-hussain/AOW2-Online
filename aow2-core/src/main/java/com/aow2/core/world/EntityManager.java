@@ -14,6 +14,7 @@ import com.aow2.core.entity.Unit;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -26,6 +27,14 @@ import java.util.concurrent.atomic.AtomicInteger;
  * <p>
  * REF: MASTER_DOCUMENTATION.md Section 3.1 — Entity management
  * REF: unit_stats.md — entity slot ranges per player
+ * <p>
+ * FIX (N1 from RE_AUDIT_REPORT.md): All list-returning methods sort by entity ID
+ * before returning to guarantee deterministic iteration order across both clients
+ * in a lockstep multiplayer game. The internal storage is ConcurrentHashMap (for
+ * thread-safe point lookups like getUnit(id)), but iteration order of
+ * ConcurrentHashMap.values() is undefined — so callers that iterate (CombatSystem,
+ * MovementSystem, etc.) would process entities in different orders on different
+ * clients, causing lockstep desyncs. Sorting by ID eliminates this risk.
  */
 public class EntityManager {
 
@@ -159,6 +168,7 @@ public class EntityManager {
                 result.add(unit);
             }
         }
+        result.sort(Comparator.comparingInt(Unit::getId));
         return Collections.unmodifiableList(result);
     }
 
@@ -177,6 +187,7 @@ public class EntityManager {
                 result.add(unit);
             }
         }
+        result.sort(Comparator.comparingInt(Unit::getId));
         return Collections.unmodifiableList(result);
     }
 
@@ -194,6 +205,7 @@ public class EntityManager {
                 result.add(unit);
             }
         }
+        result.sort(Comparator.comparingInt(Unit::getId));
         return Collections.unmodifiableList(result);
     }
 
@@ -203,7 +215,9 @@ public class EntityManager {
      * @return unmodifiable list of all units
      */
     public List<Unit> getAllUnits() {
-        return Collections.unmodifiableList(new ArrayList<>(units.values()));
+        List<Unit> result = new ArrayList<>(units.values());
+        result.sort(Comparator.comparingInt(Unit::getId));
+        return Collections.unmodifiableList(result);
     }
 
     // --- Building operations ---
@@ -240,6 +254,7 @@ public class EntityManager {
                 result.add(building);
             }
         }
+        result.sort(Comparator.comparingInt(Building::getId));
         return Collections.unmodifiableList(result);
     }
 
@@ -249,7 +264,9 @@ public class EntityManager {
      * @return unmodifiable list of all buildings
      */
     public List<Building> getAllBuildings() {
-        return Collections.unmodifiableList(new ArrayList<>(buildings.values()));
+        List<Building> result = new ArrayList<>(buildings.values());
+        result.sort(Comparator.comparingInt(Building::getId));
+        return Collections.unmodifiableList(result);
     }
 
     // --- Mine operations ---
@@ -319,7 +336,9 @@ public class EntityManager {
      * @return unmodifiable list of all projectiles
      */
     public List<Projectile> getAllProjectiles() {
-        return Collections.unmodifiableList(new ArrayList<>(projectiles.values()));
+        List<Projectile> result = new ArrayList<>(projectiles.values());
+        result.sort(Comparator.comparingInt(Projectile::getId));
+        return Collections.unmodifiableList(result);
     }
 
     /**
@@ -432,12 +451,15 @@ public class EntityManager {
      * @return unit at position, or null
      */
     public Unit findUnitAt(GridPosition position) {
-        for (Unit unit : units.values()) {
+        Unit found = null;
+        for (Unit unit : getAllUnits()) {
             if (unit.isAlive() && !unit.isGarrisoned() && unit.getPosition().equals(position)) {
-                return unit;
+                if (found == null || unit.getId() < found.getId()) {
+                    found = unit;
+                }
             }
         }
-        return null;
+        return found;
     }
 
     /**
@@ -448,12 +470,15 @@ public class EntityManager {
      * @return building at position, or null
      */
     public Building findBuildingAt(GridPosition position) {
-        for (Building building : buildings.values()) {
+        Building found = null;
+        for (Building building : getAllBuildings()) {
             if (building.isAlive() && building.getPosition().equals(position)) {
-                return building;
+                if (found == null || building.getId() < found.getId()) {
+                    found = building;
+                }
             }
         }
-        return null;
+        return found;
     }
 
     // --- Counts ---

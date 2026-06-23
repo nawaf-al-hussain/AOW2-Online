@@ -61,6 +61,21 @@ public final class LockstepEngine {
     /** Callback for sending commands to the opponent */
     private Consumer<byte[]> sendCallback;
 
+    /** Callback for sending heartbeat messages to the opponent.
+     *  FIX (H2-incomplete from RE_AUDIT_REPORT.md): Separate from sendCallback because
+     *  heartbeats use a different wire format (JSON {"type":"heartbeat","tick":N})
+     *  vs commands (binary CommandSerializer format). The transport layer (client's
+     *  WebSocket handler) must provide this callback to enable heartbeat sending. */
+    private Consumer<Long> heartbeatSendCallback;
+
+    /** Interval (in ticks) between automatic heartbeat sends.
+     *  30 ticks = 3 seconds at 10 TPS. The opponent's disconnect timer is 140 ticks
+     *  (14 seconds), so sending every 30 ticks gives ample margin. */
+    private static final int HEARTBEAT_INTERVAL_TICKS = 30;
+
+    /** Tick of the last heartbeat we sent. */
+    private long lastHeartbeatSentTick;
+
     /** Callback for desync notification */
     private Consumer<Long> desyncCallback;
 
@@ -187,8 +202,23 @@ public final class LockstepEngine {
             return;
         }
 
-        CommandType command = CommandSerializer.deserialize(data);
-        commandBuffer.submitOpponentCommand(command, command.tick());
+        // FIX (N2 + N3 from RE_AUDIT_REPORT.md): Catch malformed/malicious commands
+        // (bad ordinals, oversized counts, truncated payloads) and drop them instead
+        // of crashing the game loop. The opponent's client should never send invalid
+        // data in normal play — if it does, it's either a bug or an attack.
+        CommandType command;
+        try {
+            command = CommandSerializer.deserialize(data);
+        } catch (Exception e) {
+            log.warn("Dropping malformed command from opponent: {}", e.getMessage());
+            return;
+        }
+        try {
+            commandBuffer.submitOpponentCommand(command, command.tick());
+        } catch (IllegalArgumentException e) {
+            log.warn("Dropping out-of-range command (tick={}): {}", command.tick(), e.getMessage());
+            return;
+        }
         lastOpponentActivityTick = Math.max(lastOpponentActivityTick, command.tick());
     }
 
@@ -231,15 +261,37 @@ public final class LockstepEngine {
      * {@link #start(Consumer)} for the command-send callback contract.
      */
     public void sendHeartbeat() {
-        if (!running || sendCallback == null) {
+        if (!running) {
             return;
         }
-        // Heartbeats piggyback on the same send channel as commands. The transport
-        // layer is responsible for distinguishing them (e.g., via a 'type' field in
-        // the JSON wrapper). Here we just expose the local tick so the opponent's
-        // receiveHeartbeat() can compute clock drift.
-        // The actual heartbeat wire format is handled by GameWebSocketHandler.
-        log.trace("Sending heartbeat at tick {}", lockstepFrame);
+        if (heartbeatSendCallback != null) {
+            heartbeatSendCallback.accept(lockstepFrame);
+            lastHeartbeatSentTick = lockstepFrame;
+            log.trace("Sent heartbeat at tick {}", lockstepFrame);
+        } else if (sendCallback != null) {
+            // Fallback: if no dedicated heartbeat callback is set, log at debug.
+            // The transport layer should call setHeartbeatSendCallback() to enable
+            // actual heartbeat sending. Without it, the idle-opponent disconnect
+            // problem (H2) is not fully resolved.
+            log.debug("sendHeartbeat called but no heartbeatSendCallback set (tick {})", lockstepFrame);
+        }
+    }
+
+    /**
+     * Sets the callback for sending heartbeat messages to the opponent.
+     * <p>
+     * FIX (H2-incomplete from RE_AUDIT_REPORT.md): The client's transport layer
+     * (e.g., MultiplayerService) must call this to wire heartbeat sending. The
+     * callback receives the local tick and should serialize it as a JSON message
+     * like {"type":"heartbeat","tick":N} and send it via the WebSocket.
+     * <p>
+     * If this callback is never set, the engine will not send heartbeats and the
+     * idle-opponent false-disconnect problem will persist.
+     *
+     * @param callback the heartbeat send callback, or null to disable
+     */
+    public void setHeartbeatSendCallback(Consumer<Long> callback) {
+        this.heartbeatSendCallback = callback;
     }
 
     /**
@@ -301,6 +353,14 @@ public final class LockstepEngine {
         if (syncChecker.shouldCheck(lockstepFrame)) {
             long hash = syncChecker.computeStateHash(state, entities, economySystem, researchSystem);
             syncChecker.setLocalHash(hash);
+        }
+
+        // FIX (H2-incomplete from RE_AUDIT_REPORT.md): Send a heartbeat every
+        // HEARTBEAT_INTERVAL_TICKS so the opponent knows we're still connected
+        // even when we have no commands to issue. This prevents false disconnect
+        // pauses when the local player is idle.
+        if (lockstepFrame - lastHeartbeatSentTick >= HEARTBEAT_INTERVAL_TICKS) {
+            sendHeartbeat();
         }
 
         return commands;
@@ -613,8 +673,10 @@ public final class LockstepEngine {
         opponentMissedFrames = 0;
         lastOpponentActivityTick = 0;
         sendCallback = null;
+        heartbeatSendCallback = null;
         desyncCallback = null;
         pauseCallback = null;
         resumeCallback = null;
+        lastHeartbeatSentTick = 0;
     }
 }

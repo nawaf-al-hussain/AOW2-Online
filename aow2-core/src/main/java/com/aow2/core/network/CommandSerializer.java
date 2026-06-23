@@ -224,36 +224,72 @@ public final class CommandSerializer {
     }
 
     // --- Deserialization helpers ---
+    //
+    // FIX (N2 + N3 from RE_AUDIT_REPORT.md): All deserialization methods now validate
+    // wire-sourced values before using them:
+    //   - Array counts are sanity-checked against MAX_UNIT_IDS (50) to prevent
+    //     OutOfMemoryError from malicious oversized counts (N3).
+    //   - Enum ordinals are bounds-checked before indexing into values() arrays to
+    //     prevent ArrayIndexOutOfBoundsException from malformed ordinals (N2).
+    //   - Callers (LockstepEngine.receiveCommand) should catch IllegalArgumentException
+    //     to drop malformed commands gracefully.
 
-    private static CommandType.Move deserializeMove(ByteBuffer buf, long tick, int playerId) {
+    /** Maximum number of unit IDs a single command can reference.
+     *  REF: GameConstants.MAX_UNITS_PER_PLAYER = 50 */
+    private static final int MAX_UNIT_IDS = 50;
+
+    /** Validates that a unit-ID count from the wire is within safe bounds.
+     *  @throws IllegalArgumentException if count is negative or exceeds MAX_UNIT_IDS */
+    private static void validateCount(int count) {
+        if (count < 0 || count > MAX_UNIT_IDS) {
+            throw new IllegalArgumentException(
+                "Invalid unit count: " + count + " (max " + MAX_UNIT_IDS + ")");
+        }
+    }
+
+    /** Reads count + unit IDs from the buffer after validating count. */
+    private static int[] readUnitIds(ByteBuffer buf) {
         int count = buf.getInt();
+        validateCount(count);
         int[] unitIds = new int[count];
         for (int i = 0; i < count; i++) unitIds[i] = buf.getInt();
+        return unitIds;
+    }
+
+    private static CommandType.Move deserializeMove(ByteBuffer buf, long tick, int playerId) {
+        int[] unitIds = readUnitIds(buf);
         int x = buf.getInt();
         int y = buf.getInt();
         return new CommandType.Move(tick, playerId, unitIds, new GridPosition(x, y));
     }
 
     private static CommandType.Attack deserializeAttack(ByteBuffer buf, long tick, int playerId) {
-        int count = buf.getInt();
-        int[] unitIds = new int[count];
-        for (int i = 0; i < count; i++) unitIds[i] = buf.getInt();
+        int[] unitIds = readUnitIds(buf);
         int targetId = buf.getInt();
         return new CommandType.Attack(tick, playerId, unitIds, targetId);
     }
 
     private static CommandType.Build deserializeBuild(ByteBuffer buf, long tick, int playerId) {
         int buildingOrdinal = buf.getInt();
+        BuildingType[] types = BuildingType.values();
+        if (buildingOrdinal < 0 || buildingOrdinal >= types.length) {
+            throw new IllegalArgumentException(
+                "Invalid BuildingType ordinal: " + buildingOrdinal + " (max " + (types.length - 1) + ")");
+        }
         int x = buf.getInt();
         int y = buf.getInt();
-        return new CommandType.Build(tick, playerId,
-                BuildingType.values()[buildingOrdinal], new GridPosition(x, y));
+        return new CommandType.Build(tick, playerId, types[buildingOrdinal], new GridPosition(x, y));
     }
 
     private static CommandType.Produce deserializeProduce(ByteBuffer buf, long tick, int playerId) {
         int producerId = buf.getInt();
         int unitOrdinal = buf.getInt();
-        return new CommandType.Produce(tick, playerId, producerId, UnitType.values()[unitOrdinal]);
+        UnitType[] types = UnitType.values();
+        if (unitOrdinal < 0 || unitOrdinal >= types.length) {
+            throw new IllegalArgumentException(
+                "Invalid UnitType ordinal: " + unitOrdinal + " (max " + (types.length - 1) + ")");
+        }
+        return new CommandType.Produce(tick, playerId, producerId, types[unitOrdinal]);
     }
 
     private static CommandType.Research deserializeResearch(ByteBuffer buf, long tick, int playerId) {
@@ -263,9 +299,7 @@ public final class CommandSerializer {
     }
 
     private static CommandType.Garrison deserializeGarrison(ByteBuffer buf, long tick, int playerId) {
-        int count = buf.getInt();
-        int[] unitIds = new int[count];
-        for (int i = 0; i < count; i++) unitIds[i] = buf.getInt();
+        int[] unitIds = readUnitIds(buf);
         int buildingId = buf.getInt();
         return new CommandType.Garrison(tick, playerId, unitIds, buildingId);
     }
@@ -287,25 +321,19 @@ public final class CommandSerializer {
     }
 
     private static CommandType.Stop deserializeStop(ByteBuffer buf, long tick, int playerId) {
-        int count = buf.getInt();
-        int[] unitIds = new int[count];
-        for (int i = 0; i < count; i++) unitIds[i] = buf.getInt();
+        int[] unitIds = readUnitIds(buf);
         return new CommandType.Stop(tick, playerId, unitIds);
     }
 
     private static CommandType.AttackMove deserializeAttackMove(ByteBuffer buf, long tick, int playerId) {
-        int count = buf.getInt();
-        int[] unitIds = new int[count];
-        for (int i = 0; i < count; i++) unitIds[i] = buf.getInt();
+        int[] unitIds = readUnitIds(buf);
         int x = buf.getInt();
         int y = buf.getInt();
         return new CommandType.AttackMove(tick, playerId, unitIds, new GridPosition(x, y));
     }
 
     private static CommandType.Patrol deserializePatrol(ByteBuffer buf, long tick, int playerId) {
-        int count = buf.getInt();
-        int[] unitIds = new int[count];
-        for (int i = 0; i < count; i++) unitIds[i] = buf.getInt();
+        int[] unitIds = readUnitIds(buf);
         int x = buf.getInt();
         int y = buf.getInt();
         return new CommandType.Patrol(tick, playerId, unitIds, new GridPosition(x, y));
