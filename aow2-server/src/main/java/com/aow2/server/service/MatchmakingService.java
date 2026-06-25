@@ -42,6 +42,27 @@ public class MatchmakingService {
     @Value("${aow2.matchmaking.max-elo-range:500}")
     private int maxEloRange;
 
+    // FIX (L6 from CRITICAL_ANALYSIS_REPORT.md): Configurable map pool replaces the
+    // hardcoded "test_map" fallback. The pool is loaded from the application property
+    // aow2.matchmaking.map-pool (comma-separated). Defaults to "test_map" for backward
+    // compatibility when the property is not set.
+    @Value("${aow2.matchmaking.map-pool:test_map}")
+    private String mapPoolConfig;
+
+    /**
+     * Returns the configured map pool as a list of map names.
+     * If the property is not set, returns ["test_map"].
+     */
+    private List<String> getMapPool() {
+        if (mapPoolConfig == null || mapPoolConfig.isBlank()) {
+            return List.of("test_map");
+        }
+        return java.util.Arrays.stream(mapPoolConfig.split(","))
+            .map(String::trim)
+            .filter(s -> !s.isEmpty())
+            .toList();
+    }
+
     /** In-memory matchmaking queue: playerId → queue entry */
     private final Map<Long, QueueEntry> queue = new ConcurrentHashMap<>();
 
@@ -337,11 +358,15 @@ public class MatchmakingService {
         List<String> maps1 = (entry1 != null) ? entry1.preferredMaps() : List.of();
         List<String> maps2 = (entry2 != null) ? entry2.preferredMaps() : List.of();
 
-        // If either player has no preference, use "test_map" (the only bundled map)
+        // FIX (L6): Use configurable map pool instead of hardcoded "test_map".
+        // When either player has no preference, deterministically select from the pool
+        // using the same seed formula as M7 (playerId sum mod pool size).
         if (maps1.isEmpty() || maps2.isEmpty()) {
-            String fallback = "test_map";
-            log.info("Map selection: player {} maps={}, player {} maps={} → using '{}' (no preference)",
-                    player1Id, maps1, player2Id, maps2, fallback);
+            List<String> pool = getMapPool();
+            int seed = Math.floorMod(player1Id + player2Id, pool.size());
+            String fallback = pool.get(seed);
+            log.info("Map selection: player {} maps={}, player {} maps={} → using '{}' from pool (seed={})",
+                    player1Id, maps1, player2Id, maps2, fallback, seed);
             return fallback;
         }
 
@@ -351,9 +376,12 @@ public class MatchmakingService {
                 .toList();
 
         if (intersection.isEmpty()) {
-            String fallback = "test_map";
-            log.info("Map selection: no overlap between player {} maps={} and player {} maps={} → using '{}' (no overlap)",
-                    player1Id, maps1, player2Id, maps2, fallback);
+            // FIX (L6): Use configurable map pool instead of hardcoded "test_map".
+            List<String> pool = getMapPool();
+            int seed = Math.floorMod(player1Id + player2Id, pool.size());
+            String fallback = pool.get(seed);
+            log.info("Map selection: no overlap between player {} maps={} and player {} maps={} → using '{}' from pool (seed={})",
+                    player1Id, maps1, player2Id, maps2, fallback, seed);
             return fallback;
         }
 

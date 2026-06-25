@@ -16,21 +16,30 @@ import java.util.Map;
  * Replaces all hardcoded stat tables scattered across ProductionSystem, BuildingPlacementSystem,
  * EconomyAI, and GameScene.
  * <p>
- * This is a singleton — access via {@link #getInstance()}.
- * All stats are initialized from verified RE data and are immutable after construction.
+ * FIX (L1 from CRITICAL_ANALYSIS_REPORT.md): Previously a lazy-initialized singleton with no
+ * thread-safety and no way to inject a test instance from outside the package. Now uses
+ * double-checked locking for thread-safe initialization, and exposes {@link #setInstance(StatsRegistry)}
+ * and a public {@link #resetInstance()} for test injection. Callers in non-Spring modules
+ * (aow2-core, aow2-client) continue to use {@link #getInstance()}; Spring-managed modules
+ * can alternatively construct directly via the public constructor for DI.
  * <p>
  * REF: complete_unit_stats.json — all unit stat values
  * REF: complete_building_stats.json — all building stat values
  */
 public final class StatsRegistry {
 
-    private static StatsRegistry INSTANCE;
+    private static volatile StatsRegistry INSTANCE;
 
     private final Map<UnitType, UnitStats> unitStats;
     private final Map<BuildingType, BuildingStats> buildingStats;
     private final Map<UnitType, Integer> unitTechRequirements;
 
-    private StatsRegistry() {
+    /**
+     * Constructs a StatsRegistry with all RE-verified stats initialized.
+     * FIX (L1): Made public so DI containers (Spring) and tests can construct directly
+     * without going through the singleton.
+     */
+    public StatsRegistry() {
         unitStats = new EnumMap<>(UnitType.class);
         buildingStats = new EnumMap<>(BuildingType.class);
         unitTechRequirements = new EnumMap<>(UnitType.class);
@@ -41,24 +50,42 @@ public final class StatsRegistry {
 
     /**
      * Returns the singleton instance of the StatsRegistry.
-     * Uses lazy initialization so the instance can be reset for testing.
+     * FIX (L1): Uses double-checked locking for thread-safe lazy initialization.
      *
      * @return the stats registry instance
      */
     public static StatsRegistry getInstance() {
         if (INSTANCE == null) {
-            INSTANCE = new StatsRegistry();
+            synchronized (StatsRegistry.class) {
+                if (INSTANCE == null) {
+                    INSTANCE = new StatsRegistry();
+                }
+            }
         }
         return INSTANCE;
     }
 
     /**
-     * Resets the singleton instance. Package-private for test access.
-     * Allows tests to get a fresh StatsRegistry with clean state.
+     * Sets the singleton instance. Useful for injecting a mock or test-configured registry.
+     * FIX (L1): Added for testability — tests can call {@code setInstance(mockRegistry)}
+     * instead of relying on reflection or package-private access.
+     *
+     * @param instance the instance to use, or null to force re-creation on next getInstance()
      */
-    @SuppressWarnings("unused") // Used by tests via reflection or same-package access
-    static void resetInstance() {
-        INSTANCE = null;
+    public static void setInstance(StatsRegistry instance) {
+        synchronized (StatsRegistry.class) {
+            INSTANCE = instance;
+        }
+    }
+
+    /**
+     * Resets the singleton instance to null.
+     * FIX (L1): Made public (was package-private) so tests in other packages can reset.
+     */
+    public static void resetInstance() {
+        synchronized (StatsRegistry.class) {
+            INSTANCE = null;
+        }
     }
 
     // =========================================================================

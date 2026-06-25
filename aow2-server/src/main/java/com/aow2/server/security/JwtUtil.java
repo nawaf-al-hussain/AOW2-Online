@@ -38,19 +38,28 @@ public class JwtUtil {
             @Value("${aow2.jwt.secret}") String secret,
             @Value("${aow2.jwt.expiration-ms:86400000}") long expirationMs
     ) {
-        // FIX (C-NEW-7): Fail fast if using the default dev secret in a non-dev environment.
-        // The default secret is committed to source control and must NEVER be used in production.
+        // FIX (L7 from CRITICAL_ANALYSIS_REPORT.md): Previously, if the Spring-injected
+        // secret was the default dev value AND the AOW2_JWT_SECRET env var was set, the
+        // code would log a warning but continue using the dev secret. Now it uses the
+        // env var value directly, closing the gap where a production deployment could
+        // silently run with the committed dev secret.
+        String effectiveSecret = secret;
         String devSecret = "aow2-dev-only-secret-key-that-is-at-least-32-bytes-long-for-hmac";
         if (secret.equals(devSecret)) {
             String env = System.getenv("AOW2_JWT_SECRET");
             if (env == null || env.isBlank()) {
+                // FIX (C-NEW-7): Fail fast — no env var set, using committed dev secret.
                 throw new IllegalStateException(
                     "JWT secret is the default dev value. Set AOW2_JWT_SECRET environment variable " +
                     "to a cryptographically random secret (min 32 bytes) before deploying.");
             }
-            log.warn("Using default dev JWT secret — this is acceptable ONLY for local development");
+            // FIX (L7): Use the env var value instead of the dev default.
+            // This handles the case where Spring's ${AOW2_JWT_SECRET:default} didn't
+            // resolve the env var (e.g., if the property source wasn't configured correctly).
+            effectiveSecret = env;
+            log.info("Using JWT secret from AOW2_JWT_SECRET environment variable (Spring default was not overridden)");
         }
-        this.signingKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+        this.signingKey = Keys.hmacShaKeyFor(effectiveSecret.getBytes(StandardCharsets.UTF_8));
         this.expirationMs = expirationMs;
     }
 

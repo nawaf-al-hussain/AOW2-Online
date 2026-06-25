@@ -149,9 +149,14 @@ combat with projectiles and splash damage, and view replays. Everything else has
 - [ ] **Most data still hardcoded** — needs full backend wiring (Quick Stats is now real, but faction comparison card text and other panels are still static)
 - [ ] **No real web-playable game client**
 
-## Phase 13: Polish & Optimization ❌ NOT STARTED
+## Phase 13: Polish & Optimization ⚠️ PARTIALLY STARTED
 - [x] Sound/music infrastructure (no audio files)
 - [x] Tutorial system, accessibility settings, Docker setup
+- [x] FIX (L1, Round 6): StatsRegistry refactored — constructor now public for DI, getInstance() uses double-checked locking, setInstance()/resetInstance() public for test injection.
+- [x] FIX (L2, Round 6): PowerSystem.getPowerRadius migrated from deprecated GameConstants.BUILDING_POWER_RADIUS to GameConfig.getInstance().getBuildingPowerRadius(). Deprecated constant deleted.
+- [x] FIX (L4, Round 6): Deprecated RANK_EXP_THRESHOLDS, RANK_CREDIT_REWARDS, RANK_BONUS_POINTS arrays deleted from GameConstants (zero callers; use GameConfig.getInstance() getters).
+- [x] FIX (L7, Round 6): JwtUtil now uses AOW2_JWT_SECRET env var value directly when Spring's property resolution falls back to the dev default, instead of logging a warning and continuing with the dev secret.
+- [x] FIX (L6, Round 6): MatchmakingService.selectMatchMap now uses a configurable map pool (aow2.matchmaking.map-pool property) instead of hardcoded "test_map". Deterministic selection via playerId seed.
 - [ ] Performance optimization (entity pooling, sprite batching)
 - [ ] Localization / i18n
 - [ ] Full regression test pass
@@ -169,7 +174,7 @@ combat with projectiles and splash damage, and view replays. Everything else has
 |-------|--------|
 | Main code compilation | ✅ CLEAN — Static analysis passed (8 issues found and fixed) |
 | Test compilation | ✅ CLEAN — ChatControllerTest fixed (missing SessionService mock, missing Authentication param) |
-| Test execution | ⚠️ Unknown (JDK not available in sandbox — no javac; Gradle times out) |
+| Test execution | ⚠️ Unknown (JDK not available in sandbox — no javac; Gradle times out; CI on GitHub Actions will verify) |
 | Web build | ✅ Compiles (Next.js) |
 | Web tests | ✅ Pass (3 test files, store logic only) |
 

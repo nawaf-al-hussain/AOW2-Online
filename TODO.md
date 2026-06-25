@@ -7,6 +7,11 @@
 > Date: 2026-06-21 (session 2) | Scope: All 5 Java modules + web client
 > **Philosophy**: Only mark something resolved if the code actually works. "Documented as UNVERIFIED"
 > is NOT a fix — it's acknowledging the problem exists.
+>
+> **Update 2026-06-25 (sessions 3-8)**: 6 rounds of analyzer-driven fixes applied.
+> 30/35 issues now closed (86%). All Critical, High, and Medium issues are closed.
+> LockstepEngine is now wired into the GameScene runtime for multiplayer.
+> See `docs/analysis/` for detailed audit reports and fix logs.
 
 ---
 

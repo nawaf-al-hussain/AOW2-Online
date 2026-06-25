@@ -1,5 +1,6 @@
 package com.aow2.core.economy;
 
+import com.aow2.common.config.GameConfig;
 import com.aow2.common.config.GameConstants;
 import com.aow2.common.model.BuildingType;
 import com.aow2.common.model.Faction;
@@ -94,21 +95,21 @@ public final class PowerSystem {
     /**
      * Get the power radius for a Generator at its current upgrade level.
      * <p>
-     * REF: GameConstants.BUILDING_POWER_RADIUS = [10, 20, 30, 40, 60, 127]
+     * FIX (L2 from CRITICAL_ANALYSIS_REPORT.md): Migrated from the deprecated
+     * GameConstants.BUILDING_POWER_RADIUS array to GameConfig.getInstance().getBuildingPowerRadius()
+     * as the single source of truth.
+     * <p>
      * Level 0 = radius 10, Level 1 = radius 20, etc.
      * Max level = 5 = radius 127 (full map coverage)
-     * <p>
-     * ASSUMPTION: Generator upgrade level is derived from construction completion
-     * and building stats. For now, uses a simple level calculation based on
-     * the building's upgrade state (tracked via construction progress milestones).
      *
      * @param generator the Generator building
      * @return the power radius in grid cells
      */
     public int getPowerRadius(Building generator) {
         int level = getUpgradeLevel(generator);
-        int index = Math.min(level, GameConstants.BUILDING_POWER_RADIUS.length - 1);
-        return GameConstants.BUILDING_POWER_RADIUS[index];
+        int[] radii = GameConfig.getInstance().getBuildingPowerRadius();
+        int index = Math.min(level, radii.length - 1);
+        return radii[index];
     }
 
     /**

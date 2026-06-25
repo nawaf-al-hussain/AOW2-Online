@@ -78,11 +78,9 @@ public final class GameConstants {
     public static final double HARD_INCOME_MODIFIER = 1.3;
 
     // Building placement
-    // REF: complete_building_stats.json building_power_radius values
-    // FIX (M-NEW-4): Deprecated — use GameConfig.getInstance().getBuildingPowerRadius() as source of truth.
-    // Kept for backward compatibility with existing call sites that haven't migrated.
-    @Deprecated(since = "2026-06-21", forRemoval = true)
-    public static final int[] BUILDING_POWER_RADIUS = {10, 20, 30, 40, 60, 127};
+    // FIX (L2 from CRITICAL_ANALYSIS_REPORT.md): BUILDING_POWER_RADIUS migrated to
+    // GameConfig.getInstance().getBuildingPowerRadius(). The deprecated constant has been
+    // removed — all callers now use GameConfig.
 
     // Unit type bitmasks
     // REF: unit_stats.md - bitmask for classification
@@ -92,14 +90,10 @@ public final class GameConstants {
     public static final int LARGE_UNIT_BITMASK = 65536; // 0x10000
 
     // Rank system
-    // REF: complete_building_stats.json rank_exp_thresholds and rank_credit_rewards
-    // FIX (M-NEW-4): Deprecated — use GameConfig.getInstance() getters as source of truth.
-    @Deprecated(since = "2026-06-21", forRemoval = true)
-    public static final int[] RANK_EXP_THRESHOLDS = {20, 35, 50};
-    @Deprecated(since = "2026-06-21", forRemoval = true)
-    public static final int[] RANK_CREDIT_REWARDS = {10, 25, 51};
-    @Deprecated(since = "2026-06-21", forRemoval = true)
-    public static final int[] RANK_BONUS_POINTS = {0, 3, 6};
+    // FIX (L4 from CRITICAL_ANALYSIS_REPORT.md): RANK_EXP_THRESHOLDS, RANK_CREDIT_REWARDS,
+    // and RANK_BONUS_POINTS have been deleted. They had zero callers and were deprecated.
+    // Use GameConfig.getInstance().getRankExpThresholds() / getRankCreditRewards() /
+    // getRankBonusPoints() instead.
 
     // Death animation arrays
     // REF: combat_formulas.md - bi[] and bd[] arrays
