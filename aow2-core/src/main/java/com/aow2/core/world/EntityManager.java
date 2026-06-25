@@ -282,21 +282,26 @@ public class EntityManager {
 
     /**
      * Returns all mines in the manager.
+     * <p>
+     * FIX (N4 from AUDIT_ROUND_3.md): Result is sorted by entity ID for deterministic
+     * iteration order, matching the pattern used for units/buildings/projectiles (N1).
      *
-     * @return unmodifiable list of all mines
+     * @return unmodifiable list of all mines, sorted by entity ID
      */
     public List<Mine> getMines() {
-        return Collections.unmodifiableList(mines);
+        List<Mine> result = new ArrayList<>(mines);
+        result.sort(Comparator.comparingInt(Mine::getId));
+        return Collections.unmodifiableList(result);
     }
 
     /**
      * Returns all mines in the manager.
      * Alias for {@link #getMines()} for naming consistency with {@link #getAllUnits()}.
      *
-     * @return unmodifiable list of all mines
+     * @return unmodifiable list of all mines, sorted by entity ID
      */
     public List<Mine> getAllMines() {
-        return Collections.unmodifiableList(mines);
+        return getMines();
     }
 
     /**

@@ -365,9 +365,30 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             return;
         }
 
-        // Store the claim and request opponent confirmation
+        // Store the claim and request opponent confirmation.
+        // FIX (game-over race from AUDIT_ROUND_3.md): Use putIfAbsent instead of put
+        // to prevent a race condition where both players send game-over claims
+        // simultaneously (before either sees the other's claim). With put, the second
+        // claim would silently overwrite the first, losing the first claimant's
+        // proposed winnerId. With putIfAbsent, the first claim wins and the second
+        // claimant receives a "claim already exists" error, prompting them to confirm
+        // the existing claim instead.
         GameOverClaim newClaim = new GameOverClaim(playerId, winnerId, durationSeconds);
-        pendingGameOverClaims.put(sessionUuid, newClaim);
+        GameOverClaim existing = pendingGameOverClaims.putIfAbsent(sessionUuid, newClaim);
+        if (existing != null) {
+            // Another claim was already stored (race condition lost). Treat this as
+            // a confirmation of the existing claim instead of overwriting it.
+            log.info("Game-over claim race: player {} lost to existing claim by {} for session {}",
+                    playerId, existing.claimedBy(), sessionUuid);
+            handleGameOver(session, objectMapper.readTree(
+                objectMapper.writeValueAsString(Map.of(
+                    "sessionUuid", sessionUuid,
+                    "winnerId", existing.winnerId(),
+                    "durationSeconds", existing.durationSeconds(),
+                    "confirm", true
+                ))));
+            return;
+        }
         log.info("Game-over claim stored for session {} by player {} (winner={}), awaiting confirmation",
                 sessionUuid, playerId, winnerId);
 

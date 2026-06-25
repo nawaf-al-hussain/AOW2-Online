@@ -36,6 +36,9 @@ import com.aow2.core.economy.ResourceGenerator;
 import com.aow2.core.engine.GameLoop;
 import com.aow2.core.engine.GameState;
 import com.aow2.core.engine.TickManager;
+import com.aow2.core.network.LockstepEngine;
+import com.aow2.core.network.CommandSerializer;
+import com.aow2.client.service.MultiplayerService;
 import com.aow2.core.movement.CollisionSystem;
 import com.aow2.core.movement.MovementSystem;
 import com.aow2.core.movement.PathfindingSystem;
@@ -214,6 +217,24 @@ public class GameScene {
     /** Whether this is a campaign mission (skip test entities). FIX(CAMP-5) */
     private boolean isCampaignMission = false;
 
+    // --- Multiplayer / Lockstep Integration ---
+    // FIX (LockstepEngine integration from AUDIT_ROUND_3.md): The LockstepEngine was
+    // previously only instantiated in tests. These fields wire it into the runtime
+    // so that multiplayer commands flow through the deterministic lockstep pipeline.
+
+    /** The lockstep engine for multiplayer deterministic simulation, or null in single-player. */
+    private LockstepEngine lockstepEngine;
+
+    /** The multiplayer service for WebSocket communication, or null in single-player. */
+    private MultiplayerService multiplayerService;
+
+    /** Whether this game is a multiplayer match (uses lockstep). */
+    private boolean isMultiplayer = false;
+
+    /** Buffer for commands received from the opponent via WebSocket, pending lockstep processing. */
+    private final java.util.concurrent.ConcurrentLinkedQueue<byte[]> incomingCommandBuffer =
+        new java.util.concurrent.ConcurrentLinkedQueue<>();
+
     /** Tracks the enemy kill count for DestroyObjectives. FIX(CAMP-1) */
     private int enemyKillCount = 0;
 
@@ -368,6 +389,11 @@ public class GameScene {
 
             if (cmd != null) {
                 tickManager.enqueueCommand(cmd);
+                // FIX (LockstepEngine integration): In multiplayer mode, also submit the
+                // command to the lockstep engine so it gets relayed to the opponent.
+                if (isMultiplayer && lockstepEngine != null && lockstepEngine.isRunning()) {
+                    lockstepEngine.submitCommand(cmd);
+                }
                 LOG.info("Enqueued command: {} at ({}, {}), selected: {}",
                     command, targetGx, targetGy, selectionManager.getSelectedIds());
             }
@@ -417,6 +443,126 @@ public class GameScene {
                 cameraController.centerOnGrid(grid[0], grid[1]);
             }
         });
+    }
+
+    /**
+     * Sets up the lockstep engine for multiplayer deterministic simulation.
+     * <p>
+     * FIX (LockstepEngine integration from AUDIT_ROUND_3.md): Wires the LockstepEngine
+     * into the runtime so that:
+     * 1. Local commands are submitted to the lockstep engine (which serializes and
+     *    sends them to the opponent via the sendCallback).
+     * 2. Opponent commands received via WebSocket are buffered in {@link #incomingCommandBuffer}
+     *    and fed into the lockstep engine during {@link #onGameTick()}.
+     * 3. The lockstep engine's {@code processFrame()} drains the command buffer and
+     *    returns the commands for the current tick, which are enqueued into TickManager.
+     * 4. Heartbeats are sent every 30 ticks via the heartbeat callback to prevent
+     *    false disconnect pauses when the local player is idle (H2-client fix).
+     * 5. Sync hashes are computed and sent to the opponent for desync detection.
+     * <p>
+     * This method should be called after {@link #initializeGame()} but before
+     * {@link #startGameLoop()} when starting a multiplayer match.
+     *
+     * @param service the multiplayer service with an active game WebSocket connection
+     */
+    public void setupMultiplayer(MultiplayerService service) {
+        this.multiplayerService = service;
+        this.isMultiplayer = true;
+        this.lockstepEngine = new LockstepEngine();
+
+        // Wire the send callback: when the lockstep engine serializes a command,
+        // send it to the opponent via the game WebSocket.
+        lockstepEngine.start(serializedCommand -> {
+            // The sendCallback receives binary CommandSerializer bytes.
+            // We wrap them in a JSON message for the WebSocket transport.
+            if (multiplayerService != null) {
+                multiplayerService.sendGameCommand(java.util.Map.of(
+                    "type", "command",
+                    "data", java.util.Base64.getEncoder().encodeToString(serializedCommand)
+                ));
+            }
+        });
+
+        // FIX (H2-client): Wire the heartbeat callback so heartbeats are actually
+        // sent over the wire. Without this, sendHeartbeat() falls through to a
+        // debug log and no heartbeat reaches the opponent.
+        lockstepEngine.setHeartbeatSendCallback(tick -> {
+            if (multiplayerService != null) {
+                try {
+                    multiplayerService.sendGameCommand(java.util.Map.of(
+                        "type", "heartbeat",
+                        "tick", tick
+                    ));
+                } catch (Exception e) {
+                    LOG.warn("Failed to send heartbeat at tick {}: {}", tick, e.getMessage());
+                }
+            }
+        });
+
+        // Wire the desync callback
+        lockstepEngine.setDesyncCallback(frame -> {
+            LOG.error("Desync detected at frame {}", frame);
+            if (multiplayerService != null) {
+                // Notify the server of the desync
+                multiplayerService.sendSyncHash("", frame, 0);
+            }
+        });
+
+        // Inject game systems into the lockstep engine for command processing
+        lockstepEngine.setGameSystems(map, movement, combat, economy,
+            production, research, placement);
+
+        // Wire the MultiplayerService callback to receive opponent commands
+        service.setCallback(new MultiplayerService.MultiplayerCallback() {
+            @Override
+            public void onMatchFound(String sessionUuid, String opponentName) {}
+
+            @Override
+            public void onPlayerConnected(long playerId) {}
+
+            @Override
+            public void onCommandReceived(long fromPlayerId, java.util.Map<String, Object> command) {
+                // FIX (H2-client): Check if this is a heartbeat message (forwarded by
+                // MultiplayerService as a command-like map with type="heartbeat").
+                String msgType = (String) command.getOrDefault("type", "");
+                if ("heartbeat".equals(msgType)) {
+                    // Feed the heartbeat into the lockstep engine to reset the disconnect timer
+                    long tick = ((Number) command.getOrDefault("tick", 0L)).longValue();
+                    if (lockstepEngine != null && lockstepEngine.isRunning()) {
+                        lockstepEngine.receiveHeartbeat(tick);
+                    }
+                    return;
+                }
+                // Otherwise it's a command: the command map contains a "data" field
+                // with base64-encoded CommandSerializer bytes. Decode and buffer it.
+                Object data = command.get("data");
+                if (data instanceof String base64) {
+                    try {
+                        byte[] serialized = java.util.Base64.getDecoder().decode(base64);
+                        incomingCommandBuffer.add(serialized);
+                    } catch (Exception e) {
+                        LOG.warn("Failed to decode opponent command: {}", e.getMessage());
+                    }
+                } else if (data != null) {
+                    LOG.warn("Unexpected command data type: {}", data.getClass());
+                }
+            }
+
+            @Override
+            public void onDesyncDetected(long tick) {
+                LOG.error("Opponent reported desync at tick {}", tick);
+            }
+
+            @Override
+            public void onChatMessage(String senderName, String message) {}
+
+            @Override
+            public void onError(String error) {
+                LOG.error("Multiplayer error: {}", error);
+            }
+        });
+
+        LOG.info("Multiplayer lockstep engine initialized and wired");
     }
 
     /**
@@ -673,6 +819,27 @@ public class GameScene {
     private void onGameTick() {
         if (gameState == null || !gameState.isRunning()) {
             return;
+        }
+
+        // FIX (LockstepEngine integration): In multiplayer mode, drain incoming
+        // commands from the WebSocket receive thread into the lockstep engine,
+        // then process one lockstep frame. The lockstep engine's processFrame()
+        // returns the list of commands for this tick (both local and opponent),
+        // which we enqueue into the TickManager for processing.
+        if (isMultiplayer && lockstepEngine != null && lockstepEngine.isRunning()) {
+            // Drain WebSocket receive buffer into the lockstep engine
+            byte[] incoming;
+            while ((incoming = incomingCommandBuffer.poll()) != null) {
+                lockstepEngine.receiveCommand(incoming);
+            }
+            // Process one lockstep frame — returns commands for this tick
+            var frameCommands = lockstepEngine.processFrame(gameState, entityManager);
+            // Enqueue opponent commands (playerId != LOCAL_PLAYER_ID) into TickManager
+            for (CommandType cmd : frameCommands) {
+                if (cmd.playerId() != LOCAL_PLAYER_ID) {
+                    tickManager.enqueueCommand(cmd);
+                }
+            }
         }
 
         // Tick construction progress for all buildings under construction

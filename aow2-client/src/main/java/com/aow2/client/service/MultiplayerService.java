@@ -729,6 +729,20 @@ public final class MultiplayerService {
                         cb.onCommandReceived(fromPlayerId, command != null ? command : Map.of());
                     }
                 }
+                // FIX (H2-client): Handle heartbeat messages relayed by the server.
+                // The opponent sends {"type":"heartbeat","tick":N} periodically.
+                // We forward it to the callback as a "command" with a special "heartbeat"
+                // type marker so GameScene can feed it into LockstepEngine.receiveHeartbeat().
+                case "heartbeat" -> {
+                    long tick = ((Number) msg.getOrDefault("tick", 0L)).longValue();
+                    LOG.trace("Heartbeat received from opponent: tick {}", tick);
+                    MultiplayerCallback cb = callback;
+                    if (cb != null) {
+                        // Forward as a command-like map so the existing callback path handles it.
+                        // GameScene's onCommandReceived checks for the "heartbeat" type.
+                        cb.onCommandReceived(0, Map.of("type", "heartbeat", "tick", tick));
+                    }
+                }
                 case "desync" -> {
                     long tick = ((Number) msg.getOrDefault("tick", 0L)).longValue();
                     LOG.error("Desync detected at tick {}", tick);
