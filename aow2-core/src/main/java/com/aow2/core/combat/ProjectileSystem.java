@@ -310,7 +310,7 @@ public final class ProjectileSystem {
                     state.enqueueEvent(new com.aow2.common.event.UnitKilledEvent(
                         state.currentTick(), unit.getId(), unit.getUnitType(),
                         projectile.getSourceUnitId()));
-                    ModEventBridge.fireUnitKilled(unit.getId(), unit.getUnitType(), unit.getOwner(), projectile.getSourceUnitId());
+                    ModEventBridge.fireUnitKilled(unit.getId(), unit.getUnitType(), unit.getFaction(), projectile.getSourceUnitId());
                 }
             }
         }
@@ -342,7 +342,7 @@ public final class ProjectileSystem {
                     state.enqueueEvent(new com.aow2.common.event.BuildingDestroyedEvent(
                         state.currentTick(), building.getId(), building.getBuildingType(),
                         projectile.getSourceUnitId()));
-                    ModEventBridge.fireBuildingDestroyed(building.getId(), building.getBuildingType(), building.getOwner(), projectile.getSourceUnitId());
+                    ModEventBridge.fireBuildingDestroyed(building.getId(), building.getBuildingType(), building.getFaction(), projectile.getSourceUnitId());
                 }
             }
         }
@@ -395,7 +395,7 @@ public final class ProjectileSystem {
                     state.enqueueEvent(new com.aow2.common.event.UnitKilledEvent(
                         state.currentTick(), target.getId(), target.getUnitType(),
                         projectile.getSourceUnitId()));
-                    ModEventBridge.fireUnitKilled(target.getId(), target.getUnitType(), target.getOwner(), projectile.getSourceUnitId());
+                    ModEventBridge.fireUnitKilled(target.getId(), target.getUnitType(), target.getFaction(), projectile.getSourceUnitId());
                 }
             }
         } else {
@@ -417,7 +417,7 @@ public final class ProjectileSystem {
                     state.enqueueEvent(new com.aow2.common.event.BuildingDestroyedEvent(
                         state.currentTick(), target.getId(), target.getBuildingType(),
                         projectile.getSourceUnitId()));
-                    ModEventBridge.fireBuildingDestroyed(target.getId(), target.getBuildingType(), target.getOwner(), projectile.getSourceUnitId());
+                    ModEventBridge.fireBuildingDestroyed(target.getId(), target.getBuildingType(), target.getFaction(), projectile.getSourceUnitId());
                 }
             }
         }
