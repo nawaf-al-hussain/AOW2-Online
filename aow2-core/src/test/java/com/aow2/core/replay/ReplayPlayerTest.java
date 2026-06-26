@@ -374,8 +374,9 @@ class ReplayPlayerTest {
         @Test
         @DisplayName("shouldRejectInvalidTypeOrd")
         void shouldRejectInvalidTypeOrd() {
+            // FIX (C2): typeOrd 12 (TYPE_ATTACK_MOVE) is now valid. Use 13 to test rejection.
             assertThrows(IllegalArgumentException.class,
-                () -> new ReplayEntry(0, 12, 0, new byte[]{}));
+                () -> new ReplayEntry(0, 13, 0, new byte[]{}));
         }
 
         @Test

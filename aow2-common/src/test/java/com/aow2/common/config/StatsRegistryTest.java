@@ -38,10 +38,10 @@ class StatsRegistryTest {
     class UnitStatsCompleteness {
 
         @Test
-        @DisplayName("All 17 unit types have stats in the registry")
+        @DisplayName("All 19 unit types have stats in the registry")
         void allUnitTypesRegistered() {
             Map<UnitType, UnitStats> allStats = registry.getAllUnitStats();
-            assertEquals(17, allStats.size(), "Expected 17 unit types registered");
+            assertEquals(19, allStats.size(), "Expected 19 unit types registered");
             for (UnitType type : UnitType.values()) {
                 assertTrue(allStats.containsKey(type), "Missing stats for: " + type);
             }
@@ -141,7 +141,7 @@ class StatsRegistryTest {
                 () -> assertEquals(450, s.rewardCredits()),
                 () -> assertEquals(WeaponType.NONE, s.weaponType()),
                 () -> assertEquals(22, s.baseCost()),
-                () -> assertEquals(7, s.attackSpeed()),
+                () -> assertEquals(0, s.attackSpeed(), "CC doesn't attack — attackSpeed=0"),
                 () -> assertEquals(7, s.armor()),
                 () -> assertEquals(4, s.attackBonus()),
                 () -> assertEquals(2, s.sightRange()),

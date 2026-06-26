@@ -198,7 +198,11 @@ public final class DamageCalculator {
      * @return effective armor value
      */
     public static int calculateEffectiveArmor(Building building, int buildingArmorBonus) {
-        return building.getStats().armor() + buildingArmorBonus;
+        // FIX (pre-existing bug found during CI verification): Buildings have 0 base armor
+        // per the RE spec (combat_formulas.md: "Buildings have 0 base armour (use construction HP)").
+        // The building's BuildingStats.armor field is a structural rating, NOT the combat armor.
+        // Only research bonuses contribute to building combat armor.
+        return 0 + buildingArmorBonus;
     }
 
     /**
