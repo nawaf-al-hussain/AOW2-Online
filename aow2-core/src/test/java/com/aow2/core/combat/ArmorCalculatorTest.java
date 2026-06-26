@@ -86,35 +86,38 @@ class ArmorCalculatorTest {
     }
 
     @Test
-    @DisplayName("Should apply vehicle armor research from Resistance")
+    @DisplayName("Should not apply vehicle armor research (VEHICLE_ARMOR_RESEARCH is empty per RE spec)")
     void shouldApplyVehicleArmorResearch() {
         // Given
         Unit vehicle = new Unit(2, Faction.RESISTANCE, new GridPosition(20, 20),
             UnitType.REBEL_RHINO, REBEL_VEHICLE_STATS);
-        // Research ID 9: Composite Armour, +2 vehicle armor
+        // FIX (M4): Research ID 9 adds +2 INFANTRY armor, not vehicle armor.
+        // The RE binary confirms NO research IDs add vehicle armor via Z[player][5].
+        // Vehicle armor upgrades come from per-unit upgrade levels, not research.
         Set<Integer> research = Set.of(9);
 
         // When
         int armor = armorCalculator.calculateEffectiveArmor(vehicle, research);
 
         // Then
-        assertEquals(9, armor, "Armor should be 7 (base) + 2 (research) = 9");
+        assertEquals(7, armor, "Vehicle armor should be 7 (base) + 0 (no vehicle research) = 7");
     }
 
     @Test
-    @DisplayName("Should apply Rebel Titanium Jacket infantry armor from research ID 8")
+    @DisplayName("Should apply Rebel Titanium Jacket infantry armor from research ID 24")
     void shouldApplyTitaniumJacketInfantryArmor() {
         // Given
         Unit infantry = new Unit(2, Faction.RESISTANCE, new GridPosition(10, 10),
             UnitType.REBEL_INFANTRY, REBEL_INFANTRY_STATS);
-        // Research ID 8: Titanium Jacket, +1 infantry armor
-        Set<Integer> research = Set.of(8);
+        // FIX: Research ID 24 (not 8) is Rebel Titanium Jacket, +1 infantry armor.
+        // ID 8 is "Heavy Artillery Upgrade" which doesn't add infantry armor.
+        Set<Integer> research = Set.of(24);
 
         // When
         int armor = armorCalculator.calculateEffectiveArmor(infantry, research);
 
         // Then
-        assertEquals(6, armor, "Armor should be 5 (base) + 1 (research ID 8) = 6");
+        assertEquals(6, armor, "Armor should be 5 (base) + 1 (research ID 24) = 6");
     }
 
     @Test
@@ -149,36 +152,39 @@ class ArmorCalculatorTest {
     }
 
     @Test
-    @DisplayName("Should return zero bonus for vehicle research on infantry unit")
+    @DisplayName("Should return zero bonus for non-armor research on infantry unit")
     void shouldNotApplyVehicleResearchToInfantry() {
         // Given
         Unit infantry = new Unit(1, Faction.CONFEDERATION, new GridPosition(10, 10),
             UnitType.CONFED_INFANTRY, INFANTRY_STATS);
-        // Research ID 9: +2 vehicle armor (should not apply to infantry)
-        Set<Integer> research = Set.of(9);
+        // FIX: Research ID 1 (Advanced Targeting) is NOT an armor research at all.
+        // The original test used ID 9 which IS an infantry armor research (+2),
+        // so it incorrectly applied to infantry. Use ID 1 which is not in any
+        // armor research map.
+        Set<Integer> research = Set.of(1);
 
         // When
         int bonus = armorCalculator.getResearchArmorBonus(infantry, research);
 
         // Then
-        assertEquals(0, bonus, "Vehicle armor research should not apply to infantry");
+        assertEquals(0, bonus, "Non-armor research should not apply any bonus");
     }
 
     @Test
-    @DisplayName("Should apply research ID 0 to both infantry and vehicle units")
+    @DisplayName("Should not apply infantry-only research to vehicle units")
     void shouldApplyResearchId0ToVehicleAndInfantry() {
         // Given
         Unit vehicle = new Unit(2, Faction.CONFEDERATION, new GridPosition(20, 20),
             UnitType.CONFED_ZEUS, VEHICLE_STATS);
-        // Research ID 0: +2 infantry armor AND +2 vehicle armor
-        // REF: combat_formulas.md line 303 - ID 0 also adds "Light armour +2" (vehicle)
+        // FIX (M4): Research ID 0 (Energy Suit) adds +2 INFANTRY armor only.
+        // The RE binary confirms NO research IDs add vehicle armor via Z[player][5].
         Set<Integer> research = Set.of(0);
 
         // When
         int bonus = armorCalculator.getResearchArmorBonus(vehicle, research);
 
         // Then
-        assertEquals(2, bonus, "Research ID 0 gives +2 vehicle armor as well as infantry");
+        assertEquals(0, bonus, "Research ID 0 adds infantry armor only, not vehicle");
     }
 
     @Test
@@ -229,20 +235,23 @@ class ArmorCalculatorTest {
     }
 
     @Test
-    @DisplayName("Should stack override and additive building armor research")
+    @DisplayName("Should apply override (SET) replacing additive building armor")
     void shouldStackOverrideAndAdditiveBuildingArmor() {
         // Given
         Building building = new Building(1, Faction.CONFEDERATION, new GridPosition(32, 32),
             BuildingType.CONFED_COMMAND_CENTRE, BUILDING_STATS);
-        // Research ID 4: +4 building armor
-        // Research ID 16: building armor = 9 (override)
+        // Research ID 4: +4 building armor (additive)
+        // Research ID 16: building armor = 9 (override/SET)
+        // FIX: Per the RE spec, the override SETS the armor value, replacing the
+        // additive total. So the result is 9 (override wins), NOT 9+4=13.
+        // The RE code does: armor = entry.getValue(); // SET, not add or max
         Set<Integer> research = Set.of(4, 16);
 
         // When
         int armor = armorCalculator.calculateEffectiveBuildingArmor(building, research);
 
         // Then
-        assertEquals(13, armor, "Building armor should be 9 (override) + 4 (additive) = 13");
+        assertEquals(9, armor, "Building armor should be 9 (override SET replaces additive +4)");
     }
 
     @Test

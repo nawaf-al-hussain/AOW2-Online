@@ -248,9 +248,10 @@ class EconomySystemTest {
 
             // Then: upgradeBonus = 1 * 2 = 2
             // RE formula: (100 * 1.3) * 20 / (2 + 20) = 130 * 20 / 22 = 118.18...
-            // Faction: 118 * 1.15 = 135.7... → 135
+            // Faction: Math.round(118 * 1.15) = Math.round(135.7) = 136
+            // FIX (CI verification): Use Math.round to match ResourceGenerator's rounding.
             int reFormulaIncome = (int) ((100 * 1.3) * 20.0 / 22);
-            int expectedIncome = (int) (reFormulaIncome * 1.15);
+            int expectedIncome = (int) Math.round(reFormulaIncome * 1.15);
             assertEquals(expectedIncome, income,
                 "Combined income should apply formula + faction bonus");
             assertTrue(income > 100, "Combined effects should produce meaningful income");

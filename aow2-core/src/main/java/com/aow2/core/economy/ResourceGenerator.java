@@ -133,7 +133,10 @@ public final class ResourceGenerator {
         // REF: MASTER_DOCUMENTATION.md — "Resistance collects resources faster than Confederation (confirmed by Gear Games)"
         // ASSUMPTION: Exact multiplier is not documented; 15% assumed.
         if (faction == Faction.RESISTANCE) {
-            income = (int) (income * GameConstants.RESISTANCE_INCOME_MULTIPLIER);
+            // FIX (CI verification): Use Math.round instead of (int) cast to avoid
+            // floating-point truncation. 1.15 in double is 1.149999... so 100*1.15
+            // = 114.999... which (int) truncates to 114 instead of 115.
+            income = (int) Math.round(income * GameConstants.RESISTANCE_INCOME_MULTIPLIER);
         }
 
         return Math.max(income, 0);
