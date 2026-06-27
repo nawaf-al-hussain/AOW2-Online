@@ -671,14 +671,14 @@ class PathfindingSystemTest {
         void infantryShouldPreferGrassOverShallowWater() {
             // Given: two parallel paths — one through shallow water, one through grass
             GameMap map = new GameMap(10, 10);
-            // Shallow water column at x=4
+            // Shallow water column at x=4 (infantry can cross with cost 3)
             for (int y = 0; y < 10; y++) {
                 map.setTile(4, y, TerrainType.SHALLOW_WATER);
             }
-            // Deep water column at x=6 (forces use of shallow water or long detour)
-            for (int y = 0; y < 10; y++) {
-                map.setTile(6, y, TerrainType.DEEP_WATER);
-            }
+            // FIX (CI verification): Removed the DEEP_WATER column at x=6.
+            // DEEP_WATER is impassable for ALL units, and spanning the entire column
+            // made the path impossible. The test's intent is to verify infantry CAN
+            // cross SHALLOW_WATER — the DEEP_WATER column was an error.
 
             GridPosition start = new GridPosition(0, 5);
             GridPosition goal = new GridPosition(9, 5);
@@ -687,7 +687,7 @@ class PathfindingSystemTest {
             List<GridPosition> path = pathfinding.findPath(start, goal, map,
                 Collections.emptySet(), UnitCategory.INFANTRY);
 
-            // Then: path should exist
+            // Then: path should exist (infantry can cross shallow water)
             assertFalse(path.isEmpty(), "Infantry should find path across the map");
             assertEquals(goal, path.get(path.size() - 1));
         }
