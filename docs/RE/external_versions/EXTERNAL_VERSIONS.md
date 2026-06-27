@@ -41,11 +41,12 @@ docs/RE/external_versions/
 │   └── metadata/     (1 MANIFEST.MF)
 ├── jar_liberation_of_peru_v1.0.06/               ← J2ME Episode 2 (Gear Games 2009)
 │   ├── classes/      (11 .class files)
-│   ├── data/         (13 binary data tables)
+│   ├── data/         (14 binary data tables: a, d, d0, f, m0, m26, m35, m37, m42, m43, m44, ml, n, u)
+│   ├── audio/        (1 MIDI file: s0 — Episode 2 background music)
 │   ├── maps/         (38 map files: map1-20 + map51-68)
 │   ├── missions/     (8 mission scripts: mi0-mi7)
 │   ├── sprites/      (10 PNG files: i0 + r00-r05 rank insignia + l1, l2, icon.png)
-│   ├── text/         (5 plain-text string files: 0_t0, 0_s0, 0_d0, n, s0)
+│   ├── text/         (3 plain-text string files: 0_t0, 0_s0, 0_d0)
 │   ├── crack/        (2 cracker-added .class files)
 │   └── metadata/     (1 MANIFEST.MF)
 └── ipa_ios_v2.2/                                 ← iOS premium build (Gear Games 2009)
@@ -247,19 +248,23 @@ Two ranges, contiguous within each range:
 | `l2` | 33,345 B | Loading screen PNG (240×323, 8-bit colormap) — full-screen variant |
 | `icon.png` | 845 B | MIDlet icon (42×29, 8-bit colormap) — note different aspect ratio from Episode 1's 32×32 |
 
-### 4.6 `text/` — 5 plain-text string files
+### 4.6 `text/` — 3 plain-text string files
 
 | File | Size | Purpose |
 |------|------|---------|
 | `0_t0` | 16,675 B | **Plain-ASCII title/help strings** — readable Episode 2 title screen, "How to Play" text, credits ("Giar Geymz, 2009", "Music: Bogatencov & AN"). Prefixed with `0_` because it was inside the JAR's `0/` subfolder. |
 | `0_s0` | 1,743 B | **Plain-ASCII menu strings** — `Continue | New Game | Help | About the Game | More Games | Exit | Save | Download | Output | Campaign | Simple Game | ...` |
 | `0_d0` | 20,307 B | **Plain-ASCII campaign dialogue** — Episode 2 narrative: `"...We must not continue to tolerate this oppression! The Confederation is a cover up for his high purposes of world peace..."` |
-| `n` | 2,055 B | Name/data table (binary) — same role as APK `n` file |
-| `s0` | 26,684 B | MIDI music file (format 1, 9 tracks at 96 ppqn — more complex than Episode 1's format-0 single track) — moved here for category clarity (also listed under audio where it logically belongs; the categorization kept it as text because the J2ME build stores it next to the text strings — this is being noted as a known quirk) |
 
-**Correction**: `s0` is a MIDI file mis-categorized as text by the extractor because the JAR places it next to the text strings. The script's `categorize_jar` function checks `name in ("t0", "s0", "d0")` first and routes to `text/`. The file's actual content is `Standard MIDI data (format 1) using 9 tracks at 1/96` — it is Episode 2's background music and should be treated as audio.
+The bare `s0` (MIDI music) and `d0` (binary data table) that also exist at the JAR root are NOT in this folder — `s0` is correctly routed to `audio/` and `d0` is correctly routed to `data/`. The `0/` subfolder versions are the plain-text localisation overrides.
 
-### 4.7 `crack/` — 2 cracker-added files
+### 4.7 `audio/` — 1 MIDI file
+
+| File | Size | Purpose |
+|------|------|---------|
+| `s0` | 26,684 B | **Episode 2 background music** — Standard MIDI format 1, 9 tracks at 96 ppqn. Note: this is more complex than Episode 1's `s0m` (format 0, single track at 480 ppqn, 12 KB) — Episode 2 has a richer, multi-track score. |
+
+### 4.8 `crack/` — 2 cracker-added files
 
 | File | Size | Purpose |
 |------|------|---------|
@@ -268,7 +273,7 @@ Two ranges, contiguous within each range:
 
 **Why these are kept**: They are part of the artifact we received. They are isolated under `crack/` so the recreation project can ignore them, but they remain available for forensic completeness.
 
-### 4.8 `metadata/`
+### 4.9 `metadata/`
 
 | File | Size | Purpose |
 |------|------|---------|
