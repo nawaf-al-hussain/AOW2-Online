@@ -32,12 +32,12 @@ docs/RE/external_versions/
 ├── EXTERNAL_VERSIONS.md                          ← this file
 ├── jar_global_confederation_v1.12.0/             ← J2ME Episode 1 (HeroCraft 2012)
 │   ├── classes/      (18 .class files)
-│   ├── data/         (13 binary data tables)
+│   ├── data/         (11 binary data tables: a, d, d0, dmt, m0-m5, ml, p)
 │   ├── fonts/        (8 font definition + image-strip pairs)
-│   ├── audio/        (1 MIDI file)
-│   ├── missions/     (7 mission scripts)
-│   ├── sprites/      (3 PNG files: i0 sprite pack, hc, gg, l2)
-│   ├── text/         (1 sn8p text/string blob)
+│   ├── audio/        (1 MIDI file: s0m)
+│   ├── missions/     (7 mission scripts: mi0-mi6)
+│   ├── sprites/      (5 PNG files: i0 sprite pack, hc HeroCraft logo, gg minimap, l2 loading, icon.png)
+│   ├── text/         (1 sn8p encoded text/string blob)
 │   └── metadata/     (1 MANIFEST.MF)
 ├── jar_liberation_of_peru_v1.0.06/               ← J2ME Episode 2 (Gear Games 2009)
 │   ├── classes/      (11 .class files)
@@ -99,7 +99,7 @@ docs/RE/external_versions/
 
 **Why the obfuscated names**: Gear Games shipped with ProGuard-style single-letter obfuscation. The downstream APK has the same names, so cross-referencing is straightforward using the existing `class_mapping.json` in the parent documentation tree.
 
-### 3.2 `data/` — 13 binary data tables
+### 3.2 `data/` — 11 binary data tables
 
 | File | Size | Purpose |
 |------|------|---------|
@@ -107,13 +107,11 @@ docs/RE/external_versions/
 | `d` | 164 B | Display flags (mirrors APK `d`) |
 | `d0` | 106,423 B | Game data tables — 26 byte arrays + 18 short arrays (same format as APK `s0/d0`) |
 | `dmt` | 39 B | Tiny flag blob — likely "demo" flag (file extension suggests `d(emo)m(a)r(k)er`) |
-| `gg` | 2,033 B | Globe / minimap PNG (105×70, 8-bit colormap) |
-| `hc` | 1,853 B | HeroCraft splash logo PNG (170×142, 8-bit colormap) |
 | `m0`–`m5` | 4.9–14 KB | Six map files for Episode 1 missions |
 | `ml` | 1,489 B | Map layout metadata |
-| `n` | (none in this folder — present in APK as `n`) | — |
 | `p` | (in APK only) | Platform version byte — not shipped in J2ME |
-| `sn8p` | 31,352 B | **Encoded text blob** — 567 game strings (decoded in `gameplay_analysis/text_strings.json` upstream) |
+
+Note: `gg` (globe/minimap PNG) and `hc` (HeroCraft logo PNG) are in `sprites/`, not `data/`, because they are PNG image files despite having no `.png` extension. The `sn8p` encoded text blob is in `text/`, not `data/`, because its semantic role is text storage (even though it is binary-encoded).
 
 ### 3.3 `fonts/` — 8 font files (4 font definition + 4 image strips)
 
@@ -145,18 +143,21 @@ docs/RE/external_versions/
 | `mi5` | 643 B | Mission 5 |
 | `mi6` | 683 B | Mission 6 |
 
-### 3.6 `sprites/` — 3 PNG files
+### 3.6 `sprites/` — 5 PNG files
 
 | File | Size | Purpose |
 |------|------|---------|
 | `i0` | 271,333 B | **Sprite pack** — custom container with 3-byte big-endian size prefix per PNG, 0xFF terminator. Contains 57 sub-images for s0 (240×320) resolution |
+| `hc` | 1,853 B | HeroCraft splash logo PNG (170×142, 8-bit colormap) — shown at game startup |
+| `gg` | 2,033 B | Globe / minimap PNG (105×70, 8-bit colormap) — used as the strategic-map backdrop |
 | `l2` | 44,601 B | Loading screen PNG (240×320, 8-bit colormap) |
+| `icon.png` | 434 B | MIDlet icon PNG (32×32, 8-bit colormap) — shown in the phone's app launcher |
 
 ### 3.7 `text/` — 1 encoded text blob
 
 | File | Size | Purpose |
 |------|------|---------|
-| `sn8p` | 31,352 B | Encoded game strings — moved here for category clarity (also listed under `data/` semantics) |
+| `sn8p` | 31,352 B | **Encoded text/string blob** — 567 game strings packed in a length-prefixed binary format. Decoded upstream in `gameplay_analysis/text_strings.json`. Stored under `text/` rather than `data/` because its semantic role is text storage, even though it is binary-encoded. |
 
 ### 3.8 `metadata/` — 1 manifest
 
