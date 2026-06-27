@@ -20,7 +20,7 @@ class CombatSystemTest {
     private EntityManager entityManager;
     private CombatSystem combatSystem;
     private UnitStats infantryStats;
-    private UnitStats zeusStats;
+    private UnitStats riflemanStats;
 
     @BeforeEach
     void setUp() {
@@ -30,14 +30,18 @@ class CombatSystemTest {
 
         infantryStats = new UnitStats(UnitType.CONFED_INFANTRY, "Infantry", 40, 2, 5, 5,
             0, 4, 4, WeaponType.BULLET, 5, 4, 10, 650, 6, 255, 0, -1);
-        zeusStats = new UnitStats(UnitType.CONFED_ZEUS, "T-22 Zeus", 70, 6, 7, 5,
-            0, 2, 6, WeaponType.MACHINE_GUN, 2, 14, 30, 300, 8, 255, 0, -1);
+        // FIX (CI verification): Use BULLET weapon type for direct damage tests.
+        // Ranged weapons (MACHINE_GUN, ROCKET, etc.) spawn projectiles via
+        // ProjectileSystem instead of applying instant damage, so performAttack()
+        // for ranged units does not directly reduce the target's HP.
+        riflemanStats = new UnitStats(UnitType.CONFED_INFANTRY, "Rifleman", 40, 6, 5, 5,
+            0, 4, 6, WeaponType.BULLET, 5, 4, 10, 650, 6, 255, 0, -1);
     }
 
     @Test
     @DisplayName("Direct attack applies damage")
     void shouldPerformDirectAttack() {
-        var attacker = new Unit(1, Faction.CONFEDERATION, new GridPosition(10, 10), UnitType.CONFED_ZEUS, zeusStats);
+        var attacker = new Unit(1, Faction.CONFEDERATION, new GridPosition(10, 10), UnitType.CONFED_INFANTRY, riflemanStats);
         var target = new Unit(2, Faction.RESISTANCE, new GridPosition(11, 10), UnitType.CONFED_INFANTRY, infantryStats);
         combatSystem.performAttack(attacker, target);
         // weaponDamage=6, targetArmor=5: raw=6*(10-5)/10=3, clamped=min(3,6-5)=1
@@ -48,11 +52,12 @@ class CombatSystemTest {
     @Test
     @DisplayName("Unit killed when HP drops to 0, hp set to -1")
     void shouldKillUnitWhenHpDropsToZero() {
-        var attacker = new Unit(1, Faction.CONFEDERATION, new GridPosition(10, 10), UnitType.CONFED_ZEUS, zeusStats);
+        var attacker = new Unit(1, Faction.CONFEDERATION, new GridPosition(10, 10), UnitType.CONFED_INFANTRY, riflemanStats);
         var target = new Unit(2, Faction.RESISTANCE, new GridPosition(11, 10), UnitType.CONFED_INFANTRY, infantryStats);
         // Each hit deals 1 damage (weaponDamage=6, targetArmor=5: clamped=min(3,1)=1)
         // Need 40 hits to reduce 40 HP to 0 → death marker sets hp=-1
         for (int i = 0; i < 40; i++) {
+            attacker.setAttackState(0); // Reset state for each hit
             combatSystem.performAttack(attacker, target);
         }
         assertFalse(target.isAlive());
@@ -62,11 +67,14 @@ class CombatSystemTest {
     @Test
     @DisplayName("UnitKilledEvent generated on death")
     void shouldGenerateUnitKilledEvent() {
-        var attacker = new Unit(1, Faction.CONFEDERATION, new GridPosition(10, 10), UnitType.CONFED_ZEUS, zeusStats);
+        var attacker = new Unit(1, Faction.CONFEDERATION, new GridPosition(10, 10), UnitType.CONFED_INFANTRY, riflemanStats);
         var target = new Unit(2, Faction.RESISTANCE, new GridPosition(11, 10), UnitType.CONFED_INFANTRY, infantryStats);
-        while (target.isAlive()) {
+        int maxIterations = 200;
+        while (target.isAlive() && maxIterations-- > 0) {
+            attacker.setAttackState(0);
             combatSystem.performAttack(attacker, target);
         }
+        assertFalse(target.isAlive(), "Target should be dead after 40 hits");
         var events = gameState.drainEvents();
         assertTrue(events.stream().anyMatch(e -> e instanceof UnitKilledEvent));
     }
@@ -74,7 +82,7 @@ class CombatSystemTest {
     @Test
     @DisplayName("DamageAppliedEvent generated on each attack")
     void shouldGenerateDamageAppliedEvent() {
-        var attacker = new Unit(1, Faction.CONFEDERATION, new GridPosition(10, 10), UnitType.CONFED_ZEUS, zeusStats);
+        var attacker = new Unit(1, Faction.CONFEDERATION, new GridPosition(10, 10), UnitType.CONFED_INFANTRY, riflemanStats);
         var target = new Unit(2, Faction.RESISTANCE, new GridPosition(11, 10), UnitType.CONFED_INFANTRY, infantryStats);
         combatSystem.performAttack(attacker, target);
         var events = gameState.drainEvents();
@@ -84,7 +92,7 @@ class CombatSystemTest {
     @Test
     @DisplayName("Attacker gains 1 XP per hit")
     void shouldAddExperienceOnHit() {
-        var attacker = new Unit(1, Faction.CONFEDERATION, new GridPosition(10, 10), UnitType.CONFED_ZEUS, zeusStats);
+        var attacker = new Unit(1, Faction.CONFEDERATION, new GridPosition(10, 10), UnitType.CONFED_INFANTRY, riflemanStats);
         var target = new Unit(2, Faction.RESISTANCE, new GridPosition(11, 10), UnitType.CONFED_INFANTRY, infantryStats);
         combatSystem.performAttack(attacker, target);
         assertEquals(1, attacker.getExperience());
