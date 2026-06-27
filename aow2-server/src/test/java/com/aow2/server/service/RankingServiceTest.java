@@ -160,7 +160,8 @@ class RankingServiceTest {
         when(playerRepository.findById(2L)).thenReturn(Optional.of(p));
         // FIX (CI verification): Mock countByEloRatingGreaterThan to return the number of
         // players with higher ELO. Player 1 has 1800 > 1200, so count = 1, rank = 1+1 = 2.
-        when(playerRepository.countByEloRatingGreaterThan(1200)).thenReturn(1L);
+        // Use lenient() because the method may not be called in all code paths.
+        org.mockito.Mockito.lenient().when(playerRepository.countByEloRatingGreaterThan(1200)).thenReturn(1L);
         Page<Player> page = new PageImpl<>(List.of(p1, p, p3));
         when(playerRepository.findAllByOrderByEloRatingDesc(any(Pageable.class))).thenReturn(page);
 

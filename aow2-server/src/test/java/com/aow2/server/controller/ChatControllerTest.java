@@ -65,7 +65,7 @@ class ChatControllerTest {
         assertNotNull(response.getBody());
         assertEquals(1L, response.getBody().get("id"));
         assertEquals("match-uuid-1", response.getBody().get("matchId"));
-        assertEquals(1, response.getBody().get("playerId"));
+        assertEquals(1L, response.getBody().get("playerId"));  // FIX: Long not int
         assertEquals("hello", response.getBody().get("message"));
     }
 
