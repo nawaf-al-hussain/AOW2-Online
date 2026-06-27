@@ -14,11 +14,43 @@
 ├── source_original/            - Original obfuscated source (preserved)
 ├── assets_raw/                 - Raw extracted assets (256 files)
 ├── assets_processed/           - Categorized and identified assets (405 files)
+├── external_versions/          - ⭐ NEW: Non-APK distributions (286 files, 16.5 MB)
+│   ├── EXTERNAL_VERSIONS.md                - Per-file reference for all 286 files
+│   ├── jar_global_confederation_v1.12.0/   - J2ME Episode 1 (HeroCraft 2012, 52 files)
+│   │   ├── classes/      (18 .class files — pre-Android Java source)
+│   │   ├── data/         (13 binary data tables: a, d, d0, dmt, gg, hc, m0-m5, ml, sn8p)
+│   │   ├── fonts/        (8 font files: f0_0/f0_0p, f1_0/f1_0p, f2_0/f2_0p, f3_0/f3_0p)
+│   │   ├── audio/        (1 MIDI: s0m)
+│   │   ├── missions/     (7 mission scripts: mi0-mi6)
+│   │   ├── sprites/      (3 PNG: i0 sprite pack, l2 loading screen)
+│   │   ├── text/         (1 sn8p encoded string blob — duplicate of data/sn8p)
+│   │   └── metadata/     (1 MANIFEST.MF)
+│   ├── jar_liberation_of_peru_v1.0.06/    - J2ME Episode 2 (Gear Games 2009, 88 files)
+│   │   ├── classes/      (11 .class files — Episode 2 entry point aow22.class)
+│   │   ├── data/         (13 binary data tables: a, d, d0, f, m0, m26, m35, m37, m42, m43, m44, ml, u)
+│   │   ├── maps/         (38 map files: map1-20 + map51-68 — ONLY source for Episode 2)
+│   │   ├── missions/     (8 mission scripts: mi0-mi7)
+│   │   ├── sprites/      (10 PNG: i0 sprite pack, r00-r05 rank insignia, l1, l2, icon.png)
+│   │   ├── text/         (5 plain-ASCII string files: 0_t0, 0_s0, 0_d0 — readable game strings!)
+│   │   ├── crack/        (2 cracker-added .class files in crk/ subfolder of original JAR)
+│   │   └── metadata/     (1 MANIFEST.MF with MIDlet-1 + MIDlet-2 Crack AOW2 entries)
+│   └── ipa_ios_v2.2/                       - iOS premium build (Gear Games 2009, 146 files)
+│       ├── audio/        (74 files: 72 SFX .wav + music.mp3 + music.wav — ONLY source for SFX)
+│       ├── archives/     (1 file: add = ZIP archive containing duplicate music.mp3)
+│       ├── app_icons/    (2 files: Default.png + Icon.png)
+│       ├── sprites/      (6 files: d1 1024×1024 master atlas + 2 localized i0 packs + d00 + l1, l2, l3)
+│       ├── maps/         (6 files: m0-m5)
+│       ├── missions/     (37 files: mi0-mi6 generic + mi7_en–mi21_en + mi7_ru–mi21_ru)
+│       ├── text/         (6 files: English_t0/s0/d0 + Russian_t0/s0/d0 — ONLY source for Russian)
+│       ├── data/         (6 files: a, d, n, u, ml, d00)
+│       ├── metadata/     (6 files: Info.plist, Art_of_War_2-Info.plist, PkgInfo, 2 .nib, Art Of War 2.CutCut)
+│       ├── executable/   (1 file: Art Of War 2 — Mach-O armv6 binary, 523 KB)
+│       └── crack/        (1 file: Spid3r signature from idwaneo.com)
 ├── documentation/              - ⭐ PRIMARY OUTPUT
 │   ├── MASTER_DOCUMENTATION.md           - Complete knowledge base (3,330 lines)
 │   ├── ArtOfWar3_Recreation_Blueprint.md - Recreation guide (2,283 lines)
 │   ├── source_analysis.md                - Source code analysis
-│   ├── Asset_Catalog.md                  - Asset inventory
+│   ├── Asset_Catalog.md                  - Asset inventory (now includes §11 External Versions)
 │   ├── Knowledge_Graph_Documentation.md  - Knowledge graph docs
 │   ├── reverse_engineering_roadmap.md    - Investigation roadmap
 │   ├── class_mapping.json                - Obfuscated→deobfuscated mapping
@@ -68,14 +100,31 @@
     └── game_data.json          - Community-sourced game data
 ```
 
+### Why the `external_versions/` folder exists
+
+The Online APK (HeroCraft 2011, 2.3 MB) is a downstream Android port of a 2009–2010 Gear Games J2ME title. Android's resource pipeline stripped several asset classes that the AOW2-Online recreation project needs:
+
+- **Pre-recorded SFX** (gunfire, screams, UI clicks, explosions) — only the iOS build ships these (72 WAV files)
+- **Full-quality music** — the APK only had two 10 KB MIDI files; iOS ships `music.mp3` (1.9 MB) and `music.wav` (2.6 MB)
+- **Episode 2 — Liberation of Peru** campaign (38 maps) — only the Peru JAR ships these
+- **Plain-text game strings** — the APK encodes them in `sn8p` binary; the Peru JAR and iOS build both ship readable ASCII
+- **1024×1024 master sprite atlas** — only the iOS build ships a true-color atlas (`d1`)
+- **Russian localization** — only the iOS build ships Russian text and localized sprites
+- **Episode 1 pre-Android form** — the J2ME Global Confederation JAR is the canonical pre-port source
+
+See `external_versions/EXTERNAL_VERSIONS.md` for the per-file reference, and `documentation/Asset_Catalog.md` §11 for the cross-version asset selection guide.
+
 ### Key Statistics
-- **Total Java classes decompiled**: 185 (87 main + 28×3 resolution variants)
-- **Total assets cataloged**: 256 raw → 405 processed
+- **Total Java classes decompiled**: 185 (87 main + 28×3 resolution variants) — Online APK only
+- **Total assets cataloged**: 256 raw → 405 processed — Online APK only
+- **External version files cataloged**: 286 files (52 + 88 + 146) across 3 non-APK distributions
+- **External version total size**: 16.5 MB (988 KB + 1.5 MB + 14 MB)
 - **Unit types**: 14 (7 Confederation + 7 Rebels) + 3 mines
 - **Building types**: 16 (8 per faction)
 - **Technologies**: 16 (8 per faction) + 32 asymmetric research effects
 - **Network message types**: 34 identified
-- **Decoded text strings**: 567
-- **Map records**: 193
+- **Decoded text strings**: 567 (Online APK) + plain-ASCII strings from Peru JAR and iOS build
+- **Map records**: 193 (Online APK) + 38 Peru Episode 2 maps + 6 iOS Episode 1 maps
+- **SFX files**: 0 (Online APK) → 72 WAV files (iOS only)
 - **Master documentation**: 3,330 lines
 - **Recreation blueprint**: 2,283 lines
