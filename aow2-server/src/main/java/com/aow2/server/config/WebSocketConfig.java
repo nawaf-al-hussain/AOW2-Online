@@ -4,11 +4,12 @@ import com.aow2.server.websocket.ChatWebSocketHandler;
 import com.aow2.server.websocket.GameWebSocketHandler;
 import com.aow2.server.websocket.LobbyWebSocketHandler;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
-import org.springframework.web.socket.server.support.HttpSessionHandshakeInterceptor;
+import org.springframework.web.socket.server.standard.ServletServerContainerFactoryBean;
 
 /**
  * WebSocket configuration for the AOW2 multiplayer server.
@@ -47,22 +48,31 @@ public class WebSocketConfig implements WebSocketConfigurer {
         this.chatWebSocketHandler = chatWebSocketHandler;
     }
 
+    /**
+     * FIX (CI verification): Configure WebSocket container message size limits via
+     * ServletServerContainerFactoryBean instead of per-handler setMaxTextMessageBufferSize
+     * (which doesn't exist in Spring WebSocket 6.1 / Spring Boot 3.3).
+     */
+    @Bean
+    public ServletServerContainerFactoryBean createWebSocketContainer() {
+        ServletServerContainerFactoryBean container = new ServletServerContainerFactoryBean();
+        container.setMaxTextMessageBufferSize(MAX_TEXT_MESSAGE_SIZE);
+        container.setMaxBinaryMessageBufferSize(MAX_TEXT_MESSAGE_SIZE);
+        return container;
+    }
+
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
         // REF: session_lifecycle.md - Lobby state (aO=14), matchmaking events
-        // FIX (M-NEW-17): Set text message size limits on all WebSocket handlers
         registry.addHandler(lobbyWebSocketHandler, "/ws/lobby")
-                .setAllowedOrigins(allowedOrigins)
-                .setMaxTextMessageBufferSize(MAX_TEXT_MESSAGE_SIZE);
+                .setAllowedOrigins(allowedOrigins);
 
         // REF: multiplayer_architecture.md - Game signaling for P2P lockstep
         registry.addHandler(gameWebSocketHandler, "/ws/game")
-                .setAllowedOrigins(allowedOrigins)
-                .setMaxTextMessageBufferSize(MAX_TEXT_MESSAGE_SIZE);
+                .setAllowedOrigins(allowedOrigins);
 
         // REF: protocol_specification.md - Chat messages between players
         registry.addHandler(chatWebSocketHandler, "/ws/chat")
-                .setAllowedOrigins(allowedOrigins)
-                .setMaxTextMessageBufferSize(MAX_TEXT_MESSAGE_SIZE);
+                .setAllowedOrigins(allowedOrigins);
     }
 }
