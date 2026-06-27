@@ -1,6 +1,7 @@
 package com.aow2.server.controller;
 
 import com.aow2.server.model.ChatMessage;
+import com.aow2.server.model.GameSession;
 import com.aow2.server.repository.ChatMessageRepository;
 import com.aow2.server.service.SessionService;
 import org.junit.jupiter.api.BeforeEach;
@@ -119,7 +120,12 @@ class ChatControllerTest {
         when(chatMessageRepository.findByMatchIdOrderByTimestampAsc("match-uuid-1"))
                 .thenReturn(List.of(msg1, msg2));
 
-        when(sessionService.getSessionByUuid("match-uuid-1")).thenReturn(java.util.Optional.empty());
+        // FIX (CI verification): Mock session to show player 1 as a participant.
+        // Previously returned Optional.empty() which caused 403 Forbidden because
+        // the controller checks session participation before returning messages.
+        GameSession session = new GameSession("match-uuid-1", 1L, 2L, "test_map");
+        when(sessionService.getSessionByUuid("match-uuid-1")).thenReturn(java.util.Optional.of(session));
+        when(authentication.getPrincipal()).thenReturn(1L);
 
         ResponseEntity<List<com.aow2.common.model.ChatMessageRecord>> response =
                 chatController.getChatHistory(authentication, "match-uuid-1");

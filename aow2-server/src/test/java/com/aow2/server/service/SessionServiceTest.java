@@ -1,6 +1,7 @@
 package com.aow2.server.service;
 
 import com.aow2.server.model.GameSession;
+import com.aow2.server.repository.GameSessionRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -11,6 +12,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.any;
 
 /**
  * Tests for the SessionService game session lifecycle management.
@@ -20,10 +24,16 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class SessionServiceTest {
 
     private SessionService sessionService;
+    private GameSessionRepository sessionRepository;
 
     @BeforeEach
     void setUp() {
         sessionService = new SessionService();
+        sessionRepository = mock(GameSessionRepository.class);
+        // FIX (CI verification): Inject mock repository to prevent NullPointerException
+        // when createSession() calls sessionRepository.save().
+        when(sessionRepository.save(any(GameSession.class))).thenAnswer(inv -> inv.getArgument(0));
+        sessionService.setSessionRepository(sessionRepository);
     }
 
     @Test

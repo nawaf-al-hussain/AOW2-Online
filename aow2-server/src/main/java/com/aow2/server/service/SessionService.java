@@ -33,6 +33,11 @@ public class SessionService {
     @org.springframework.beans.factory.annotation.Autowired
     private GameSessionRepository sessionRepository;
 
+    /** Package-private setter for test injection of mock repository. */
+    void setSessionRepository(GameSessionRepository repository) {
+        this.sessionRepository = repository;
+    }
+
     /** Active game sessions indexed by session UUID */
     private final Map<String, GameSession> activeSessions = new ConcurrentHashMap<>();
 

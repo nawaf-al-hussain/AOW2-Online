@@ -33,21 +33,21 @@ public class MatchmakingService {
 
     /** Initial ELO range for matching */
     @Value("${aow2.matchmaking.initial-elo-range:100}")
-    private int initialEloRange;
+    private int initialEloRange = 100;
 
     /** Maximum ELO range expansion per second waited */
     private static final int ELO_RANGE_EXPANSION_PER_SEC = 50;
 
     /** Maximum ELO range cap */
     @Value("${aow2.matchmaking.max-elo-range:500}")
-    private int maxEloRange;
+    private int maxEloRange = 500;
 
     // FIX (L6 from CRITICAL_ANALYSIS_REPORT.md): Configurable map pool replaces the
     // hardcoded "test_map" fallback. The pool is loaded from the application property
     // aow2.matchmaking.map-pool (comma-separated). Defaults to "test_map" for backward
     // compatibility when the property is not set.
     @Value("${aow2.matchmaking.map-pool:test_map}")
-    private String mapPoolConfig;
+    private String mapPoolConfig = "test_map";
 
     /**
      * Returns the configured map pool as a list of map names.

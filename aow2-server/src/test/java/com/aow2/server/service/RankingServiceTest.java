@@ -158,6 +158,9 @@ class RankingServiceTest {
         Player p1 = createPlayer(1L, 1800, 30);
         Player p3 = createPlayer(3L, 1000, 30);
         when(playerRepository.findById(2L)).thenReturn(Optional.of(p));
+        // FIX (CI verification): Mock countByEloRatingGreaterThan to return the number of
+        // players with higher ELO. Player 1 has 1800 > 1200, so count = 1, rank = 1+1 = 2.
+        when(playerRepository.countByEloRatingGreaterThan(1200)).thenReturn(1L);
         Page<Player> page = new PageImpl<>(List.of(p1, p, p3));
         when(playerRepository.findAllByOrderByEloRatingDesc(any(Pageable.class))).thenReturn(page);
 
