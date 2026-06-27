@@ -1,5 +1,6 @@
 package com.aow2.client;
 
+import com.aow2.client.scene.AssetTestScene;
 import com.aow2.client.scene.CampaignScene;
 import com.aow2.client.scene.GameScene;
 import com.aow2.client.scene.MainMenuScene;
@@ -81,6 +82,9 @@ public class AOW2App extends GameApplication {
     /** Settings scene. */
     private SettingsScene settingsScene;
 
+    /** Asset test scene (validates decoded iOS sprites + OGG audio). */
+    private AssetTestScene assetTestScene;
+
     /** Current active scene state. */
     private ActiveScene activeScene;
 
@@ -88,7 +92,7 @@ public class AOW2App extends GameApplication {
      * Enum representing which scene is currently active.
      */
     private enum ActiveScene {
-        MAIN_MENU, GAME, MAP_EDITOR, MULTIPLAYER_LOBBY, MOD_MANAGER, CAMPAIGN, SETTINGS
+        MAIN_MENU, GAME, MAP_EDITOR, MULTIPLAYER_LOBBY, MOD_MANAGER, CAMPAIGN, SETTINGS, ASSET_TEST
     }
 
     @Override
@@ -349,6 +353,32 @@ public class AOW2App extends GameApplication {
     }
 
     /**
+     * Shows the asset test scene.
+     * <p>
+     * This scene validates that the decoded iOS sprites and converted OGG audio
+     * files can be loaded and played by the FXGL client. It is a developer
+     * utility — not part of the normal game flow.
+     */
+    private void showAssetTest() {
+        if (assetTestScene != null) {
+            assetTestScene.dispose();
+            assetTestScene = null;
+        }
+
+        assetTestScene = new AssetTestScene();
+        assetTestScene.setBackCallback(() -> {
+            assetTestScene.dispose();
+            showMainMenu();
+        });
+
+        FXGL.getGameScene().clearUINodes();
+        FXGL.getGameScene().addUINode(assetTestScene.getRoot());
+
+        activeScene = ActiveScene.ASSET_TEST;
+        LOG.info("Asset test scene displayed");
+    }
+
+    /**
      * Handles menu actions from the main menu.
      *
      * @param action the action string from MainMenuScene
@@ -380,6 +410,10 @@ public class AOW2App extends GameApplication {
             case "settings" -> {
                 LOG.info("Opening Settings");
                 showSettings();
+            }
+            case "asset_test" -> {
+                LOG.info("Opening Asset Test scene");
+                showAssetTest();
             }
             case "quit" -> {
                 LOG.info("Quit requested");

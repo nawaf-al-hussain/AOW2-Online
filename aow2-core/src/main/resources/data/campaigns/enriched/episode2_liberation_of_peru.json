@@ -1,0 +1,480 @@
+{
+  "episode": "LIBERATION_OF_PERU",
+  "title": "Episode 2: Liberation of Peru",
+  "missions": [
+    {
+      "id": 1,
+      "name": "Resistance Rising",
+      "description": "Establish a hidden base and begin the fight for liberation.",
+      "briefing": "Comandante, the time has come. The Confederation occupies our homeland, but the people will not be silenced forever. Build a Headquarters in the jungle and train our first fighters. The liberation of Peru begins now.",
+      "playerFaction": "RESISTANCE",
+      "mapFile": "data/maps/ep2_mission1.json",
+      "objectives": [
+        {
+          "type": "destroy",
+          "name": "Destroy Confederation patrol",
+          "targetCount": 8
+        }
+      ],
+      "triggers": [
+        {
+          "type": "time",
+          "triggerId": 20,
+          "triggerTick": 600
+        }
+      ],
+      "scriptFiles": [
+        "data/scripts/ep2_mission1.lua"
+      ],
+      "difficulty": 1,
+      "briefing_original": "But this is no time for sentimentality, Colonel. It's time to get down to business. Collect the best units and advanced. We are starting to offensive!",
+      "objectives_original": [
+        "- Build database; & - Destroy the enemy base."
+      ],
+      "dialog_before": [
+        "... We must not continue to tolerate this oppression! The Confederation is a cover up for his high purposes of world peace, and technical progress! And where is this world? Where is this progress? The so-called peacekeeping army razed all who are dissatisfied with the power of the confederation. The whole world is not straightening up, works for the benefit of several countries that are the head of the Confederation. They have one goal - to get the most out of the earth to satisfy his bourgeois greed! They and basking in the benefits of their progress, they who live in the world, and we were only fed with promises and keep at a distance in the labor force! & & Time to put an end to this! Think, brothers, as you look into the eyes of their hungry children, if you fold your hands and accept fate, leaving them with such a world? The world of slavery and oppression! Why did you give them life, if you can not make it worthy?!",
+        "We failed ... But this does not mean that the resistance surrendered. We again gained strength! We are again ready for battle! Because of our decisive action, the Resistance forces have grown around the world. All new and new uprisings erupt in the Middle East, Asia, Africa, South America and even in Europe itself. We have begun to bring the matter to an end, and now is the perfect for this moment!",
+        "The world should not belong to anybody! Everyone in it has the same right to life, and we will fight for your rights! God be with us strength! & & From the speech delivered by General Jose Monterosa, the brother of Miguel Monteros, who took over command of the Liberation Army of Peru.",
+        "The entire central part of Peru is under the control of the army of the confederation. For the three months that have elapsed since our retreat in the Amazon jungle, the Confederation of well-entrenched and established supply of equipment from the capital through the mountains. Our main goal, to cut off the main forces of the Confederation of the capital. Without reinforcements they do not survive long.",
+        "Yes, General, but we can not attack head on. Despite our numerical superiority, the army of the Confederacy has more powerful weapons and equipment.",
+        "We will not do this. We will emerge from the jungle and to draw attention of the Confederation, destroying their base near Pucallpa. We now have enough power to do so. While the enemy will pull off his main forces to the north to the jungle, part of our army, headed by you, Colonel, comes out to the south along the mountains for almost free territory and destroy the weakened roadblocks on the pass, cutting the Confederacy from the coast.",
+        "I'll command the rest of the army in the jungle. When here the noise blow down all the enemy forces, we will show them what a guerilla war!",
+        "I'm sure Miguel Monteros would appreciate your plan!",
+        "We're all missing our leader. And hope for his release will not leave us until he's alive ..."
+      ],
+      "dialog_after": [
+        "Our plan worked! They swallowed! Intelligence reports, that with all the bases of the Confederation of the North put forward technique. We stirred up a hornets' nest. We retreat into the jungle, occupy a defense and wait until the guests.",
+        "Colonel, report the situation. What do you have?",
+        "Division extends to the pass on a planned route. Broke halfway through. Patrols Confederation has not been noticed.",
+        "Excellent! Proceed according to plan! To communications.",
+        "I'll help you understand the management game. On the top panel you can see the number of units in your army, the quantity of consumed and generated energy and the available finance. In the bottom pane displays the groups of units. Left soft key (LSK) is minimap. The right soft key (PUK), causing the system menu, or if there is a selected unit, release the mouse.",
+        "For the construction of production bases and units you need the money and energy.",
+        "Financing you get through the headquarters. Each additional staff brings 30% less money than the previous one. You also get rewarded for every killed enemy unit at a rate of 20% of its value.",
+        "Energy generate power. Each building needs for energy. If power is not enough, the building ceases to function. We already have a power plant, but this may not be enough, so we construct another.",
+        "To do this, move the cursor to the headquarters and the press 'fire'. On the next panel, left / right to select the power plant. In the bottom panel indicate the value of buildings and energy consumption. Press the fire or LSC, to select the building. Place the circuit built on the vacant area on the map and click on 'fire'. Indicator appears above the building construction process. In the same way, build the plant and another barracks, to accelerate the training of infantry.",
+        "On the choice of construction you can press 0 to get information on the selected building.",
+        "Now, will order the infantry. Hover over the finished barracks and press 'fire'. The panel for the current unit type specified cost and main characteristics: attack, armor, speed. Left / right arrows select the type of unit, up / down arrows indicate the number.",
+        "You can order on several units of each type. The order will be executed one by one. To begin production, press 'fire' or BFV.",
+        "You can specify the point of collection of ready units. To this end, the panel order units, press 1 and enter a point on the map.",
+        "The plant can make equipment. Request vehicle similar to the order of infantry. Now the book a few light assault vehicles 'Coyote'.",
+        "Move cursor to a unit, and then briefly 'fire' to select it. Move the cursor to the free cell and press the 'fire' to send there unit. Hover over the object of the enemy and press the 'fire' to give a dedicated unit command 'attack'.",
+        "Now choose a group of units. If there is a selected unit, then the CPM to release the cursor. When the cursor is free, hold fire until then, until the selection frame. Arrows stretch frame 'to include several units and press the' fire '. Under the cursor displays the number of selected units.",
+        "If the cursor is free, fast double-pressing 'fire' anywhere selects all units on screen.",
+        "To remember the group, hold 1, 3, 7 or 9, until the indicator on the bottom of the group will not bright. To activate memorized group, press shortly on the corresponding number key. The bottom panel shows the number of units stored in each group. Quick double press a number key will bring the screen to the center of the group.",
+        "The enemy began to attack. Necessary to strengthen the defense base.",
+        "For these purposes, are bunkers and walls, as they have strong armor. Build a pair of bunkers at the entrance to the base to contain the enemy's attacks.",
+        "Also, for purposes of defense are mine. They are installed from the staff, as well as any construction. Mines can only be installed in a visible area, with a radius of 5 cells from the mines should not be the enemy units.",
+        "Try to mine the area at the entrance to the base.",
+        "If a single or multiple units, hold down the 'fire' until the context menu . Through the context menu provides the following items: the selection of the group, defense, siege mode. Items can be selected using the corresponding numeric keys.",
+        "Dedicated units through the context menu can be transformed into defense mode. In this mode, they will defend themselves, without moving from their position. To bring them back to normal, they must be easy to move.",
+        "Some types of units can go into siege mode. In Siege Mode units are fixed, so to move them to be translated back into camp mode.",
+        "If the base is surrounded by the enemy's wall, and a narrow passage is under fire from the bunkers, you can try to destroy the wall to expand the space for maneuver and to attack the fortifications at the same time a large number of units .",
+        "Comrade General! At your orders headquarters deployed. Intelligence reports that the first units of the enemy is approaching.",
+        "Prepare for the defense! Build more fortifications dominate the approaches to the base. We are having admitted them closely.",
+        "Confederate Army has a much better than ours, but we will moorland. In the jungle, they will disperse. This will save us from the massive attacks."
+      ],
+      "source_briefing": "Peru 0_d0 mission block 1"
+    },
+    {
+      "id": 2,
+      "name": "Guerrilla Tactics",
+      "description": "Use stealth and speed to ambush a Confederation supply convoy.",
+      "briefing": "A Confederation supply convoy is moving through the mountain pass. Our Coyote scouts have pinpointed their route. Set up an ambush \u2014 strike fast and fade before reinforcements arrive.",
+      "playerFaction": "RESISTANCE",
+      "mapFile": "data/maps/ep2_mission2.json",
+      "objectives": [
+        {
+          "type": "destroy",
+          "name": "Destroy supply vehicles",
+          "targetCount": 5
+        },
+        {
+          "type": "timed",
+          "name": "Escape before reinforcements",
+          "durationTicks": 3600
+        }
+      ],
+      "triggers": [
+        {
+          "type": "time",
+          "triggerId": 21,
+          "triggerTick": 1200
+        },
+        {
+          "type": "unitCount",
+          "triggerId": 22,
+          "faction": "CONFEDERATION",
+          "unitType": "CONFED_HAMMER",
+          "threshold": 3
+        }
+      ],
+      "scriptFiles": [
+        "data/scripts/ep2_mission2.lua"
+      ],
+      "difficulty": 2,
+      "briefing_original": "Confederate Army has a much better than ours, but we will moorland. In the jungle, they will disperse. This will save us from the massive attacks.",
+      "objectives_original": [
+        "- Organize the defense base; & - Flip enemy attacks."
+      ],
+      "dialog_before": [
+        "Our plan worked! They swallowed! Intelligence reports, that with all the bases of the Confederation of the North put forward technique. We stirred up a hornets' nest. We retreat into the jungle, occupy a defense and wait until the guests.",
+        "Colonel, report the situation. What do you have?",
+        "Division extends to the pass on a planned route. Broke halfway through. Patrols Confederation has not been noticed.",
+        "Excellent! Proceed according to plan! To communications.",
+        "I'll help you understand the management game. On the top panel you can see the number of units in your army, the quantity of consumed and generated energy and the available finance. In the bottom pane displays the groups of units. Left soft key (LSK) is minimap. The right soft key (PUK), causing the system menu, or if there is a selected unit, release the mouse.",
+        "For the construction of production bases and units you need the money and energy.",
+        "Financing you get through the headquarters. Each additional staff brings 30% less money than the previous one. You also get rewarded for every killed enemy unit at a rate of 20% of its value.",
+        "Energy generate power. Each building needs for energy. If power is not enough, the building ceases to function. We already have a power plant, but this may not be enough, so we construct another.",
+        "To do this, move the cursor to the headquarters and the press 'fire'. On the next panel, left / right to select the power plant. In the bottom panel indicate the value of buildings and energy consumption. Press the fire or LSC, to select the building. Place the circuit built on the vacant area on the map and click on 'fire'. Indicator appears above the building construction process. In the same way, build the plant and another barracks, to accelerate the training of infantry.",
+        "On the choice of construction you can press 0 to get information on the selected building.",
+        "Now, will order the infantry. Hover over the finished barracks and press 'fire'. The panel for the current unit type specified cost and main characteristics: attack, armor, speed. Left / right arrows select the type of unit, up / down arrows indicate the number.",
+        "You can order on several units of each type. The order will be executed one by one. To begin production, press 'fire' or BFV.",
+        "You can specify the point of collection of ready units. To this end, the panel order units, press 1 and enter a point on the map.",
+        "The plant can make equipment. Request vehicle similar to the order of infantry. Now the book a few light assault vehicles 'Coyote'.",
+        "Move cursor to a unit, and then briefly 'fire' to select it. Move the cursor to the free cell and press the 'fire' to send there unit. Hover over the object of the enemy and press the 'fire' to give a dedicated unit command 'attack'.",
+        "Now choose a group of units. If there is a selected unit, then the CPM to release the cursor. When the cursor is free, hold fire until then, until the selection frame. Arrows stretch frame 'to include several units and press the' fire '. Under the cursor displays the number of selected units.",
+        "If the cursor is free, fast double-pressing 'fire' anywhere selects all units on screen.",
+        "To remember the group, hold 1, 3, 7 or 9, until the indicator on the bottom of the group will not bright. To activate memorized group, press shortly on the corresponding number key. The bottom panel shows the number of units stored in each group. Quick double press a number key will bring the screen to the center of the group.",
+        "The enemy began to attack. Necessary to strengthen the defense base.",
+        "For these purposes, are bunkers and walls, as they have strong armor. Build a pair of bunkers at the entrance to the base to contain the enemy's attacks.",
+        "Also, for purposes of defense are mine. They are installed from the staff, as well as any construction. Mines can only be installed in a visible area, with a radius of 5 cells from the mines should not be the enemy units.",
+        "Try to mine the area at the entrance to the base.",
+        "If a single or multiple units, hold down the 'fire' until the context menu . Through the context menu provides the following items: the selection of the group, defense, siege mode. Items can be selected using the corresponding numeric keys.",
+        "Dedicated units through the context menu can be transformed into defense mode. In this mode, they will defend themselves, without moving from their position. To bring them back to normal, they must be easy to move.",
+        "Some types of units can go into siege mode. In Siege Mode units are fixed, so to move them to be translated back into camp mode.",
+        "If the base is surrounded by the enemy's wall, and a narrow passage is under fire from the bunkers, you can try to destroy the wall to expand the space for maneuver and to attack the fortifications at the same time a large number of units .",
+        "Comrade General! At your orders headquarters deployed. Intelligence reports that the first units of the enemy is approaching.",
+        "Prepare for the defense! Build more fortifications dominate the approaches to the base. We are having admitted them closely."
+      ],
+      "dialog_after": [
+        "It's the right time to strike from the flanks and take the remnants of the enemy army in the ring. Give the command flanking detachments.",
+        "There!",
+        "The first wave destroyed! Hopefully, the confederation will realize how serious our intentions are, and will take more than a massive offensive.",
+        "According to intelligence reports, the northern front has requested reinforcements from the capital, and the colonies were put forward through the mountains.",
+        "All hope for you, Colonel! You have to grab the base on the pass and destroy the column. Are you ready for action?",
+        "Yes, comrade general! We will try to live up to our expectations!",
+        "Now You See Lab. Order in the laboratory is similar to the order of infantry. Description of the research is available by pressing 0 on the panel studies.",
+        "Investigations require a lot of money. To increase funding, build another headquarters.",
+        "First commando sent to the enemy base, was destroyed. At the last moment commander reported that they had to mine part of the main buildings. Then shots rang out, and the connection was lost.",
+        "We have to send a second subversive detachment under the command of Captain Martinez to finish the job. We do not take this fortress available forces.",
+        "My team is ready for action!",
+        "Your task is to get into the rear of the base at a distance of detonating the transmitter and send a bourgeois nest in the sky! Our first subversive detachment has brought panic. Surely they have stepped up security perimeter. Try to go unnoticed. Join the battle only in extreme cases. When you're ready for detonation, report. We will strike all the forces on the balance of the base.",
+        "Yes! We will try to do everything, as you said!",
+        "Act without delay! We have little time! Column with reinforcements already on the way."
+      ],
+      "source_briefing": "Peru 0_d0 mission block 2"
+    },
+    {
+      "id": 3,
+      "name": "Mountain Fortress",
+      "description": "Capture the mountain outpost and turn its defenses against the enemy.",
+      "briefing": "The Confederation has fortified a mountain outpost with Rocket Launchers. We need those emplacements. Send Snipers to neutralize the garrison and capture the position. Our own towers will hold the line.",
+      "playerFaction": "RESISTANCE",
+      "mapFile": "data/maps/ep2_mission3.json",
+      "objectives": [
+        {
+          "type": "capture",
+          "name": "Capture the mountain outpost",
+          "targetX": 80,
+          "targetY": 20
+        },
+        {
+          "type": "defend",
+          "name": "Hold the outpost",
+          "entityId": 100,
+          "durationTicks": 4800
+        }
+      ],
+      "triggers": [
+        {
+          "type": "area",
+          "triggerId": 23,
+          "centerX": 80,
+          "centerY": 20,
+          "radius": 6,
+          "factionId": 1
+        },
+        {
+          "type": "time",
+          "triggerId": 24,
+          "triggerTick": 2400
+        }
+      ],
+      "scriptFiles": [
+        "data/scripts/ep2_mission3.lua"
+      ],
+      "difficulty": 2,
+      "briefing_original": "Act without delay! We have little time! Column with reinforcements already on the way.",
+      "objectives_original": [
+        "- Get into the rear of the enemy; & - set to detonate mines."
+      ],
+      "dialog_before": [
+        "It's the right time to strike from the flanks and take the remnants of the enemy army in the ring. Give the command flanking detachments.",
+        "There!",
+        "The first wave destroyed! Hopefully, the confederation will realize how serious our intentions are, and will take more than a massive offensive.",
+        "According to intelligence reports, the northern front has requested reinforcements from the capital, and the colonies were put forward through the mountains.",
+        "All hope for you, Colonel! You have to grab the base on the pass and destroy the column. Are you ready for action?",
+        "Yes, comrade general! We will try to live up to our expectations!",
+        "Now You See Lab. Order in the laboratory is similar to the order of infantry. Description of the research is available by pressing 0 on the panel studies.",
+        "Investigations require a lot of money. To increase funding, build another headquarters.",
+        "First commando sent to the enemy base, was destroyed. At the last moment commander reported that they had to mine part of the main buildings. Then shots rang out, and the connection was lost.",
+        "We have to send a second subversive detachment under the command of Captain Martinez to finish the job. We do not take this fortress available forces.",
+        "My team is ready for action!",
+        "Your task is to get into the rear of the base at a distance of detonating the transmitter and send a bourgeois nest in the sky! Our first subversive detachment has brought panic. Surely they have stepped up security perimeter. Try to go unnoticed. Join the battle only in extreme cases. When you're ready for detonation, report. We will strike all the forces on the balance of the base.",
+        "Yes! We will try to do everything, as you said!"
+      ],
+      "dialog_after": [
+        "There is a signal. Ready for detonation.",
+        "Excellent! We too are ready. Blast!",
+        "Time ... Two ... Three ...",
+        "Thanks, Captain! Your group will perfectly cope with the job! Now it's our turn.",
+        "All units! TO FIGHT!"
+      ],
+      "source_briefing": "Peru 0_d0 mission block 3"
+    },
+    {
+      "id": 4,
+      "name": "Desert Storm",
+      "description": "Break through the desert blockade with armor superiority.",
+      "briefing": "The Confederation has blockaded the desert road with Fortress tanks. Our Rhino heavy tanks can break their line, but we must act before they bring in Torrent artillery. Speed is critical.",
+      "playerFaction": "RESISTANCE",
+      "mapFile": "data/maps/ep2_mission4.json",
+      "objectives": [
+        {
+          "type": "destroy",
+          "name": "Destroy enemy blockade",
+          "targetCount": 6
+        },
+        {
+          "type": "destroy",
+          "name": "Eliminate Fortress tanks",
+          "targetCount": 3
+        }
+      ],
+      "triggers": [
+        {
+          "type": "buildingDestroyed",
+          "triggerId": 25,
+          "buildingType": "CONFED_ROCKET_LAUNCHER",
+          "faction": "CONFEDERATION"
+        },
+        {
+          "type": "time",
+          "triggerId": 26,
+          "triggerTick": 3000
+        }
+      ],
+      "scriptFiles": [
+        "data/scripts/ep2_mission4.lua"
+      ],
+      "difficulty": 3,
+      "briefing_original": "All units! TO FIGHT!",
+      "objectives_original": [
+        "- Destroy the enemy base."
+      ],
+      "dialog_before": [
+        "There is a signal. Ready for detonation.",
+        "Excellent! We too are ready. Blast!",
+        "Time ... Two ... Three ...",
+        "Thanks, Captain! Your group will perfectly cope with the job! Now it's our turn."
+      ],
+      "dialog_after": [
+        "Comrade General, the base is destroyed. Gorge under our control. Preparing for the interception of enemy columns.",
+        "Good. Everything is going according to plan. According to intelligence reports, the convoy is approaching you. It will take place in the gorge south of your base from west to east. Take the defense so as to destroy the maximum number of techniques and enemy infantry.",
+        "Several cars in the convoy carrying the command, scientists and models of new technologies. In no case can not run them through the gorge! Take Action!",
+        "Yes! Will do everything in our power!"
+      ],
+      "source_briefing": "Peru 0_d0 mission block 4"
+    },
+    {
+      "id": 5,
+      "name": "Coastal Assault",
+      "description": "Launch an amphibious assault on the Confederation port.",
+      "briefing": "The Confederation uses the coastal port to bring in reinforcements. We must take it. Armadillo transports will carry our forces ashore while Porcupine artillery provides cover fire from the cliffs.",
+      "playerFaction": "RESISTANCE",
+      "mapFile": "data/maps/ep2_mission5.json",
+      "objectives": [
+        {
+          "type": "destroy",
+          "name": "Destroy port Command Centre",
+          "targetCount": 1
+        },
+        {
+          "type": "capture",
+          "name": "Secure the docks",
+          "targetX": 100,
+          "targetY": 60
+        }
+      ],
+      "triggers": [
+        {
+          "type": "area",
+          "triggerId": 27,
+          "centerX": 100,
+          "centerY": 60,
+          "radius": 8,
+          "factionId": 1
+        },
+        {
+          "type": "buildingDestroyed",
+          "triggerId": 28,
+          "buildingType": "CONFED_COMMAND_CENTRE",
+          "faction": "CONFEDERATION"
+        },
+        {
+          "type": "time",
+          "triggerId": 29,
+          "triggerTick": 4800
+        }
+      ],
+      "scriptFiles": [
+        "data/scripts/ep2_mission5.lua"
+      ],
+      "difficulty": 3,
+      "briefing_original": "Yes! Will do everything in our power!",
+      "objectives_original": [
+        "- Take a defense; & - Kill at least 90% of units of the enemy; & - Do not pass cars carrying scientists and command (indicated by red arrow)."
+      ],
+      "dialog_before": [
+        "Comrade General, the base is destroyed. Gorge under our control. Preparing for the interception of enemy columns.",
+        "Good. Everything is going according to plan. According to intelligence reports, the convoy is approaching you. It will take place in the gorge south of your base from west to east. Take the defense so as to destroy the maximum number of techniques and enemy infantry.",
+        "Several cars in the convoy carrying the command, scientists and models of new technologies. In no case can not run them through the gorge! Take Action!"
+      ],
+      "dialog_after": [
+        "Comrade Colonel, it was the vanguard. Special equipment will go into the main part of the column, which is already approaching. Be prepared for the interception.",
+        "Column destroyed. We did everything we could.",
+        "Congratulations! You are well coped with the task! Start an offensive on the east. We are advancing from the north. Pinch the remnants of the army in a vise!",
+        "Now that the northern front of the Confederation remained without reinforcements, we will end with him before the main headquarters in Europe will have time to do something about it!",
+        "Person for each unit added to the amount of penalties commensurate with its importance. For special units, designated by red arrows, the number of penalty points is multiplied by 4. Points are displayed as bars under the radar. When the bar reaches the right edge, is considered a failed mission.",
+        "Comrade Colonel! I report on the results of intelligence operations. Three kilometers to the east - well-protected base, but the equipment on it a little. We managed to damage their means of communication so that they could not ask for reinforcements from sosedeney base.",
+        "Next base of the Confederation, capable to provide them with strong support, is located 50 kilometers to the northeast.",
+        "We must attack immediately, while engineers have not developed a relationship and not asked for reinforcements.",
+        "We are a great job. Employment, they will suffice for long. But I still can not procrastinate!"
+      ],
+      "source_briefing": "Peru 0_d0 mission block 5"
+    },
+    {
+      "id": 6,
+      "name": "Night Raid",
+      "description": "Infiltrate the Confederation research facility under cover of darkness.",
+      "briefing": "Our intelligence indicates the Confederation is developing a new superweapon at their Tech Centre. Infiltrate the facility, destroy their research, and eliminate the scientists. This must look like an accident.",
+      "playerFaction": "RESISTANCE",
+      "mapFile": "data/maps/ep2_mission6.json",
+      "objectives": [
+        {
+          "type": "destroy",
+          "name": "Destroy Tech Centre",
+          "targetCount": 1
+        },
+        {
+          "type": "escort",
+          "name": "Escort infiltrator to extraction",
+          "unitId": 200,
+          "destX": 10,
+          "destY": 10
+        }
+      ],
+      "triggers": [
+        {
+          "type": "buildingDestroyed",
+          "triggerId": 30,
+          "buildingType": "CONFED_TECH_CENTRE",
+          "faction": "CONFEDERATION"
+        },
+        {
+          "type": "time",
+          "triggerId": 31,
+          "triggerTick": 6000
+        }
+      ],
+      "scriptFiles": [
+        "data/scripts/ep2_mission6.lua"
+      ],
+      "difficulty": 4,
+      "briefing_original": "We are a great job. Employment, they will suffice for long. But I still can not procrastinate!",
+      "objectives_original": [
+        "- Destroy the enemy base before reinforcements arrive. &"
+      ],
+      "dialog_before": [
+        "Comrade Colonel, it was the vanguard. Special equipment will go into the main part of the column, which is already approaching. Be prepared for the interception.",
+        "Column destroyed. We did everything we could.",
+        "Congratulations! You are well coped with the task! Start an offensive on the east. We are advancing from the north. Pinch the remnants of the army in a vise!",
+        "Now that the northern front of the Confederation remained without reinforcements, we will end with him before the main headquarters in Europe will have time to do something about it!",
+        "Person for each unit added to the amount of penalties commensurate with its importance. For special units, designated by red arrows, the number of penalty points is multiplied by 4. Points are displayed as bars under the radar. When the bar reaches the right edge, is considered a failed mission.",
+        "Comrade Colonel! I report on the results of intelligence operations. Three kilometers to the east - well-protected base, but the equipment on it a little. We managed to damage their means of communication so that they could not ask for reinforcements from sosedeney base.",
+        "Next base of the Confederation, capable to provide them with strong support, is located 50 kilometers to the northeast.",
+        "We must attack immediately, while engineers have not developed a relationship and not asked for reinforcements."
+      ],
+      "dialog_after": [
+        "Our communicators intercepted an encrypted signal from the base of the enemy. They established a connection. All is lost!",
+        "So, reinforcements will be here soon. But sooner put his hands! This is our land! And we will stand up to the last drop of blood!"
+      ],
+      "source_briefing": "Peru 0_d0 mission block 6"
+    },
+    {
+      "id": 7,
+      "name": "Liberation Day",
+      "description": "The final battle for Peru. Drive the Confederation from our homeland.",
+      "briefing": "Comandante, the day of liberation is at hand. All Resistance cells converge on the capital. The Confederation's grip on Peru ends today. For our homeland, for our people \u2014 victory or death!",
+      "playerFaction": "RESISTANCE",
+      "mapFile": "data/maps/ep2_mission7.json",
+      "objectives": [
+        {
+          "type": "destroy",
+          "name": "Destroy all Confederation buildings",
+          "targetCount": 8
+        },
+        {
+          "type": "timed",
+          "name": "Liberate before reinforcements arrive",
+          "durationTicks": 9000
+        }
+      ],
+      "triggers": [
+        {
+          "type": "time",
+          "triggerId": 32,
+          "triggerTick": 600
+        },
+        {
+          "type": "time",
+          "triggerId": 33,
+          "triggerTick": 2400
+        },
+        {
+          "type": "time",
+          "triggerId": 34,
+          "triggerTick": 5400
+        },
+        {
+          "type": "buildingDestroyed",
+          "triggerId": 35,
+          "buildingType": "CONFED_COMMAND_CENTRE",
+          "faction": "CONFEDERATION"
+        }
+      ],
+      "scriptFiles": [
+        "data/scripts/ep2_mission7.lua"
+      ],
+      "difficulty": 5,
+      "briefing_original": "So, reinforcements will be here soon. But sooner put his hands! This is our land! And we will stand up to the last drop of blood!",
+      "objectives_original": [
+        "- Trying to repulse the attacks reinforcement; & - Destroy the enemy base."
+      ],
+      "dialog_before": [
+        "Our communicators intercepted an encrypted signal from the base of the enemy. They established a connection. All is lost!"
+      ],
+      "dialog_after": [
+        "We are very lucky! We managed to capture the unmade station with public-key encryption, while engineers repaired it.",
+        "We can not study it in our lab - we do not have special equipment for this. We must as soon as possible to bring her home base in the central laboratory.",
+        "Comrade General! During the last operation we seized a radio station with the keys. We sent a detachment led by Captain Martinez, he should deliver it to our central laboratory for the study.",
+        "If researchers can deal with it, we will be able to intercept enemy communications.",
+        "Well done, Colonel! This can greatly turn the tide of events! We need to get a radio station as soon as possible!",
+        "But now is not the best time to deliver such valuable cargo. It seems that the Confederation has made a desperate leap and threw all the remaining forces of the northern front in our home base. We are still holding on, but the squad will be hard to break through this meat grinder.",
+        "We will try to distract enemy fire and organize a meeting of the detachment.",
+        "We break through! Not one of those rough and tumble twisted!"
+      ],
+      "source_briefing": "Peru 0_d0 mission block 7"
+    }
+  ]
+}

@@ -91,3 +91,40 @@ Stage Summary:
 - Total decoded assets: 168 files (90 sprites + 3 loading screens + 1 atlas + 1 sprite inventory + 72 SFX OGG + 1 music OGG + 1 audio inventory + 1 DECODED_ASSETS.md doc... actually 95 + 74 = 169 asset files + documentation)
 - ffmpeg libvorbis quirk documented in DECODED_ASSETS.md §3.2 and Asset_Catalog.md §11.6.2
 - Both decoder scripts (`scripts/decode_ios_sprites.py`, `scripts/convert_ios_audio_to_ogg.py`) are idempotent and re-runnable
+
+---
+Task ID: 4
+Agent: Main
+Task: Port Peru maps to JSON, enrich campaign briefings, write FXGL asset test scene, and verify sprite mappings visually.
+
+Work Log:
+- Step 1: Generated visual contact sheets for all 90 iOS sprites using scripts/make_sprite_contact_sheet.py
+- Step 2: Used ZAI vision model (VLM) to analyse the contact sheets and identify what each sprite actually depicts
+- Step 3: Updated DECODED_ASSETS.md §2.2 with verified sprite mappings — found 9 mappings were WRONG in the initial guess-based documentation (sprites 7, 8, 9, 10, 14, 16, 28, 30, 31-34)
+- Step 4: Decompiled jar_low classes with CFR decompiler to understand the Peru map binary format
+- Step 5: Traced the map loading code in f.java — found r() method at line 996 that parses: [width][height][terrain_idx][rle_count][rle_data...][building_count][buildings...][fog_bitmask]
+- Step 6: Wrote scripts/convert_peru_maps.py — converts 38 Peru JAR binary maps to AOW2-Online JSON format
+- Step 7: Converted all 38 maps successfully (map1-20 + map51-68), all pass MapLoader validation
+- Step 8: Wrote scripts/enrich_campaign_briefings.py — parses iOS English_d0 and Peru 0_d0 text files to extract mission briefings
+- Step 9: Fixed parser twice — first fix handled ;&-joined objectives, second fix used two-pass approach to correctly identify briefing as segment immediately before objectives
+- Step 10: Enriched both episode1 (7 missions, source: iOS English_d0) and episode2 (7 missions, source: Peru 0_d0) campaign JSONs with original briefing text, objectives, and dialog
+- Step 11: Wrote AssetTestScene.java — new FXGL scene that loads decoded iOS sprites via classpath getResourceAsStream and plays OGG SFX via javax.sound.sampled
+- Step 12: Copied sample assets (7 sprites, 8 SFX, 1 music track) into aow2-client/src/main/resources/
+- Step 13: Added OGG Vorbis SPI dependencies (jorbis, tritonus-share, vorbisspi) to aow2-client/build.gradle.kts
+- Step 14: Wired AssetTestScene into AOW2App.java (new showAssetTest() method + "asset_test" menu action)
+- Step 15: Added "Asset Test" button to MainMenuScene
+- Step 16: Verified AssetTestScene compiles cleanly (0 errors — the 14 pre-existing errors are unrelated)
+- Step 17: Commit and push to GitHub
+
+Stage Summary:
+- Sprite mapping verification: 9 out of 45 mappings were corrected based on VLM visual analysis
+- Contact sheets generated at docs/RE/external_versions/ipa_ios_v2.2/sprites_contact_sheet/ for future reference
+- 38 Peru campaign maps converted from binary to JSON (all pass MapLoader validation)
+- Maps stored at aow2-core/src/main/resources/data/maps/peru/peru_mapN.json
+- 8 Episode 1 briefings extracted from iOS English_d0 (16,193 chars parsed into 95 segments)
+- 10 Episode 2 briefings extracted from Peru 0_d0 (20,307 chars parsed)
+- Both campaign JSONs enriched with briefing_original, objectives_original, dialog_before, dialog_after fields
+- Enriched JSONs at aow2-core/src/main/resources/data/campaigns/enriched/
+- AssetTestScene validates the full pipeline: decode → copy to resources → load via classpath → display/play
+- OGG Vorbis SPI added to build so javax.sound.sampled can play .ogg files
+- The 14 pre-existing compile errors (ICE/RUINS terrain types, ToggleButton, fillArc signature) are NOT caused by this task

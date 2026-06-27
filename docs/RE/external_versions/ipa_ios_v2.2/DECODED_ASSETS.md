@@ -56,55 +56,96 @@ Extracted from `ipa_ios_v2.2/sprites/English_i0` using the i0 unpacker. Each spr
 
 Note: At "section boundaries" (e.g. between UI sprites and unit sprites, observed at index 36→37), there are **two consecutive 3-byte separators** instead of one. The unpacker handles this by skipping all consecutive zero-byte groups.
 
-**Sprite inventory** (full metadata in `inventory.json`):
+#### 2.2.1 Verified sprite mappings
 
-| Index | Dimensions | Mode | Size | Likely purpose |
-|-------|-----------|------|------|----------------|
-| 0 | 480×320 | P | 53,189 B | Full-screen background (title or menu) |
-| 1 | 179×125 | P | 14,875 B | Terrain tile — grass/plains |
-| 2 | 206×131 | P | 13,727 B | Terrain tile — desert |
-| 3 | 229×114 | P | 13,749 B | Terrain tile — snow/water |
-| 4 | 200×63 | P | 7,302 B | Terrain tile — road/bridge |
-| 5 | 274×147 | P | 32,090 B | Large unit sprite sheet (Confederation) |
-| 6 | 268×140 | P | 24,217 B | Large unit sprite sheet (Rebels) |
-| 7 | 200×112 | P | 17,663 B | Building sprite sheet |
-| 8 | 77×152 | P | 5,311 B | Building — small (bunker/locator?) |
-| 9 | 77×152 | P | 4,918 B | Building — small alt |
-| 10 | 107×152 | P | 8,543 B | Building — medium (factory?) |
-| 11 | 153×49 | P | 4,001 B | UI bar / panel |
-| 12 | 91×109 | P | 5,598 B | Small unit sprite |
-| 13 | 112×118 | P | 6,392 B | Small unit sprite alt |
-| 14 | 223×78 | P | 12,576 B | Wide UI panel / button bar |
-| 15 | 154×71 | P | 9,796 B | UI panel |
-| 16 | 135×129 | RGBA | 27,374 B | Unit sprite with alpha (transparent bg) |
-| 17 | 73×119 | RGBA | 14,797 B | Small unit with alpha |
-| 18 | 65×75 | RGBA | 6,992 B | Tiny unit with alpha |
-| 19 | 121×67 | RGBA | 1,156 B | UI element with alpha |
-| 20 | 91×82 | P | 3,283 B | Icon-sized sprite |
-| 21 | 94×63 | P | 2,194 B | Icon-sized sprite |
-| 22 | 106×56 | P | 2,582 B | Icon-sized sprite |
-| 23 | 169×30 | RGBA | 11,500 B | Wide banner / status bar |
-| 24 | 68×81 | RGBA | 11,417 B | Unit portrait with alpha |
-| 25 | 78×30 | P | 764 B | Small label / tag |
-| 26 | 126×38 | RGBA | 9,382 B | Banner with alpha |
-| 27 | 231×42 | RGBA | 2,905 B | Wide banner with alpha |
-| 28 | 300×300 | RGBA | 15,800 B | Large icon or portrait (square) |
-| 29 | 272×31 | RGBA | 9,936 B | Long horizontal banner |
-| 30 | 45×94 | P | 1,114 B | Tall narrow sprite (tower/wall?) |
-| 31 | 220×166 | RGBA | 85,408 B | Large sprite — likely mission briefing |
-| 32 | 220×166 | RGBA | 85,936 B | Large sprite — mission briefing alt |
-| 33 | 220×166 | RGBA | 101,659 B | Large sprite — mission briefing alt |
-| 34 | 220×166 | RGBA | 97,764 B | Large sprite — mission briefing alt |
-| 35 | 133×36 | P | 3,493 B | Small label / button |
-| 36 | 198×81 | P | 942 B | Medium icon |
-| 37 | 148×36 | P | 370 B | Small label (text rendered into sprite) |
-| 38 | 61×43 | P | 887 B | Tiny icon |
-| 39 | 88×53 | RGBA | 1,718 B | Small icon with alpha |
-| 40 | 58×50 | RGBA | 3,801 B | Small icon with alpha |
-| 41 | 50×28 | P | 796 B | Tiny label |
-| 42 | 63×16 | P | 578 B | Mini label |
-| 43 | 98×15 | P | 1,323 B | Small label |
-| 44 | 33×7 | P | 251 B | Micro label / separator |
+**Verification method**: A visual contact sheet (`sprites_contact_sheet/english_contact_sheet.png`) was generated and analysed with the ZAI vision model. The mappings below are the model's output, cross-referenced against the existing `Asset_Catalog.md` §4.3 (J2ME/APK sprite indices derived from Java source-code analysis).
+
+**Confidence levels**:
+- ✅ **Verified** — VLM analysis + matches existing source-code-derived mapping
+- 🟡 **Likely** — VLM analysis only, no source-code cross-reference available
+- ❓ **Unknown** — VLM analysis was vague or unclear
+
+| Index | Dimensions | Mode | Size | Verified purpose | Confidence |
+|-------|-----------|------|------|------------------|------------|
+| 0 | 480×320 | P | 53,189 B | Title screen — "GLOBAL CONFEDERATION" text over a dark blue grid-overlaid globe focused on the Americas | ✅ Verified |
+| 1 | 179×125 | P | 14,875 B | Terrain tile sheet — grass/dirt/water tiles | ✅ Verified |
+| 2 | 206×131 | P | 13,727 B | Terrain tile sheet — rock/desert tiles | ✅ Verified |
+| 3 | 229×114 | P | 13,749 B | Terrain tile sheet — tree/forest tiles | ✅ Verified |
+| 4 | 200×63 | P | 7,302 B | Terrain tile sheet — bush/vegetation tiles | ✅ Verified |
+| 5 | 274×147 | P | 32,090 B | **Confederation (blue) sprite sheet** — 15 sub-sprites: 7 buildings (Command Center, Factory, Outpost, 3 turrets, Dome), 5 vehicles (Tank, APC, Scout Car, Heavy Tank, Artillery), 2 infantry (Soldier, Specialist), 1 crystal/resource | ✅ Verified |
+| 6 | 268×140 | P | 24,217 B | **Rebels (red) sprite sheet** — 12 sub-sprites: buildings, vehicles, infantry (red faction equivalent of #5) | ✅ Verified |
+| 7 | 200×112 | P | 17,663 B | UI/information panel (was incorrectly guessed as "building sprite sheet") | ✅ Verified (corrected) |
+| 8 | 77×152 | P | 5,311 B | Unit sprite sheet (blue faction — was guessed as "building") | ✅ Verified (corrected) |
+| 9 | 77×152 | P | 4,918 B | Unit sprite sheet (red faction — was guessed as "building") | ✅ Verified (corrected) |
+| 10 | 107×152 | P | 8,543 B | Vehicle sprite sheet (blue faction — was guessed as "factory") | ✅ Verified (corrected) |
+| 11 | 153×49 | P | 4,001 B | Vehicle sprite sheet (blue faction, smaller) | 🟡 Likely |
+| 12 | 91×109 | P | 5,598 B | Vehicle sprite sheet (red faction) | 🟡 Likely |
+| 13 | 112×118 | P | 6,392 B | Vehicle sprite sheet (red faction) | 🟡 Likely |
+| 14 | 223×78 | P | 12,576 B | Water/ship tile sheet (was guessed as "UI panel") | ✅ Verified (corrected) |
+| 15 | 154×71 | P | 9,796 B | Aircraft sprite sheet (blue faction) | 🟡 Likely |
+| 16 | 135×129 | RGBA | 27,374 B | Explosion effect (was guessed as "unit portrait") | ✅ Verified (corrected) |
+| 17 | 73×119 | RGBA | 14,797 B | Empty/placeholder sprite (transparent) | 🟡 Likely |
+| 18 | 65×75 | RGBA | 6,992 B | Empty/placeholder sprite (transparent) | 🟡 Likely |
+| 19 | 121×67 | RGBA | 1,156 B | Cloud/smoke effect | 🟡 Likely |
+| 20 | 91×82 | P | 3,283 B | Dirt/terrain tile sheet | 🟡 Likely |
+| 21 | 94×63 | P | 2,194 B | Dirt/terrain tile sheet | 🟡 Likely |
+| 22 | 106×56 | P | 2,582 B | Grass/terrain tile sheet | 🟡 Likely |
+| 23 | 169×30 | RGBA | 11,500 B | UI element (buttons/icons) | 🟡 Likely |
+| 24 | 68×81 | RGBA | 11,417 B | UI element (buttons/icons) | 🟡 Likely |
+| 25 | 78×30 | P | 764 B | Small terrain detail | 🟡 Likely |
+| 26 | 126×38 | RGBA | 9,382 B | UI element (buttons/icons) | 🟡 Likely |
+| 27 | 231×42 | RGBA | 2,905 B | UI/information panel | 🟡 Likely |
+| 28 | 300×300 | RGBA | 15,800 B | **UI elements sheet** — grid-patterned panels, coloured rectangular blocks, small icon-like symbols (crosses, arrows, shapes), and a distinct orange landmass outline. Used for maps, menus, and tactical information display. (was guessed as "large icon or portrait") | ✅ Verified (corrected) |
+| 29 | 272×31 | RGBA | 9,936 B | Building/structure sprite (transparent) | 🟡 Likely |
+| 30 | 45×94 | P | 1,114 B | Blue faction insignia/badge (was guessed as "tower/wall") | ✅ Verified (corrected) |
+| 31 | 220×166 | RGBA | 85,408 B | Water texture (transparent) — was guessed as "mission briefing" | ✅ Verified (corrected) |
+| 32 | 220×166 | RGBA | 85,936 B | Water texture (transparent) | ✅ Verified (corrected) |
+| 33 | 220×166 | RGBA | 101,659 B | Water texture (transparent) | ✅ Verified (corrected) |
+| 34 | 220×166 | RGBA | 97,764 B | Water texture (transparent) | ✅ Verified (corrected) |
+| 35 | 133×36 | P | 3,493 B | Character portraits sheet | 🟡 Likely |
+| 36 | 198×81 | P | 942 B | UI element (buttons/icons) | 🟡 Likely |
+| 37 | 148×36 | P | 370 B | UI element (buttons/icons) — this is the sprite that differs in Russian (212×72) due to longer Cyrillic text | ✅ Verified |
+| 38 | 61×43 | P | 887 B | Red faction insignia/badge | 🟡 Likely |
+| 39 | 88×53 | RGBA | 1,718 B | Black smoke effect | 🟡 Likely |
+| 40 | 58×50 | RGBA | 3,801 B | Menu button/logo | 🟡 Likely |
+| 41 | 50×28 | P | 796 B | Menu button/logo | 🟡 Likely |
+| 42 | 63×16 | P | 578 B | Menu button/logo | 🟡 Likely |
+| 43 | 98×15 | P | 1,323 B | Menu button/logo | 🟡 Likely |
+| 44 | 33×7 | P | 251 B | Menu button/logo | 🟡 Likely |
+
+#### 2.2.2 Key corrections from visual verification
+
+The visual verification revealed **several mappings were wrong** in the initial guess-based documentation:
+
+| Index | Initial guess (WRONG) | Verified purpose (CORRECT) |
+|-------|----------------------|----------------------------|
+| 7 | "Building sprite sheet" | UI/information panel |
+| 8 | "Building — small (bunker/locator?)" | Unit sprite sheet (blue faction) |
+| 9 | "Building — small alt" | Unit sprite sheet (red faction) |
+| 10 | "Building — medium (factory?)" | Vehicle sprite sheet (blue faction) |
+| 14 | "Wide UI panel / button bar" | Water/ship tile sheet |
+| 16 | "Unit sprite with alpha (transparent bg)" | Explosion effect |
+| 28 | "Large icon or portrait (square)" | UI elements sheet (grid panels, icons, landmass outline) |
+| 30 | "Tall narrow sprite (tower/wall?)" | Blue faction insignia/badge |
+| 31–34 | "Large sprite — likely mission briefing" | Water textures (4 variants) |
+
+**Lesson**: Initial dimension-based guesses are unreliable. Always verify sprite mappings by visual inspection before using them in code.
+
+#### 2.2.3 Contact sheets for further verification
+
+The following contact sheet PNGs are available for manual visual verification:
+
+| File | Contents |
+|------|----------|
+| `sprites_contact_sheet/english_contact_sheet.png` | All 45 English sprites in a 5×9 grid |
+| `sprites_contact_sheet/russian_contact_sheet.png` | All 45 Russian sprites in a 5×9 grid |
+| `sprites_contact_sheet/en_ru_differences.png` | Side-by-side comparison of the 1 sprite that differs between EN and RU (index 37) |
+| `sprites_contact_sheet/visual_verification.json` | Machine-readable metadata for every sprite |
+
+To regenerate these contact sheets:
+```bash
+python3 /home/z/my-project/scripts/make_sprite_contact_sheet.py
+```
 
 ### 2.3 `russian/` — 45 Russian-Localized Sprites
 

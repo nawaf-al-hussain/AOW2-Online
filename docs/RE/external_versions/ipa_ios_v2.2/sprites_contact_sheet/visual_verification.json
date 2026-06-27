@@ -1,0 +1,907 @@
+{
+  "english_sprites": [
+    {
+      "index": 0,
+      "filename": "en_000.png",
+      "width": 480,
+      "height": 320,
+      "mode": "RGBA",
+      "size_bytes": 53189,
+      "cell_x": 0,
+      "cell_y": 0
+    },
+    {
+      "index": 1,
+      "filename": "en_001.png",
+      "width": 179,
+      "height": 125,
+      "mode": "RGBA",
+      "size_bytes": 14875,
+      "cell_x": 1,
+      "cell_y": 0
+    },
+    {
+      "index": 2,
+      "filename": "en_002.png",
+      "width": 206,
+      "height": 131,
+      "mode": "RGBA",
+      "size_bytes": 13727,
+      "cell_x": 2,
+      "cell_y": 0
+    },
+    {
+      "index": 3,
+      "filename": "en_003.png",
+      "width": 229,
+      "height": 114,
+      "mode": "RGBA",
+      "size_bytes": 13749,
+      "cell_x": 3,
+      "cell_y": 0
+    },
+    {
+      "index": 4,
+      "filename": "en_004.png",
+      "width": 200,
+      "height": 63,
+      "mode": "RGBA",
+      "size_bytes": 7302,
+      "cell_x": 4,
+      "cell_y": 0
+    },
+    {
+      "index": 5,
+      "filename": "en_005.png",
+      "width": 274,
+      "height": 147,
+      "mode": "RGBA",
+      "size_bytes": 32090,
+      "cell_x": 0,
+      "cell_y": 1
+    },
+    {
+      "index": 6,
+      "filename": "en_006.png",
+      "width": 268,
+      "height": 140,
+      "mode": "RGBA",
+      "size_bytes": 24217,
+      "cell_x": 1,
+      "cell_y": 1
+    },
+    {
+      "index": 7,
+      "filename": "en_007.png",
+      "width": 200,
+      "height": 112,
+      "mode": "RGBA",
+      "size_bytes": 17663,
+      "cell_x": 2,
+      "cell_y": 1
+    },
+    {
+      "index": 8,
+      "filename": "en_008.png",
+      "width": 77,
+      "height": 152,
+      "mode": "RGBA",
+      "size_bytes": 5311,
+      "cell_x": 3,
+      "cell_y": 1
+    },
+    {
+      "index": 9,
+      "filename": "en_009.png",
+      "width": 77,
+      "height": 152,
+      "mode": "RGBA",
+      "size_bytes": 4918,
+      "cell_x": 4,
+      "cell_y": 1
+    },
+    {
+      "index": 10,
+      "filename": "en_010.png",
+      "width": 107,
+      "height": 152,
+      "mode": "RGBA",
+      "size_bytes": 8543,
+      "cell_x": 0,
+      "cell_y": 2
+    },
+    {
+      "index": 11,
+      "filename": "en_011.png",
+      "width": 153,
+      "height": 49,
+      "mode": "RGBA",
+      "size_bytes": 4001,
+      "cell_x": 1,
+      "cell_y": 2
+    },
+    {
+      "index": 12,
+      "filename": "en_012.png",
+      "width": 91,
+      "height": 109,
+      "mode": "RGBA",
+      "size_bytes": 5598,
+      "cell_x": 2,
+      "cell_y": 2
+    },
+    {
+      "index": 13,
+      "filename": "en_013.png",
+      "width": 112,
+      "height": 118,
+      "mode": "RGBA",
+      "size_bytes": 6392,
+      "cell_x": 3,
+      "cell_y": 2
+    },
+    {
+      "index": 14,
+      "filename": "en_014.png",
+      "width": 223,
+      "height": 78,
+      "mode": "RGBA",
+      "size_bytes": 12576,
+      "cell_x": 4,
+      "cell_y": 2
+    },
+    {
+      "index": 15,
+      "filename": "en_015.png",
+      "width": 154,
+      "height": 71,
+      "mode": "RGBA",
+      "size_bytes": 9796,
+      "cell_x": 0,
+      "cell_y": 3
+    },
+    {
+      "index": 16,
+      "filename": "en_016.png",
+      "width": 135,
+      "height": 129,
+      "mode": "RGBA",
+      "size_bytes": 27374,
+      "cell_x": 1,
+      "cell_y": 3
+    },
+    {
+      "index": 17,
+      "filename": "en_017.png",
+      "width": 73,
+      "height": 119,
+      "mode": "RGBA",
+      "size_bytes": 14797,
+      "cell_x": 2,
+      "cell_y": 3
+    },
+    {
+      "index": 18,
+      "filename": "en_018.png",
+      "width": 65,
+      "height": 75,
+      "mode": "RGBA",
+      "size_bytes": 6992,
+      "cell_x": 3,
+      "cell_y": 3
+    },
+    {
+      "index": 19,
+      "filename": "en_019.png",
+      "width": 121,
+      "height": 67,
+      "mode": "RGBA",
+      "size_bytes": 1156,
+      "cell_x": 4,
+      "cell_y": 3
+    },
+    {
+      "index": 20,
+      "filename": "en_020.png",
+      "width": 91,
+      "height": 82,
+      "mode": "RGBA",
+      "size_bytes": 3283,
+      "cell_x": 0,
+      "cell_y": 4
+    },
+    {
+      "index": 21,
+      "filename": "en_021.png",
+      "width": 94,
+      "height": 63,
+      "mode": "RGBA",
+      "size_bytes": 2194,
+      "cell_x": 1,
+      "cell_y": 4
+    },
+    {
+      "index": 22,
+      "filename": "en_022.png",
+      "width": 106,
+      "height": 56,
+      "mode": "RGBA",
+      "size_bytes": 2582,
+      "cell_x": 2,
+      "cell_y": 4
+    },
+    {
+      "index": 23,
+      "filename": "en_023.png",
+      "width": 169,
+      "height": 30,
+      "mode": "RGBA",
+      "size_bytes": 11500,
+      "cell_x": 3,
+      "cell_y": 4
+    },
+    {
+      "index": 24,
+      "filename": "en_024.png",
+      "width": 68,
+      "height": 81,
+      "mode": "RGBA",
+      "size_bytes": 11417,
+      "cell_x": 4,
+      "cell_y": 4
+    },
+    {
+      "index": 25,
+      "filename": "en_025.png",
+      "width": 78,
+      "height": 30,
+      "mode": "RGBA",
+      "size_bytes": 764,
+      "cell_x": 0,
+      "cell_y": 5
+    },
+    {
+      "index": 26,
+      "filename": "en_026.png",
+      "width": 126,
+      "height": 38,
+      "mode": "RGBA",
+      "size_bytes": 9382,
+      "cell_x": 1,
+      "cell_y": 5
+    },
+    {
+      "index": 27,
+      "filename": "en_027.png",
+      "width": 231,
+      "height": 42,
+      "mode": "RGBA",
+      "size_bytes": 2905,
+      "cell_x": 2,
+      "cell_y": 5
+    },
+    {
+      "index": 28,
+      "filename": "en_028.png",
+      "width": 300,
+      "height": 300,
+      "mode": "RGBA",
+      "size_bytes": 15800,
+      "cell_x": 3,
+      "cell_y": 5
+    },
+    {
+      "index": 29,
+      "filename": "en_029.png",
+      "width": 272,
+      "height": 31,
+      "mode": "RGBA",
+      "size_bytes": 9936,
+      "cell_x": 4,
+      "cell_y": 5
+    },
+    {
+      "index": 30,
+      "filename": "en_030.png",
+      "width": 45,
+      "height": 94,
+      "mode": "RGBA",
+      "size_bytes": 1114,
+      "cell_x": 0,
+      "cell_y": 6
+    },
+    {
+      "index": 31,
+      "filename": "en_031.png",
+      "width": 220,
+      "height": 166,
+      "mode": "RGBA",
+      "size_bytes": 85408,
+      "cell_x": 1,
+      "cell_y": 6
+    },
+    {
+      "index": 32,
+      "filename": "en_032.png",
+      "width": 220,
+      "height": 166,
+      "mode": "RGBA",
+      "size_bytes": 85936,
+      "cell_x": 2,
+      "cell_y": 6
+    },
+    {
+      "index": 33,
+      "filename": "en_033.png",
+      "width": 220,
+      "height": 166,
+      "mode": "RGBA",
+      "size_bytes": 101659,
+      "cell_x": 3,
+      "cell_y": 6
+    },
+    {
+      "index": 34,
+      "filename": "en_034.png",
+      "width": 220,
+      "height": 166,
+      "mode": "RGBA",
+      "size_bytes": 97764,
+      "cell_x": 4,
+      "cell_y": 6
+    },
+    {
+      "index": 35,
+      "filename": "en_035.png",
+      "width": 133,
+      "height": 36,
+      "mode": "RGBA",
+      "size_bytes": 3493,
+      "cell_x": 0,
+      "cell_y": 7
+    },
+    {
+      "index": 36,
+      "filename": "en_036.png",
+      "width": 198,
+      "height": 81,
+      "mode": "RGBA",
+      "size_bytes": 942,
+      "cell_x": 1,
+      "cell_y": 7
+    },
+    {
+      "index": 37,
+      "filename": "en_037.png",
+      "width": 148,
+      "height": 36,
+      "mode": "RGBA",
+      "size_bytes": 370,
+      "cell_x": 2,
+      "cell_y": 7
+    },
+    {
+      "index": 38,
+      "filename": "en_038.png",
+      "width": 61,
+      "height": 43,
+      "mode": "RGBA",
+      "size_bytes": 887,
+      "cell_x": 3,
+      "cell_y": 7
+    },
+    {
+      "index": 39,
+      "filename": "en_039.png",
+      "width": 88,
+      "height": 53,
+      "mode": "RGBA",
+      "size_bytes": 1718,
+      "cell_x": 4,
+      "cell_y": 7
+    },
+    {
+      "index": 40,
+      "filename": "en_040.png",
+      "width": 58,
+      "height": 50,
+      "mode": "RGBA",
+      "size_bytes": 3801,
+      "cell_x": 0,
+      "cell_y": 8
+    },
+    {
+      "index": 41,
+      "filename": "en_041.png",
+      "width": 50,
+      "height": 28,
+      "mode": "RGBA",
+      "size_bytes": 796,
+      "cell_x": 1,
+      "cell_y": 8
+    },
+    {
+      "index": 42,
+      "filename": "en_042.png",
+      "width": 63,
+      "height": 16,
+      "mode": "RGBA",
+      "size_bytes": 578,
+      "cell_x": 2,
+      "cell_y": 8
+    },
+    {
+      "index": 43,
+      "filename": "en_043.png",
+      "width": 98,
+      "height": 15,
+      "mode": "RGBA",
+      "size_bytes": 1323,
+      "cell_x": 3,
+      "cell_y": 8
+    },
+    {
+      "index": 44,
+      "filename": "en_044.png",
+      "width": 33,
+      "height": 7,
+      "mode": "RGBA",
+      "size_bytes": 251,
+      "cell_x": 4,
+      "cell_y": 8
+    }
+  ],
+  "russian_sprites": [
+    {
+      "index": 0,
+      "filename": "ru_000.png",
+      "width": 480,
+      "height": 320,
+      "mode": "RGBA",
+      "size_bytes": 53189,
+      "cell_x": 0,
+      "cell_y": 0
+    },
+    {
+      "index": 1,
+      "filename": "ru_001.png",
+      "width": 179,
+      "height": 125,
+      "mode": "RGBA",
+      "size_bytes": 14875,
+      "cell_x": 1,
+      "cell_y": 0
+    },
+    {
+      "index": 2,
+      "filename": "ru_002.png",
+      "width": 206,
+      "height": 131,
+      "mode": "RGBA",
+      "size_bytes": 13727,
+      "cell_x": 2,
+      "cell_y": 0
+    },
+    {
+      "index": 3,
+      "filename": "ru_003.png",
+      "width": 229,
+      "height": 114,
+      "mode": "RGBA",
+      "size_bytes": 13749,
+      "cell_x": 3,
+      "cell_y": 0
+    },
+    {
+      "index": 4,
+      "filename": "ru_004.png",
+      "width": 200,
+      "height": 63,
+      "mode": "RGBA",
+      "size_bytes": 7302,
+      "cell_x": 4,
+      "cell_y": 0
+    },
+    {
+      "index": 5,
+      "filename": "ru_005.png",
+      "width": 274,
+      "height": 147,
+      "mode": "RGBA",
+      "size_bytes": 32090,
+      "cell_x": 0,
+      "cell_y": 1
+    },
+    {
+      "index": 6,
+      "filename": "ru_006.png",
+      "width": 268,
+      "height": 140,
+      "mode": "RGBA",
+      "size_bytes": 24217,
+      "cell_x": 1,
+      "cell_y": 1
+    },
+    {
+      "index": 7,
+      "filename": "ru_007.png",
+      "width": 200,
+      "height": 112,
+      "mode": "RGBA",
+      "size_bytes": 17663,
+      "cell_x": 2,
+      "cell_y": 1
+    },
+    {
+      "index": 8,
+      "filename": "ru_008.png",
+      "width": 77,
+      "height": 152,
+      "mode": "RGBA",
+      "size_bytes": 5311,
+      "cell_x": 3,
+      "cell_y": 1
+    },
+    {
+      "index": 9,
+      "filename": "ru_009.png",
+      "width": 77,
+      "height": 152,
+      "mode": "RGBA",
+      "size_bytes": 4918,
+      "cell_x": 4,
+      "cell_y": 1
+    },
+    {
+      "index": 10,
+      "filename": "ru_010.png",
+      "width": 107,
+      "height": 152,
+      "mode": "RGBA",
+      "size_bytes": 8543,
+      "cell_x": 0,
+      "cell_y": 2
+    },
+    {
+      "index": 11,
+      "filename": "ru_011.png",
+      "width": 153,
+      "height": 49,
+      "mode": "RGBA",
+      "size_bytes": 4001,
+      "cell_x": 1,
+      "cell_y": 2
+    },
+    {
+      "index": 12,
+      "filename": "ru_012.png",
+      "width": 91,
+      "height": 109,
+      "mode": "RGBA",
+      "size_bytes": 5598,
+      "cell_x": 2,
+      "cell_y": 2
+    },
+    {
+      "index": 13,
+      "filename": "ru_013.png",
+      "width": 112,
+      "height": 118,
+      "mode": "RGBA",
+      "size_bytes": 6392,
+      "cell_x": 3,
+      "cell_y": 2
+    },
+    {
+      "index": 14,
+      "filename": "ru_014.png",
+      "width": 223,
+      "height": 78,
+      "mode": "RGBA",
+      "size_bytes": 12576,
+      "cell_x": 4,
+      "cell_y": 2
+    },
+    {
+      "index": 15,
+      "filename": "ru_015.png",
+      "width": 154,
+      "height": 71,
+      "mode": "RGBA",
+      "size_bytes": 9796,
+      "cell_x": 0,
+      "cell_y": 3
+    },
+    {
+      "index": 16,
+      "filename": "ru_016.png",
+      "width": 135,
+      "height": 129,
+      "mode": "RGBA",
+      "size_bytes": 27374,
+      "cell_x": 1,
+      "cell_y": 3
+    },
+    {
+      "index": 17,
+      "filename": "ru_017.png",
+      "width": 73,
+      "height": 119,
+      "mode": "RGBA",
+      "size_bytes": 14797,
+      "cell_x": 2,
+      "cell_y": 3
+    },
+    {
+      "index": 18,
+      "filename": "ru_018.png",
+      "width": 65,
+      "height": 75,
+      "mode": "RGBA",
+      "size_bytes": 6992,
+      "cell_x": 3,
+      "cell_y": 3
+    },
+    {
+      "index": 19,
+      "filename": "ru_019.png",
+      "width": 121,
+      "height": 67,
+      "mode": "RGBA",
+      "size_bytes": 1156,
+      "cell_x": 4,
+      "cell_y": 3
+    },
+    {
+      "index": 20,
+      "filename": "ru_020.png",
+      "width": 91,
+      "height": 82,
+      "mode": "RGBA",
+      "size_bytes": 3283,
+      "cell_x": 0,
+      "cell_y": 4
+    },
+    {
+      "index": 21,
+      "filename": "ru_021.png",
+      "width": 94,
+      "height": 63,
+      "mode": "RGBA",
+      "size_bytes": 2194,
+      "cell_x": 1,
+      "cell_y": 4
+    },
+    {
+      "index": 22,
+      "filename": "ru_022.png",
+      "width": 106,
+      "height": 56,
+      "mode": "RGBA",
+      "size_bytes": 2582,
+      "cell_x": 2,
+      "cell_y": 4
+    },
+    {
+      "index": 23,
+      "filename": "ru_023.png",
+      "width": 169,
+      "height": 30,
+      "mode": "RGBA",
+      "size_bytes": 11500,
+      "cell_x": 3,
+      "cell_y": 4
+    },
+    {
+      "index": 24,
+      "filename": "ru_024.png",
+      "width": 68,
+      "height": 81,
+      "mode": "RGBA",
+      "size_bytes": 11417,
+      "cell_x": 4,
+      "cell_y": 4
+    },
+    {
+      "index": 25,
+      "filename": "ru_025.png",
+      "width": 78,
+      "height": 30,
+      "mode": "RGBA",
+      "size_bytes": 764,
+      "cell_x": 0,
+      "cell_y": 5
+    },
+    {
+      "index": 26,
+      "filename": "ru_026.png",
+      "width": 126,
+      "height": 38,
+      "mode": "RGBA",
+      "size_bytes": 9382,
+      "cell_x": 1,
+      "cell_y": 5
+    },
+    {
+      "index": 27,
+      "filename": "ru_027.png",
+      "width": 231,
+      "height": 42,
+      "mode": "RGBA",
+      "size_bytes": 2905,
+      "cell_x": 2,
+      "cell_y": 5
+    },
+    {
+      "index": 28,
+      "filename": "ru_028.png",
+      "width": 300,
+      "height": 300,
+      "mode": "RGBA",
+      "size_bytes": 15800,
+      "cell_x": 3,
+      "cell_y": 5
+    },
+    {
+      "index": 29,
+      "filename": "ru_029.png",
+      "width": 272,
+      "height": 31,
+      "mode": "RGBA",
+      "size_bytes": 9936,
+      "cell_x": 4,
+      "cell_y": 5
+    },
+    {
+      "index": 30,
+      "filename": "ru_030.png",
+      "width": 45,
+      "height": 94,
+      "mode": "RGBA",
+      "size_bytes": 1114,
+      "cell_x": 0,
+      "cell_y": 6
+    },
+    {
+      "index": 31,
+      "filename": "ru_031.png",
+      "width": 220,
+      "height": 166,
+      "mode": "RGBA",
+      "size_bytes": 85408,
+      "cell_x": 1,
+      "cell_y": 6
+    },
+    {
+      "index": 32,
+      "filename": "ru_032.png",
+      "width": 220,
+      "height": 166,
+      "mode": "RGBA",
+      "size_bytes": 85936,
+      "cell_x": 2,
+      "cell_y": 6
+    },
+    {
+      "index": 33,
+      "filename": "ru_033.png",
+      "width": 220,
+      "height": 166,
+      "mode": "RGBA",
+      "size_bytes": 101659,
+      "cell_x": 3,
+      "cell_y": 6
+    },
+    {
+      "index": 34,
+      "filename": "ru_034.png",
+      "width": 220,
+      "height": 166,
+      "mode": "RGBA",
+      "size_bytes": 97764,
+      "cell_x": 4,
+      "cell_y": 6
+    },
+    {
+      "index": 35,
+      "filename": "ru_035.png",
+      "width": 133,
+      "height": 36,
+      "mode": "RGBA",
+      "size_bytes": 3493,
+      "cell_x": 0,
+      "cell_y": 7
+    },
+    {
+      "index": 36,
+      "filename": "ru_036.png",
+      "width": 198,
+      "height": 81,
+      "mode": "RGBA",
+      "size_bytes": 942,
+      "cell_x": 1,
+      "cell_y": 7
+    },
+    {
+      "index": 37,
+      "filename": "ru_037.png",
+      "width": 212,
+      "height": 72,
+      "mode": "RGBA",
+      "size_bytes": 659,
+      "cell_x": 2,
+      "cell_y": 7
+    },
+    {
+      "index": 38,
+      "filename": "ru_038.png",
+      "width": 61,
+      "height": 43,
+      "mode": "RGBA",
+      "size_bytes": 887,
+      "cell_x": 3,
+      "cell_y": 7
+    },
+    {
+      "index": 39,
+      "filename": "ru_039.png",
+      "width": 88,
+      "height": 53,
+      "mode": "RGBA",
+      "size_bytes": 1718,
+      "cell_x": 4,
+      "cell_y": 7
+    },
+    {
+      "index": 40,
+      "filename": "ru_040.png",
+      "width": 58,
+      "height": 50,
+      "mode": "RGBA",
+      "size_bytes": 3801,
+      "cell_x": 0,
+      "cell_y": 8
+    },
+    {
+      "index": 41,
+      "filename": "ru_041.png",
+      "width": 50,
+      "height": 28,
+      "mode": "RGBA",
+      "size_bytes": 796,
+      "cell_x": 1,
+      "cell_y": 8
+    },
+    {
+      "index": 42,
+      "filename": "ru_042.png",
+      "width": 63,
+      "height": 16,
+      "mode": "RGBA",
+      "size_bytes": 578,
+      "cell_x": 2,
+      "cell_y": 8
+    },
+    {
+      "index": 43,
+      "filename": "ru_043.png",
+      "width": 98,
+      "height": 15,
+      "mode": "RGBA",
+      "size_bytes": 1323,
+      "cell_x": 3,
+      "cell_y": 8
+    },
+    {
+      "index": 44,
+      "filename": "ru_044.png",
+      "width": 33,
+      "height": 7,
+      "mode": "RGBA",
+      "size_bytes": 251,
+      "cell_x": 4,
+      "cell_y": 8
+    }
+  ],
+  "note": "Open the contact_sheet.png files to visually verify sprite-to-entity mappings. Each cell shows the sprite on a checkerboard background (so transparency is visible) with its filename, dimensions, and pixel mode labelled below."
+}
