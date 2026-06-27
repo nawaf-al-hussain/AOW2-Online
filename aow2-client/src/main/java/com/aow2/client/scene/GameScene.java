@@ -332,6 +332,33 @@ public class GameScene {
                 case "build" -> inputHandler.onKeyPressed(
                     new javafx.scene.input.KeyEvent(javafx.scene.input.KeyEvent.KEY_PRESSED,
                     "b", "b", javafx.scene.input.KeyCode.B, false, false, false, false));
+                case "upgrade" -> {
+                    // FIX (Building Upgrade UI): When the Upgrade button is pressed,
+                    // check if a single building is selected and issue an UpgradeCommand.
+                    if (selectionManager != null && selectionManager.hasSelection()) {
+                        var selectedIds = selectionManager.getSelectedIds();
+                        if (selectedIds.size() == 1) {
+                            int buildingId = selectedIds.iterator().next();
+                            var building = entityManager.getBuilding(buildingId);
+                            if (building != null && building.isAlive()
+                                    && !building.isUnderConstruction()
+                                    && building.getUpgradeLevel() < 3) {
+                                long tick = gameState.currentTick();
+                                var cmd = new CommandType.Upgrade(tick, LOCAL_PLAYER_ID, buildingId);
+                                tickManager.enqueueCommand(cmd);
+                                if (isMultiplayer && lockstepEngine != null && lockstepEngine.isRunning()) {
+                                    lockstepEngine.submitCommand(cmd);
+                                }
+                                LOG.info("Upgrade command issued for building {} (current level: {})",
+                                    buildingId, building.getUpgradeLevel());
+                            } else if (building != null) {
+                                LOG.debug("Cannot upgrade building {}: alive={}, underConstruction={}, level={}",
+                                    buildingId, building.isAlive(), building.isUnderConstruction(),
+                                    building != null ? building.getUpgradeLevel() : -1);
+                            }
+                        }
+                    }
+                }
                 default -> LOG.warn("Unknown HUD action: {}", action);
             }
         });

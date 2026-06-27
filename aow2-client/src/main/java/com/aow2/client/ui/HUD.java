@@ -76,6 +76,7 @@ public class HUD {
     private Button holdButton;
     private Button patrolButton;
     private Button buildButton;
+    private Button upgradeButton;
 
     /** Current credits amount. */
     private int credits;
@@ -284,7 +285,11 @@ public class HUD {
         buildButton.setStyle(btnStyle);
         buildButton.setOnAction(e -> fireEvent("build"));
 
-        row.getChildren().addAll(attackButton, stopButton, holdButton, patrolButton, buildButton);
+        upgradeButton = new Button("Upgrade [U]");
+        upgradeButton.setStyle(btnStyle);
+        upgradeButton.setOnAction(e -> fireEvent("upgrade"));
+
+        row.getChildren().addAll(attackButton, stopButton, holdButton, patrolButton, buildButton, upgradeButton);
         return row;
     }
 
@@ -374,12 +379,15 @@ public class HUD {
             Building building = entityManager.getBuilding(id);
             if (building != null) {
                 selectionNameLabel.setText(building.getBuildingType().displayName());
-                selectionHpLabel.setText("HP: " + building.getHp() + "/" + building.getMaxHp());
+                selectionHpLabel.setText("HP: " + building.getHp() + "/" + building.getEffectiveMaxHp());
                 selectionInfoLabel.setText(String.format("Armor: %d | Sight: %d | %s",
                     building.getStats().armor(), building.getStats().sightRange(),
                     building.isPowered() ? "Powered" : "Unpowered"));
-                selectionExtraLabel.setText(building.isUnderConstruction()
-                    ? "Under Construction" : building.getBuildingType().faction().toString());
+                // FIX (Building Upgrade UI): Show upgrade level in the selection panel
+                String extra = building.isUnderConstruction()
+                    ? "Under Construction"
+                    : "Lv " + building.getUpgradeLevel() + "/3 | " + building.getBuildingType().faction();
+                selectionExtraLabel.setText(extra);
                 return;
             }
         }
