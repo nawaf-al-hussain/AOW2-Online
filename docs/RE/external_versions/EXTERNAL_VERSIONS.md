@@ -29,7 +29,8 @@ Each external version was therefore preserved verbatim so the recreation project
 
 ```
 docs/RE/external_versions/
-├── EXTERNAL_VERSIONS.md                          ← this file
+├── EXTERNAL_VERSIONS.md                          ← this file (raw extraction reference)
+├── ipa_ios_v2.2/DECODED_ASSETS.md                ← decoded/converted assets reference (NEW)
 ├── jar_global_confederation_v1.12.0/             ← J2ME Episode 1 (HeroCraft 2012)
 │   ├── classes/      (18 .class files)
 │   ├── data/         (11 binary data tables: a, d, d0, dmt, m0-m5, ml, p)
@@ -50,10 +51,22 @@ docs/RE/external_versions/
 │   ├── crack/        (2 cracker-added .class files)
 │   └── metadata/     (1 MANIFEST.MF)
 └── ipa_ios_v2.2/                                 ← iOS premium build (Gear Games 2009)
-    ├── audio/        (74 files: 73 SFX .wav + music.mp3)
+    ├── audio/        (74 files: 73 SFX .wav + music.mp3 — RAW original)
+    ├── audio_ogg/    (73 OGG files + inventory.json — DECODED for FXGL, see DECODED_ASSETS.md)
+    │   ├── sfx/      (72 OGG files converted from WAV at 96 kbps VBR)
+    │   ├── music/    (1 OGG file: music.ogg converted from music.mp3 at 160 kbps VBR)
+    │   └── inventory.json
     ├── archives/     (1 file: add = ZIP archive containing duplicate music.mp3)
     ├── app_icons/    (2 files: Default.png + Icon.png)
-    ├── sprites/      (6 files: d1 master atlas + 2 localized i0 packs + d00 + l1, l2, l3)
+    ├── sprites/      (6 files: d1 master atlas + 2 localized i0 packs + d00 + l1, l2, l3 — RAW original)
+    ├── sprites_decoded/ (95 files — DECODED for FXGL, see DECODED_ASSETS.md)
+    │   ├── d1_master_atlas.png   (1024×1024 RGBA — renamed copy of d1)
+    │   ├── english/              (45 PNGs unpacked from English_i0)
+    │   ├── russian/              (45 PNGs unpacked from Russian_i0)
+    │   ├── loading_screen_small.png  (renamed l1)
+    │   ├── loading_screen_full.png   (renamed l2)
+    │   ├── loading_screen_alt.png    (renamed l3)
+    │   └── inventory.json
     ├── maps/         (6 files: m0-m5)
     ├── missions/     (37 files: mi0-mi6 generic + mi7_en through mi21_en + mi7_ru through mi21_ru)
     ├── text/         (6 files: English_t0/s0/d0 + Russian_t0/s0/d0)

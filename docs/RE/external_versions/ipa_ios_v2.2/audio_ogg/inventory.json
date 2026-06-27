@@ -1,0 +1,1686 @@
+{
+  "sfx": [
+    {
+      "filename": "affirmative_1.ogg",
+      "source": "affirmative_1.wav",
+      "src_size_bytes": 54896,
+      "dst_size_bytes": 24551,
+      "compression_ratio": 2.24,
+      "src_format": {
+        "codec": "pcm_u8",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 8,
+        "duration": 2.477143,
+        "bit_rate": 177288
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 2.477143,
+        "bit_rate": 79288
+      }
+    },
+    {
+      "filename": "affirmative_2.ogg",
+      "source": "affirmative_2.wav",
+      "src_size_bytes": 63308,
+      "dst_size_bytes": 27806,
+      "compression_ratio": 2.28,
+      "src_format": {
+        "codec": "pcm_u8",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 8,
+        "duration": 2.858776,
+        "bit_rate": 177161
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 2.858776,
+        "bit_rate": 77812
+      }
+    },
+    {
+      "filename": "affirmative_3.ogg",
+      "source": "affirmative_3.wav",
+      "src_size_bytes": 62902,
+      "dst_size_bytes": 27570,
+      "compression_ratio": 2.28,
+      "src_format": {
+        "codec": "pcm_u8",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 8,
+        "duration": 2.833379,
+        "bit_rate": 177602
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 2.833379,
+        "bit_rate": 77843
+      }
+    },
+    {
+      "filename": "affirmative_4.ogg",
+      "source": "affirmative_4.wav",
+      "src_size_bytes": 83090,
+      "dst_size_bytes": 35653,
+      "compression_ratio": 2.33,
+      "src_format": {
+        "codec": "pcm_u8",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 8,
+        "duration": 3.755918,
+        "bit_rate": 176979
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 3.755918,
+        "bit_rate": 75939
+      }
+    },
+    {
+      "filename": "affirmative_l_1.ogg",
+      "source": "affirmative_l_1.wav",
+      "src_size_bytes": 22474,
+      "dst_size_bytes": 12594,
+      "compression_ratio": 1.78,
+      "src_format": {
+        "codec": "pcm_u8",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 8,
+        "duration": 1.0,
+        "bit_rate": 179792
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 1.0,
+        "bit_rate": 100752
+      }
+    },
+    {
+      "filename": "affirmative_l_11.ogg",
+      "source": "affirmative_l_11.wav",
+      "src_size_bytes": 22322,
+      "dst_size_bytes": 12576,
+      "compression_ratio": 1.77,
+      "src_format": {
+        "codec": "pcm_u8",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 8,
+        "duration": 1.0,
+        "bit_rate": 178576
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 1.0,
+        "bit_rate": 100608
+      }
+    },
+    {
+      "filename": "affirmative_l_2.ogg",
+      "source": "affirmative_l_2.wav",
+      "src_size_bytes": 22322,
+      "dst_size_bytes": 12725,
+      "compression_ratio": 1.75,
+      "src_format": {
+        "codec": "pcm_u8",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 8,
+        "duration": 1.0,
+        "bit_rate": 178576
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 1.0,
+        "bit_rate": 101800
+      }
+    },
+    {
+      "filename": "affirmative_l_3.ogg",
+      "source": "affirmative_l_3.wav",
+      "src_size_bytes": 16490,
+      "dst_size_bytes": 10226,
+      "compression_ratio": 1.61,
+      "src_format": {
+        "codec": "pcm_u8",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 8,
+        "duration": 0.73551,
+        "bit_rate": 179358
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 0.73551,
+        "bit_rate": 111226
+      }
+    },
+    {
+      "filename": "affirmative_l_4.ogg",
+      "source": "affirmative_l_4.wav",
+      "src_size_bytes": 21062,
+      "dst_size_bytes": 12119,
+      "compression_ratio": 1.74,
+      "src_format": {
+        "codec": "pcm_u8",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 8,
+        "duration": 0.942857,
+        "bit_rate": 178707
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 0.942857,
+        "bit_rate": 102827
+      }
+    },
+    {
+      "filename": "affirmative_l_5.ogg",
+      "source": "affirmative_l_5.wav",
+      "src_size_bytes": 22322,
+      "dst_size_bytes": 12523,
+      "compression_ratio": 1.78,
+      "src_format": {
+        "codec": "pcm_u8",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 8,
+        "duration": 1.0,
+        "bit_rate": 178576
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 1.0,
+        "bit_rate": 100184
+      }
+    },
+    {
+      "filename": "affirmative_l_6.ogg",
+      "source": "affirmative_l_6.wav",
+      "src_size_bytes": 22322,
+      "dst_size_bytes": 12590,
+      "compression_ratio": 1.77,
+      "src_format": {
+        "codec": "pcm_u8",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 8,
+        "duration": 1.0,
+        "bit_rate": 178576
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 1.0,
+        "bit_rate": 100720
+      }
+    },
+    {
+      "filename": "affirmative_l_7.ogg",
+      "source": "affirmative_l_7.wav",
+      "src_size_bytes": 22322,
+      "dst_size_bytes": 12540,
+      "compression_ratio": 1.78,
+      "src_format": {
+        "codec": "pcm_u8",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 8,
+        "duration": 1.0,
+        "bit_rate": 178576
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 1.0,
+        "bit_rate": 100320
+      }
+    },
+    {
+      "filename": "attack_1.ogg",
+      "source": "attack_1.wav",
+      "src_size_bytes": 69686,
+      "dst_size_bytes": 32079,
+      "compression_ratio": 2.17,
+      "src_format": {
+        "codec": "pcm_u8",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 8,
+        "duration": 3.151429,
+        "bit_rate": 176900
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 3.151429,
+        "bit_rate": 81433
+      }
+    },
+    {
+      "filename": "build_1.ogg",
+      "source": "build_1.wav",
+      "src_size_bytes": 26204,
+      "dst_size_bytes": 8935,
+      "compression_ratio": 2.93,
+      "src_format": {
+        "codec": "pcm_s16le",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 16,
+        "duration": 0.58898,
+        "bit_rate": 355923
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 0.58898,
+        "bit_rate": 121362
+      }
+    },
+    {
+      "filename": "building_ready_1.ogg",
+      "source": "building_ready_1.wav",
+      "src_size_bytes": 43340,
+      "dst_size_bytes": 19846,
+      "compression_ratio": 2.18,
+      "src_format": {
+        "codec": "pcm_u8",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 8,
+        "duration": 1.943946,
+        "bit_rate": 178358
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 1.943946,
+        "bit_rate": 81673
+      }
+    },
+    {
+      "filename": "click_1.ogg",
+      "source": "click_1.wav",
+      "src_size_bytes": 17748,
+      "dst_size_bytes": 7732,
+      "compression_ratio": 2.3,
+      "src_format": {
+        "codec": "pcm_s16le",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 16,
+        "duration": 0.399728,
+        "bit_rate": 355201
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 0.399728,
+        "bit_rate": 154745
+      }
+    },
+    {
+      "filename": "explode_bld_1.ogg",
+      "source": "explode_bld_1.wav",
+      "src_size_bytes": 45068,
+      "dst_size_bytes": 21436,
+      "compression_ratio": 2.1,
+      "src_format": {
+        "codec": "pcm_u8",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 8,
+        "duration": 2.035011,
+        "bit_rate": 177170
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 2.035011,
+        "bit_rate": 84268
+      }
+    },
+    {
+      "filename": "explode_bld_2.ogg",
+      "source": "explode_bld_2.wav",
+      "src_size_bytes": 45632,
+      "dst_size_bytes": 21905,
+      "compression_ratio": 2.08,
+      "src_format": {
+        "codec": "pcm_u8",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 8,
+        "duration": 2.06059,
+        "bit_rate": 177160
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 2.06059,
+        "bit_rate": 85043
+      }
+    },
+    {
+      "filename": "explode_heavy_1.ogg",
+      "source": "explode_heavy_1.wav",
+      "src_size_bytes": 72258,
+      "dst_size_bytes": 17854,
+      "compression_ratio": 4.05,
+      "src_format": {
+        "codec": "pcm_s16le",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 16,
+        "duration": 1.635782,
+        "bit_rate": 353386
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 1.635782,
+        "bit_rate": 87317
+      }
+    },
+    {
+      "filename": "explode_heavy_2.ogg",
+      "source": "explode_heavy_2.wav",
+      "src_size_bytes": 47868,
+      "dst_size_bytes": 11843,
+      "compression_ratio": 4.04,
+      "src_format": {
+        "codec": "pcm_s16le",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 16,
+        "duration": 1.07805,
+        "bit_rate": 355219
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 1.07805,
+        "bit_rate": 87884
+      }
+    },
+    {
+      "filename": "explode_heavy_3.ogg",
+      "source": "explode_heavy_3.wav",
+      "src_size_bytes": 21898,
+      "dst_size_bytes": 12360,
+      "compression_ratio": 1.77,
+      "src_format": {
+        "codec": "pcm_u8",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 8,
+        "duration": 0.983265,
+        "bit_rate": 178165
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 0.983265,
+        "bit_rate": 100562
+      }
+    },
+    {
+      "filename": "explode_heavy_4.ogg",
+      "source": "explode_heavy_4.wav",
+      "src_size_bytes": 30658,
+      "dst_size_bytes": 15748,
+      "compression_ratio": 1.95,
+      "src_format": {
+        "codec": "pcm_u8",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 8,
+        "duration": 1.380227,
+        "bit_rate": 177698
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 1.380227,
+        "bit_rate": 91277
+      }
+    },
+    {
+      "filename": "explode_heavy_5.ogg",
+      "source": "explode_heavy_5.wav",
+      "src_size_bytes": 84964,
+      "dst_size_bytes": 12605,
+      "compression_ratio": 6.74,
+      "src_format": {
+        "codec": "pcm_s16le",
+        "sample_rate": 44100,
+        "channels": 1,
+        "bits_per_sample": 16,
+        "duration": 0.96195,
+        "bit_rate": 706598
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 0.96195,
+        "bit_rate": 104828
+      }
+    },
+    {
+      "filename": "explode_heavy_6.ogg",
+      "source": "explode_heavy_6.wav",
+      "src_size_bytes": 78262,
+      "dst_size_bytes": 17576,
+      "compression_ratio": 4.45,
+      "src_format": {
+        "codec": "pcm_s16le",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 16,
+        "duration": 1.771927,
+        "bit_rate": 353341
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 1.771927,
+        "bit_rate": 79353
+      }
+    },
+    {
+      "filename": "explode_heavy_7.ogg",
+      "source": "explode_heavy_7.wav",
+      "src_size_bytes": 60020,
+      "dst_size_bytes": 14825,
+      "compression_ratio": 4.05,
+      "src_format": {
+        "codec": "pcm_s16le",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 16,
+        "duration": 1.358277,
+        "bit_rate": 353506
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 1.358277,
+        "bit_rate": 87316
+      }
+    },
+    {
+      "filename": "explode_light_1.ogg",
+      "source": "explode_light_1.wav",
+      "src_size_bytes": 40678,
+      "dst_size_bytes": 11399,
+      "compression_ratio": 3.57,
+      "src_format": {
+        "codec": "pcm_s16le",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 16,
+        "duration": 0.919683,
+        "bit_rate": 353843
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 0.919683,
+        "bit_rate": 99155
+      }
+    },
+    {
+      "filename": "explode_light_2.ogg",
+      "source": "explode_light_2.wav",
+      "src_size_bytes": 15796,
+      "dst_size_bytes": 10038,
+      "compression_ratio": 1.57,
+      "src_format": {
+        "codec": "pcm_u8",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 8,
+        "duration": 0.706213,
+        "bit_rate": 178937
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 0.706213,
+        "bit_rate": 113710
+      }
+    },
+    {
+      "filename": "explode_light_3.ogg",
+      "source": "explode_light_3.wav",
+      "src_size_bytes": 10938,
+      "dst_size_bytes": 8270,
+      "compression_ratio": 1.32,
+      "src_format": {
+        "codec": "pcm_u8",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 8,
+        "duration": 0.485442,
+        "bit_rate": 180256
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 0.485442,
+        "bit_rate": 136288
+      }
+    },
+    {
+      "filename": "explode_light_4.ogg",
+      "source": "explode_light_4.wav",
+      "src_size_bytes": 10938,
+      "dst_size_bytes": 8276,
+      "compression_ratio": 1.32,
+      "src_format": {
+        "codec": "pcm_u8",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 8,
+        "duration": 0.485442,
+        "bit_rate": 180256
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 0.485442,
+        "bit_rate": 136387
+      }
+    },
+    {
+      "filename": "explode_light_5.ogg",
+      "source": "explode_light_5.wav",
+      "src_size_bytes": 38460,
+      "dst_size_bytes": 11210,
+      "compression_ratio": 3.43,
+      "src_format": {
+        "codec": "pcm_s16le",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 16,
+        "duration": 0.867166,
+        "bit_rate": 354810
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 0.867166,
+        "bit_rate": 103417
+      }
+    },
+    {
+      "filename": "flamethrower_1.ogg",
+      "source": "flamethrower_1.wav",
+      "src_size_bytes": 35194,
+      "dst_size_bytes": 17140,
+      "compression_ratio": 2.05,
+      "src_format": {
+        "codec": "pcm_u8",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 8,
+        "duration": 1.582177,
+        "bit_rate": 177952
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 1.582177,
+        "bit_rate": 86665
+      }
+    },
+    {
+      "filename": "machine_light_1.ogg",
+      "source": "machine_light_1.wav",
+      "src_size_bytes": 14414,
+      "dst_size_bytes": 10414,
+      "compression_ratio": 1.38,
+      "src_format": {
+        "codec": "pcm_u8",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 8,
+        "duration": 0.644807,
+        "bit_rate": 178831
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 0.644807,
+        "bit_rate": 129204
+      }
+    },
+    {
+      "filename": "machine_light_2.ogg",
+      "source": "machine_light_2.wav",
+      "src_size_bytes": 12044,
+      "dst_size_bytes": 9427,
+      "compression_ratio": 1.28,
+      "src_format": {
+        "codec": "pcm_u8",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 8,
+        "duration": 0.537279,
+        "bit_rate": 179333
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 0.537279,
+        "bit_rate": 140366
+      }
+    },
+    {
+      "filename": "machine_light_3.ogg",
+      "source": "machine_light_3.wav",
+      "src_size_bytes": 24728,
+      "dst_size_bytes": 9831,
+      "compression_ratio": 2.52,
+      "src_format": {
+        "codec": "pcm_u8",
+        "sample_rate": 44100,
+        "channels": 1,
+        "bits_per_sample": 8,
+        "duration": 0.554558,
+        "bit_rate": 356723
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 0.554558,
+        "bit_rate": 141821
+      }
+    },
+    {
+      "filename": "machine_light_4.ogg",
+      "source": "machine_light_4.wav",
+      "src_size_bytes": 15652,
+      "dst_size_bytes": 10547,
+      "compression_ratio": 1.48,
+      "src_format": {
+        "codec": "pcm_u8",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 8,
+        "duration": 0.700952,
+        "bit_rate": 178637
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 0.700952,
+        "bit_rate": 120373
+      }
+    },
+    {
+      "filename": "machine_light_5.ogg",
+      "source": "machine_light_5.wav",
+      "src_size_bytes": 15712,
+      "dst_size_bytes": 10601,
+      "compression_ratio": 1.48,
+      "src_format": {
+        "codec": "pcm_u8",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 8,
+        "duration": 0.700227,
+        "bit_rate": 179507
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 0.700227,
+        "bit_rate": 121115
+      }
+    },
+    {
+      "filename": "machine_light_6.ogg",
+      "source": "machine_light_6.wav",
+      "src_size_bytes": 15436,
+      "dst_size_bytes": 10697,
+      "compression_ratio": 1.44,
+      "src_format": {
+        "codec": "pcm_u8",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 8,
+        "duration": 0.691156,
+        "bit_rate": 178668
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 0.691156,
+        "bit_rate": 123815
+      }
+    },
+    {
+      "filename": "machine_med_1.ogg",
+      "source": "machine_med_1.wav",
+      "src_size_bytes": 18626,
+      "dst_size_bytes": 11115,
+      "compression_ratio": 1.68,
+      "src_format": {
+        "codec": "pcm_u8",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 8,
+        "duration": 0.835782,
+        "bit_rate": 178285
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 0.835782,
+        "bit_rate": 106391
+      }
+    },
+    {
+      "filename": "machine_med_2.ogg",
+      "source": "machine_med_2.wav",
+      "src_size_bytes": 17892,
+      "dst_size_bytes": 13339,
+      "compression_ratio": 1.34,
+      "src_format": {
+        "codec": "pcm_u8",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 8,
+        "duration": 0.80254,
+        "bit_rate": 178353
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 0.80254,
+        "bit_rate": 132967
+      }
+    },
+    {
+      "filename": "machine_med_3.ogg",
+      "source": "machine_med_3.wav",
+      "src_size_bytes": 14740,
+      "dst_size_bytes": 10196,
+      "compression_ratio": 1.45,
+      "src_format": {
+        "codec": "pcm_u8",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 8,
+        "duration": 0.659592,
+        "bit_rate": 178777
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 0.659592,
+        "bit_rate": 123664
+      }
+    },
+    {
+      "filename": "menu_close_1.ogg",
+      "source": "menu_close_1.wav",
+      "src_size_bytes": 16452,
+      "dst_size_bytes": 10234,
+      "compression_ratio": 1.61,
+      "src_format": {
+        "codec": "pcm_u8",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 8,
+        "duration": 0.7322,
+        "bit_rate": 179754
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 0.7322,
+        "bit_rate": 111816
+      }
+    },
+    {
+      "filename": "menu_open_1.ogg",
+      "source": "menu_open_1.wav",
+      "src_size_bytes": 17660,
+      "dst_size_bytes": 10817,
+      "compression_ratio": 1.63,
+      "src_format": {
+        "codec": "pcm_u8",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 8,
+        "duration": 0.788435,
+        "bit_rate": 179190
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 0.788435,
+        "bit_rate": 109756
+      }
+    },
+    {
+      "filename": "money_1.ogg",
+      "source": "money_1.wav",
+      "src_size_bytes": 33624,
+      "dst_size_bytes": 17456,
+      "compression_ratio": 1.93,
+      "src_format": {
+        "codec": "pcm_u8",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 8,
+        "duration": 1.515964,
+        "bit_rate": 177439
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 1.515964,
+        "bit_rate": 92118
+      }
+    },
+    {
+      "filename": "research_complete_1.ogg",
+      "source": "research_complete_1.wav",
+      "src_size_bytes": 23240,
+      "dst_size_bytes": 13266,
+      "compression_ratio": 1.75,
+      "src_format": {
+        "codec": "pcm_u8",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 8,
+        "duration": 1.034739,
+        "bit_rate": 179678
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 1.034739,
+        "bit_rate": 102564
+      }
+    },
+    {
+      "filename": "rocket_light_1.ogg",
+      "source": "rocket_light_1.wav",
+      "src_size_bytes": 15688,
+      "dst_size_bytes": 10248,
+      "compression_ratio": 1.53,
+      "src_format": {
+        "codec": "pcm_u8",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 8,
+        "duration": 0.706032,
+        "bit_rate": 177759
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 0.706032,
+        "bit_rate": 116119
+      }
+    },
+    {
+      "filename": "rocket_light_2.ogg",
+      "source": "rocket_light_2.wav",
+      "src_size_bytes": 16038,
+      "dst_size_bytes": 10316,
+      "compression_ratio": 1.55,
+      "src_format": {
+        "codec": "pcm_u8",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 8,
+        "duration": 0.721859,
+        "bit_rate": 177741
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 0.721859,
+        "bit_rate": 114327
+      }
+    },
+    {
+      "filename": "rocket_light_3.ogg",
+      "source": "rocket_light_3.wav",
+      "src_size_bytes": 15182,
+      "dst_size_bytes": 9981,
+      "compression_ratio": 1.52,
+      "src_format": {
+        "codec": "pcm_u8",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 8,
+        "duration": 0.683039,
+        "bit_rate": 177817
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 0.683039,
+        "bit_rate": 116901
+      }
+    },
+    {
+      "filename": "scream_1.ogg",
+      "source": "scream_1.wav",
+      "src_size_bytes": 19648,
+      "dst_size_bytes": 11630,
+      "compression_ratio": 1.69,
+      "src_format": {
+        "codec": "pcm_u8",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 8,
+        "duration": 0.875283,
+        "bit_rate": 179580
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 0.875283,
+        "bit_rate": 106297
+      }
+    },
+    {
+      "filename": "scream_2.ogg",
+      "source": "scream_2.wav",
+      "src_size_bytes": 20988,
+      "dst_size_bytes": 12105,
+      "compression_ratio": 1.73,
+      "src_format": {
+        "codec": "pcm_u8",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 8,
+        "duration": 0.936054,
+        "bit_rate": 179374
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 0.936054,
+        "bit_rate": 103455
+      }
+    },
+    {
+      "filename": "scream_3.ogg",
+      "source": "scream_3.wav",
+      "src_size_bytes": 17970,
+      "dst_size_bytes": 10997,
+      "compression_ratio": 1.63,
+      "src_format": {
+        "codec": "pcm_u8",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 8,
+        "duration": 0.799138,
+        "bit_rate": 179893
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 0.799138,
+        "bit_rate": 110088
+      }
+    },
+    {
+      "filename": "scream_4.ogg",
+      "source": "scream_4.wav",
+      "src_size_bytes": 14308,
+      "dst_size_bytes": 9631,
+      "compression_ratio": 1.49,
+      "src_format": {
+        "codec": "pcm_u8",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 8,
+        "duration": 0.62966,
+        "bit_rate": 181786
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 0.62966,
+        "bit_rate": 122364
+      }
+    },
+    {
+      "filename": "scream_5.ogg",
+      "source": "scream_5.wav",
+      "src_size_bytes": 14124,
+      "dst_size_bytes": 9541,
+      "compression_ratio": 1.48,
+      "src_format": {
+        "codec": "pcm_u8",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 8,
+        "duration": 0.624762,
+        "bit_rate": 180856
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 0.624762,
+        "bit_rate": 122171
+      }
+    },
+    {
+      "filename": "select_1.ogg",
+      "source": "select_1.wav",
+      "src_size_bytes": 22578,
+      "dst_size_bytes": 12622,
+      "compression_ratio": 1.79,
+      "src_format": {
+        "codec": "pcm_u8",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 8,
+        "duration": 0.999909,
+        "bit_rate": 180640
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 0.999909,
+        "bit_rate": 100985
+      }
+    },
+    {
+      "filename": "select_2.ogg",
+      "source": "select_2.wav",
+      "src_size_bytes": 26016,
+      "dst_size_bytes": 13584,
+      "compression_ratio": 1.92,
+      "src_format": {
+        "codec": "pcm_u8",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 8,
+        "duration": 1.146395,
+        "bit_rate": 181549
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 1.146395,
+        "bit_rate": 94794
+      }
+    },
+    {
+      "filename": "select_3.ogg",
+      "source": "select_3.wav",
+      "src_size_bytes": 22520,
+      "dst_size_bytes": 12549,
+      "compression_ratio": 1.79,
+      "src_format": {
+        "codec": "pcm_u8",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 8,
+        "duration": 0.999592,
+        "bit_rate": 180233
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 0.999592,
+        "bit_rate": 100432
+      }
+    },
+    {
+      "filename": "select_4.ogg",
+      "source": "select_4.wav",
+      "src_size_bytes": 23562,
+      "dst_size_bytes": 12697,
+      "compression_ratio": 1.86,
+      "src_format": {
+        "codec": "pcm_u8",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 8,
+        "duration": 1.039773,
+        "bit_rate": 181285
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 1.039773,
+        "bit_rate": 97690
+      }
+    },
+    {
+      "filename": "select_5.ogg",
+      "source": "select_5.wav",
+      "src_size_bytes": 22474,
+      "dst_size_bytes": 12562,
+      "compression_ratio": 1.79,
+      "src_format": {
+        "codec": "pcm_u8",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 8,
+        "duration": 1.0,
+        "bit_rate": 179792
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 1.0,
+        "bit_rate": 100496
+      }
+    },
+    {
+      "filename": "select_6.ogg",
+      "source": "select_6.wav",
+      "src_size_bytes": 22246,
+      "dst_size_bytes": 12515,
+      "compression_ratio": 1.78,
+      "src_format": {
+        "codec": "pcm_u8",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 8,
+        "duration": 1.0,
+        "bit_rate": 177968
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 1.0,
+        "bit_rate": 100120
+      }
+    },
+    {
+      "filename": "sniper_1.ogg",
+      "source": "sniper_1.wav",
+      "src_size_bytes": 10130,
+      "dst_size_bytes": 8192,
+      "compression_ratio": 1.24,
+      "src_format": {
+        "codec": "pcm_u8",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 8,
+        "duration": 0.453968,
+        "bit_rate": 178514
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 0.453968,
+        "bit_rate": 144362
+      }
+    },
+    {
+      "filename": "sniper_2.ogg",
+      "source": "sniper_2.wav",
+      "src_size_bytes": 9516,
+      "dst_size_bytes": 8010,
+      "compression_ratio": 1.19,
+      "src_format": {
+        "codec": "pcm_u8",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 8,
+        "duration": 0.426122,
+        "bit_rate": 178653
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 0.426122,
+        "bit_rate": 150379
+      }
+    },
+    {
+      "filename": "sniper_3.ogg",
+      "source": "sniper_3.wav",
+      "src_size_bytes": 9084,
+      "dst_size_bytes": 7748,
+      "compression_ratio": 1.17,
+      "src_format": {
+        "codec": "pcm_u8",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 8,
+        "duration": 0.406531,
+        "bit_rate": 178761
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 0.406531,
+        "bit_rate": 152470
+      }
+    },
+    {
+      "filename": "tank_heavy_1.ogg",
+      "source": "tank_heavy_1.wav",
+      "src_size_bytes": 18930,
+      "dst_size_bytes": 11123,
+      "compression_ratio": 1.7,
+      "src_format": {
+        "codec": "pcm_u8",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 8,
+        "duration": 0.848753,
+        "bit_rate": 178426
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 0.848753,
+        "bit_rate": 104840
+      }
+    },
+    {
+      "filename": "tank_heavy_2.ogg",
+      "source": "tank_heavy_2.wav",
+      "src_size_bytes": 13780,
+      "dst_size_bytes": 9268,
+      "compression_ratio": 1.49,
+      "src_format": {
+        "codec": "pcm_u8",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 8,
+        "duration": 0.619501,
+        "bit_rate": 177949
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 0.619501,
+        "bit_rate": 119683
+      }
+    },
+    {
+      "filename": "tank_heavy_3.ogg",
+      "source": "tank_heavy_3.wav",
+      "src_size_bytes": 20686,
+      "dst_size_bytes": 9945,
+      "compression_ratio": 2.08,
+      "src_format": {
+        "codec": "pcm_u8",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 8,
+        "duration": 0.928435,
+        "bit_rate": 178244
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 0.928435,
+        "bit_rate": 85692
+      }
+    },
+    {
+      "filename": "tank_heavy_4.ogg",
+      "source": "tank_heavy_4.wav",
+      "src_size_bytes": 16542,
+      "dst_size_bytes": 8357,
+      "compression_ratio": 1.98,
+      "src_format": {
+        "codec": "pcm_u8",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 8,
+        "duration": 0.744762,
+        "bit_rate": 177688
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 0.744762,
+        "bit_rate": 89768
+      }
+    },
+    {
+      "filename": "tank_light_1.ogg",
+      "source": "tank_light_1.wav",
+      "src_size_bytes": 9204,
+      "dst_size_bytes": 7667,
+      "compression_ratio": 1.2,
+      "src_format": {
+        "codec": "pcm_u8",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 8,
+        "duration": 0.411973,
+        "bit_rate": 178730
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 0.411973,
+        "bit_rate": 148883
+      }
+    },
+    {
+      "filename": "tank_light_2.ogg",
+      "source": "tank_light_2.wav",
+      "src_size_bytes": 8184,
+      "dst_size_bytes": 7188,
+      "compression_ratio": 1.14,
+      "src_format": {
+        "codec": "pcm_u8",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 8,
+        "duration": 0.365714,
+        "bit_rate": 179025
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 0.365714,
+        "bit_rate": 157237
+      }
+    },
+    {
+      "filename": "tank_light_3.ogg",
+      "source": "tank_light_3.wav",
+      "src_size_bytes": 7952,
+      "dst_size_bytes": 7212,
+      "compression_ratio": 1.1,
+      "src_format": {
+        "codec": "pcm_u8",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 8,
+        "duration": 0.355193,
+        "bit_rate": 179102
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 0.355193,
+        "bit_rate": 162435
+      }
+    },
+    {
+      "filename": "tank_light_4.ogg",
+      "source": "tank_light_4.wav",
+      "src_size_bytes": 8044,
+      "dst_size_bytes": 7183,
+      "compression_ratio": 1.12,
+      "src_format": {
+        "codec": "pcm_u8",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 8,
+        "duration": 0.359365,
+        "bit_rate": 179071
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 0.359365,
+        "bit_rate": 159904
+      }
+    },
+    {
+      "filename": "tank_siege_1.ogg",
+      "source": "tank_siege_1.wav",
+      "src_size_bytes": 15944,
+      "dst_size_bytes": 10046,
+      "compression_ratio": 1.59,
+      "src_format": {
+        "codec": "pcm_u8",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 8,
+        "duration": 0.717642,
+        "bit_rate": 177737
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 0.717642,
+        "bit_rate": 111988
+      }
+    },
+    {
+      "filename": "tank_siege_2.ogg",
+      "source": "tank_siege_2.wav",
+      "src_size_bytes": 14266,
+      "dst_size_bytes": 9435,
+      "compression_ratio": 1.51,
+      "src_format": {
+        "codec": "pcm_u8",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 8,
+        "duration": 0.641497,
+        "bit_rate": 177908
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 0.641497,
+        "bit_rate": 117662
+      }
+    },
+    {
+      "filename": "tank_siege_3.ogg",
+      "source": "tank_siege_3.wav",
+      "src_size_bytes": 14572,
+      "dst_size_bytes": 9648,
+      "compression_ratio": 1.51,
+      "src_format": {
+        "codec": "pcm_u8",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bits_per_sample": 8,
+        "duration": 0.65542,
+        "bit_rate": 177864
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 0.65542,
+        "bit_rate": 117762
+      }
+    }
+  ],
+  "music": [
+    {
+      "filename": "music.ogg",
+      "source": "music.mp3",
+      "src_size_bytes": 1889074,
+      "dst_size_bytes": 2134378,
+      "compression_ratio": 0.89,
+      "src_format": {
+        "codec": "mp3",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 118.003125,
+        "bit_rate": 128069
+      },
+      "dst_format": {
+        "codec": "vorbis",
+        "sample_rate": 44100,
+        "channels": 2,
+        "bits_per_sample": 0,
+        "duration": 117.995102,
+        "bit_rate": 144709
+      },
+      "note": "Converted from music.mp3 (128 kbps stereo) rather than music.wav (8-bit mono 22050 Hz) because the MP3 is higher fidelity. Original music.wav is preserved in audio/ for archival."
+    }
+  ]
+}

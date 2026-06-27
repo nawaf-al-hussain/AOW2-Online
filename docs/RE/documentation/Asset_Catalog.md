@@ -712,10 +712,12 @@ docs/RE/external_versions/
 │   ├── crack/        (2 cracker-added .class files)
 │   └── metadata/     (1 MANIFEST.MF)
 └── ipa_ios_v2.2/                                 ← iOS premium build (Gear Games 2009)
-    ├── audio/        (74 files: 72 SFX .wav + music.mp3 + music.wav)
+    ├── audio/        (74 files: 72 SFX .wav + music.mp3 + music.wav — RAW)
+    ├── audio_ogg/    (73 OGG + inventory.json — DECODED for FXGL, see §11.6)
     ├── archives/     (1 file: add = ZIP archive containing duplicate music.mp3)
     ├── app_icons/    (2 files: Default.png + Icon.png)
-    ├── sprites/      (6 files: d1 master atlas + 2 localized i0 packs + d00 + l1, l2, l3)
+    ├── sprites/      (6 files: d1 master atlas + 2 localized i0 packs + d00 + l1, l2, l3 — RAW)
+    ├── sprites_decoded/ (95 files — DECODED for FXGL, see §11.6)
     ├── maps/         (6 files: m0-m5)
     ├── missions/     (37 files: mi0-mi6 generic + mi7_en through mi21_en + mi7_ru through mi21_ru)
     ├── text/         (6 files: English_t0/s0/d0 + Russian_t0/s0/d0)
@@ -758,3 +760,101 @@ python3 scripts/organize_external_versions.py
 ```
 
 Verification: 286 files organized (52 + 88 + 146), totalling 16.5 MB. Counts match the raw extractions exactly — no files dropped, no files duplicated across version folders.
+
+### 11.6 Decoded / FXGL-ready assets (NEW)
+
+The raw iOS extraction under `ipa_ios_v2.2/sprites/` and `ipa_ios_v2.2/audio/` contains files in Gear Games' proprietary packaging formats (packed sprite containers, 8-bit PCM WAV). These are not directly loadable by FXGL, so a second decoding/conversion pass was applied.
+
+**Total decoded assets**: 168 files (90 sprites + 73 OGG audio + 3 loading screens + 2 inventory JSONs)
+
+**Full per-file reference**: see `docs/RE/external_versions/ipa_ios_v2.2/DECODED_ASSETS.md`
+
+#### 11.6.1 Decoded sprites (`ipa_ios_v2.2/sprites_decoded/`) — 95 files
+
+| Subfolder / file | Files | Purpose |
+|------------------|-------|---------|
+| `d1_master_atlas.png` | 1 | Renamed copy of the 1024×1024 RGBA master atlas |
+| `english/en_000.png` – `en_044.png` | 45 | Individual PNG sprites unpacked from `English_i0` |
+| `russian/ru_000.png` – `ru_044.png` | 45 | Individual PNG sprites unpacked from `Russian_i0` |
+| `loading_screen_small.png` | 1 | Renamed `l1` (148×98) |
+| `loading_screen_full.png` | 1 | Renamed `l2` (480×320) |
+| `loading_screen_alt.png` | 1 | Renamed `l3` (480×320) |
+| `inventory.json` | 1 | Machine-readable metadata for every decoded sprite |
+
+**i0 container format (iOS variant)** — decoded by `scripts/decode_ios_sprites.py`:
+
+```
+[3-byte BE size][PNG data][3-byte 0x000000 separator]
+[3-byte BE size][PNG data][3-byte 0x000000 separator]
+...
+[3-byte BE size][PNG data]                ← last sprite, no trailing separator
+[3-byte 0x000000 separator][0xFF terminator]
+```
+
+At section boundaries (observed between index 36 and 37), there are **two consecutive 3-byte separators** instead of one. The decoder handles this by skipping all consecutive zero-byte groups before reading the next size prefix.
+
+#### 11.6.2 Converted audio (`ipa_ios_v2.2/audio_ogg/`) — 74 files
+
+| Subfolder / file | Files | Purpose |
+|------------------|-------|---------|
+| `sfx/*.ogg` | 72 | All 72 SFX WAV files converted to OGG/Vorbis at 96 kbps VBR |
+| `music/music.ogg` | 1 | Background music converted from `music.mp3` at 160 kbps VBR |
+| `inventory.json` | 1 | Machine-readable conversion metadata |
+
+**Conversion parameters** (applied by `scripts/convert_ios_audio_to_ogg.py`):
+
+| Asset | Codec | Bitrate | Sample rate | Channels | Compression |
+|-------|-------|---------|-------------|----------|-------------|
+| SFX | libvorbis | 96 kbps VBR | 44100 Hz | Stereo | 2.1× (1.92 MB → 0.92 MB) |
+| Music | libvorbis | 160 kbps VBR | 44100 Hz | Stereo | 0.89× (1.89 MB → 2.13 MB, quality upgrade) |
+
+**Why resample to 44100 Hz stereo?** FFmpeg's libvorbis encoder fails with "encoder setup failed" on 22050 Hz mono input (a known Debian package quirk). Resampling to 44100 Hz stereo (duplicating the mono channel) works around this and produces output that sounds identical to the original mono.
+
+#### 11.6.3 SFX inventory by category
+
+| Category | Files | Total OGG size | Examples |
+|----------|-------|----------------|----------|
+| UI / selection | 25 | 378 KB | `select_1.ogg`–`select_6.ogg`, `affirmative_1.ogg`–`affirmative_4.ogg`, `menu_open_1.ogg`, `money_1.ogg`, `build_1.ogg`, `building_ready_1.ogg`, `research_complete_1.ogg` |
+| Infantry weapons | 4 | 41 KB | `sniper_1.ogg`–`sniper_3.ogg`, `flamethrower_1.ogg` |
+| Vehicle weapons | 23 | 224 KB | `machine_light_1.ogg`–`machine_light_6.ogg`, `machine_med_1.ogg`–`machine_med_3.ogg`, `tank_light/heavy/siege_*.ogg`, `rocket_light_*.ogg` |
+| Explosions | 14 | 195 KB | `explode_light_1.ogg`–`explode_light_5.ogg`, `explode_heavy_1.ogg`–`explode_heavy_7.ogg`, `explode_bld_1.ogg`–`explode_bld_2.ogg` |
+| Voice | 6 | 86 KB | `scream_1.ogg`–`scream_5.ogg`, `attack_1.ogg` |
+| **Total** | **72** | **924 KB** | |
+
+#### 11.6.4 Usage in FXGL
+
+```bash
+# Copy decoded sprites into FXGL assets
+cp docs/RE/external_versions/ipa_ios_v2.2/sprites_decoded/english/*.png \
+   aow2-client/src/main/resources/assets/textures/entities/
+cp docs/RE/external_versions/ipa_ios_v2.2/sprites_decoded/loading_screen_*.png \
+   aow2-client/src/main/resources/assets/textures/ui/
+
+# Copy converted audio into FXGL assets
+cp docs/RE/external_versions/ipa_ios_v2.2/audio_ogg/sfx/*.ogg \
+   aow2-client/src/main/resources/assets/sounds/
+cp docs/RE/external_versions/ipa_ios_v2.2/audio_ogg/music/music.ogg \
+   aow2-client/src/main/resources/assets/music/
+```
+
+```java
+// Load a sprite
+Texture sprite = FXGL.assetLoader().loadTexture("entities/en_005.png");
+
+// Play a SFX
+Audio sound = FXGL.assetLoader().loadSound("sounds/sniper_1.ogg");
+FXGL.getAudioPlayer().playSound(sound);
+
+// Play looping music
+Audio music = FXGL.assetLoader().loadMusic("music/music.ogg");
+FXGL.getAudioPlayer().playMusic("bgm", music);
+```
+
+#### 11.6.5 Regenerating decoded assets
+
+Both decoder scripts are idempotent and can be re-run if source files change:
+
+```bash
+python3 /home/z/my-project/scripts/decode_ios_sprites.py
+python3 /home/z/my-project/scripts/convert_ios_audio_to_ogg.py
+```

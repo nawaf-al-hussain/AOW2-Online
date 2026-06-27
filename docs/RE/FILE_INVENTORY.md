@@ -36,10 +36,22 @@
 │   │   ├── crack/        (2 cracker-added .class files in crk/ subfolder of original JAR)
 │   │   └── metadata/     (1 MANIFEST.MF with MIDlet-1 + MIDlet-2 Crack AOW2 entries)
 │   └── ipa_ios_v2.2/                       - iOS premium build (Gear Games 2009, 146 files)
-│       ├── audio/        (74 files: 72 SFX .wav + music.mp3 + music.wav — ONLY source for SFX)
+│       ├── audio/        (74 files: 72 SFX .wav + music.mp3 + music.wav — RAW, ONLY source for SFX)
+│       ├── audio_ogg/    (74 files: 72 SFX OGG + music.ogg + inventory.json — DECODED for FXGL)
+│       │   ├── sfx/      (72 OGG files at 96 kbps VBR, 44100 Hz stereo — 2.1× compression vs WAV)
+│       │   ├── music/    (1 OGG: music.ogg at 160 kbps VBR from music.mp3)
+│       │   └── inventory.json
 │       ├── archives/     (1 file: add = ZIP archive containing duplicate music.mp3)
 │       ├── app_icons/    (2 files: Default.png + Icon.png)
-│       ├── sprites/      (6 files: d1 1024×1024 master atlas + 2 localized i0 packs + d00 + l1, l2, l3)
+│       ├── sprites/      (6 files: d1 1024×1024 master atlas + 2 localized i0 packs + d00 + l1, l2, l3 — RAW)
+│       ├── sprites_decoded/ (95 files: 90 PNGs + 3 loading screens + 1 inventory.json + 1 atlas — DECODED for FXGL)
+│       │   ├── d1_master_atlas.png   (1024×1024 RGBA — renamed copy of d1)
+│       │   ├── english/              (45 PNGs: en_000.png – en_044.png, unpacked from English_i0)
+│       │   ├── russian/              (45 PNGs: ru_000.png – ru_044.png, unpacked from Russian_i0)
+│       │   ├── loading_screen_small.png  (renamed l1)
+│       │   ├── loading_screen_full.png   (renamed l2)
+│       │   ├── loading_screen_alt.png    (renamed l3)
+│       │   └── inventory.json
 │       ├── maps/         (6 files: m0-m5)
 │       ├── missions/     (37 files: mi0-mi6 generic + mi7_en–mi21_en + mi7_ru–mi21_ru)
 │       ├── text/         (6 files: English_t0/s0/d0 + Russian_t0/s0/d0 — ONLY source for Russian)
@@ -105,27 +117,33 @@
 
 The Online APK (HeroCraft 2011, 2.3 MB) is a downstream Android port of a 2009–2010 Gear Games J2ME title. Android's resource pipeline stripped several asset classes that the AOW2-Online recreation project needs:
 
-- **Pre-recorded SFX** (gunfire, screams, UI clicks, explosions) — only the iOS build ships these (72 WAV files)
-- **Full-quality music** — the APK only had two 10 KB MIDI files; iOS ships `music.mp3` (1.9 MB) and `music.wav` (2.6 MB)
+- **Pre-recorded SFX** (gunfire, screams, UI clicks, explosions) — only the iOS build ships these (72 WAV files, also converted to 72 OGG files under `audio_ogg/`)
+- **Full-quality music** — the APK only had two 10 KB MIDI files; iOS ships `music.mp3` (1.9 MB) and `music.wav` (2.6 MB), also converted to `music.ogg` under `audio_ogg/`
 - **Episode 2 — Liberation of Peru** campaign (38 maps) — only the Peru JAR ships these
 - **Plain-text game strings** — the APK encodes them in `sn8p` binary; the Peru JAR and iOS build both ship readable ASCII
 - **1024×1024 master sprite atlas** — only the iOS build ships a true-color atlas (`d1`)
+- **Pre-sliced individual sprites** — only the iOS build ships pre-sliced sprites in its `i0` containers (90 sprites unpacked under `sprites_decoded/`)
 - **Russian localization** — only the iOS build ships Russian text and localized sprites
 - **Episode 1 pre-Android form** — the J2ME Global Confederation JAR is the canonical pre-port source
 
-See `external_versions/EXTERNAL_VERSIONS.md` for the per-file reference, and `documentation/Asset_Catalog.md` §11 for the cross-version asset selection guide.
+See:
+- `external_versions/EXTERNAL_VERSIONS.md` for the raw per-file reference
+- `external_versions/ipa_ios_v2.2/DECODED_ASSETS.md` for the decoded/converted assets reference (FXGL-ready)
+- `documentation/Asset_Catalog.md` §11 (especially §11.6) for the cross-version asset selection guide
 
 ### Key Statistics
 - **Total Java classes decompiled**: 185 (87 main + 28×3 resolution variants) — Online APK only
 - **Total assets cataloged**: 256 raw → 405 processed — Online APK only
 - **External version files cataloged**: 286 files (52 + 88 + 146) across 3 non-APK distributions
 - **External version total size**: 16.5 MB (988 KB + 1.5 MB + 14 MB)
+- **Decoded iOS sprites**: 90 PNGs (45 English + 45 Russian) + 3 loading screens + 1 master atlas = 95 files
+- **Converted iOS audio**: 73 OGG files (72 SFX + 1 music) + 1 inventory JSON = 74 files
 - **Unit types**: 14 (7 Confederation + 7 Rebels) + 3 mines
 - **Building types**: 16 (8 per faction)
 - **Technologies**: 16 (8 per faction) + 32 asymmetric research effects
 - **Network message types**: 34 identified
 - **Decoded text strings**: 567 (Online APK) + plain-ASCII strings from Peru JAR and iOS build
 - **Map records**: 193 (Online APK) + 38 Peru Episode 2 maps + 6 iOS Episode 1 maps
-- **SFX files**: 0 (Online APK) → 72 WAV files (iOS only)
+- **SFX files**: 0 (Online APK) → 72 WAV files (iOS raw) → 72 OGG files (iOS decoded for FXGL)
 - **Master documentation**: 3,330 lines
 - **Recreation blueprint**: 2,283 lines

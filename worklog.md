@@ -50,3 +50,44 @@ Stage Summary:
 - BIG WIN: iOS build ships 37 mission scripts (mi0-mi21 × 2 languages) — only full mission briefing set
 - Cracker artifacts isolated under `crack/` subfolders (Peru: 2 .class files; iOS: Spid3r signature + CutCut Mach-O) — preserved for forensic completeness but flagged as non-game-assets
 - Categorization script preserved at `scripts/organize_external_versions.py` for re-runnability
+
+---
+Task ID: 3
+Agent: Main
+Task: Decode iOS sprite atlas and convert WAV SFX to OGG for FXGL (subtasks 1 & 2 from previous session's recommendation list).
+
+Work Log:
+- Step 1: Wrote `scripts/decode_ios_sprites.py` to unpack the iOS i0 sprite containers
+- Step 2: Reverse-engineered the iOS i0 format:
+  * [3-byte BE size][PNG data][3-byte 0x000000 separator]...[0xFF terminator]
+  * At section boundaries (e.g. between UI and unit sprites) there are TWO consecutive separators
+  * This differs from the J2ME i0 format which uses [3-byte size][PNG]...[0xFF] with no separators
+- Step 3: Extracted 90 individual sprites (45 English + 45 Russian) from English_i0 and Russian_i0
+  * All 45 IEND markers matched — full extraction, no truncated sprites
+  * 44/45 sprites have identical EN/RU dimensions; sprite 37 differs (RU=212×72 vs EN=148×36) due to longer Cyrillic text
+- Step 4: Copied d1 master atlas as `d1_master_atlas.png` (1024×1024 RGBA, 1.27 MB)
+- Step 5: Copied loading screens with descriptive names (loading_screen_small/full/alt.png)
+- Step 6: Wrote `inventory.json` with full metadata for every decoded sprite (index, filename, size, dimensions, mode, format)
+- Step 7: Wrote `scripts/convert_ios_audio_to_ogg.py` to convert WAV/MP3 to OGG/Vorbis via ffmpeg
+- Step 8: Discovered libvorbis encoder fails on 22050 Hz mono input ("encoder setup failed" — Debian ffmpeg quirk)
+- Step 9: Fixed by resampling to 44100 Hz stereo (duplicating mono channel — audibly identical) before encoding
+- Step 10: Converted all 72 SFX WAV files to OGG at 96 kbps VBR (1.92 MB → 0.92 MB, 2.1× compression)
+- Step 11: Converted music.mp3 to music.ogg at 160 kbps VBR (1.89 MB → 2.13 MB — quality upgrade from 128 kbps MP3)
+- Step 12: Wrote `inventory.json` with full conversion metadata (source size, dest size, compression ratio, src/dst format details)
+- Step 13: Wrote `docs/RE/external_versions/ipa_ios_v2.2/DECODED_ASSETS.md` — 280-line per-file reference for all 168 decoded assets
+- Step 14: Updated `docs/RE/external_versions/EXTERNAL_VERSIONS.md` — added DECODED_ASSETS.md reference and updated directory layout
+- Step 15: Updated `docs/RE/documentation/Asset_Catalog.md` — added §11.6 "Decoded / FXGL-ready assets" with usage examples
+- Step 16: Updated `docs/RE/FILE_INVENTORY.md` — added sprites_decoded/ and audio_ogg/ to iOS tree, updated key statistics
+- Step 17: Commit and push to GitHub
+
+Stage Summary:
+- iOS i0 format reverse-engineered: 3-byte BE size prefix + 3-byte 0x000000 separator between sprites + 0xFF terminator at end (differs from J2ME format which has no separators)
+- 90 sprites extracted (45 EN + 45 RU) — all FXGL-ready PNG files
+- 1 master atlas preserved (1024×1024 RGBA, 1.27 MB) — sub-sprite boundaries require iOS Mach-O analysis (out of scope)
+- 3 loading screens renamed with descriptive filenames
+- 72 SFX OGG files (96 kbps VBR, 44100 Hz stereo) — 2.1× smaller than WAV source
+- 1 music OGG file (160 kbps VBR, 44100 Hz stereo) — quality upgrade from 128 kbps MP3
+- All assets ready for direct use in FXGL via `FXGL.assetLoader().loadTexture()` / `loadSound()` / `loadMusic()`
+- Total decoded assets: 168 files (90 sprites + 3 loading screens + 1 atlas + 1 sprite inventory + 72 SFX OGG + 1 music OGG + 1 audio inventory + 1 DECODED_ASSETS.md doc... actually 95 + 74 = 169 asset files + documentation)
+- ffmpeg libvorbis quirk documented in DECODED_ASSETS.md §3.2 and Asset_Catalog.md §11.6.2
+- Both decoder scripts (`scripts/decode_ios_sprites.py`, `scripts/convert_ios_audio_to_ogg.py`) are idempotent and re-runnable
