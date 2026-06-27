@@ -46,6 +46,9 @@ public final class CommandProcessor {
     /** Handler for garrison commands. */
     private final GarrisonCommandHandler garrisonHandler;
 
+    /** Handler for upgrade commands. */
+    private final UpgradeCommandHandler upgradeHandler;
+
     /**
      * Constructs a CommandProcessor with default handlers.
      */
@@ -56,6 +59,7 @@ public final class CommandProcessor {
         this.produceHandler = new ProduceCommandHandler();
         this.researchHandler = new ResearchCommandHandler();
         this.garrisonHandler = new GarrisonCommandHandler();
+        this.upgradeHandler = new UpgradeCommandHandler();
     }
 
     /**
@@ -90,6 +94,7 @@ public final class CommandProcessor {
             case CommandType.SiegeMode cmd -> handleSiegeMode(cmd, entities, combat);
             case CommandType.Stop cmd -> handleStop(cmd, entities);
             case CommandType.Patrol cmd -> handlePatrol(cmd, entities, map, movement);
+            case CommandType.Upgrade cmd -> upgradeHandler.handle(cmd, entities, economy, null);
         }
     }
 

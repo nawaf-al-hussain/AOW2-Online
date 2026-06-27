@@ -39,6 +39,7 @@ public final class ReplayRecorder {
     private static final int TYPE_STOP = 0x0A;
     private static final int TYPE_PATROL = 0x0B;
     private static final int TYPE_ATTACK_MOVE = 0x0C;
+    private static final int TYPE_UPGRADE = 0x0D;
 
     /** Whether recording is active. */
     private boolean recording;
@@ -253,6 +254,7 @@ public final class ReplayRecorder {
             case CommandType.Stop st -> TYPE_STOP;
             case CommandType.Patrol pt -> TYPE_PATROL;
             case CommandType.AttackMove am -> TYPE_ATTACK_MOVE;
+            case CommandType.Upgrade u -> TYPE_UPGRADE;
         };
 
         byte[] fullPayload = CommandSerializer.serialize(command);

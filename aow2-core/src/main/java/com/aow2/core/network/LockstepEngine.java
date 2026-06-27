@@ -630,6 +630,16 @@ public final class LockstepEngine {
                     }
                 }
             }
+            case CommandType.Upgrade u -> {
+                // Route Upgrade command through CommandProcessor
+                if (economySystem == null) {
+                    log.warn("Upgrade command skipped: economySystem not injected");
+                } else {
+                    commandProcessor.process(u, state, entities, gameMap, movementSystem,
+                            combatSystem, economySystem, productionSystem, researchSystem,
+                            buildingPlacementSystem);
+                }
+            }
         }
     }
 

@@ -25,12 +25,11 @@ public record ReplayEntry(
         if (tick < 0) {
             throw new IllegalArgumentException("tick must not be negative, got: " + tick);
         }
-        // FIX (C2 from CRITICAL_ANALYSIS_REPORT.md): Validate against 12, not 11.
-        // TYPE_ATTACK_MOVE = 0x0C = 12 — the previous bound of 11 caused every AttackMove
-        // command to throw IllegalArgumentException, crashing the replay recorder.
-        // REF: ReplayRecorder.java TYPE_ATTACK_MOVE = 0x0C
-        if (typeOrd < 0 || typeOrd > 12) {
-            throw new IllegalArgumentException("typeOrd must be 0-12, got: " + typeOrd);
+        // FIX (C2 from CRITICAL_ANALYSIS_REPORT.md): Validate against 13, not 12.
+        // TYPE_ATTACK_MOVE = 0x0C = 12, TYPE_UPGRADE = 0x0D = 13
+        // REF: ReplayRecorder.java TYPE_UPGRADE = 0x0D
+        if (typeOrd < 0 || typeOrd > 13) {
+            throw new IllegalArgumentException("typeOrd must be 0-13, got: " + typeOrd);
         }
         if (playerId < 0 || playerId > 1) {
             throw new IllegalArgumentException("playerId must be 0 or 1, got: " + playerId);

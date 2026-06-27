@@ -398,6 +398,7 @@ class CommandTypeTest {
                 case CommandType.Stop s -> "Stop";
                 case CommandType.AttackMove am -> "AttackMove";
                 case CommandType.Patrol p -> "Patrol";
+                case CommandType.Upgrade u -> "Upgrade";
             };
         }
 

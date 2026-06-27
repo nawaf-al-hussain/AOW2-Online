@@ -157,6 +157,7 @@ combat with projectiles and splash damage, and view replays. Everything else has
 - [x] FIX (L4, Round 6): Deprecated RANK_EXP_THRESHOLDS, RANK_CREDIT_REWARDS, RANK_BONUS_POINTS arrays deleted from GameConstants (zero callers; use GameConfig.getInstance() getters).
 - [x] FIX (L7, Round 6): JwtUtil now uses AOW2_JWT_SECRET env var value directly when Spring's property resolution falls back to the dev default, instead of logging a warning and continuing with the dev secret.
 - [x] FIX (L6, Round 6): MatchmakingService.selectMatchMap now uses a configurable map pool (aow2.matchmaking.map-pool property) instead of hardcoded "test_map". Deterministic selection via playerId seed.
+- [x] FEAT (Building Upgrade Payment Flow): Implemented full building upgrade system — UpgradeCommand (13th CommandType variant), UpgradeCommandHandler (validates ownership, affordability, max level; deducts credits; applies +20% HP bonus per level; updates power grid for Generator upgrades), wired into CommandProcessor, LockstepEngine, CommandSerializer (type 0x0D), ReplayRecorder (type 13), and ReplayEntry (validation bound updated to 13). 13 tests in BuildingUpgradeTest covering validation, effects, serialization, and replay recording.
 - [ ] Performance optimization (entity pooling, sprite batching)
 - [ ] Localization / i18n
 - [ ] Full regression test pass

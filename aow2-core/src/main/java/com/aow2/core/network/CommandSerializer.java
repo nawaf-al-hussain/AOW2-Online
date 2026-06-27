@@ -29,6 +29,7 @@ public final class CommandSerializer {
     private static final byte TYPE_STOP = 0x0A;
     private static final byte TYPE_PATROL = 0x0B;
     private static final byte TYPE_ATTACK_MOVE = 0x0C;
+    private static final byte TYPE_UPGRADE = 0x0D;
 
     private CommandSerializer() {
         // Utility class, no instantiation
@@ -55,6 +56,7 @@ public final class CommandSerializer {
             case CommandType.Stop st -> serializeStop(st);
             case CommandType.Patrol pt -> serializePatrol(pt);
             case CommandType.AttackMove am -> serializeAttackMove(am);
+            case CommandType.Upgrade u -> serializeUpgrade(u);
         };
     }
 
@@ -84,6 +86,7 @@ public final class CommandSerializer {
             case TYPE_STOP -> deserializeStop(buf, tick, playerId);
             case TYPE_PATROL -> deserializePatrol(buf, tick, playerId);
             case TYPE_ATTACK_MOVE -> deserializeAttackMove(buf, tick, playerId);
+            case TYPE_UPGRADE -> deserializeUpgrade(buf, tick, playerId);
             default -> throw new IllegalArgumentException("Unknown command type ID: " + typeId);
         };
     }
@@ -223,6 +226,15 @@ public final class CommandSerializer {
         return buf.array();
     }
 
+    private static byte[] serializeUpgrade(CommandType.Upgrade u) {
+        ByteBuffer buf = ByteBuffer.allocate(1 + 8 + 4 + 4);
+        buf.put(TYPE_UPGRADE);
+        buf.putLong(u.tick());
+        buf.putInt(u.playerId());
+        buf.putInt(u.buildingId());
+        return buf.array();
+    }
+
     // --- Deserialization helpers ---
     //
     // FIX (N2 + N3 from RE_AUDIT_REPORT.md): All deserialization methods now validate
@@ -337,5 +349,10 @@ public final class CommandSerializer {
         int x = buf.getInt();
         int y = buf.getInt();
         return new CommandType.Patrol(tick, playerId, unitIds, new GridPosition(x, y));
+    }
+
+    private static CommandType.Upgrade deserializeUpgrade(ByteBuffer buf, long tick, int playerId) {
+        int buildingId = buf.getInt();
+        return new CommandType.Upgrade(tick, playerId, buildingId);
     }
 }

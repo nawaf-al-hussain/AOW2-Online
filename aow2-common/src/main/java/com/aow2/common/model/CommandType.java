@@ -19,7 +19,7 @@ public sealed interface CommandType permits
     CommandType.Move, CommandType.Attack, CommandType.AttackMove, CommandType.Build,
     CommandType.Produce, CommandType.Research, CommandType.Garrison,
     CommandType.Ungarrison, CommandType.Cancel, CommandType.SiegeMode,
-    CommandType.Stop, CommandType.Patrol {
+    CommandType.Stop, CommandType.Patrol, CommandType.Upgrade {
 
     /**
      * The tick at which this command should be processed.
@@ -398,4 +398,23 @@ public sealed interface CommandType permits
             return result;
         }
     }
+
+    /**
+     * Upgrade a building to the next level.
+     * <p>
+     * Deducts the upgrade cost from the player's credits and increments the
+     * building's upgrade level. Upgrade levels provide:
+     * <ul>
+     *   <li>Generators: increased power radius (10→20→30→40→60→127)</li>
+     *   <li>Command Centres: increased income per cycle</li>
+     *   <li>All buildings: increased max HP</li>
+     * </ul>
+     * REF: complete_building_stats.json — upgradeCosts per building type
+     * REF: GameConstants.BUILDING_POWER_RADIUS — power radius per upgrade level
+     *
+     * @param tick       the game tick when this command was issued
+     * @param playerId   the issuing player's ID (0 or 1)
+     * @param buildingId the entity ID of the building to upgrade
+     */
+    record Upgrade(long tick, int playerId, int buildingId) implements CommandType {}
 }
