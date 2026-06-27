@@ -175,10 +175,8 @@ public final class LuaEngine {
             try {
                 return chunk.call();
             } finally {
-                // Remove the hook after execution to avoid affecting subsequent calls
-                if (thread != null) {
-                    thread.sethook(LuaValue.NIL, LuaValue.NIL, LuaValue.NIL);
-                }
+                // No hook to remove — instruction counting is not available without
+                // LuaThread access (LuaJ 3.x package-private field).
             }
         } catch (LuaError e) {
             if (e.getMessage() != null && e.getMessage().contains("instruction limit")) {
@@ -403,14 +401,14 @@ public final class LuaEngine {
             // Clear all Lua globals by re-creating the standard globals
             globals = JsePlatform.standardGlobals();
             // Re-apply sandboxing on reset
-            globals.remove("os");
-            globals.remove("io");
-            globals.remove("java");
-            globals.remove("debug");
-            globals.set("load", new org.luaj.vm2.LuaNil());
-            globals.set("loadstring", new org.luaj.vm2.LuaNil());
-            globals.set("dofile", new org.luaj.vm2.LuaNil());
-            globals.set("require", new org.luaj.vm2.LuaNil());
+            globals.set("os", LuaValue.NIL);
+            globals.set("io", LuaValue.NIL);
+            globals.set("java", LuaValue.NIL);
+            globals.set("debug", LuaValue.NIL);
+            globals.set("load", LuaValue.NIL);
+            globals.set("loadstring", LuaValue.NIL);
+            globals.set("dofile", LuaValue.NIL);
+            globals.set("require", LuaValue.NIL);
 
             // FIX (M-51): Re-bind game API after reset so the aow2 table is available
             // for new scripts without requiring a full re-initialization.
