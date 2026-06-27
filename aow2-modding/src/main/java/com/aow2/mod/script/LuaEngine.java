@@ -438,7 +438,7 @@ public final class LuaEngine {
      * @param value Java object
      * @return corresponding LuaValue
      */
-    static LuaValue javaToLua(Object value) {
+    public static LuaValue javaToLua(Object value) {
         if (value == null) return LuaValue.NIL;
         if (value instanceof LuaValue lv) return lv;
         if (value instanceof Boolean b) return LuaValue.valueOf(b);
