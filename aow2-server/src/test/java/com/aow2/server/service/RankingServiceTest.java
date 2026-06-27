@@ -158,8 +158,9 @@ class RankingServiceTest {
         Player p1 = createPlayer(1L, 1800, 30);
         Player p3 = createPlayer(3L, 1000, 30);
         when(playerRepository.findById(2L)).thenReturn(Optional.of(p));
-        Page<Player> page = new PageImpl<>(List.of(p1, p, p3));
-        when(playerRepository.findAllByOrderByEloRatingDesc(any(Pageable.class))).thenReturn(page);
+        // FIX (CI verification): getPlayerRanking() uses countByEloRatingGreaterThan to
+        // compute rank. Player 1 has 1800 > 1200, so count = 1, rank = 1+1 = 2.
+        when(playerRepository.countByEloRatingGreaterThan(1200)).thenReturn(1L);
 
         Map<String, Object> ranking = rankingService.getPlayerRanking(2L);
         assertEquals(2, ranking.get("rank"));
