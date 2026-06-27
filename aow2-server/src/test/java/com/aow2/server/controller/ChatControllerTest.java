@@ -123,7 +123,7 @@ class ChatControllerTest {
         // FIX (CI verification): Mock session to show player 1 as a participant.
         // Previously returned Optional.empty() which caused 403 Forbidden because
         // the controller checks session participation before returning messages.
-        GameSession session = new GameSession("match-uuid-1", 1L, 2L, "test_map");
+        GameSession session = new GameSession(1L, 2L, "test_map");
         when(sessionService.getSessionByUuid("match-uuid-1")).thenReturn(java.util.Optional.of(session));
         when(authentication.getPrincipal()).thenReturn(1L);
 
