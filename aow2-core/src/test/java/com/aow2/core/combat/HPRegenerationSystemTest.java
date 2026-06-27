@@ -187,7 +187,7 @@ class HPRegenerationSystemTest {
             entityManager.addUnit(unit);
 
             hpRegenSystem.processTick(entityManager, 128); // +1 → hp = 31
-            hpRegenSystem.processTick(entityManager, 254); // +1 → hp = 32
+            hpRegenSystem.processTick(entityManager, 256); // +1 → hp = 32 (256 % 128 == 0)
 
             assertEquals(32, unit.getHp());
         }

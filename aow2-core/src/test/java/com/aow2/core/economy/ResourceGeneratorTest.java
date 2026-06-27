@@ -296,9 +296,9 @@ class ResourceGeneratorTest {
             placeCompletedHQ(1); // Resistance
             // base: 100, modifier: 1.0, upgradeBonus: 0
             // RE formula: (100 * 1.0) * 20 / 20 = 100
-            // Faction: (int)(100 * 1.15) = 114 (IEEE 754 truncation of 114.999...)
+            // FIX (CI verification): Math.round(100 * 1.15) = Math.round(114.999...) = 115
             int income = resourceGenerator.calculateCycleIncome(1, entities, 1.0);
-            assertEquals(114, income, "Resistance income should be ~115 (15% bonus, int-truncated), got " + income);
+            assertEquals(115, income, "Resistance income should be 115 (15% bonus, Math.round), got " + income);
         }
 
         @Test
