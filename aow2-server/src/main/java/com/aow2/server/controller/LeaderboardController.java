@@ -76,6 +76,12 @@ public class LeaderboardController {
      */
     @GetMapping("/me")
     public ResponseEntity<Map<String, Object>> getMyRanking(Authentication authentication) {
+        // FIX (F-02): Defensive null check — SecurityConfig requires authentication for
+        // /api/leaderboard/me, but if the matcher is ever reordered or removed, an
+        // unauthenticated request would NPE here. Return 401 explicitly instead.
+        if (authentication == null || authentication.getPrincipal() == null) {
+            return ResponseEntity.status(401).body(Map.of("error", "Authentication required"));
+        }
         Long playerId = (Long) authentication.getPrincipal();
         try {
             Map<String, Object> ranking = rankingService.getPlayerRanking(playerId);

@@ -12,7 +12,7 @@ IDs F-01 through F-30 assigned per the loop prompt priority order.
 | ID | Source | Severity | Title | Status | Verified |
 |----|--------|----------|-------|--------|---------|
 | F-01 | FULL_ANALYSIS §3 | CRITICAL | Missing `last_sync_tick` DB column → add V6 migration | VERIFIED | 2026-06-29 |
-| F-02 | FULL_ANALYSIS §3 | CRITICAL | `/api/leaderboard/me` NPE on unauthenticated access | TODO | - |
+| F-02 | FULL_ANALYSIS §3 | CRITICAL | `/api/leaderboard/me` NPE on unauthenticated access | VERIFIED | 2026-06-29 |
 | F-03 | FULL_ANALYSIS §3 | CRITICAL | `ChatController.sendMessage` no participation check | TODO | - |
 | F-04 | FULL_ANALYSIS §7.4 | HIGH | Produce/Train command unreachable — no production UI | TODO | - |
 | F-05 | FULL_ANALYSIS §7.4 | HIGH | Research command unreachable — no research UI | TODO | - |
@@ -46,9 +46,9 @@ IDs F-01 through F-30 assigned per the loop prompt priority order.
 
 ## Current Work Item
 
-**ID:** F-02
-**What I'm doing:** Fixing `/api/leaderboard/me` NPE on unauthenticated access — either restrict the endpoint to authenticated users in SecurityConfig, or add a null check in the controller.
-**Verification gate:** Code path analysis confirms unauthenticated request returns 401 (not 500). Either SecurityConfig requires authentication for `/api/leaderboard/me`, or `getMyRanking()` null-checks the `Authentication` parameter.
+**ID:** F-03
+**What I'm doing:** Adding session participation check to `ChatController.sendMessage()` so non-participants get 403.
+**Verification gate:** Code review: `ChatController.sendMessage()` calls session participation check before writing. Unit test added that verifies non-participant gets 403.
 
 ## Deferred Items
 

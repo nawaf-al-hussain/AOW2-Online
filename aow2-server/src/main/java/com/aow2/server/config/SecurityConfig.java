@@ -66,6 +66,13 @@ public class SecurityConfig {
                         .requestMatchers("/api/matchmaking/**").authenticated()
                         .requestMatchers("/api/maps/**").authenticated()
                         .requestMatchers("/api/replays/**").authenticated()
+                        // FIX (F-02): /api/leaderboard/me requires authentication because
+                        // it dereferences the Authentication principal. Without this override,
+                        // an unauthenticated request would NPE in getMyRanking() and return
+                        // HTTP 500 instead of 401. The more-specific matcher MUST come before
+                        // the /api/leaderboard/** wildcard — Spring Security matches in order
+                        // and the first match wins.
+                        .requestMatchers("/api/leaderboard/me").authenticated()
                         .requestMatchers("/api/leaderboard/**").permitAll()
                         // FIX (H8 from CRITICAL_ANALYSIS_REPORT.md): Expose /api/stats/**
                         // publicly so unauthenticated visitors see live server counts on
