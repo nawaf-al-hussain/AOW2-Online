@@ -180,3 +180,21 @@ Append-only. One entry per iteration. Never edited.
 - F-26: isPassableBy(SHALLOW_WATER, INFANTRY) returns false, consistent with getMovementCost()=MAX_VALUE ✅
 **New status:** F-19, F-21, F-23, F-26 all VERIFIED
 **Next item:** F-20 — ChatTab WebSocket connection
+
+---
+## Iteration 10 (FINAL) — 2026-06-29T22:30:00+08:00
+
+**Item:** Loop complete — wrote FIXES_SUMMARY.md
+**Action taken:**
+- F-29: Removed 4 unused npm dependencies from aow2-web/package.json (next-auth, @hookform/resolvers, @tanstack/react-query, date-fns). Verified react-hook-form IS used in form.tsx so kept it.
+- F-27: Deferred — ArmorCalculator.VEHICLE_ARMOR_RESEARCH is empty BY DESIGN per RE docs (no research IDs add vehicle armor through Z[] array).
+- F-28: Deferred — download count dedup requires a DB schema change (new per-player-per-map table).
+- F-30: Deferred — rate limiting requires Spring Boot interceptor infrastructure.
+- F-20, F-22, F-24, F-25: Deferred — require runtime testing or architectural changes.
+- F-31, F-32: Deferred — Lua sandbox issues require LuaJ fork or API breaking change.
+- Wrote FIXES_SUMMARY.md with full fixed/deferred tables, files modified, regression check, and known risks.
+**Final tally:**
+- 22 items VERIFIED (F-01..F-19, F-21, F-23, F-26, F-29)
+- 10 items DEFERRED (F-20, F-22, F-24, F-25, F-27, F-28, F-30, F-31, F-32 + F-12 already fixed)
+- 9 iterations, 9 commits, all pushed to GitHub
+**Loop status:** COMPLETE
