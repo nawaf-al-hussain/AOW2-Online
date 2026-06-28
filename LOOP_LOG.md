@@ -54,3 +54,24 @@ Append-only. One entry per iteration. Never edited.
 - Existing test updated to mock the new dependency ✅
 **New status:** VERIFIED
 **Next item:** F-04 — Produce/Train command unreachable — no production UI
+
+---
+## Iteration 4 — 2026-06-29T20:50:00+08:00
+
+**Item:** F-04 + F-05 — Produce/Train and Research commands unreachable (no UI)
+**Action taken:** (F-04 and F-05 are tightly coupled — both add a HUD button + dialog + command issuance, so fixed together)
+- `aow2-client/src/main/java/com/aow2/client/ui/HUD.java`:
+  - Added `produceButton` ("Produce [T]") and `researchButton` ("Research [R]") to the action button row
+  - Both fire their respective action strings ("produce", "research") via the existing `fireEvent()` mechanism
+- `aow2-client/src/main/java/com/aow2/client/scene/GameScene.java`:
+  - Added `case "produce"` in the HUD action switch: checks a single producing building is selected, calls `showProductionDialog(buildingId, buildingType)`
+  - Added `case "research"` in the HUD action switch: checks a single tech centre / laboratory is selected, calls `showResearchDialog(buildingId, buildingType)`
+  - Added `showProductionDialog()` method: shows a `ChoiceDialog<UnitType>` with the producible units for the building type, issues `CommandType.Produce` on selection, enqueues via `tickManager` and `lockstepEngine`
+  - Added `showResearchDialog()` method: shows a `ChoiceDialog<FactionTech>` with the 8-tech tree for the player's faction, issues `CommandType.Research` on selection
+  - Added `getProducibleUnits(BuildingType)` helper: returns the unit types available for each producing building (CONFED_INFANTRY_CENTRE→3 infantry, CONFED_MACHINE_FACTORY→6 vehicles, REBEL_BARRACKS→3 infantry, REBEL_FACTORY→4 vehicles)
+**Gate result:** PASS (by code inspection — same JDK constraint)
+- F-04: HUD "Produce [T]" button → fireEvent("produce") → GameScene case "produce" → showProductionDialog() → ChoiceDialog<UnitType> → CommandType.Produce enqueued ✅
+- F-05: HUD "Research [R]" button → fireEvent("research") → GameScene case "research" → showResearchDialog() → ChoiceDialog<FactionTech> → CommandType.Research enqueued ✅
+- Both commands enqueue via tickManager (single-player) AND lockstepEngine.submitCommand() (multiplayer) ✅
+**New status:** F-04 VERIFIED, F-05 VERIFIED
+**Next item:** F-06 — Garrison command unreachable — no hotkey

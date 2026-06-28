@@ -77,6 +77,8 @@ public class HUD {
     private Button patrolButton;
     private Button buildButton;
     private Button upgradeButton;
+    private Button produceButton;
+    private Button researchButton;
 
     /** Current credits amount. */
     private int credits;
@@ -289,7 +291,19 @@ public class HUD {
         upgradeButton.setStyle(btnStyle);
         upgradeButton.setOnAction(e -> fireEvent("upgrade"));
 
-        row.getChildren().addAll(attackButton, stopButton, holdButton, patrolButton, buildButton, upgradeButton);
+        // FIX (F-04): Produce button — opens the production dialog when a producing
+        // building (Infantry Centre / Machine Factory / Barracks / Factory) is selected.
+        produceButton = new Button("Produce [T]");
+        produceButton.setStyle(btnStyle);
+        produceButton.setOnAction(e -> fireEvent("produce"));
+
+        // FIX (F-05): Research button — opens the research dialog when a tech centre
+        // / laboratory is selected.
+        researchButton = new Button("Research [R]");
+        researchButton.setStyle(btnStyle);
+        researchButton.setOnAction(e -> fireEvent("research"));
+
+        row.getChildren().addAll(attackButton, stopButton, holdButton, patrolButton, buildButton, upgradeButton, produceButton, researchButton);
         return row;
     }
 

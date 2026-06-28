@@ -359,6 +359,44 @@ public class GameScene {
                         }
                     }
                 }
+                case "produce" -> {
+                    // FIX (F-04): When the Produce button is pressed, check if a single
+                    // producing building is selected and show the production dialog.
+                    if (selectionManager != null && selectionManager.hasSelection()) {
+                        var selectedIds = selectionManager.getSelectedIds();
+                        if (selectedIds.size() == 1) {
+                            int buildingId = selectedIds.iterator().next();
+                            var building = entityManager.getBuilding(buildingId);
+                            if (building != null && building.isAlive()
+                                    && !building.isUnderConstruction()
+                                    && building.getType().producesUnits()) {
+                                showProductionDialog(buildingId, building.getType());
+                            } else if (building != null) {
+                                LOG.debug("Cannot produce from building {}: producesUnits={}",
+                                    buildingId, building.getType().producesUnits());
+                            }
+                        }
+                    }
+                }
+                case "research" -> {
+                    // FIX (F-05): When the Research button is pressed, check if a single
+                    // tech centre / laboratory is selected and show the research dialog.
+                    if (selectionManager != null && selectionManager.hasSelection()) {
+                        var selectedIds = selectionManager.getSelectedIds();
+                        if (selectedIds.size() == 1) {
+                            int buildingId = selectedIds.iterator().next();
+                            var building = entityManager.getBuilding(buildingId);
+                            if (building != null && building.isAlive()
+                                    && !building.isUnderConstruction()
+                                    && building.getType().researches()) {
+                                showResearchDialog(buildingId, building.getType());
+                            } else if (building != null) {
+                                LOG.debug("Cannot research at building {}: researches={}",
+                                    buildingId, building.getType().researches());
+                            }
+                        }
+                    }
+                }
                 default -> LOG.warn("Unknown HUD action: {}", action);
             }
         });
@@ -1452,6 +1490,114 @@ public class GameScene {
             if (campaignEndCallback != null) {
                 campaignEndCallback.run();
             }
+        });
+    }
+
+    /**
+     * Shows the unit production dialog for a producing building.
+     * <p>
+     * FIX (F-04): Lists the unit types available for the given building type, lets the
+     * player choose one, and issues a {@link CommandType.Produce} command. The command
+     * is enqueued via {@link TickManager} and, in multiplayer, submitted to the
+     * {@link LockstepEngine} for deterministic sync.
+     *
+     * @param buildingId   the producing building's entity ID
+     * @param buildingType the building type (determines which units are available)
+     */
+    private void showProductionDialog(int buildingId, com.aow2.common.model.BuildingType buildingType) {
+        java.util.List<com.aow2.common.model.UnitType> availableUnits = getProducibleUnits(buildingType);
+        if (availableUnits.isEmpty()) {
+            LOG.warn("No units available for building type: {}", buildingType);
+            return;
+        }
+
+        ChoiceDialog<com.aow2.common.model.UnitType> dialog =
+            new ChoiceDialog<>(availableUnits.get(0), availableUnits);
+        dialog.setTitle("Produce Unit");
+        dialog.setHeaderText("Select unit to produce at " + buildingType.getDisplayName() + ":");
+        if (gameCanvas.getScene() != null && gameCanvas.getScene().getWindow() != null) {
+            dialog.initOwner(gameCanvas.getScene().getWindow());
+        }
+        var result = dialog.showAndWait();
+        result.ifPresent(unitType -> {
+            long tick = gameState.currentTick();
+            var cmd = new CommandType.Produce(tick, LOCAL_PLAYER_ID, buildingId, unitType);
+            tickManager.enqueueCommand(cmd);
+            if (isMultiplayer && lockstepEngine != null && lockstepEngine.isRunning()) {
+                lockstepEngine.submitCommand(cmd);
+            }
+            LOG.info("Produce command issued: building={} unit={}", buildingId, unitType);
+        });
+    }
+
+    /**
+     * Returns the list of unit types that can be produced at the given building.
+     *
+     * @param buildingType the producing building type
+     * @return list of producible unit types (empty if none)
+     */
+    private java.util.List<com.aow2.common.model.UnitType> getProducibleUnits(
+            com.aow2.common.model.BuildingType buildingType) {
+        return switch (buildingType) {
+            case CONFED_INFANTRY_CENTRE -> java.util.List.of(
+                com.aow2.common.model.UnitType.CONFED_INFANTRY,
+                com.aow2.common.model.UnitType.CONFED_GRENADIER,
+                com.aow2.common.model.UnitType.CONFED_LIGHT_ASSAULT);
+            case CONFED_MACHINE_FACTORY -> java.util.List.of(
+                com.aow2.common.model.UnitType.CONFED_HEAVY_ASSAULT,
+                com.aow2.common.model.UnitType.CONFED_FLAME_ASSAULT,
+                com.aow2.common.model.UnitType.CONFED_HAMMER,
+                com.aow2.common.model.UnitType.CONFED_ZEUS,
+                com.aow2.common.model.UnitType.CONFED_FORTRESS,
+                com.aow2.common.model.UnitType.CONFED_TORRENT);
+            case REBEL_BARRACKS -> java.util.List.of(
+                com.aow2.common.model.UnitType.REBEL_INFANTRY,
+                com.aow2.common.model.UnitType.REBEL_GRENADIER,
+                com.aow2.common.model.UnitType.REBEL_SNIPER);
+            case REBEL_FACTORY -> java.util.List.of(
+                com.aow2.common.model.UnitType.REBEL_COYOTE,
+                com.aow2.common.model.UnitType.REBEL_ARMADILLO,
+                com.aow2.common.model.UnitType.REBEL_RHINO,
+                com.aow2.common.model.UnitType.REBEL_PORCUPINE);
+            default -> java.util.List.of();
+        };
+    }
+
+    /**
+     * Shows the research dialog for a technology centre or laboratory.
+     * <p>
+     * FIX (F-05): Lists available research topics, lets the player choose one, and
+     * issues a {@link CommandType.Research} command.
+     *
+     * @param buildingId   the tech building's entity ID
+     * @param buildingType the building type (must be CONFED_TECH_CENTRE or REBEL_LABORATORY)
+     */
+    private void showResearchDialog(int buildingId, com.aow2.common.model.BuildingType buildingType) {
+        // Get the 8-tech tree for the player's faction
+        var researchRegistry = com.aow2.core.research.ResearchRegistry.getInstance();
+        var factionTechs = researchRegistry.getFactionTechs(playerFaction);
+        if (factionTechs.isEmpty()) {
+            LOG.warn("No research topics available for faction: {}", playerFaction);
+            return;
+        }
+
+        ChoiceDialog<com.aow2.core.research.ResearchRegistry.FactionTech> dialog =
+            new ChoiceDialog<>(factionTechs.get(0), factionTechs);
+        dialog.setTitle("Research Technology");
+        dialog.setHeaderText("Select technology to research:");
+        if (gameCanvas.getScene() != null && gameCanvas.getScene().getWindow() != null) {
+            dialog.initOwner(gameCanvas.getScene().getWindow());
+        }
+        var result = dialog.showAndWait();
+        result.ifPresent(tech -> {
+            long tick = gameState.currentTick();
+            var cmd = new CommandType.Research(tick, LOCAL_PLAYER_ID, buildingId, tech.globalEffectId());
+            tickManager.enqueueCommand(cmd);
+            if (isMultiplayer && lockstepEngine != null && lockstepEngine.isRunning()) {
+                lockstepEngine.submitCommand(cmd);
+            }
+            LOG.info("Research command issued: building={} researchId={} ({})",
+                buildingId, tech.globalEffectId(), tech.name());
         });
     }
 

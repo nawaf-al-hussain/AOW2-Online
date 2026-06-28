@@ -14,8 +14,8 @@ IDs F-01 through F-30 assigned per the loop prompt priority order.
 | F-01 | FULL_ANALYSIS §3 | CRITICAL | Missing `last_sync_tick` DB column → add V6 migration | VERIFIED | 2026-06-29 |
 | F-02 | FULL_ANALYSIS §3 | CRITICAL | `/api/leaderboard/me` NPE on unauthenticated access | VERIFIED | 2026-06-29 |
 | F-03 | FULL_ANALYSIS §3 | CRITICAL | `ChatController.sendMessage` no participation check | VERIFIED | 2026-06-29 |
-| F-04 | FULL_ANALYSIS §7.4 | HIGH | Produce/Train command unreachable — no production UI | TODO | - |
-| F-05 | FULL_ANALYSIS §7.4 | HIGH | Research command unreachable — no research UI | TODO | - |
+| F-04 | FULL_ANALYSIS §7.4 | HIGH | Produce/Train command unreachable — no production UI | VERIFIED | 2026-06-29 |
+| F-05 | FULL_ANALYSIS §7.4 | HIGH | Research command unreachable — no research UI | VERIFIED | 2026-06-29 |
 | F-06 | FULL_ANALYSIS §7.4 | HIGH | Garrison command unreachable — no hotkey | TODO | - |
 | F-07 | FULL_ANALYSIS §7.4 | HIGH | Siege mode unreachable — no hotkey | TODO | - |
 | F-08 | FULL_ANALYSIS §3 | HIGH | `cancel_production:N` not handled in GameScene | TODO | - |
@@ -46,9 +46,9 @@ IDs F-01 through F-30 assigned per the loop prompt priority order.
 
 ## Current Work Item
 
-**ID:** F-04
-**What I'm doing:** Adding production UI dialog — when a producing building (Infantry Centre, Machine Factory) is selected, show a dialog to choose and queue units.
-**Verification gate:** Select a producing building in-game → production dialog appears → clicking a unit queues it → `ProduceCommandHandler` is invoked (verified by log or test).
+**ID:** F-06
+**What I'm doing:** Wiring Garrison command — add G hotkey in InputHandler to issue GarrisonCommand when infantry is selected and right-clicking a bunker.
+**Verification gate:** Select infantry, press G, right-click bunker → garrison command issued. Code review confirms GarrisonCommand created and enqueued.
 
 ## Deferred Items
 
