@@ -19,7 +19,7 @@ IDs F-01 through F-30 assigned per the loop prompt priority order.
 | F-06 | FULL_ANALYSIS §7.4 | HIGH | Garrison command unreachable — no hotkey | VERIFIED | 2026-06-29 |
 | F-07 | FULL_ANALYSIS §7.4 | HIGH | Siege mode unreachable — no hotkey | VERIFIED | 2026-06-29 |
 | F-08 | FULL_ANALYSIS §3 | HIGH | `cancel_production:N` not handled in GameScene | VERIFIED | 2026-06-29 |
-| F-09 | FULL_ANALYSIS §3 | MEDIUM | Multiplayer match-found → game-start: session UUID not passed | TODO | - |
+| F-09 | FULL_ANALYSIS §3 | MEDIUM | Multiplayer match-found → game-start: session UUID not passed | VERIFIED | 2026-06-29 |
 | F-10 | FULL_ANALYSIS §3 | HIGH | A/S/D key conflict (camera pan vs game commands) | TODO | - |
 | F-11 | FULL_ANALYSIS §3 | MEDIUM | Hold command identical to Stop — no distinct behavior | TODO | - |
 | F-12 | FULL_ANALYSIS §3 | LOW | `ep2_mission7.lua` syntax error (missing closing quote, line 108) | TODO | - |
@@ -46,9 +46,9 @@ IDs F-01 through F-30 assigned per the loop prompt priority order.
 
 ## Current Work Item
 
-**ID:** F-09
-**What I'm doing:** Fixing multiplayer match-found → game-start flow — pass session UUID from MultiplayerLobbyScene.onMatchFound to GameScene.setupMultiplayer() so LockstepEngine connects.
-**Verification gate:** Code review confirms setupMultiplayer() is called with non-null session UUID in the match-found path, and LockstepEngine.connect() is invoked.
+**ID:** F-10
+**What I'm doing:** Fixing A/S/D key conflict — CameraController treats A/S/D as camera pan, conflicting with attack-move/stop/hold commands. Remove A/S/D from CameraController's key handling.
+**Verification gate:** CameraController key list does not contain A, S, D. Pressing A enters attack-move mode without panning the camera.
 
 ## Deferred Items
 

@@ -97,3 +97,22 @@ Append-only. One entry per iteration. Never edited.
 - All three commands enqueue via tickManager AND lockstepEngine (multiplayer) ✅
 **New status:** F-06 VERIFIED, F-07 VERIFIED, F-08 VERIFIED
 **Next item:** F-09 — Multiplayer match-found → game-start: session UUID not passed
+
+---
+## Iteration 6 — 2026-06-29T21:20:00+08:00
+
+**Item:** F-09 — Multiplayer match-found → game-start: session UUID not passed
+**Action taken:**
+- `aow2-client/src/main/java/com/aow2/client/AOW2App.java`:
+  - Added new `showGame(String mapResourcePath, String sessionUuid)` overload
+  - Existing `showGame(String mapResourcePath)` now delegates to the new overload with `sessionUuid=null`
+  - Existing `showGame()` still delegates to `showGame(null)`
+  - When `sessionUuid` is non-null: creates a `MultiplayerService`, calls `connectGameWebSocket()`, calls `gameScene.setupMultiplayer(mpService)` — this wires the LockstepEngine and enables command sync
+  - Updated `onMatchFound(String sessionUuid)` to call `showGame(null, sessionUuid)` instead of `showGame()` — passes the session UUID through to the multiplayer setup path
+**Gate result:** PASS (by code inspection)
+- `onMatchFound` now calls `showGame(null, sessionUuid)` with the actual session UUID ✅
+- `showGame(map, sessionUuid)` overload exists and calls `setupMultiplayer(mpService)` when sessionUuid is non-null ✅
+- `connectGameWebSocket()` is called before `setupMultiplayer` so the WebSocket is established ✅
+- Single-player path (sessionUuid=null) is unaffected — no multiplayer setup ✅
+**New status:** VERIFIED
+**Next item:** F-10 — A/S/D key conflict (camera pan vs game commands)

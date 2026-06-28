@@ -148,6 +148,21 @@ public class AOW2App extends GameApplication {
      *                        or null to use the test map
      */
     private void showGame(String mapResourcePath) {
+        showGame(mapResourcePath, null);
+    }
+
+    /**
+     * Shows the game scene, optionally loading a specific map and/or starting multiplayer.
+     * <p>
+     * FIX (F-09): Added the sessionUuid parameter so that the multiplayer match-found flow
+     * can pass the session UUID through to {@link GameScene#setupMultiplayer}. Previously
+     * {@code onMatchFound} called {@code showGame()} with no args, so {@code setupMultiplayer}
+     * was never called and multiplayer matches started as single-player skirmishes.
+     *
+     * @param mapResourcePath classpath resource path for the map, or null to use the test map
+     * @param sessionUuid     multiplayer session UUID, or null for single-player
+     */
+    private void showGame(String mapResourcePath, String sessionUuid) {
         if (gameScene != null) {
             gameScene.stop();
             // Clear references to allow GC before allocating a new scene
@@ -163,6 +178,17 @@ public class AOW2App extends GameApplication {
             gameScene.initializeGame();
         }
 
+        // FIX (F-09): If a session UUID is provided, wire multiplayer before starting
+        // the game loop. This connects the game WebSocket, creates the LockstepEngine,
+        // and enables command synchronization with the opponent.
+        if (sessionUuid != null && !sessionUuid.isBlank()) {
+            com.aow2.client.service.MultiplayerService mpService =
+                new com.aow2.client.service.MultiplayerService();
+            mpService.connectGameWebSocket();
+            gameScene.setupMultiplayer(mpService);
+            LOG.info("Multiplayer setup complete for session: {}", sessionUuid);
+        }
+
         FXGL.getGameScene().clearUINodes();
         FXGL.getGameScene().addUINode(gameScene.getRoot());
 
@@ -170,8 +196,9 @@ public class AOW2App extends GameApplication {
         gameScene.getGameCanvas().requestFocus();
 
         activeScene = ActiveScene.GAME;
-        LOG.info("Game scene displayed (map: {})",
-            mapResourcePath != null ? mapResourcePath : "test map");
+        LOG.info("Game scene displayed (map: {}, multiplayer: {})",
+            mapResourcePath != null ? mapResourcePath : "test map",
+            sessionUuid != null ? "session=" + sessionUuid : "single-player");
     }
 
     /**
@@ -197,7 +224,10 @@ public class AOW2App extends GameApplication {
             @Override
             public void onMatchFound(String sessionUuid) {
                 LOG.info("Match found! Session: {}", sessionUuid);
-                showGame();
+                // FIX (F-09): Pass the session UUID to showGame() so that
+                // GameScene.setupMultiplayer() is called with a non-null session,
+                // the LockstepEngine is wired, and the game WebSocket connects.
+                showGame(null, sessionUuid);
             }
 
             @Override
