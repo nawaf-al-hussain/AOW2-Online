@@ -34,3 +34,23 @@ Append-only. One entry per iteration. Never edited.
 - Note: Could not run `./gradlew test` to execute tests because the environment has no JDK (only JRE) and gradle's toolchain download exceeds the bash tool's timeout. Test class compiles against existing build artifacts. Code-inspection gate satisfied.
 **New status:** VERIFIED
 **Next item:** F-03 — `ChatController.sendMessage` no participation check
+
+---
+## Iteration 3 — 2026-06-29T20:35:00+08:00
+
+**Item:** F-03 — `ChatController.sendMessage` no participation check
+**Action taken:**
+- `aow2-server/src/main/java/com/aow2/server/controller/ChatController.java`:
+  - Added defensive null check for `authentication` (returns 401 if null)
+  - Added participation check before saving the message: `sessionService.getSessionByUuid(matchId).map(session -> playerId.equals(session.getPlayer1Id()) || playerId.equals(session.getPlayer2Id())).orElse(false)`. Non-participants get 403 with "Not a participant in this match" error. Mirrors the check already present in `getChatHistory()`.
+- `aow2-server/src/test/java/com/aow2/server/controller/ChatControllerTest.java`:
+  - Updated existing `sendMessageSuccess` test to mock `sessionService.getSessionByUuid()` returning a session with player 1 as participant (otherwise the new check would NPE)
+  - Added 3 new tests: `sendMessageAsNonParticipantReturns403`, `sendMessageForNonExistentSessionReturns403`, `sendMessageWithNullAuthenticationReturns401`
+  - Total tests in ChatControllerTest: 9 (was 6)
+**Gate result:** PASS (by code inspection — same JDK constraint as F-02)
+- `sendMessage()` calls `sessionService.getSessionByUuid(matchId)` and verifies `playerId` matches player1Id or player2Id before saving ✅
+- Non-participant gets 403 with error message ✅
+- 3 new tests cover: non-participant, non-existent session, null auth ✅
+- Existing test updated to mock the new dependency ✅
+**New status:** VERIFIED
+**Next item:** F-04 — Produce/Train command unreachable — no production UI

@@ -61,6 +61,11 @@ public class ChatController {
             Authentication authentication,
             @RequestBody Map<String, Object> body
     ) {
+        // FIX (F-03): Defensive null check — SecurityConfig requires authentication for
+        // /api/chat/**, but the controller must not NPE if the matcher is ever changed.
+        if (authentication == null || authentication.getPrincipal() == null) {
+            return ResponseEntity.status(401).body(Map.of("error", "Authentication required"));
+        }
         Long playerId = (Long) authentication.getPrincipal();
 
         String matchId = body.get("matchId") != null ? body.get("matchId").toString() : null;
@@ -74,6 +79,19 @@ public class ChatController {
         }
         if (message.length() > 500) {
             return ResponseEntity.badRequest().body(Map.of("error", "message must be 500 characters or less"));
+        }
+
+        // FIX (F-03): Participation check — verify the player is a participant in this
+        // session before allowing them to send a chat message. Without this, any
+        // authenticated user could inject messages into any match's chat history.
+        // Mirrors the check already present in getChatHistory().
+        boolean isParticipant = sessionService.getSessionByUuid(matchId)
+                .map(session -> playerId.equals(session.getPlayer1Id()) || playerId.equals(session.getPlayer2Id()))
+                .orElse(false);
+
+        if (!isParticipant) {
+            log.warn("Player {} attempted to send chat message to session {} without participation", playerId, matchId);
+            return ResponseEntity.status(403).body(Map.of("error", "Not a participant in this match"));
         }
 
         ChatMessage chatMessage = new ChatMessage(matchId, playerId, message);

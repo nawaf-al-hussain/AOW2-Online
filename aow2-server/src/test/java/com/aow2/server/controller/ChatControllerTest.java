@@ -51,6 +51,10 @@ class ChatControllerTest {
     void sendMessageSuccess() {
         when(authentication.getPrincipal()).thenReturn(1L);
 
+        // FIX (F-03): Mock session participation — player 1 is a participant in this session.
+        GameSession session = new GameSession(1L, 2L, "test-map");
+        when(sessionService.getSessionByUuid("match-uuid-1")).thenReturn(java.util.Optional.of(session));
+
         ChatMessage saved = new ChatMessage("match-uuid-1", 1L, "hello");
         saved.setId(1L);
         saved.setTimestamp(Instant.now());
@@ -67,6 +71,50 @@ class ChatControllerTest {
         assertEquals("match-uuid-1", response.getBody().get("matchId"));
         assertEquals(1L, response.getBody().get("playerId"));  // FIX: Long not int
         assertEquals("hello", response.getBody().get("message"));
+    }
+
+    @Test
+    @DisplayName("F-03: Send chat message as non-participant returns 403")
+    void sendMessageAsNonParticipantReturns403() {
+        when(authentication.getPrincipal()).thenReturn(999L);  // player 999 is NOT in this session
+
+        // Session has players 1 and 2, not 999
+        GameSession session = new GameSession(1L, 2L, "test-map");
+        when(sessionService.getSessionByUuid("match-uuid-1")).thenReturn(java.util.Optional.of(session));
+
+        ResponseEntity<Map<String, Object>> response = chatController.sendMessage(
+                authentication,
+                Map.of("matchId", "match-uuid-1", "message", "hello")
+        );
+
+        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode(), "Non-participant must get 403, not 200");
+        assertNotNull(response.getBody());
+        assertEquals("Not a participant in this match", response.getBody().get("error"));
+    }
+
+    @Test
+    @DisplayName("F-03: Send chat message for non-existent session returns 403")
+    void sendMessageForNonExistentSessionReturns403() {
+        when(authentication.getPrincipal()).thenReturn(1L);
+        when(sessionService.getSessionByUuid("nonexistent-uuid")).thenReturn(java.util.Optional.empty());
+
+        ResponseEntity<Map<String, Object>> response = chatController.sendMessage(
+                authentication,
+                Map.of("matchId", "nonexistent-uuid", "message", "hello")
+        );
+
+        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode(), "Non-existent session must get 403");
+    }
+
+    @Test
+    @DisplayName("F-03: Send chat message with null authentication returns 401")
+    void sendMessageWithNullAuthenticationReturns401() {
+        ResponseEntity<Map<String, Object>> response = chatController.sendMessage(
+                null,
+                Map.of("matchId", "match-uuid-1", "message", "hello")
+        );
+
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
     }
 
     @Test

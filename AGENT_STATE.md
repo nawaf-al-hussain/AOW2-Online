@@ -13,7 +13,7 @@ IDs F-01 through F-30 assigned per the loop prompt priority order.
 |----|--------|----------|-------|--------|---------|
 | F-01 | FULL_ANALYSIS §3 | CRITICAL | Missing `last_sync_tick` DB column → add V6 migration | VERIFIED | 2026-06-29 |
 | F-02 | FULL_ANALYSIS §3 | CRITICAL | `/api/leaderboard/me` NPE on unauthenticated access | VERIFIED | 2026-06-29 |
-| F-03 | FULL_ANALYSIS §3 | CRITICAL | `ChatController.sendMessage` no participation check | TODO | - |
+| F-03 | FULL_ANALYSIS §3 | CRITICAL | `ChatController.sendMessage` no participation check | VERIFIED | 2026-06-29 |
 | F-04 | FULL_ANALYSIS §7.4 | HIGH | Produce/Train command unreachable — no production UI | TODO | - |
 | F-05 | FULL_ANALYSIS §7.4 | HIGH | Research command unreachable — no research UI | TODO | - |
 | F-06 | FULL_ANALYSIS §7.4 | HIGH | Garrison command unreachable — no hotkey | TODO | - |
@@ -46,9 +46,9 @@ IDs F-01 through F-30 assigned per the loop prompt priority order.
 
 ## Current Work Item
 
-**ID:** F-03
-**What I'm doing:** Adding session participation check to `ChatController.sendMessage()` so non-participants get 403.
-**Verification gate:** Code review: `ChatController.sendMessage()` calls session participation check before writing. Unit test added that verifies non-participant gets 403.
+**ID:** F-04
+**What I'm doing:** Adding production UI dialog — when a producing building (Infantry Centre, Machine Factory) is selected, show a dialog to choose and queue units.
+**Verification gate:** Select a producing building in-game → production dialog appears → clicking a unit queues it → `ProduceCommandHandler` is invoked (verified by log or test).
 
 ## Deferred Items
 
