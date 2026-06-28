@@ -52,3 +52,22 @@ A modern recreation of the classic mobile RTS game "Art of War 2: Online" using 
 - `aow2-client` - FXGL game client with JavaFX UI
 - `aow2-server` - Spring Boot multiplayer backend
 - `aow2-modding` - Mod loader and Lua scripting engine
+
+## Asset Development
+
+Original game assets (sprites, audio, maps, mission briefings) have been
+extracted from 4 source distributions and decoded for use in this recreation.
+The full reference is at **[`docs/RE/ASSET_DEVELOPMENT_GUIDE.md`](docs/RE/ASSET_DEVELOPMENT_GUIDE.md)**.
+
+Quick status:
+- ✅ 286 files extracted from J2ME Global, J2ME Peru, and iOS v2.2 builds
+- ✅ 90 iOS sprites decoded from packed i0 containers (45 EN + 45 RU)
+- ✅ 72 SFX + 1 music track converted from WAV/MP3 to OGG/Vorbis
+- ✅ 38 Peru campaign maps ported from binary to JSON format
+- ✅ Both campaign JSONs enriched with original Gear Games briefing text
+- ✅ `AssetTestScene` validates the asset pipeline end-to-end
+- ⏳ AudioManager bridging, terrain lookup decoding, and CampaignScene wiring pending
+
+To test the asset pipeline: run the client, click **"Asset Test"** on the
+main menu to view decoded sprites and play converted OGG SFX.
+

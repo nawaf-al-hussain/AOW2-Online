@@ -128,3 +128,31 @@ Stage Summary:
 - AssetTestScene validates the full pipeline: decode → copy to resources → load via classpath → display/play
 - OGG Vorbis SPI added to build so javax.sound.sampled can play .ogg files
 - The 14 pre-existing compile errors (ICE/RUINS terrain types, ToggleButton, fillArc signature) are NOT caused by this task
+
+---
+Task ID: 5
+Agent: Main
+Task: Documentation update — create ASSET_DEVELOPMENT_GUIDE.md, update TODO.md, prepare handoff for when asset work resumes.
+
+Work Log:
+- Step 1: Reviewed current TODO.md (333 lines) — found audio section was outdated ("no .wav/.mp3 asset files exist")
+- Step 2: Updated TODO.md "What Still Does NOT Work" §4 — marked audio as PARTIALLY FIXED, explained the AudioManager-to-OGG bridge work needed
+- Step 3: Added new "🎨 ASSET DEVELOPMENT" section to TODO.md with: completed items, pending items (7, priority-ordered), and key file references
+- Step 4: Created docs/RE/ASSET_DEVELOPMENT_GUIDE.md — comprehensive 350-line guide covering:
+  * §1 Where everything lives (source archives, extracted assets, wired assets, scripts)
+  * §2 Current state — what works (12-row capability table)
+  * §3 What's verified vs. guessed (sprite mappings, terrain mappings, audio mappings)
+  * §4 How to continue — 7 concrete next steps with file paths, code snippets, effort estimates
+  * §5 Re-running the scripts (5 scenarios)
+  * §6 Verification checklist (sprites, audio, maps, briefings)
+  * §7 Glossary (12 terms)
+  * §8 Commit history (5 asset-related commits)
+- Step 5: Commit and push
+
+Stage Summary:
+- Single source of truth for asset development now exists at docs/RE/ASSET_DEVELOPMENT_GUIDE.md
+- TODO.md accurately reflects that audio assets exist but need bridging to AudioManager
+- All 7 pending tasks are prioritised (HIGH/MEDIUM/LOW) with concrete file paths and effort estimates
+- Scripts preserved at /home/z/my-project/scripts/ with idempotent re-run instructions
+- Next developer can pick up asset work by reading §4 of the guide and following the priority order
+- User is doing a full repo analysis in parallel — results will inform the next round of work

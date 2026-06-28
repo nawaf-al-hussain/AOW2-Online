@@ -1,6 +1,10 @@
 # Art of War 2 Online - Complete Reverse Engineering Project
 ## File Inventory
 
+> **NEW (2026-06-28):** Asset development guide available at
+> [`ASSET_DEVELOPMENT_GUIDE.md`](ASSET_DEVELOPMENT_GUIDE.md) — single source
+> of truth for asset work status, next steps, and re-running scripts.
+
 ### Project Structure
 ```
 /project

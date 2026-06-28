@@ -330,5 +330,38 @@
 1. ~~Build placement broken end-to-end~~ ✅ FIXED (H-NEW-11) — UI wiring complete, backend was already working
 2. ~~Campaign non-functional~~ ✅ FIXED (H-NEW-13) — objectives, victory/defeat, return flow all wired
 3. ~~No real map loading~~ ✅ FIXED (H-NEW-12) — skirmish dialog + campaign passthrough
-4. Audio produces zero sound — AudioManager fully wired but **no .wav/.mp3 asset files exist** (placeholder filenames documented in README.txt)
-5. ~~GameSession never persisted to DB~~ ✅ FIXED (H-NEW-9) — full CRUD + crash recovery
+4. ~~Audio produces zero sound — no .wav/.mp3 asset files exist~~ ✅ PARTIALLY FIXED (2026-06-28) — 72 SFX + 1 music track converted to OGG and copied into `aow2-client/src/main/resources/audio/`. AudioManager still expects `.wav`/`.mp3` filenames (e.g. `playSFX("ui_click")`) but the converted files are `.ogg` with original names (e.g. `select_1.ogg`). A new `AssetTestScene` validates playback via `javax.sound.sampled` + Vorbis SPI. AudioManager needs to be updated to: (a) load `.ogg` files, (b) map its placeholder names to the real iOS SFX names. See `docs/RE/ASSET_DEVELOPMENT_GUIDE.md` §4 for the bridge work needed.
+
+---
+
+## 🎨 ASSET DEVELOPMENT (sessions 2026-06-27 to 2026-06-28)
+
+Asset work is tracked separately from the game-logic TODO above. See
+**`docs/RE/ASSET_DEVELOPMENT_GUIDE.md`** for the full reference.
+
+### Completed
+- ✅ Extracted 286 files from 3 non-APK distributions (J2ME Global Confederation, J2ME Liberation of Peru, iOS v2.2)
+- ✅ Categorised all files under `docs/RE/external_versions/` with per-file documentation
+- ✅ Decoded 90 iOS sprites (45 EN + 45 RU) from packed i0 containers
+- ✅ Verified sprite mappings via VLM visual analysis (9 corrections applied)
+- ✅ Converted 72 SFX WAV + 1 music MP3 to OGG/Vorbis for FXGL
+- ✅ Ported 38 Peru campaign maps from binary to AOW2-Online JSON format
+- ✅ Enriched both campaign JSONs with original Gear Games briefing text
+- ✅ Built `AssetTestScene` to validate the asset pipeline end-to-end
+- ✅ Added OGG Vorbis SPI dependencies to the build
+
+### Pending (priority order)
+1. **HIGH**: Bridge AudioManager to the converted OGG files — update `playSFX()`/`playMusic()` to load `.ogg` and map placeholder names (`ui_click` → `select_1.ogg`, etc.)
+2. **HIGH**: Fix the 14 pre-existing compile errors so the build is green again (ICE/RUINS terrain types, ToggleButton, fillArc signature — unrelated to asset work but blocks running the game)
+3. **MEDIUM**: Decode the `d0` terrain lookup tables so Peru maps' high terrain byte values (>100) map to correct terrain types instead of defaulting to GRASS
+4. **MEDIUM**: Wire enriched campaign briefings into `CampaignScene` so the mission briefing panel shows original Gear Games text
+5. **MEDIUM**: Decode the iOS Mach-O sprite-rect table to slice `d1` master atlas programmatically (currently only the pre-sliced `i0` sprites are usable)
+6. **LOW**: Cross-reference iOS mission briefings with the 38 Peru maps to determine which map corresponds to which mission
+7. **LOW**: Convert remaining 64 SFX + music.wav (only a 9-file sample was copied to client resources)
+
+### Key files
+- `docs/RE/ASSET_DEVELOPMENT_GUIDE.md` — how to continue asset development
+- `docs/RE/external_versions/EXTERNAL_VERSIONS.md` — raw extraction reference (286 files)
+- `docs/RE/external_versions/ipa_ios_v2.2/DECODED_ASSETS.md` — decoded/converted assets reference
+- `docs/RE/documentation/Asset_Catalog.md` §11 — cross-version asset selection guide
+- `/home/z/my-project/scripts/` — all decoder/converter scripts (preserved outside the repo)
