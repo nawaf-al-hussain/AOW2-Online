@@ -16,9 +16,9 @@ IDs F-01 through F-30 assigned per the loop prompt priority order.
 | F-03 | FULL_ANALYSIS §3 | CRITICAL | `ChatController.sendMessage` no participation check | VERIFIED | 2026-06-29 |
 | F-04 | FULL_ANALYSIS §7.4 | HIGH | Produce/Train command unreachable — no production UI | VERIFIED | 2026-06-29 |
 | F-05 | FULL_ANALYSIS §7.4 | HIGH | Research command unreachable — no research UI | VERIFIED | 2026-06-29 |
-| F-06 | FULL_ANALYSIS §7.4 | HIGH | Garrison command unreachable — no hotkey | TODO | - |
-| F-07 | FULL_ANALYSIS §7.4 | HIGH | Siege mode unreachable — no hotkey | TODO | - |
-| F-08 | FULL_ANALYSIS §3 | HIGH | `cancel_production:N` not handled in GameScene | TODO | - |
+| F-06 | FULL_ANALYSIS §7.4 | HIGH | Garrison command unreachable — no hotkey | VERIFIED | 2026-06-29 |
+| F-07 | FULL_ANALYSIS §7.4 | HIGH | Siege mode unreachable — no hotkey | VERIFIED | 2026-06-29 |
+| F-08 | FULL_ANALYSIS §3 | HIGH | `cancel_production:N` not handled in GameScene | VERIFIED | 2026-06-29 |
 | F-09 | FULL_ANALYSIS §3 | MEDIUM | Multiplayer match-found → game-start: session UUID not passed | TODO | - |
 | F-10 | FULL_ANALYSIS §3 | HIGH | A/S/D key conflict (camera pan vs game commands) | TODO | - |
 | F-11 | FULL_ANALYSIS §3 | MEDIUM | Hold command identical to Stop — no distinct behavior | TODO | - |
@@ -46,9 +46,9 @@ IDs F-01 through F-30 assigned per the loop prompt priority order.
 
 ## Current Work Item
 
-**ID:** F-06
-**What I'm doing:** Wiring Garrison command — add G hotkey in InputHandler to issue GarrisonCommand when infantry is selected and right-clicking a bunker.
-**Verification gate:** Select infantry, press G, right-click bunker → garrison command issued. Code review confirms GarrisonCommand created and enqueued.
+**ID:** F-09
+**What I'm doing:** Fixing multiplayer match-found → game-start flow — pass session UUID from MultiplayerLobbyScene.onMatchFound to GameScene.setupMultiplayer() so LockstepEngine connects.
+**Verification gate:** Code review confirms setupMultiplayer() is called with non-null session UUID in the match-found path, and LockstepEngine.connect() is invoked.
 
 ## Deferred Items
 

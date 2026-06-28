@@ -75,3 +75,25 @@ Append-only. One entry per iteration. Never edited.
 - Both commands enqueue via tickManager (single-player) AND lockstepEngine.submitCommand() (multiplayer) ✅
 **New status:** F-04 VERIFIED, F-05 VERIFIED
 **Next item:** F-06 — Garrison command unreachable — no hotkey
+
+---
+## Iteration 5 — 2026-06-29T21:05:00+08:00
+
+**Item:** F-06 + F-07 + F-08 — Garrison hotkey, Siege mode hotkey, Cancel production handler
+**Action taken:** (All three are InputHandler/GameScene wiring, fixed together)
+- `aow2-client/src/main/java/com/aow2/client/input/InputHandler.java`:
+  - Added `GARRISON` to the `CommandMode` enum
+  - Added `case G` key handler: sets `commandMode = CommandMode.GARRISON` (right-click then issues "garrison" command)
+  - Added `case D` key handler: issues `issueCommand("siege_mode", -1, -1)` immediately (no right-click needed — siege mode is a toggle)
+  - Added `case GARRISON -> "garrison"` to the right-click command dispatch switch
+- `aow2-client/src/main/java/com/aow2/client/scene/GameScene.java`:
+  - Added `case "garrison"` to the command switch: finds friendly bunker at target position, issues `CommandType.Garrison(tick, playerId, unitIds, buildingId)`. Only CONFED_BUNKER and REBEL_BUNKER qualify (not walls/towers).
+  - Added `case "siege_mode"` to the command switch: iterates selected units, for each siege-capable unit (isSiegeCapable() returns true for Fortress, Hammer, Torrent, Rhino, Sniper) issues `CommandType.SiegeMode(tick, playerId, unitId, newState)` where newState is the opposite of the current siege state
+  - Added `cancel_production:N` handler BEFORE the HUD action switch (prefix match): parses the slot index, issues `CommandType.Cancel(tick, playerId, buildingId)` for the selected producing building. Both tickManager and lockstepEngine receive the command.
+**Gate result:** PASS (by code inspection)
+- F-06: G key → GARRISON mode → right-click → "garrison" command → CommandType.Garrison ✅
+- F-07: D key → "siege_mode" command → CommandType.SiegeMode for each siege-capable unit ✅
+- F-08: HUD "cancel_production:N" → prefix match → CommandType.Cancel ✅
+- All three commands enqueue via tickManager AND lockstepEngine (multiplayer) ✅
+**New status:** F-06 VERIFIED, F-07 VERIFIED, F-08 VERIFIED
+**Next item:** F-09 — Multiplayer match-found → game-start: session UUID not passed

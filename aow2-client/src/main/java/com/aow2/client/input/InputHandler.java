@@ -37,7 +37,7 @@ public class InputHandler {
 
     /** Current input mode for command context. */
     public enum CommandMode {
-        NORMAL, ATTACK_MOVE, PATROL, BUILD_PLACEMENT
+        NORMAL, ATTACK_MOVE, PATROL, BUILD_PLACEMENT, GARRISON
     }
 
     /** The selection manager. */
@@ -310,6 +310,23 @@ public class InputHandler {
                     }
                 }
             }
+            // FIX (F-06): Garrison hotkey — press G to enter garrison mode, then
+            // right-click a friendly bunker to issue a Garrison command.
+            case G -> {
+                if (selectionManager.hasSelection()) {
+                    commandMode = CommandMode.GARRISON;
+                    LOG.debug("Garrison mode activated — right-click a bunker");
+                }
+            }
+            // FIX (F-07): Siege mode hotkey — press D to toggle siege mode on
+            // siege-capable units (Fortress, Hammer, Torrent, Rhino). Issues a
+            // SiegeMode command immediately (no right-click target needed).
+            case D -> {
+                if (selectionManager.hasSelection()) {
+                    issueCommand("siege_mode", -1, -1);
+                    LOG.debug("Siege mode toggle command issued");
+                }
+            }
             case ESCAPE -> {
                 if (commandMode != CommandMode.NORMAL) {
                     commandMode = CommandMode.NORMAL;
@@ -381,6 +398,7 @@ public class InputHandler {
             case ATTACK_MOVE -> "attack_move";
             case PATROL -> "patrol";
             case BUILD_PLACEMENT -> "build";
+            case GARRISON -> "garrison";  // FIX (F-06): right-click issues garrison command
             case NORMAL -> "move"; // Default: move command
         };
 

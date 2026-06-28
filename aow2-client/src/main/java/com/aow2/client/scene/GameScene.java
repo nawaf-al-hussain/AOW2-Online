@@ -316,6 +316,39 @@ public class GameScene {
         // HUD action callback
         hud.setActionCallback(action -> {
             LOG.debug("HUD action: {}", action);
+
+            // FIX (F-08): Cancel production — HUD fires "cancel_production:N" when
+            // the player right-clicks production queue slot N. Parse the slot index
+            // and issue a Cancel command for the selected producing building.
+            // Handled before the switch because the switch uses constant case labels
+            // and we need a prefix match.
+            if (action != null && action.startsWith("cancel_production:")) {
+                try {
+                    int slotIndex = Integer.parseInt(action.substring("cancel_production:".length()));
+                    if (selectionManager != null && selectionManager.hasSelection()) {
+                        var selectedIds = selectionManager.getSelectedIds();
+                        if (selectedIds.size() == 1) {
+                            int buildingId = selectedIds.iterator().next();
+                            var building = entityManager.getBuilding(buildingId);
+                            if (building != null && building.isAlive()
+                                    && building.getType().producesUnits()) {
+                                long tick = gameState.currentTick();
+                                var cmd = new CommandType.Cancel(tick, LOCAL_PLAYER_ID, buildingId);
+                                tickManager.enqueueCommand(cmd);
+                                if (isMultiplayer && lockstepEngine != null && lockstepEngine.isRunning()) {
+                                    lockstepEngine.submitCommand(cmd);
+                                }
+                                LOG.info("Cancel production command issued: building={} slot={}",
+                                    buildingId, slotIndex);
+                            }
+                        }
+                    }
+                } catch (NumberFormatException e) {
+                    LOG.warn("Invalid cancel_production action: {}", action);
+                }
+                return;
+            }
+
             switch (action) {
                 case "attack" -> inputHandler.onKeyPressed(
                     new javafx.scene.input.KeyEvent(javafx.scene.input.KeyEvent.KEY_PRESSED,
@@ -448,6 +481,36 @@ public class GameScene {
                         LOG.warn("Build command issued but no building type selected");
                         yield null;
                     }
+                }
+                // FIX (F-06): Garrison command — right-click on a friendly bunker while
+                // in GARRISON mode issues a Garrison command with the selected unit IDs.
+                case "garrison" -> {
+                    Building targetBuilding = entityManager.findBuildingAt(targetPos);
+                    if (targetBuilding != null && targetBuilding.getFaction() == playerFaction
+                            && (targetBuilding.getType() == BuildingType.CONFED_BUNKER
+                                || targetBuilding.getType() == BuildingType.REBEL_BUNKER)) {
+                        yield new CommandType.Garrison(tick, LOCAL_PLAYER_ID, selectedIds, targetBuilding.getId());
+                    }
+                    LOG.warn("Garrison command: no friendly bunker at ({}, {})", targetGx, targetGy);
+                    yield null;
+                }
+                // FIX (F-07): Siege mode toggle — issues a SiegeMode command for each
+                // selected siege-capable unit (Fortress, Hammer, Torrent, Rhino, Sniper).
+                case "siege_mode" -> {
+                    // Toggle siege mode for each selected unit that is siege-capable.
+                    for (int id : selectedIds) {
+                        Unit u = entityManager.getUnit(id);
+                        if (u != null && u.isAlive() && u.getUnitType().isSiegeCapable()) {
+                            boolean newState = !u.isSiegeMode();
+                            var siegeCmd = new CommandType.SiegeMode(tick, LOCAL_PLAYER_ID, id, newState);
+                            tickManager.enqueueCommand(siegeCmd);
+                            if (isMultiplayer && lockstepEngine != null && lockstepEngine.isRunning()) {
+                                lockstepEngine.submitCommand(siegeCmd);
+                            }
+                            LOG.info("Siege mode toggle for unit {}: {}", id, newState);
+                        }
+                    }
+                    yield null;  // commands already enqueued in the loop
                 }
                 default -> null;
             };
