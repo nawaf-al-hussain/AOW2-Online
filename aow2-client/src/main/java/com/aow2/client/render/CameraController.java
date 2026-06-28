@@ -222,9 +222,12 @@ public class CameraController {
 
         switch (event.getCode()) {
             case W, UP    -> panUp = pressed;
-            case S, DOWN  -> panDown = pressed;
-            case A, LEFT  -> panLeft = pressed;
-            case D, RIGHT -> panRight = pressed;
+            // FIX (F-10): Removed S, A, D from camera controls — they conflict with
+            // the game command hotkeys (S=stop, A=attack-move, D=siege mode toggle).
+            // Camera panning now uses W + arrow keys only.
+            case DOWN     -> panDown = pressed;
+            case LEFT     -> panLeft = pressed;
+            case RIGHT    -> panRight = pressed;
             default -> { /* not a camera key */ }
         }
     }

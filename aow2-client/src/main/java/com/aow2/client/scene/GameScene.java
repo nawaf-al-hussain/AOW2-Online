@@ -471,7 +471,9 @@ public class GameScene {
                     yield new CommandType.AttackMove(tick, LOCAL_PLAYER_ID, selectedIds, targetPos);
                 }
                 case "stop" -> new CommandType.Stop(tick, LOCAL_PLAYER_ID, selectedIds);
-                case "hold" -> new CommandType.Stop(tick, LOCAL_PLAYER_ID, selectedIds);
+                // FIX (F-11): Hold is now a distinct command — clears path but retains
+                // attack target so units can attack enemies in range without moving.
+                case "hold" -> new CommandType.Hold(tick, LOCAL_PLAYER_ID, selectedIds);
                 case "patrol" -> new CommandType.Patrol(tick, LOCAL_PLAYER_ID, selectedIds, targetPos);
                 case "build" -> {
                     BuildingType buildType = inputHandler.getPendingBuildType();

@@ -20,9 +20,9 @@ IDs F-01 through F-30 assigned per the loop prompt priority order.
 | F-07 | FULL_ANALYSIS §7.4 | HIGH | Siege mode unreachable — no hotkey | VERIFIED | 2026-06-29 |
 | F-08 | FULL_ANALYSIS §3 | HIGH | `cancel_production:N` not handled in GameScene | VERIFIED | 2026-06-29 |
 | F-09 | FULL_ANALYSIS §3 | MEDIUM | Multiplayer match-found → game-start: session UUID not passed | VERIFIED | 2026-06-29 |
-| F-10 | FULL_ANALYSIS §3 | HIGH | A/S/D key conflict (camera pan vs game commands) | TODO | - |
-| F-11 | FULL_ANALYSIS §3 | MEDIUM | Hold command identical to Stop — no distinct behavior | TODO | - |
-| F-12 | FULL_ANALYSIS §3 | LOW | `ep2_mission7.lua` syntax error (missing closing quote, line 108) | TODO | - |
+| F-10 | FULL_ANALYSIS §3 | HIGH | A/S/D key conflict (camera pan vs game commands) | VERIFIED | 2026-06-29 |
+| F-11 | FULL_ANALYSIS §3 | MEDIUM | Hold command identical to Stop — no distinct behavior | VERIFIED | 2026-06-29 |
+| F-12 | FULL_ANALYSIS §3 | LOW | `ep2_mission7.lua` syntax error (missing closing quote, line 108) | VERIFIED | 2026-06-29 (already fixed) |
 | F-13 | FULL_ANALYSIS §3 | MEDIUM | Campaign save fails — `gameState`/`entityManager` never set in `CampaignScene` | TODO | - |
 | F-14 | FULL_ANALYSIS §3 | MEDIUM | Non-atomic ELO recording (session complete + ELO not in shared transaction) | TODO | - |
 | F-15 | FULL_ANALYSIS §3 | MEDIUM | `leaveQueue` not synchronized with `queueLock` | TODO | - |
@@ -46,9 +46,9 @@ IDs F-01 through F-30 assigned per the loop prompt priority order.
 
 ## Current Work Item
 
-**ID:** F-10
-**What I'm doing:** Fixing A/S/D key conflict — CameraController treats A/S/D as camera pan, conflicting with attack-move/stop/hold commands. Remove A/S/D from CameraController's key handling.
-**Verification gate:** CameraController key list does not contain A, S, D. Pressing A enters attack-move mode without panning the camera.
+**ID:** F-13
+**What I'm doing:** Fixing campaign save — CampaignScene.saveGame() requires gameState/entityManager which are never set. Wire setGameState()/setEntityManager() from AOW2App.
+**Verification gate:** Start campaign mission, complete it, return to campaign scene → saveGame() writes a file. File exists on disk.
 
 ## Deferred Items
 

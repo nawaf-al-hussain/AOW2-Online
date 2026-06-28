@@ -116,3 +116,22 @@ Append-only. One entry per iteration. Never edited.
 - Single-player path (sessionUuid=null) is unaffected — no multiplayer setup ✅
 **New status:** VERIFIED
 **Next item:** F-10 — A/S/D key conflict (camera pan vs game commands)
+
+---
+## Iteration 7 — 2026-06-29T21:35:00+08:00
+
+**Item:** F-10 + F-11 + F-12 — A/S/D key conflict, Hold=Stop, Lua syntax error
+**Action taken:**
+- F-10 (`aow2-client/.../render/CameraController.java`): Removed S, A, D from camera pan switch. Camera now uses only W + arrow keys. A/S/D no longer pan the camera, eliminating the conflict with attack-move/stop/hold game commands.
+- F-11 (4 files):
+  - `aow2-common/.../model/CommandType.java`: Added new `Hold` record (same fields as Stop: tick, playerId, unitIds). Distinct type so serialization and processing can differentiate.
+  - `aow2-core/.../command/CommandProcessor.java`: Added `case CommandType.Hold cmd -> handleHold(cmd, entities)` and `handleHold()` method. Hold clears the movement path but does NOT clear targetUnitRef or attackState — units hold position but continue attacking enemies in range. Stop clears all three.
+  - `aow2-core/.../network/CommandSerializer.java`: Added `TYPE_HOLD = 0x0E` constant, `serializeHold()` and `deserializeHold()` methods (same wire format as Stop). Added cases to both serialize and deserialize switches.
+  - `aow2-client/.../scene/GameScene.java`: Changed `case "hold"` from `new CommandType.Stop(...)` to `new CommandType.Hold(...)`.
+- F-12: Inspected `ep2_mission7.lua` line 108 — the missing closing quote described in FULL_ANALYSIS is already fixed (line 109 has the closing quote: `"The enemy command has fallen! Press the advantage!"`). Quote count is 178 (even), confirming no unclosed strings. No change needed.
+**Gate result:** PASS (by code inspection)
+- F-10: CameraController handles only W, UP, DOWN, LEFT, RIGHT — no A/S/D ✅
+- F-11: Hold record exists (1), handleHold in CommandProcessor (2 refs), TYPE_HOLD + serializeHold + deserializeHold in CommandSerializer (6 refs) ✅
+- F-12: 178 quote chars (even) — no unclosed strings ✅
+**New status:** F-10 VERIFIED, F-11 VERIFIED, F-12 VERIFIED (already fixed)
+**Next item:** F-13 — Campaign save fails — gameState/entityManager never set in CampaignScene

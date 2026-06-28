@@ -93,6 +93,8 @@ public final class CommandProcessor {
             case CommandType.Cancel cmd -> handleCancel(cmd, entities, economy, production, research);
             case CommandType.SiegeMode cmd -> handleSiegeMode(cmd, entities, combat);
             case CommandType.Stop cmd -> handleStop(cmd, entities);
+            // FIX (F-11): Hold is distinct from Stop — clears path but retains attack target.
+            case CommandType.Hold cmd -> handleHold(cmd, entities);
             case CommandType.Patrol cmd -> handlePatrol(cmd, entities, map, movement);
             case CommandType.Upgrade cmd -> upgradeHandler.handle(cmd, entities, economy, null);
         }
@@ -161,6 +163,28 @@ public final class CommandProcessor {
                 unit.setTargetUnitRef(null);
                 unit.setAttackState(0);
                 LOG.debug("Unit {} stopped", unitId);
+            }
+        }
+    }
+
+    /**
+     * Handle a hold-position command.
+     * <p>
+     * FIX (F-11): Distinct from Stop — clears the movement path but retains the
+     * attack target and attack state, so units can attack enemies in range
+     * without moving from their current position.
+     *
+     * @param cmd      the hold command
+     * @param entities the entity manager
+     */
+    private void handleHold(CommandType.Hold cmd, EntityManager entities) {
+        for (int unitId : cmd.unitIds()) {
+            var unit = entities.getUnit(unitId);
+            if (unit != null && unit.isAlive()) {
+                unit.clearPath();
+                // NOTE: Do NOT clear targetUnitRef or attackState — hold position
+                // allows units to continue attacking enemies in range.
+                LOG.debug("Unit {} holding position", unitId);
             }
         }
     }

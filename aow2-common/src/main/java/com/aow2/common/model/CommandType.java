@@ -359,6 +359,46 @@ public sealed interface CommandType permits
     }
 
     /**
+     * Hold position command. Distinct from Stop: units clear their movement path
+     * but retain their attack target, allowing them to attack enemies in range
+     * without moving. Stop clears both path and attack target.
+     * <p>
+     * FIX (F-11): Previously H key issued CommandType.Stop, making hold functionally
+     * identical to stop. Added this Hold record so the two commands are distinct.
+     *
+     * @param tick     game tick
+     * @param playerId issuing player
+     * @param unitIds  entity IDs of units to hold position
+     */
+    record Hold(long tick, int playerId, int[] unitIds) implements CommandType {
+        public Hold {
+            if (tick < 0) {
+                throw new IllegalArgumentException("tick must not be negative, got: " + tick);
+            }
+            if (unitIds == null || unitIds.length == 0) {
+                throw new IllegalArgumentException("unitIds must not be null or empty");
+            }
+            unitIds = unitIds.clone();
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof Hold that)) return false;
+            return tick == that.tick && playerId == that.playerId
+                && Arrays.equals(unitIds, that.unitIds);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = Long.hashCode(tick);
+            result = 31 * result + playerId;
+            result = 31 * result + Arrays.hashCode(unitIds);
+            return result;
+        }
+    }
+
+    /**
      * Set a patrol route for one or more units between their current position and a waypoint.
      *
      * @param tick     game tick

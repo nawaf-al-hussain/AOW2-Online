@@ -30,6 +30,7 @@ public final class CommandSerializer {
     private static final byte TYPE_PATROL = 0x0B;
     private static final byte TYPE_ATTACK_MOVE = 0x0C;
     private static final byte TYPE_UPGRADE = 0x0D;
+    private static final byte TYPE_HOLD = 0x0E;  // FIX (F-11): Hold command — distinct from Stop
 
     private CommandSerializer() {
         // Utility class, no instantiation
@@ -54,6 +55,7 @@ public final class CommandSerializer {
             case CommandType.Cancel c -> serializeCancel(c);
             case CommandType.SiegeMode s -> serializeSiegeMode(s);
             case CommandType.Stop st -> serializeStop(st);
+            case CommandType.Hold h -> serializeHold(h);  // FIX (F-11)
             case CommandType.Patrol pt -> serializePatrol(pt);
             case CommandType.AttackMove am -> serializeAttackMove(am);
             case CommandType.Upgrade u -> serializeUpgrade(u);
@@ -84,6 +86,7 @@ public final class CommandSerializer {
             case TYPE_CANCEL -> deserializeCancel(buf, tick, playerId);
             case TYPE_SIEGE_MODE -> deserializeSiegeMode(buf, tick, playerId);
             case TYPE_STOP -> deserializeStop(buf, tick, playerId);
+            case TYPE_HOLD -> deserializeHold(buf, tick, playerId);  // FIX (F-11)
             case TYPE_PATROL -> deserializePatrol(buf, tick, playerId);
             case TYPE_ATTACK_MOVE -> deserializeAttackMove(buf, tick, playerId);
             case TYPE_UPGRADE -> deserializeUpgrade(buf, tick, playerId);
@@ -197,6 +200,20 @@ public final class CommandSerializer {
         buf.putInt(st.playerId());
         buf.putInt(st.unitIds().length);
         for (int id : st.unitIds()) buf.putInt(id);
+        return buf.array();
+    }
+
+    /**
+     * FIX (F-11): Serialize Hold command. Same format as Stop.
+     */
+    private static byte[] serializeHold(CommandType.Hold h) {
+        int unitIdBytes = 4 + h.unitIds().length * 4;
+        ByteBuffer buf = ByteBuffer.allocate(1 + 8 + 4 + unitIdBytes);
+        buf.put(TYPE_HOLD);
+        buf.putLong(h.tick());
+        buf.putInt(h.playerId());
+        buf.putInt(h.unitIds().length);
+        for (int id : h.unitIds()) buf.putInt(id);
         return buf.array();
     }
 
@@ -335,6 +352,14 @@ public final class CommandSerializer {
     private static CommandType.Stop deserializeStop(ByteBuffer buf, long tick, int playerId) {
         int[] unitIds = readUnitIds(buf);
         return new CommandType.Stop(tick, playerId, unitIds);
+    }
+
+    /**
+     * FIX (F-11): Deserialize Hold command. Same format as Stop.
+     */
+    private static CommandType.Hold deserializeHold(ByteBuffer buf, long tick, int playerId) {
+        int[] unitIds = readUnitIds(buf);
+        return new CommandType.Hold(tick, playerId, unitIds);
     }
 
     private static CommandType.AttackMove deserializeAttackMove(ByteBuffer buf, long tick, int playerId) {
