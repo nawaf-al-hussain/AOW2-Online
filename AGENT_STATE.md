@@ -23,12 +23,12 @@ IDs F-01 through F-30 assigned per the loop prompt priority order.
 | F-10 | FULL_ANALYSIS §3 | HIGH | A/S/D key conflict (camera pan vs game commands) | VERIFIED | 2026-06-29 |
 | F-11 | FULL_ANALYSIS §3 | MEDIUM | Hold command identical to Stop — no distinct behavior | VERIFIED | 2026-06-29 |
 | F-12 | FULL_ANALYSIS §3 | LOW | `ep2_mission7.lua` syntax error (missing closing quote, line 108) | VERIFIED | 2026-06-29 (already fixed) |
-| F-13 | FULL_ANALYSIS §3 | MEDIUM | Campaign save fails — `gameState`/`entityManager` never set in `CampaignScene` | TODO | - |
-| F-14 | FULL_ANALYSIS §3 | MEDIUM | Non-atomic ELO recording (session complete + ELO not in shared transaction) | TODO | - |
-| F-15 | FULL_ANALYSIS §3 | MEDIUM | `leaveQueue` not synchronized with `queueLock` | TODO | - |
-| F-16 | FULL_ANALYSIS §3 | MEDIUM | No double-session guard in `SessionService.createSession()` | TODO | - |
-| F-17 | FULL_ANALYSIS §3 (partial) | MEDIUM | `SessionService.reportSyncHash` missing `@Transactional` | TODO | - |
-| F-18 | FULL_ANALYSIS §4 (H-AUDIT-1 note) | MEDIUM | `SessionService` session lock entries never removed (memory leak) | TODO | - |
+| F-13 | FULL_ANALYSIS §3 | MEDIUM | Campaign save fails — `gameState`/`entityManager` never set in `CampaignScene` | VERIFIED | 2026-06-29 |
+| F-14 | FULL_ANALYSIS §3 | MEDIUM | Non-atomic ELO recording (session complete + ELO not in shared transaction) | VERIFIED | 2026-06-29 |
+| F-15 | FULL_ANALYSIS §3 | MEDIUM | `leaveQueue` not synchronized with `queueLock` | VERIFIED | 2026-06-29 |
+| F-16 | FULL_ANALYSIS §3 | MEDIUM | No double-session guard in `SessionService.createSession()` | VERIFIED | 2026-06-29 |
+| F-17 | FULL_ANALYSIS §3 (partial) | MEDIUM | `SessionService.reportSyncHash` missing `@Transactional` | VERIFIED | 2026-06-29 |
+| F-18 | FULL_ANALYSIS §4 (H-AUDIT-1 note) | MEDIUM | `SessionService` session lock entries never removed (memory leak) | VERIFIED | 2026-06-29 |
 | F-19 | FULL_ANALYSIS §3 | MEDIUM | `MatchmakingPanel` bypasses `apiUrl()` — POST goes to Next.js not Spring Boot | TODO | - |
 | F-20 | FULL_ANALYSIS §10 | MEDIUM | `ChatTab` has no WebSocket connection — chat is local state only | TODO | - |
 | F-21 | FULL_ANALYSIS §3 | MEDIUM | Replay viewer not wired from any menu | TODO | - |
@@ -46,9 +46,9 @@ IDs F-01 through F-30 assigned per the loop prompt priority order.
 
 ## Current Work Item
 
-**ID:** F-13
-**What I'm doing:** Fixing campaign save — CampaignScene.saveGame() requires gameState/entityManager which are never set. Wire setGameState()/setEntityManager() from AOW2App.
-**Verification gate:** Start campaign mission, complete it, return to campaign scene → saveGame() writes a file. File exists on disk.
+**ID:** F-19
+**What I'm doing:** Fix MatchmakingPanel to use apiUrl() so POST goes to Spring Boot not Next.js.
+**Verification gate:** MatchmakingPanel.tsx uses apiUrl('/matchmaking/join') not a bare '/api/' path.
 
 ## Deferred Items
 

@@ -252,12 +252,18 @@ public class MatchmakingService {
      * @return a status map indicating the result
      */
     public Map<String, Object> leaveQueue(Long playerId) {
-        QueueEntry removed = queue.remove(playerId);
-        if (removed != null) {
-            log.info("Player {} left matchmaking queue", playerId);
-            return Map.of("status", "removed", "playerId", playerId);
+        // FIX (F-15): Synchronize on queueLock to prevent race with backgroundMatchSweep.
+        // Without this, a player could leave the queue at the exact moment the sweep
+        // iterates and finds a match, resulting in the player being placed in a match
+        // they didn't want.
+        synchronized (queueLock) {
+            QueueEntry removed = queue.remove(playerId);
+            if (removed != null) {
+                log.info("Player {} left matchmaking queue", playerId);
+                return Map.of("status", "removed", "playerId", playerId);
+            }
+            return Map.of("status", "not_queued", "playerId", playerId);
         }
-        return Map.of("status", "not_queued", "playerId", playerId);
     }
 
     /**

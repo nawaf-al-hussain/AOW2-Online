@@ -409,15 +409,22 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
     /**
      * Finalize a game result: complete the session and record ELO.
      * Only called after two-phase confirmation.
+     * <p>
+     * FIX (F-14): Wrapped both calls in a single @Transactional method on SessionService
+     * so the session completion and ELO recording are atomic. If recordMatchResult fails,
+     * the completeSession will be rolled back.
      */
     private void finalizeGameResult(GameSession gs, Long winnerId, int durationSeconds) {
-        sessionService.completeSession(gs.getSessionUuid(), winnerId, durationSeconds);
-        rankingService.recordMatchResult(
+        // FIX (F-14): Use the atomic completeSessionAndRecordElo method so both ops
+        // share the same transaction. Previously these were two separate calls — if
+        // recordMatchResult failed, the session was marked COMPLETED but ELO was lost.
+        sessionService.completeSessionAndRecordElo(
+                gs.getSessionUuid(),
+                winnerId,
+                durationSeconds,
                 gs.getPlayer1Id(),
                 gs.getPlayer2Id(),
-                winnerId,
-                gs.getMapName(),
-                durationSeconds
+                gs.getMapName()
         );
         log.info("Game result finalized: session={}, winner={}, duration={}s",
                 gs.getSessionUuid(), winnerId, durationSeconds);

@@ -38,6 +38,15 @@ public class SessionService {
         this.sessionRepository = repository;
     }
 
+    /** FIX (F-14): RankingService injected so completeSessionAndRecordElo can be atomic. */
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.aow2.server.service.RankingService rankingService;
+
+    /** Package-private setter for test injection of mock ranking service. */
+    void setRankingService(com.aow2.server.service.RankingService service) {
+        this.rankingService = service;
+    }
+
     /** Active game sessions indexed by session UUID */
     private final Map<String, GameSession> activeSessions = new ConcurrentHashMap<>();
 
@@ -141,6 +150,29 @@ public class SessionService {
      */
     @Transactional
     public GameSession createSession(Long player1Id, Long player2Id, String mapName) {
+        // FIX (F-16): Double-session guard — check if either player is already in an
+        // active session. Without this, playerSessions.put() silently overwrites the
+        // previous mapping, allowing a player to be in multiple simultaneous sessions
+        // (causing ELO corruption and state confusion).
+        if (playerSessions.containsKey(player1Id)) {
+            String existingSession = playerSessions.get(player1Id);
+            GameSession existing = activeSessions.get(existingSession);
+            if (existing != null && existing.getState() != GameSession.SessionState.COMPLETED
+                    && existing.getState() != GameSession.SessionState.DISCONNECTED) {
+                throw new IllegalStateException(
+                    "Player " + player1Id + " is already in an active session: " + existingSession);
+            }
+        }
+        if (playerSessions.containsKey(player2Id)) {
+            String existingSession = playerSessions.get(player2Id);
+            GameSession existing = activeSessions.get(existingSession);
+            if (existing != null && existing.getState() != GameSession.SessionState.COMPLETED
+                    && existing.getState() != GameSession.SessionState.DISCONNECTED) {
+                throw new IllegalStateException(
+                    "Player " + player2Id + " is already in an active session: " + existingSession);
+            }
+        }
+
         GameSession session = new GameSession(player1Id, player2Id, mapName);
         session = sessionRepository.save(session);
         activeSessions.put(session.getSessionUuid(), session);
@@ -223,6 +255,44 @@ public class SessionService {
     }
 
     /**
+     * FIX (F-14): Atomically complete a session and record the ELO result.
+     * <p>
+     * Previously {@link #completeSession} and {@code RankingService.recordMatchResult}
+     * were called sequentially from {@code GameWebSocketHandler.finalizeGameResult}
+     * without a shared transaction. If recordMatchResult failed, the session was marked
+     * COMPLETED but ELO was never recorded — and the idempotency guard in completeSession
+     * prevented retry.
+     * <p>
+     * This method runs both operations inside a single {@code @Transactional} boundary.
+     * If either fails, the entire transaction rolls back.
+     *
+     * @param sessionUuid     the session UUID
+     * @param winnerId        the winner's player ID
+     * @param durationSeconds the match duration in seconds
+     * @param player1Id       player 1's ID (for ELO recording)
+     * @param player2Id       player 2's ID (for ELO recording)
+     * @param mapName         the map name (for ELO recording)
+     * @return the completed session, or empty if not found
+     */
+    @Transactional
+    public Optional<GameSession> completeSessionAndRecordElo(
+            String sessionUuid, Long winnerId, int durationSeconds,
+            Long player1Id, Long player2Id, String mapName) {
+        // Complete the session first (uses the same @Transactional context)
+        Optional<GameSession> result = completeSession(sessionUuid, winnerId, durationSeconds);
+        if (result.isEmpty()) {
+            return result;
+        }
+        // Record ELO in the same transaction — if this fails, completeSession rolls back
+        if (rankingService != null) {
+            rankingService.recordMatchResult(player1Id, player2Id, winnerId, mapName, durationSeconds);
+        } else {
+            log.warn("RankingService not injected — ELO not recorded for session {}", sessionUuid);
+        }
+        return result;
+    }
+
+    /**
      * Marks a session as disconnected due to player dropout.
      * REF: multiplayer_architecture.md - Disconnect detection (>3 consecutive errors)
      *
@@ -260,6 +330,7 @@ public class SessionService {
      * @param syncHash    the player's state hash at the given tick
      * @return true if a desync was detected between players at the same tick
      */
+    @Transactional  // FIX (F-17): reportSyncHash calls sessionRepository.save() — must be transactional
     public boolean reportSyncHash(String sessionUuid, Long playerId, long tick, long syncHash) {
         synchronized (getSessionLock(sessionUuid)) {
             GameSession session = activeSessions.get(sessionUuid);
@@ -453,5 +524,9 @@ public class SessionService {
             playerToWsSession.remove(session.getPlayer1Id());
             playerToWsSession.remove(session.getPlayer2Id());
         }
+        // FIX (F-18): Remove the per-session lock entry to prevent memory leak.
+        // Without this, sessionLocks accumulates entries for every session ever
+        // created, even after the session is completed and removed.
+        sessionLocks.remove(sessionUuid);
     }
 }

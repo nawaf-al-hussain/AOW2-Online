@@ -135,3 +135,24 @@ Append-only. One entry per iteration. Never edited.
 - F-12: 178 quote chars (even) — no unclosed strings ✅
 **New status:** F-10 VERIFIED, F-11 VERIFIED, F-12 VERIFIED (already fixed)
 **Next item:** F-13 — Campaign save fails — gameState/entityManager never set in CampaignScene
+
+---
+## Iteration 8 — 2026-06-29T21:55:00+08:00
+
+**Item:** F-13 + F-14 + F-15 + F-16 + F-17 + F-18 — campaign save, atomic ELO, leaveQueue sync, double-session guard, reportSyncHash @Transactional, sessionLocks leak
+**Action taken:** (6 server/client wiring fixes, all small, batched)
+- F-13 (`aow2-client/.../AOW2App.java`): Added showCampaign(GameState, EntityManager) overload. campaignEndCallback now passes gameScene.getGameState() and gameScene.getEntityManager() to showCampaign, which calls campaignScene.setGameState() and setEntityManager(). saveGame() now has non-null state to serialize.
+- F-14 (`aow2-server/.../SessionService.java` + `GameWebSocketHandler.java`): Added completeSessionAndRecordElo() method — @Transactional, calls completeSession() then rankingService.recordMatchResult() in the same transaction. Injected RankingService into SessionService via @Autowired. GameWebSocketHandler.finalizeGameResult() now calls the atomic method instead of two separate calls.
+- F-15 (`aow2-server/.../MatchmakingService.java`): Wrapped leaveQueue() body in synchronized(queueLock) to prevent race with backgroundMatchSweep.
+- F-16 (`aow2-server/.../SessionService.java`): Added double-session guard in createSession() — checks playerSessions for both players before inserting. Throws IllegalStateException if either player is already in an active (non-COMPLETED, non-DISCONNECTED) session.
+- F-17 (`aow2-server/.../SessionService.java`): Added @Transactional annotation to reportSyncHash() — it calls sessionRepository.save() which requires a transaction.
+- F-18 (`aow2-server/.../SessionService.java`): Added sessionLocks.remove(sessionUuid) to removeSession() to prevent memory leak.
+**Gate result:** PASS (by code inspection)
+- F-13: showCampaign(GameState, EntityManager) overload exists, sets gameState/entityManager on campaignScene ✅
+- F-14: completeSessionAndRecordElo() is @Transactional, calls both completeSession and recordMatchResult ✅
+- F-15: leaveQueue() body is inside synchronized(queueLock) ✅
+- F-16: createSession() checks playerSessions for both players, throws IllegalStateException ✅
+- F-17: reportSyncHash() has @Transactional annotation ✅
+- F-18: removeSession() calls sessionLocks.remove(sessionUuid) ✅
+**New status:** F-13 through F-18 all VERIFIED
+**Next item:** F-19 — MatchmakingPanel bypasses apiUrl()

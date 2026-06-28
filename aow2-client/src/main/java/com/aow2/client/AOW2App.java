@@ -247,12 +247,34 @@ public class AOW2App extends GameApplication {
      * Shows the campaign selection scene.
      */
     private void showCampaign() {
+        showCampaign(null, null);
+    }
+
+    /**
+     * Shows the campaign selection scene, optionally passing the game state and
+     * entity manager from a just-finished mission so the campaign can be saved.
+     * <p>
+     * FIX (F-13): Previously showCampaign() took no arguments, so gameState and
+     * entityManager were never set on CampaignScene — saveGame() silently failed.
+     *
+     * @param gameState    the game state from the just-finished mission, or null
+     * @param entityManager the entity manager from the just-finished mission, or null
+     */
+    private void showCampaign(com.aow2.core.engine.GameState gameState,
+                              com.aow2.core.world.EntityManager entityManager) {
         if (campaignScene != null) {
             FXGL.getGameScene().clearUINodes();
             campaignScene = null;
         }
 
         campaignScene = new CampaignScene();
+        // FIX (F-13): Wire gameState and entityManager so saveGame() can serialize them
+        if (gameState != null) {
+            campaignScene.setGameState(gameState);
+        }
+        if (entityManager != null) {
+            campaignScene.setEntityManager(entityManager);
+        }
         // Create or reuse the CampaignManager so state persists across scene transitions
         if (campaignManager == null) {
             // FIX(CAMP-5+6): Use real MissionScriptEngine instead of NoOpScriptEngine.
@@ -295,7 +317,11 @@ public class AOW2App extends GameApplication {
                     gameScene.setCampaignContext(campaignManager, episodeIndex, missionIndex);
                     gameScene.setCampaignEndCallback(() -> {
                         LOG.info("Campaign mission ended, returning to campaign scene");
-                        showCampaign();
+                        // FIX (F-13): Pass the gameState and entityManager from the
+                        // just-finished mission to the campaign scene so saveGame()
+                        // can serialize them. Without this, saveGame() silently fails
+                        // because both fields are null.
+                        showCampaign(gameScene.getGameState(), gameScene.getEntityManager());
                     });
                     // FIX(CAMP-5): Load mission Lua scripts into the script engine.
                     // Must happen after initializeGame() so gameState/entityManager exist.
