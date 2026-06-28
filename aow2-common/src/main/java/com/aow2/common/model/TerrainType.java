@@ -96,7 +96,12 @@ public enum TerrainType {
     public boolean isPassableBy(UnitCategory category) {
         return switch (this) {
             case DEEP_WATER -> false; // No ground units can cross deep water
-            case SHALLOW_WATER -> category == UnitCategory.INFANTRY; // Only infantry
+            // FIX (F-26): SHALLOW_WATER was passableBy(INFANTRY)=true but getMovementCost()=MAX_VALUE,
+            // creating a contradiction in the pathfinder (A* open set used isPassableBy but
+            // g-cost used getMovementCost, yielding infinite cost for a "passable" tile).
+            // Now SHALLOW_WATER is impassable for ALL units, consistent with the constructor
+            // (passable=false, movementCost=MAX_VALUE) and getMovementCost().
+            case SHALLOW_WATER -> false;
             case MOUNTAIN -> false; // Impassable for all
             case SWAMP -> category != UnitCategory.VEHICLE && category != UnitCategory.SPECIAL_MACHINERY; // Vehicles and SPECIAL_MACHINERY bog down
             default -> passableByDefault;

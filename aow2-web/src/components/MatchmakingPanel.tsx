@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useMatchmakingStore } from "@/lib/store";
 import { toast } from "sonner";
+import { apiUrl } from "@/lib/api";  // FIX (F-19): use apiUrl() so POST goes to Spring Boot (port 8080), not Next.js
 
 export default function MatchmakingPanel() {
   const { isSearching, searchTime, matchFound, opponent, startSearch, stopSearch, foundMatch } = useMatchmakingStore();
@@ -33,7 +34,10 @@ export default function MatchmakingPanel() {
     startSearch();
     // Try to join real matchmaking
     try {
-      const res = await fetch('/api/matchmaking/join', { method: 'POST' });
+      // FIX (F-19): Use apiUrl() with port 8080 so the POST goes to the Spring Boot
+      // server, not the Next.js dev server. Previously this was a bare '/api/' path
+      // which hit Next.js (no /api/matchmaking route) and always returned 404.
+      const res = await fetch(apiUrl('/api/matchmaking/join', 8080), { method: 'POST' });
       if (res.ok) {
         setServerAvailable(true);
       } else {

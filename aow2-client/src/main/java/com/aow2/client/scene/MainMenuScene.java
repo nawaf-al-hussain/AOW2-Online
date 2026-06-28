@@ -129,8 +129,8 @@ public class MainMenuScene {
         buttonBox.setAlignment(Pos.CENTER);
         buttonBox.setPadding(new Insets(0, 0, 80, 0));
 
-        String[] buttonLabels = {"Campaign", "Skirmish", "Multiplayer", "Map Editor", "Mods", "Settings", "Asset Test", "Quit"};
-        String[] actions = {"campaign", "skirmish", "multiplayer", "map_editor", "mods", "settings", "asset_test", "quit"};
+        String[] buttonLabels = {"Campaign", "Skirmish", "Multiplayer", "Map Editor", "Mods", "Settings", "Replays", "Asset Test", "Quit"};
+        String[] actions = {"campaign", "skirmish", "multiplayer", "map_editor", "mods", "settings", "replays", "asset_test", "quit"};
 
         for (int i = 0; i < buttonLabels.length; i++) {
             javafx.scene.control.Button btn = new javafx.scene.control.Button(buttonLabels[i]);

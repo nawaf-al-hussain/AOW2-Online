@@ -396,10 +396,34 @@ class CommandTypeTest {
                 case CommandType.Cancel c -> "Cancel";
                 case CommandType.SiegeMode s -> "SiegeMode";
                 case CommandType.Stop s -> "Stop";
+                case CommandType.Hold h -> "Hold";  // FIX (F-11): Hold command type
                 case CommandType.AttackMove am -> "AttackMove";
                 case CommandType.Patrol p -> "Patrol";
                 case CommandType.Upgrade u -> "Upgrade";
             };
+        }
+
+        @Test
+        @DisplayName("F-23: Upgrade command rejects negative tick/playerId/buildingId")
+        void upgradeRejectsNegativeValues() {
+            assertThrows(IllegalArgumentException.class,
+                () -> new CommandType.Upgrade(-1, 0, 0),
+                "F-23: Negative tick should throw");
+            assertThrows(IllegalArgumentException.class,
+                () -> new CommandType.Upgrade(0, -1, 0),
+                "F-23: Negative playerId should throw");
+            assertThrows(IllegalArgumentException.class,
+                () -> new CommandType.Upgrade(0, 0, -1),
+                "F-23: Negative buildingId should throw");
+        }
+
+        @Test
+        @DisplayName("F-23: Upgrade command accepts valid values")
+        void upgradeAcceptsValidValues() {
+            var cmd = new CommandType.Upgrade(10, 0, 5);
+            assertEquals(10L, cmd.tick());
+            assertEquals(0, cmd.playerId());
+            assertEquals(5, cmd.buildingId());
         }
 
         @Test

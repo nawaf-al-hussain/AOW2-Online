@@ -156,3 +156,27 @@ Append-only. One entry per iteration. Never edited.
 - F-18: removeSession() calls sessionLocks.remove(sessionUuid) ✅
 **New status:** F-13 through F-18 all VERIFIED
 **Next item:** F-19 — MatchmakingPanel bypasses apiUrl()
+
+---
+## Iteration 9 — 2026-06-29T22:15:00+08:00
+
+**Item:** F-19 + F-21 + F-23 + F-26 — MatchmakingPanel apiUrl, ReplayViewer wiring, Upgrade validation, SHALLOW_WATER contradiction
+**Action taken:**
+- F-19 (`aow2-web/src/components/MatchmakingPanel.tsx`): Imported apiUrl from @/lib/api. Changed `fetch('/api/matchmaking/join')` to `fetch(apiUrl('/api/matchmaking/join', 8080))` so the POST goes to Spring Boot (port 8080), not the Next.js dev server.
+- F-21 (`aow2-client/.../scene/MainMenuScene.java` + `AOW2App.java` + `ReplayViewerScene.java`):
+  - Added "Replays" button to MainMenuScene (between Settings and Asset Test)
+  - Added `case "replays" -> showReplayViewer()` in AOW2App menu action handler
+  - Added `showReplayViewer()` method in AOW2App that creates a ReplayViewerScene via `createForEmbedding()` and adds its root to the FXGL game scene
+  - Added `createForEmbedding()` static factory and `getRoot()` method to ReplayViewerScene (previously only had `createScene()` which returned a JavaFX Scene, not compatible with the FXGL UI node pattern)
+- F-23 (`aow2-common/.../model/CommandType.java`): Added compact constructor validation to Upgrade record — rejects negative tick, playerId, or buildingId with IllegalArgumentException. All other 12 command types already had this validation; Upgrade was the only one missing it.
+- F-26 (`aow2-common/.../model/TerrainType.java`): Changed `isPassableBy()` for SHALLOW_WATER from `category == UnitCategory.INFANTRY` to `false`. Now both `isPassableBy()` and `getMovementCost()` agree: SHALLOW_WATER is impassable for all units. Updated 2 tests in PathfindingSystemTest that expected infantry to cross shallow water.
+- Test updates:
+  - `aow2-common/.../CommandTypeTest.java`: Added `case CommandType.Hold h -> "Hold"` to the typeName switch (needed because F-11 added the Hold record). Added 2 new tests for F-23: upgradeRejectsNegativeValues, upgradeAcceptsValidValues.
+  - `aow2-core/.../PathfindingSystemTest.java`: Updated infantryShouldPreferGrassOverShallowWater to expect no path (was: path exists). Updated getTerrainCostShouldReturnFiniteCostForInfantryShallowWater to assert isPassableBy(INFANTRY) returns false.
+**Gate result:** PASS (by code inspection)
+- F-19: MatchmakingPanel uses apiUrl('/api/matchmaking/join', 8080) ✅
+- F-21: MainMenuScene has "Replays" button, AOW2App.showReplayViewer() navigates to ReplayViewerScene ✅
+- F-23: Upgrade compact constructor throws on negative values, 2 tests added ✅
+- F-26: isPassableBy(SHALLOW_WATER, INFANTRY) returns false, consistent with getMovementCost()=MAX_VALUE ✅
+**New status:** F-19, F-21, F-23, F-26 all VERIFIED
+**Next item:** F-20 — ChatTab WebSocket connection

@@ -409,6 +409,24 @@ public class AOW2App extends GameApplication {
     }
 
     /**
+     * Shows the replay viewer scene.
+     * <p>
+     * FIX (F-21): ReplayViewerScene was fully functional but not wired from any menu.
+     * Added "Replays" button to MainMenuScene and this handler to navigate to it.
+     */
+    private void showReplayViewer() {
+        FXGL.getGameScene().clearUINodes();
+        var replayScene = com.aow2.client.scene.ReplayViewerScene.createForEmbedding(action -> {
+            if ("back".equals(action)) {
+                showMainMenu();
+            }
+        });
+        FXGL.getGameScene().addUINode(replayScene.getRoot());
+        activeScene = ActiveScene.MAIN_MENU;  // reuse enum value — no ReplayViewer enum constant
+        LOG.info("Replay viewer scene displayed");
+    }
+
+    /**
      * Shows the asset test scene.
      * <p>
      * This scene validates that the decoded iOS sprites and converted OGG audio
@@ -470,6 +488,10 @@ public class AOW2App extends GameApplication {
             case "asset_test" -> {
                 LOG.info("Opening Asset Test scene");
                 showAssetTest();
+            }
+            case "replays" -> {
+                LOG.info("Opening Replay Viewer");
+                showReplayViewer();
             }
             case "quit" -> {
                 LOG.info("Quit requested");

@@ -29,14 +29,14 @@ IDs F-01 through F-30 assigned per the loop prompt priority order.
 | F-16 | FULL_ANALYSIS §3 | MEDIUM | No double-session guard in `SessionService.createSession()` | VERIFIED | 2026-06-29 |
 | F-17 | FULL_ANALYSIS §3 (partial) | MEDIUM | `SessionService.reportSyncHash` missing `@Transactional` | VERIFIED | 2026-06-29 |
 | F-18 | FULL_ANALYSIS §4 (H-AUDIT-1 note) | MEDIUM | `SessionService` session lock entries never removed (memory leak) | VERIFIED | 2026-06-29 |
-| F-19 | FULL_ANALYSIS §3 | MEDIUM | `MatchmakingPanel` bypasses `apiUrl()` — POST goes to Next.js not Spring Boot | TODO | - |
+| F-19 | FULL_ANALYSIS §3 | MEDIUM | `MatchmakingPanel` bypasses `apiUrl()` — POST goes to Next.js not Spring Boot | VERIFIED | 2026-06-29 |
 | F-20 | FULL_ANALYSIS §10 | MEDIUM | `ChatTab` has no WebSocket connection — chat is local state only | TODO | - |
-| F-21 | FULL_ANALYSIS §3 | MEDIUM | Replay viewer not wired from any menu | TODO | - |
+| F-21 | FULL_ANALYSIS §3 | MEDIUM | Replay viewer not wired from any menu | VERIFIED | 2026-06-29 |
 | F-22 | FULL_ANALYSIS §3 | MEDIUM | Settings scene is a stub — connect `AccessibilitySettings` | TODO | - |
-| F-23 | FULL_ANALYSIS §3 | MEDIUM | `Upgrade` command missing input validation in compact constructor | TODO | - |
+| F-23 | FULL_ANALYSIS §3 | MEDIUM | `Upgrade` command missing input validation in compact constructor | VERIFIED | 2026-06-29 |
 | F-24 | FULL_ANALYSIS §3 | MEDIUM | `onAreaEntered()` Lua hook never dispatched | TODO | - |
 | F-25 | FULL_ANALYSIS §3 (known limitation #2) | MEDIUM | Script messages never displayed in HUD | TODO | - |
-| F-26 | FULL_ANALYSIS §3 | LOW | `SHALLOW_WATER` passability contradiction in `TerrainType` | TODO | - |
+| F-26 | FULL_ANALYSIS §3 | LOW | `SHALLOW_WATER` passability contradiction in `TerrainType` | VERIFIED | 2026-06-29 |
 | F-27 | FULL_ANALYSIS §3 | LOW | Vehicle armor research map empty (verify against RE docs first) | TODO | - |
 | F-28 | FULL_ANALYSIS §3 | LOW | Download count inflation on maps (no per-player deduplication) | TODO | - |
 | F-29 | FULL_ANALYSIS §11 | LOW | Remove unused npm dependencies | TODO | - |
@@ -46,9 +46,9 @@ IDs F-01 through F-30 assigned per the loop prompt priority order.
 
 ## Current Work Item
 
-**ID:** F-19
-**What I'm doing:** Fix MatchmakingPanel to use apiUrl() so POST goes to Spring Boot not Next.js.
-**Verification gate:** MatchmakingPanel.tsx uses apiUrl('/matchmaking/join') not a bare '/api/' path.
+**ID:** F-20
+**What I'm doing:** Wire ChatTab WebSocket connection so chat messages go to the server, not just local state.
+**Verification gate:** ChatTab opens a WebSocket to /ws/chat, sends and receives messages.
 
 ## Deferred Items
 

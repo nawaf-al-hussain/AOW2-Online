@@ -156,6 +156,30 @@ public class ReplayViewerScene {
     }
 
     /**
+     * FIX (F-21): Returns the root pane for embedding as a UI node in the FXGL game scene.
+     * Alternative to {@link #createScene} for the AOW2App scene-switching pattern.
+     *
+     * @param onBack callback invoked when the user presses the Back button
+     * @return the ReplayViewerScene instance (call getRoot() to add to the game scene)
+     */
+    public static ReplayViewerScene createForEmbedding(Consumer<String> onBack) {
+        ReplayViewerScene scene = new ReplayViewerScene(onBack);
+        scene.buildUI();
+        scene.startTimer();
+        LOG.info("ReplayViewerScene created for embedding");
+        return scene;
+    }
+
+    /**
+     * FIX (F-21): Returns the root StackPane for adding to the FXGL game scene.
+     *
+     * @return the root pane
+     */
+    public StackPane getRoot() {
+        return root;
+    }
+
+    /**
      * Creates a new ReplayViewerScene and returns a JavaFX {@link Scene}.
      *
      * @param onBack callback invoked when the user presses the Back button
