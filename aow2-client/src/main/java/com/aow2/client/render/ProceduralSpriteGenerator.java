@@ -10,6 +10,7 @@ import com.aow2.common.model.UnitType;
 import javafx.scene.SnapshotParameters;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.shape.ArcType;  // FIX: required for fillArc() closure parameter
 import javafx.scene.image.Image;
 import javafx.scene.image.WritableImage;
 import javafx.scene.paint.Color;
@@ -116,7 +117,7 @@ public class ProceduralSpriteGenerator {
 
         // Helmet accent
         gc.setFill(dark);
-        gc.fillArc(cx - 3, cy - 10, 6, 5, 0, 180);
+        gc.fillArc(cx - 3, cy - 10, 6, 5, 0, 180, ArcType.OPEN);
 
         // Arms holding weapon
         double angle = directionToAngle(direction);
@@ -424,7 +425,7 @@ public class ProceduralSpriteGenerator {
 
         // Dish
         gc.setFill(Color.rgb(180, 200, 220));
-        gc.fillArc(cx, cy - 18, 8, 8, -30, 240);
+        gc.fillArc(cx, cy - 18, 8, 8, -30, 240, ArcType.OPEN);
 
         // Building highlight
         gc.setFill(light);
@@ -672,13 +673,7 @@ public class ProceduralSpriteGenerator {
                 gc.strokeLine(cx - 3, cy, cx, cy);
                 gc.strokeLine(cx + 2, cy, cx + 5, cy);
             }
-            case DIRT -> {
-                // Pebbles
-                gc.setFill(Color.rgb(140, 120, 80, 0.4));
-                gc.fillOval(cx - 4, cy - 2, 2, 2);
-                gc.fillOval(cx + 2, cy + 1, 2, 2);
-                gc.fillOval(cx - 1, cy + 3, 1.5, 1.5);
-            }
+            // FIX: Removed DIRT case — terrain type was removed from TerrainType enum
             case HILLS -> {
                 // Contour lines
                 gc.setStroke(Color.rgb(70, 110, 40, 0.4));
@@ -736,24 +731,8 @@ public class ProceduralSpriteGenerator {
                 gc.fillOval(cx - 1, cy + 2, 1.5, 1.5);
                 gc.fillOval(cx + 5, cy + 3, 1, 1);
             }
-            case ICE -> {
-                // Crack lines
-                gc.setStroke(Color.rgb(200, 240, 255, 0.5));
-                gc.setLineWidth(0.5);
-                gc.strokeLine(cx - 5, cy - 2, cx + 2, cy + 1);
-                gc.strokeLine(cx + 2, cy + 1, cx + 6, cy - 1);
-                gc.strokeLine(cx - 3, cy + 3, cx + 1, cy + 5);
-            }
-            case RUINS -> {
-                // Broken walls
-                gc.setFill(Color.rgb(60, 60, 60, 0.5));
-                gc.fillRect(cx - 6, cy - 3, 3, 5);
-                gc.fillRect(cx + 3, cy - 1, 2, 4);
-                gc.fillRect(cx - 1, cy + 1, 4, 3);
-                // Rubble dots
-                gc.setFill(Color.rgb(80, 80, 80, 0.3));
-                gc.fillOval(cx - 3, cy + 3, 2, 1.5);
-            }
+            // FIX: Removed ICE and RUINS cases — these terrain types were removed
+            // from TerrainType enum (not in RE spec, were fabricated).
             case RESOURCE_DEPOSIT -> {
                 // Crystal/gold shapes
                 gc.setFill(Color.rgb(255, 220, 50, 0.6));

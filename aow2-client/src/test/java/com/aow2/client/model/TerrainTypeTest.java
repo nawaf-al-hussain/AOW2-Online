@@ -151,9 +151,11 @@ class TerrainTypeTest {
         }
 
         @Test
-        @DisplayName("SHALLOW_WATER is passable only for infantry")
+        @DisplayName("F-26: SHALLOW_WATER is impassable for all categories (was infantry-only)")
         void shallowWaterOnlyInfantry() {
-            assertTrue(TerrainType.SHALLOW_WATER.isPassableBy(UnitCategory.INFANTRY));
+            // FIX (F-26): SHALLOW_WATER is now impassable for ALL units to resolve
+            // the isPassableBy vs getMovementCost contradiction.
+            assertFalse(TerrainType.SHALLOW_WATER.isPassableBy(UnitCategory.INFANTRY));
             assertFalse(TerrainType.SHALLOW_WATER.isPassableBy(UnitCategory.VEHICLE));
             assertFalse(TerrainType.SHALLOW_WATER.isPassableBy(UnitCategory.SPECIAL_MACHINERY));
             assertFalse(TerrainType.SHALLOW_WATER.isPassableBy(UnitCategory.MINE));

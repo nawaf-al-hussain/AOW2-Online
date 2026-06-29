@@ -19,7 +19,7 @@ public sealed interface CommandType permits
     CommandType.Move, CommandType.Attack, CommandType.AttackMove, CommandType.Build,
     CommandType.Produce, CommandType.Research, CommandType.Garrison,
     CommandType.Ungarrison, CommandType.Cancel, CommandType.SiegeMode,
-    CommandType.Stop, CommandType.Patrol, CommandType.Upgrade {
+    CommandType.Stop, CommandType.Hold, CommandType.Patrol, CommandType.Upgrade {
 
     /**
      * The tick at which this command should be processed.

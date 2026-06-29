@@ -20,9 +20,9 @@ class InputHandlerCommandModeTest {
     class EnumValues {
 
         @Test
-        @DisplayName("has exactly 4 values")
+        @DisplayName("has exactly 5 values")  // FIX (F-06): Added GARRISON mode
         void hasFourValues() {
-            assertEquals(4, CommandMode.values().length);
+            assertEquals(5, CommandMode.values().length);
         }
 
         @Test

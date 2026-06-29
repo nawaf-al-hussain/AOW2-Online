@@ -520,8 +520,10 @@ class PathfindingSystemTest {
     class PerUnitTypePassability {
 
         @Test
-        @DisplayName("Infantry should find path through SHALLOW_WATER")
+        @DisplayName("F-26: Infantry cannot cross SHALLOW_WATER (impassable for all units)")
         void infantryShouldCrossShallowWater() {
+            // FIX (F-26): SHALLOW_WATER is now impassable for ALL units including infantry.
+            // Previously this test expected infantry to cross — now it should not.
             // Given: a map with a wall of SHALLOW_WATER separating start and goal
             GameMap map = new GameMap(10, 10);
             for (int y = 0; y < 10; y++) {
@@ -535,14 +537,8 @@ class PathfindingSystemTest {
             List<GridPosition> path = pathfinding.findPath(start, goal, map,
                 Collections.emptySet(), UnitCategory.INFANTRY);
 
-            // Then: path should be found through shallow water
-            assertFalse(path.isEmpty(), "Infantry should cross shallow water");
-            assertEquals(goal, path.get(path.size() - 1));
-
-            // Verify the path goes through shallow water
-            boolean usesShallowWater = path.stream()
-                .anyMatch(p -> map.getTile(p.x(), p.y()) == TerrainType.SHALLOW_WATER);
-            assertTrue(usesShallowWater, "Infantry path should include shallow water tiles");
+            // Then: no path should exist (shallow water is impassable)
+            assertTrue(path.isEmpty(), "F-26: Infantry should NOT cross SHALLOW_WATER");
         }
 
         @Test
@@ -606,8 +602,10 @@ class PathfindingSystemTest {
         }
 
         @Test
-        @DisplayName("Infantry on SHALLOW_WATER start position should find path")
+        @DisplayName("F-26: Infantry on SHALLOW_WATER start cannot find path (impassable)")
         void infantryOnShallowWaterStartShouldFindPath() {
+            // FIX (F-26): SHALLOW_WATER is now impassable for ALL units. Infantry starting
+            // on shallow water cannot path through more shallow water.
             // Given: infantry starting on shallow water
             GameMap map = new GameMap(10, 10);
             map.setTile(0, 5, TerrainType.SHALLOW_WATER);
@@ -620,9 +618,8 @@ class PathfindingSystemTest {
             List<GridPosition> path = pathfinding.findPath(start, goal, map,
                 Collections.emptySet(), UnitCategory.INFANTRY);
 
-            // Then: path should be found
-            assertFalse(path.isEmpty(), "Infantry starting on shallow water should find path");
-            assertEquals(goal, path.get(path.size() - 1));
+            // Then: no path should exist (shallow water is impassable)
+            assertTrue(path.isEmpty(), "F-26: Infantry should NOT path through SHALLOW_WATER");
         }
 
         @Test

@@ -40,6 +40,7 @@ public final class ReplayRecorder {
     private static final int TYPE_PATROL = 0x0B;
     private static final int TYPE_ATTACK_MOVE = 0x0C;
     private static final int TYPE_UPGRADE = 0x0D;
+    private static final int TYPE_HOLD = 0x0E;  // FIX (F-11): Hold command type
 
     /** Whether recording is active. */
     private boolean recording;
@@ -252,6 +253,7 @@ public final class ReplayRecorder {
             case CommandType.Cancel c -> TYPE_CANCEL;
             case CommandType.SiegeMode s -> TYPE_SIEGE_MODE;
             case CommandType.Stop st -> TYPE_STOP;
+            case CommandType.Hold h -> TYPE_HOLD;  // FIX (F-11)
             case CommandType.Patrol pt -> TYPE_PATROL;
             case CommandType.AttackMove am -> TYPE_ATTACK_MOVE;
             case CommandType.Upgrade u -> TYPE_UPGRADE;

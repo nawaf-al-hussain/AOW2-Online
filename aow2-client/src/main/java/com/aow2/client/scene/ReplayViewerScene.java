@@ -723,8 +723,10 @@ public class ReplayViewerScene {
 
     /**
      * Applies style and hover effects to a button.
+     * FIX: Changed parameter from Button to ButtonBase so it accepts both Button
+     * and ToggleButton (ToggleButton extends ButtonBase, not Button).
      */
-    private static void styleButton(Button btn, String style, String hoverStyle) {
+    private static void styleButton(javafx.scene.control.ButtonBase btn, String style, String hoverStyle) {
         btn.setStyle(style);
         btn.setOnMouseEntered(e -> btn.setStyle(hoverStyle));
         btn.setOnMouseExited(e -> btn.setStyle(style));

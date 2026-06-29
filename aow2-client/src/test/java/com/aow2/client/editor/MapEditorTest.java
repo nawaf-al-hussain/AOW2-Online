@@ -108,14 +108,14 @@ class MapEditorTest {
         @DisplayName("shouldPaintMultipleTerrainTypes")
         void shouldPaintMultipleTerrainTypes() {
             // When: painting different terrains
-            editor.paintTerrain(new GridPosition(0, 0), TerrainType.MOUNTAIN);
-            editor.paintTerrain(new GridPosition(1, 1), TerrainType.FOREST);
-            editor.paintTerrain(new GridPosition(2, 2), TerrainType.SAND);
+            editor.paintTerrain(new GridPosition(5, 5), TerrainType.MOUNTAIN);
+            editor.paintTerrain(new GridPosition(10, 10), TerrainType.FOREST);
+            editor.paintTerrain(new GridPosition(15, 15), TerrainType.SAND);
 
             // Then: each tile should have the correct terrain
-            assertEquals(TerrainType.MOUNTAIN, editor.getCurrentMap().getTile(0, 0));
-            assertEquals(TerrainType.FOREST, editor.getCurrentMap().getTile(1, 1));
-            assertEquals(TerrainType.SAND, editor.getCurrentMap().getTile(2, 2));
+            assertEquals(TerrainType.MOUNTAIN, editor.getCurrentMap().getTile(5, 5));
+            assertEquals(TerrainType.FOREST, editor.getCurrentMap().getTile(10, 10));
+            assertEquals(TerrainType.SAND, editor.getCurrentMap().getTile(15, 15));
         }
 
         @Test

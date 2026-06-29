@@ -26,12 +26,12 @@ class UnitTypeTest {
         @Test
         @DisplayName("all type IDs are unique within each faction")
         void allTypeIdsUniquePerFaction() {
-            Set<Integer> confedIds = UnitType.values().stream()
+            Set<Integer> confedIds = java.util.Arrays.stream(UnitType.values())
                 .filter(u -> u.faction() == Faction.CONFEDERATION)
                 .map(UnitType::typeId)
                 .collect(Collectors.toSet());
 
-            Set<Integer> rebelIds = UnitType.values().stream()
+            Set<Integer> rebelIds = java.util.Arrays.stream(UnitType.values())
                 .filter(u -> u.faction() == Faction.RESISTANCE)
                 .map(UnitType::typeId)
                 .collect(Collectors.toSet());
@@ -234,9 +234,9 @@ class UnitTypeTest {
     class EnumCompleteness {
 
         @Test
-        @DisplayName("there are exactly 17 unit types")
+        @DisplayName("there are exactly 19 unit types")
         void exactlySeventeenUnitTypes() {
-            assertEquals(17, UnitType.values().length);
+            assertEquals(19, UnitType.values().length);
         }
 
         @Test

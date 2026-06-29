@@ -4,6 +4,7 @@ import com.aow2.client.service.MultiplayerService;
 
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;  // FIX: missing import caused compile error
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;

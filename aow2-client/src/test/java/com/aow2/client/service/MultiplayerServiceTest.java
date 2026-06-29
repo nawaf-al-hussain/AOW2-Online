@@ -144,21 +144,24 @@ class MultiplayerServiceTest {
     class WebSocket {
 
         @Test
-        @DisplayName("connectLobbyWebSocket fails gracefully without auth")
+        @DisplayName("connectLobbyWebSocket throws IllegalStateException without auth")
         void connectLobbyWithoutAuth() {
-            assertDoesNotThrow(() -> service.connectLobbyWebSocket());
+            // FIX: ensureAuthenticated() throws IllegalStateException when no JWT is set.
+            // The test previously expected graceful failure (no throw), but the method
+            // correctly throws to signal the caller must authenticate first.
+            assertThrows(IllegalStateException.class, () -> service.connectLobbyWebSocket());
         }
 
         @Test
-        @DisplayName("connectGameWebSocket fails gracefully without auth")
+        @DisplayName("connectGameWebSocket throws IllegalStateException without auth")
         void connectGameWithoutAuth() {
-            assertDoesNotThrow(() -> service.connectGameWebSocket());
+            assertThrows(IllegalStateException.class, () -> service.connectGameWebSocket());
         }
 
         @Test
-        @DisplayName("connectChatWebSocket fails gracefully without auth")
+        @DisplayName("connectChatWebSocket throws IllegalStateException without auth")
         void connectChatWithoutAuth() {
-            assertDoesNotThrow(() -> service.connectChatWebSocket());
+            assertThrows(IllegalStateException.class, () -> service.connectChatWebSocket());
         }
 
         @Test

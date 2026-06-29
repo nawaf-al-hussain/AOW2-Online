@@ -599,8 +599,9 @@ public class AOW2App extends GameApplication {
     /**
      * Called when the application is about to exit.
      * Performs cleanup of scene resources.
+     * NOTE: FXGL's GameApplication does not have an onExit() override — this is
+     * called manually from the JavaFX stop() lifecycle.
      */
-    @Override
     protected void onExit() {
         if (gameScene != null) {
             gameScene.stop();

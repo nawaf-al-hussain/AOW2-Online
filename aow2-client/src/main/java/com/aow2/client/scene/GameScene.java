@@ -331,7 +331,7 @@ public class GameScene {
                             int buildingId = selectedIds.iterator().next();
                             var building = entityManager.getBuilding(buildingId);
                             if (building != null && building.isAlive()
-                                    && building.getType().producesUnits()) {
+                                    && building.getBuildingType().producesUnits()) {
                                 long tick = gameState.currentTick();
                                 var cmd = new CommandType.Cancel(tick, LOCAL_PLAYER_ID, buildingId);
                                 tickManager.enqueueCommand(cmd);
@@ -402,11 +402,11 @@ public class GameScene {
                             var building = entityManager.getBuilding(buildingId);
                             if (building != null && building.isAlive()
                                     && !building.isUnderConstruction()
-                                    && building.getType().producesUnits()) {
-                                showProductionDialog(buildingId, building.getType());
+                                    && building.getBuildingType().producesUnits()) {
+                                showProductionDialog(buildingId, building.getBuildingType());
                             } else if (building != null) {
                                 LOG.debug("Cannot produce from building {}: producesUnits={}",
-                                    buildingId, building.getType().producesUnits());
+                                    buildingId, building.getBuildingType().producesUnits());
                             }
                         }
                     }
@@ -421,11 +421,11 @@ public class GameScene {
                             var building = entityManager.getBuilding(buildingId);
                             if (building != null && building.isAlive()
                                     && !building.isUnderConstruction()
-                                    && building.getType().researches()) {
-                                showResearchDialog(buildingId, building.getType());
+                                    && building.getBuildingType().researches()) {
+                                showResearchDialog(buildingId, building.getBuildingType());
                             } else if (building != null) {
                                 LOG.debug("Cannot research at building {}: researches={}",
-                                    buildingId, building.getType().researches());
+                                    buildingId, building.getBuildingType().researches());
                             }
                         }
                     }
@@ -489,8 +489,8 @@ public class GameScene {
                 case "garrison" -> {
                     Building targetBuilding = entityManager.findBuildingAt(targetPos);
                     if (targetBuilding != null && targetBuilding.getFaction() == playerFaction
-                            && (targetBuilding.getType() == BuildingType.CONFED_BUNKER
-                                || targetBuilding.getType() == BuildingType.REBEL_BUNKER)) {
+                            && (targetBuilding.getBuildingType() == BuildingType.CONFED_BUNKER
+                                || targetBuilding.getBuildingType() == BuildingType.REBEL_BUNKER)) {
                         yield new CommandType.Garrison(tick, LOCAL_PLAYER_ID, selectedIds, targetBuilding.getId());
                     }
                     LOG.warn("Garrison command: no friendly bunker at ({}, {})", targetGx, targetGy);
@@ -1579,7 +1579,7 @@ public class GameScene {
         ChoiceDialog<com.aow2.common.model.UnitType> dialog =
             new ChoiceDialog<>(availableUnits.get(0), availableUnits);
         dialog.setTitle("Produce Unit");
-        dialog.setHeaderText("Select unit to produce at " + buildingType.getDisplayName() + ":");
+        dialog.setHeaderText("Select unit to produce at " + buildingType.displayName() + ":");
         if (gameCanvas.getScene() != null && gameCanvas.getScene().getWindow() != null) {
             dialog.initOwner(gameCanvas.getScene().getWindow());
         }

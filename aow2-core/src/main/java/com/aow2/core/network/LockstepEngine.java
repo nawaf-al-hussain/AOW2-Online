@@ -555,6 +555,17 @@ public final class LockstepEngine {
                     }
                 }
             }
+            case CommandType.Hold h -> {
+                // FIX (F-11): Hold — clear path but retain attack target
+                for (int unitId : h.unitIds()) {
+                    var unit = entities.getUnit(unitId);
+                    if (owns(unit, h.playerId())) {
+                        unit.clearPath();
+                        // NOTE: Do NOT clear targetUnitRef or attackState — hold position
+                        // allows units to continue attacking enemies in range.
+                    }
+                }
+            }
             case CommandType.SiegeMode sm -> {
                 // FIX (C4 from CRITICAL_ANALYSIS_REPORT.md): Add ownership check.
                 var unit = entities.getUnit(sm.unitId());

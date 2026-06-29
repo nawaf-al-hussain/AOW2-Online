@@ -18,6 +18,10 @@ class CameraControllerTest {
     @BeforeEach
     void setUp() {
         controller = new CameraController();
+        // FIX: Disable edge scrolling in tests so mouse position (0,0) doesn't
+        // trigger unintended camera movement. Tests that need edge scrolling
+        // can re-enable it.
+        controller.setEdgeScrollEnabled(false);
     }
 
     @Nested
