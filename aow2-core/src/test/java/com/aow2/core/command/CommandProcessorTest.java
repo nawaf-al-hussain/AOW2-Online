@@ -186,4 +186,70 @@ class CommandProcessorTest {
         assertDoesNotThrow(() -> processor.process(patrol, state, entities, map,
             movement, combat, economy, production, research, placement));
     }
+
+    // =========================================================================
+    // F-11: Hold command — distinct from Stop
+    // =========================================================================
+
+    @Test
+    @DisplayName("F-11: Hold command clears path but retains attack target")
+    void holdCommandClearsPathRetainsTarget() {
+        UnitStats stats = new UnitStats(UnitType.CONFED_INFANTRY, "Infantry", 40, 2, 5, 5, 0, 4, 4, WeaponType.BULLET, 5, 4, 10, 650, 6, 255, 0, -1);
+        var unit = new com.aow2.core.entity.Unit(1, Faction.CONFEDERATION, new GridPosition(5, 5),
+            UnitType.CONFED_INFANTRY, stats);
+        entities.addUnit(unit);
+
+        // Set an attack target and attack state
+        unit.setTargetUnitRef(42);
+        unit.setAttackState(5);
+        assertEquals(42, unit.getTargetUnitRef(),
+            "Unit should have attack target set before Hold");
+
+        // Issue Hold command
+        CommandType.Hold hold = new CommandType.Hold(0, 0, new int[]{1});
+        processor.process(hold, state, entities, map,
+            movement, combat, economy, production, research, placement);
+
+        // F-11: Hold should clear the path but NOT clear the attack target
+        // Stop would clear both path AND target. Hold only clears path.
+        assertEquals(42, unit.getTargetUnitRef(),
+            "F-11: Hold must NOT clear the attack target (Stop does)");
+    }
+
+    @Test
+    @DisplayName("F-11: Stop command clears both path AND attack target")
+    void stopCommandClearsPathAndTarget() {
+        UnitStats stats = new UnitStats(UnitType.CONFED_INFANTRY, "Infantry", 40, 2, 5, 5, 0, 4, 4, WeaponType.BULLET, 5, 4, 10, 650, 6, 255, 0, -1);
+        var unit = new com.aow2.core.entity.Unit(1, Faction.CONFEDERATION, new GridPosition(5, 5),
+            UnitType.CONFED_INFANTRY, stats);
+        entities.addUnit(unit);
+
+        // Set an attack target
+        unit.setTargetUnitRef(42);
+        unit.setAttackState(5);
+
+        // Issue Stop command
+        CommandType.Stop stop = new CommandType.Stop(0, 0, new int[]{1});
+        processor.process(stop, state, entities, map,
+            movement, combat, economy, production, research, placement);
+
+        // Stop should clear BOTH path AND target
+        assertNull(unit.getTargetUnitRef(),
+            "Stop must clear the attack target (Hold does not)");
+        assertEquals(0, unit.getAttackState(),
+            "Stop must reset attack state to 0");
+    }
+
+    @Test
+    @DisplayName("F-11: Hold command processes without error")
+    void holdCommandProcesses() {
+        UnitStats stats = new UnitStats(UnitType.CONFED_INFANTRY, "Infantry", 40, 2, 5, 5, 0, 4, 4, WeaponType.BULLET, 5, 4, 10, 650, 6, 255, 0, -1);
+        var unit = new com.aow2.core.entity.Unit(1, Faction.CONFEDERATION, new GridPosition(5, 5),
+            UnitType.CONFED_INFANTRY, stats);
+        entities.addUnit(unit);
+
+        CommandType.Hold hold = new CommandType.Hold(0, 0, new int[]{1});
+        assertDoesNotThrow(() -> processor.process(hold, state, entities, map,
+            movement, combat, economy, production, research, placement));
+    }
 }
