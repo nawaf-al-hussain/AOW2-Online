@@ -14,8 +14,10 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -394,4 +396,75 @@ public class SelectionManager {
             return true; // entity no longer exists
         });
     }
+
+    /**
+     * Cycles through unit types in the current selection.
+     * <p>
+     * Groups selected units by UnitType, then selects the next group in rotation.
+     * Pressing Tab repeatedly cycles through all distinct unit types in the
+     * original selection. When the cycle wraps around, the full selection is restored.
+     * <p>
+     * Standard RTS feature: in a mixed group (e.g. infantry + tanks), Tab lets
+     * you quickly select just the infantry, then just the tanks, then back to all.
+     */
+    public void cycleUnitTypeInSelection() {
+        if (entityManager == null || selectedIds.isEmpty()) {
+            return;
+        }
+
+        // Group selected units by type
+        Map<com.aow2.common.model.UnitType, List<Integer>> byType = new LinkedHashMap<>();
+        List<Integer> buildingIds = new ArrayList<>();
+
+        for (int id : selectedIds) {
+            Unit unit = entityManager.getUnit(id);
+            if (unit != null && unit.isAlive()) {
+                byType.computeIfAbsent(unit.getUnitType(), k -> new ArrayList<>()).add(id);
+            } else {
+                Building building = entityManager.getBuilding(id);
+                if (building != null && building.isAlive()) {
+                    buildingIds.add(id);
+                }
+            }
+        }
+
+        if (byType.isEmpty()) {
+            return;  // No units to cycle (only buildings selected)
+        }
+
+        // Determine current cycle index
+        if (currentCycleIndex < 0 || currentCycleIndex >= byType.size()) {
+            currentCycleIndex = 0;
+        } else {
+            currentCycleIndex = (currentCycleIndex + 1) % (byType.size() + 1);
+        }
+
+        // Select the appropriate group
+        selectedIds.clear();
+        if (currentCycleIndex < byType.size()) {
+            // Select only the units of the current type
+            List<List<Integer>> groups = new ArrayList<>(byType.values());
+            for (int id : groups.get(currentCycleIndex)) {
+                selectedIds.add(id);
+            }
+            LOG.debug("Tab: selected type group {} of {} ({} units)",
+                currentCycleIndex + 1, byType.size(), selectedIds.size());
+        } else {
+            // Wrap around: restore full selection (all types + buildings)
+            for (List<Integer> group : byType.values()) {
+                for (int id : group) {
+                    if (selectedIds.size() >= MAX_SELECTION) break;
+                    selectedIds.add(id);
+                }
+            }
+            for (int id : buildingIds) {
+                if (selectedIds.size() >= MAX_SELECTION) break;
+                selectedIds.add(id);
+            }
+            LOG.debug("Tab: restored full selection ({} entities)", selectedIds.size());
+        }
+    }
+
+    /** Current index in the unit-type cycle (Tab key). -1 = not cycling. */
+    private int currentCycleIndex = -1;
 }

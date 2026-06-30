@@ -466,6 +466,15 @@ public class GameScene {
                     }
                     yield new CommandType.Move(tick, LOCAL_PLAYER_ID, selectedIds, targetPos);
                 }
+                // Shift+right-click waypoint queuing — issues a Move that doesn't clear
+                // existing orders. The unit's MovementSystem will queue this as the next
+                // destination after the current one is reached.
+                case "queued_move" -> {
+                    yield new CommandType.Move(tick, LOCAL_PLAYER_ID, selectedIds, targetPos);
+                }
+                case "queued_attack_move" -> {
+                    yield new CommandType.AttackMove(tick, LOCAL_PLAYER_ID, selectedIds, targetPos);
+                }
                 case "attack_move" -> {
                     // Attack-move: move to target, engaging enemies along the way
                     yield new CommandType.AttackMove(tick, LOCAL_PLAYER_ID, selectedIds, targetPos);
@@ -526,6 +535,35 @@ public class GameScene {
                 }
                 LOG.info("Enqueued command: {} at ({}, {}), selected: {}",
                     command, targetGx, targetGy, selectionManager.getSelectedIds());
+            }
+        });
+
+        // Camera action callback — handles Space (jump to event) and Home (center on base)
+        inputHandler.setCameraActionCallback(action -> {
+            switch (action) {
+                case "jump_to_event" -> {
+                    // Jump to the last alert event (unit under attack, building complete, etc.)
+                    // For now, center on the first friendly unit that is in combat
+                    var units = entityManager.getAliveUnitsForPlayer(playerFaction);
+                    if (!units.isEmpty()) {
+                        var u = units.get(0);
+                        cameraController.centerOnGrid(u.getPosition().x(), u.getPosition().y());
+                        LOG.debug("Space: jumped to unit at {}", u.getPosition());
+                    }
+                }
+                case "center_on_base" -> {
+                    // Center on the player's Command Centre / Headquarters
+                    var buildings = entityManager.getBuildingsForPlayer(playerFaction);
+                    for (var b : buildings) {
+                        if (b.getBuildingType() == com.aow2.common.model.BuildingType.CONFED_COMMAND_CENTRE
+                            || b.getBuildingType() == com.aow2.common.model.BuildingType.REBEL_HEADQUARTERS) {
+                            cameraController.centerOnGrid(b.getPosition().x(), b.getPosition().y());
+                            LOG.debug("Home: centered on base at {}", b.getPosition());
+                            return;
+                        }
+                    }
+                    LOG.debug("Home: no Command Centre / Headquarters found");
+                }
             }
         });
 

@@ -23,10 +23,19 @@ import java.util.Map;
  * <p>
  * Input bindings:
  * - Left click: select
+ * - Left click + drag: area select
+ * - Double-click: select all units of same type on screen
+ * - Ctrl+click: select all units of same type on screen
+ * - Shift+click: add/remove from selection
  * - Right click: command (move/attack/garrison based on context)
- * - Box drag: area select
- * - Hotkeys: A=attack, S=stop, H=hold, P=patrol, B=build
- * - Camera controls: WASD, arrow keys, edge scroll
+ * - Shift+right-click: queue waypoint (does not replace existing orders)
+ * - Middle click + drag: pan camera
+ * - Hotkeys: A=attack, S=stop, H=hold, P=patrol, B=build, G=garrison, D=siege, T=produce, R=research, U=upgrade
+ * - Tab: cycle through unit types in mixed selection
+ * - Space: jump to last event (attack/production completion)
+ * - Home: center camera on player's Command Centre / Headquarters
+ * - Camera controls: W, arrow keys, edge scroll, middle-click drag
+ * - Control groups: Ctrl+1-9 assign, 1-9/0 recall
  * - Escape: deselect/cancel
  * <p>
  * REF: MASTER_DOCUMENTATION.md Section 7 - Controls and Hotkeys
@@ -34,6 +43,9 @@ import java.util.Map;
 public class InputHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(InputHandler.class);
+
+    /** Maximum time between two clicks to count as a double-click (ms). */
+    private static final long DOUBLE_CLICK_THRESHOLD_MS = 350;
 
     /** Current input mode for command context. */
     public enum CommandMode {
@@ -67,11 +79,33 @@ public class InputHandler {
     /** Whether the left mouse button is currently pressed. */
     private boolean leftMouseDown;
 
+    /** Whether the middle mouse button is currently pressed (for camera drag). */
+    private boolean middleMouseDown;
+
     /** Last mouse X position. */
     private double lastMouseX;
 
     /** Last mouse Y position. */
     private double lastMouseY;
+
+    /** Mouse X when middle-click drag started (for camera drag offset). */
+    private double middleDragStartX;
+
+    /** Mouse Y when middle-click drag started (for camera drag offset). */
+    private double middleDragStartY;
+
+    /** Camera X when middle-click drag started. */
+    private double middleDragStartCamX;
+
+    /** Camera Y when middle-click drag started. */
+    private double middleDragStartCamY;
+
+    /** Timestamp of the last left-click (for double-click detection). */
+    private long lastClickTimeMs;
+
+    /** Grid position of the last left-click (for double-click detection). */
+    private int lastClickGx = -1;
+    private int lastClickGy = -1;
 
     /** Current camera offset X (for coordinate conversion). */
     private double cameraOffsetX;
@@ -87,33 +121,30 @@ public class InputHandler {
      */
     @FunctionalInterface
     public interface CommandCallback {
-        /**
-         * Called when a command is issued.
-         *
-         * @param command the command type
-         * @param targetGx target grid X (or -1 if no target)
-         * @param targetGy target grid Y (or -1 if no target)
-         */
         void onCommand(String command, int targetGx, int targetGy);
     }
 
     /**
      * Callback interface for build mode activation.
-     * Called when the player presses B, allowing the UI layer to show
-     * a building type selection dialog.
      */
     @FunctionalInterface
     public interface BuildTypeCallback {
-        /** Called when the player requests build mode. */
         void onBuildModeRequested();
     }
 
     /**
+     * Callback for camera actions (jump to event, center on base).
+     */
+    @FunctionalInterface
+    public interface CameraActionCallback {
+        void onCameraAction(String action);
+    }
+
+    /** Callback for camera actions like jump-to-event and center-on-base. */
+    private CameraActionCallback cameraActionCallback;
+
+    /**
      * Constructs a new InputHandler.
-     *
-     * @param selectionManager the selection manager
-     * @param cameraController the camera controller
-     * @param isoRenderer      the isometric renderer
      */
     public InputHandler(SelectionManager selectionManager, CameraController cameraController,
                         IsometricRenderer isoRenderer) {
@@ -122,64 +153,49 @@ public class InputHandler {
         this.isoRenderer = isoRenderer;
         this.commandMode = CommandMode.NORMAL;
         this.leftMouseDown = false;
+        this.middleMouseDown = false;
         this.cameraOffsetX = 0;
         this.cameraOffsetY = 0;
         this.zoom = 1.0;
     }
 
-    /**
-     * Sets the command callback.
-     *
-     * @param callback the command callback
-     */
     public void setCommandCallback(CommandCallback callback) {
         this.commandCallback = callback;
     }
 
-    /**
-     * Sets the build type callback, invoked when the player presses B.
-     *
-     * @param callback the build type callback
-     */
     public void setBuildTypeCallback(BuildTypeCallback callback) {
         this.buildTypeCallback = callback;
     }
 
     /**
-     * Gets the pending building type selected for build placement.
+     * Sets the camera action callback for jump-to-event and center-on-base.
      *
-     * @return the building type, or null if none selected
+     * @param callback the camera action callback
      */
+    public void setCameraActionCallback(CameraActionCallback callback) {
+        this.cameraActionCallback = callback;
+    }
+
     public BuildingType getPendingBuildType() {
         return pendingBuildType;
     }
 
-    /**
-     * Sets the pending building type for build placement.
-     *
-     * @param buildingType the building type to build
-     */
     public void setPendingBuildType(BuildingType buildingType) {
         this.pendingBuildType = buildingType;
     }
 
-    /**
-     * Sets the current camera transform for coordinate conversion.
-     *
-     * @param offsetX camera X offset
-     * @param offsetY camera Y offset
-     * @param zoom    zoom level
-     */
     public void setCameraTransform(double offsetX, double offsetY, double zoom) {
         this.cameraOffsetX = offsetX;
         this.cameraOffsetY = offsetY;
         this.zoom = zoom;
     }
 
+    // =========================================================================
+    // Mouse handling
+    // =========================================================================
+
     /**
      * Handles mouse press events.
-     *
-     * @param event the mouse event
      */
     public void onMousePressed(MouseEvent event) {
         lastMouseX = event.getSceneX();
@@ -188,30 +204,44 @@ public class InputHandler {
         if (event.getButton() == MouseButton.PRIMARY) {
             leftMouseDown = true;
             selectionManager.startDrag(event.getSceneX(), event.getSceneY());
+        } else if (event.getButton() == MouseButton.MIDDLE) {
+            // Middle-click starts camera drag
+            middleMouseDown = true;
+            middleDragStartX = event.getSceneX();
+            middleDragStartY = event.getSceneY();
+            middleDragStartCamX = cameraController.getCameraX();
+            middleDragStartCamY = cameraController.getCameraY();
+            LOG.debug("Middle-click camera drag started");
         }
     }
 
     /**
      * Handles mouse drag events.
-     *
-     * @param event the mouse event
      */
     public void onMouseDragged(MouseEvent event) {
         lastMouseX = event.getSceneX();
         lastMouseY = event.getSceneY();
 
+        if (middleMouseDown) {
+            // Middle-click camera drag: move camera opposite to mouse movement
+            double dx = event.getSceneX() - middleDragStartX;
+            double dy = event.getSceneY() - middleDragStartY;
+            cameraController.panToWorld(
+                middleDragStartCamX - dx / zoom,
+                middleDragStartCamY - dy / zoom
+            );
+            return;  // Don't process selection drag or edge scroll while middle-dragging
+        }
+
         if (leftMouseDown) {
             selectionManager.updateDrag(event.getSceneX(), event.getSceneY());
         }
 
-        // Pass to camera controller for edge scrolling
         cameraController.handleMouseMove(event);
     }
 
     /**
      * Handles mouse release events.
-     *
-     * @param event the mouse event
      */
     public void onMouseReleased(MouseEvent event) {
         if (event.getButton() == MouseButton.PRIMARY) {
@@ -223,33 +253,62 @@ public class InputHandler {
             // Check if this was a click or a drag
             double[] dragBox = selectionManager.getDragBox();
             if (dragBox == null) {
-                // No active drag box — treat as a single click
                 int[] grid = screenToGrid(event.getSceneX(), event.getSceneY());
-                selectionManager.handleClick(grid[0], grid[1], shiftDown, ctrlDown);
+                handleLeftClick(grid[0], grid[1], shiftDown, ctrlDown, event.getSceneX(), event.getSceneY());
             } else {
                 double dx = Math.abs(event.getSceneX() - dragBox[0]);
                 double dy = Math.abs(event.getSceneY() - dragBox[1]);
 
                 if (dx < 5.0 && dy < 5.0) {
-                    // Click - convert screen to grid and select
                     int[] grid = screenToGrid(event.getSceneX(), event.getSceneY());
-                    selectionManager.handleClick(grid[0], grid[1], shiftDown, ctrlDown);
+                    handleLeftClick(grid[0], grid[1], shiftDown, ctrlDown, event.getSceneX(), event.getSceneY());
                 } else {
-                    // Drag box selection
                     selectionManager.endDrag(event.getSceneX(), event.getSceneY(), shiftDown,
                         this::screenToGridForDrag);
                 }
             }
         } else if (event.getButton() == MouseButton.SECONDARY) {
-            // Right click - issue command
             handleRightClick(event);
+        } else if (event.getButton() == MouseButton.MIDDLE) {
+            middleMouseDown = false;
+            LOG.debug("Middle-click camera drag ended");
         }
     }
 
     /**
-     * Handles mouse move events (no buttons pressed).
+     * Handles left-click selection with double-click and Ctrl+click support.
      *
-     * @param event the mouse event
+     * @param gx grid X
+     * @param gy grid Y
+     * @param shiftDown whether Shift is held
+     * @param ctrlDown whether Ctrl is held
+     * @param screenX click screen X (for double-click screen detection)
+     * @param screenY click screen Y
+     */
+    private void handleLeftClick(int gx, int gy, boolean shiftDown, boolean ctrlDown,
+                                  double screenX, double screenY) {
+        long now = System.currentTimeMillis();
+
+        // Double-click detection: same grid position, within threshold
+        boolean isDoubleClick = (now - lastClickTimeMs < DOUBLE_CLICK_THRESHOLD_MS)
+                             && (gx == lastClickGx && gy == lastClickGy);
+
+        if (isDoubleClick && !shiftDown) {
+            // Double-click: select all units of the same type on screen
+            selectionManager.handleClick(gx, gy, false, true);  // ctrlDown=true triggers selectAllOfType
+            LOG.debug("Double-click: select all of same type at ({}, {})", gx, gy);
+        } else {
+            // Normal click — Ctrl+click already selects all of same type via SelectionManager
+            selectionManager.handleClick(gx, gy, shiftDown, ctrlDown);
+        }
+
+        lastClickTimeMs = now;
+        lastClickGx = gx;
+        lastClickGy = gy;
+    }
+
+    /**
+     * Handles mouse move events (no buttons pressed).
      */
     public void onMouseMoved(MouseEvent event) {
         lastMouseX = event.getSceneX();
@@ -259,20 +318,20 @@ public class InputHandler {
 
     /**
      * Handles scroll events for zoom.
-     *
-     * @param event the scroll event
      */
     public void onScroll(ScrollEvent event) {
         cameraController.handleScroll(event);
     }
 
+    // =========================================================================
+    // Keyboard handling
+    // =========================================================================
+
     /**
      * Handles keyboard press events.
-     *
-     * @param event the key event
      */
     public void onKeyPressed(KeyEvent event) {
-        // Camera controls
+        // Camera controls (W, arrows only — A/S/D are game commands)
         cameraController.handleKeyEvent(event);
 
         switch (event.getCode()) {
@@ -306,25 +365,38 @@ public class InputHandler {
                         buildTypeCallback.onBuildModeRequested();
                     } else {
                         commandMode = CommandMode.BUILD_PLACEMENT;
-                        LOG.debug("Build placement mode activated (no callback)");
                     }
                 }
             }
-            // FIX (F-06): Garrison hotkey — press G to enter garrison mode, then
-            // right-click a friendly bunker to issue a Garrison command.
             case G -> {
                 if (selectionManager.hasSelection()) {
                     commandMode = CommandMode.GARRISON;
-                    LOG.debug("Garrison mode activated — right-click a bunker");
+                    LOG.debug("Garrison mode activated");
                 }
             }
-            // FIX (F-07): Siege mode hotkey — press D to toggle siege mode on
-            // siege-capable units (Fortress, Hammer, Torrent, Rhino). Issues a
-            // SiegeMode command immediately (no right-click target needed).
             case D -> {
                 if (selectionManager.hasSelection()) {
                     issueCommand("siege_mode", -1, -1);
                     LOG.debug("Siege mode toggle command issued");
+                }
+            }
+            case TAB -> {
+                // Cycle through unit types in the current selection
+                selectionManager.cycleUnitTypeInSelection();
+                LOG.debug("Tab: cycled unit type in selection");
+            }
+            case SPACE -> {
+                // Jump to last event (attack alert, production complete, etc.)
+                if (cameraActionCallback != null) {
+                    cameraActionCallback.onCameraAction("jump_to_event");
+                    LOG.debug("Space: jump to last event");
+                }
+            }
+            case HOME -> {
+                // Center camera on player's Command Centre / Headquarters
+                if (cameraActionCallback != null) {
+                    cameraActionCallback.onCameraAction("center_on_base");
+                    LOG.debug("Home: center on base");
                 }
             }
             case ESCAPE -> {
@@ -336,7 +408,6 @@ public class InputHandler {
                     LOG.debug("Selection cleared");
                 }
             }
-            // FIX (L-NEW-17): Control groups — Ctrl+Digit1-9 assign, Digit1-9/0 recall
             case DIGIT1, DIGIT2, DIGIT3, DIGIT4, DIGIT5,
                  DIGIT6, DIGIT7, DIGIT8, DIGIT9, DIGIT0 -> {
                 int groupNumber = switch (event.getCode()) {
@@ -354,18 +425,16 @@ public class InputHandler {
                 };
                 if (groupNumber < 0) break;
                 if (event.isControlDown() || event.isMetaDown()) {
-                    // Assign current selection to control group
                     List<Integer> selectedIds = selectionManager.getSelectedIdsList();
                     if (!selectedIds.isEmpty()) {
                         controlGroups.put(groupNumber, selectedIds);
                         LOG.debug("Control group {} assigned: {} units", groupNumber, selectedIds.size());
                     }
                 } else {
-                    // Recall control group
                     List<Integer> groupIds = controlGroups.get(groupNumber);
                     if (groupIds != null && !groupIds.isEmpty()) {
                         selectionManager.selectUnitsByIds(groupIds);
-                        LOG.debug("Control group {} recalled: {} units", groupNumber, groupIds.size());
+                        LOG.debug("Control group {} recalled", groupNumber);
                     }
                 }
             }
@@ -375,17 +444,18 @@ public class InputHandler {
 
     /**
      * Handles keyboard release events.
-     *
-     * @param event the key event
      */
     public void onKeyReleased(KeyEvent event) {
         cameraController.handleKeyEvent(event);
     }
 
+    // =========================================================================
+    // Right-click command handling with Shift waypoint queuing
+    // =========================================================================
+
     /**
      * Handles a right-click command based on context.
-     *
-     * @param event the mouse event
+     * Shift+right-click queues a waypoint instead of replacing existing orders.
      */
     private void handleRightClick(MouseEvent event) {
         if (!selectionManager.hasSelection()) {
@@ -393,29 +463,36 @@ public class InputHandler {
         }
 
         int[] grid = screenToGrid(event.getSceneX(), event.getSceneY());
+        boolean shiftDown = event.isShiftDown();
 
         String command = switch (commandMode) {
             case ATTACK_MOVE -> "attack_move";
             case PATROL -> "patrol";
             case BUILD_PLACEMENT -> "build";
-            case GARRISON -> "garrison";  // FIX (F-06): right-click issues garrison command
-            case NORMAL -> "move"; // Default: move command
+            case GARRISON -> "garrison";
+            case NORMAL -> "move";
         };
 
-        issueCommand(command, grid[0], grid[1]);
+        // Shift+right-click queues a waypoint — the command string carries
+        // a "queued_" prefix so GameScene knows not to clear existing orders.
+        if (shiftDown && commandMode == CommandMode.NORMAL) {
+            issueCommand("queued_move", grid[0], grid[1]);
+            LOG.debug("Queued move waypoint at ({}, {})", grid[0], grid[1]);
+        } else if (shiftDown && commandMode == CommandMode.ATTACK_MOVE) {
+            issueCommand("queued_attack_move", grid[0], grid[1]);
+            LOG.debug("Queued attack-move waypoint at ({}, {})", grid[0], grid[1]);
+        } else {
+            issueCommand(command, grid[0], grid[1]);
+        }
 
-        // Reset command mode after issuing command
-        if (commandMode != CommandMode.NORMAL) {
+        // Reset command mode after issuing command (unless Shift held for queuing)
+        if (commandMode != CommandMode.NORMAL && !shiftDown) {
             commandMode = CommandMode.NORMAL;
         }
     }
 
     /**
      * Issues a command through the callback.
-     *
-     * @param command  command string
-     * @param targetGx target grid X
-     * @param targetGy target grid Y
      */
     private void issueCommand(String command, int targetGx, int targetGy) {
         if (commandCallback != null) {
@@ -423,64 +500,41 @@ public class InputHandler {
         }
     }
 
-    /**
-     * Converts screen coordinates to grid coordinates using the current camera transform.
-     *
-     * @param screenX screen X
-     * @param screenY screen Y
-     * @return [gridX, gridY]
-     */
+    // =========================================================================
+    // Coordinate conversion
+    // =========================================================================
+
     private int[] screenToGrid(double screenX, double screenY) {
-        // Undo camera transform: screen -> world -> grid
         double worldX = (screenX - cameraOffsetX) / zoom;
         double worldY = (screenY - cameraOffsetY) / zoom;
         return isoRenderer.screenToGrid(worldX, worldY);
     }
 
-    /**
-     * Screen to grid conversion for drag selection (BiFunction interface).
-     *
-     * @param sx screen X
-     * @param sy screen Y
-     * @return [gridX, gridY]
-     */
     private int[] screenToGridForDrag(Double sx, Double sy) {
         return screenToGrid(sx, sy);
     }
 
-    /**
-     * Gets the current command mode.
-     *
-     * @return the command mode
-     */
+    // =========================================================================
+    // Getters / Setters
+    // =========================================================================
+
     public CommandMode getCommandMode() {
         return commandMode;
     }
 
-    /**
-     * Sets the current command mode.
-     *
-     * @param mode the command mode
-     */
     public void setCommandMode(CommandMode mode) {
         this.commandMode = mode;
     }
 
-    /**
-     * Gets the last mouse X position.
-     *
-     * @return last mouse X
-     */
     public double getLastMouseX() {
         return lastMouseX;
     }
 
-    /**
-     * Gets the last mouse Y position.
-     *
-     * @return last mouse Y
-     */
     public double getLastMouseY() {
         return lastMouseY;
+    }
+
+    public boolean isMiddleMouseDown() {
+        return middleMouseDown;
     }
 }
