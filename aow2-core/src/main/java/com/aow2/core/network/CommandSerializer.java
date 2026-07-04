@@ -126,7 +126,7 @@ public final class CommandSerializer {
         buf.put(TYPE_BUILD);
         buf.putLong(b.tick());
         buf.putInt(b.playerId());
-        buf.putInt(b.buildingType().ordinal());
+        buf.putInt(b.buildingType().typeId());  // FIX (ANALYSIS_V2 2.12): use typeId() not ordinal()
         buf.putInt(b.position().x());
         buf.putInt(b.position().y());
         return buf.array();
@@ -138,7 +138,7 @@ public final class CommandSerializer {
         buf.putLong(p.tick());
         buf.putInt(p.playerId());
         buf.putInt(p.producerId());
-        buf.putInt(p.unitType().ordinal());
+        buf.putInt(p.unitType().typeId());  // FIX (ANALYSIS_V2 2.12): use typeId() not ordinal()
         return buf.array();
     }
 
@@ -299,26 +299,27 @@ public final class CommandSerializer {
     }
 
     private static CommandType.Build deserializeBuild(ByteBuffer buf, long tick, int playerId) {
-        int buildingOrdinal = buf.getInt();
-        BuildingType[] types = BuildingType.values();
-        if (buildingOrdinal < 0 || buildingOrdinal >= types.length) {
-            throw new IllegalArgumentException(
-                "Invalid BuildingType ordinal: " + buildingOrdinal + " (max " + (types.length - 1) + ")");
+        int buildingTypeId = buf.getInt();
+        // FIX (ANALYSIS_V2 2.12): Use fromTypeId() instead of values()[ordinal]
+        // so enum reorders don't break replays and network compatibility.
+        BuildingType type = BuildingType.fromTypeId(buildingTypeId);
+        if (type == null) {
+            throw new IllegalArgumentException("Invalid BuildingType typeId: " + buildingTypeId);
         }
         int x = buf.getInt();
         int y = buf.getInt();
-        return new CommandType.Build(tick, playerId, types[buildingOrdinal], new GridPosition(x, y));
+        return new CommandType.Build(tick, playerId, type, new GridPosition(x, y));
     }
 
     private static CommandType.Produce deserializeProduce(ByteBuffer buf, long tick, int playerId) {
         int producerId = buf.getInt();
-        int unitOrdinal = buf.getInt();
-        UnitType[] types = UnitType.values();
-        if (unitOrdinal < 0 || unitOrdinal >= types.length) {
-            throw new IllegalArgumentException(
-                "Invalid UnitType ordinal: " + unitOrdinal + " (max " + (types.length - 1) + ")");
+        int unitTypeId = buf.getInt();
+        // FIX (ANALYSIS_V2 2.12): Use fromTypeId() instead of values()[ordinal]
+        UnitType type = UnitType.fromTypeId(unitTypeId);
+        if (type == null) {
+            throw new IllegalArgumentException("Invalid UnitType typeId: " + unitTypeId);
         }
-        return new CommandType.Produce(tick, playerId, producerId, types[unitOrdinal]);
+        return new CommandType.Produce(tick, playerId, producerId, type);
     }
 
     private static CommandType.Research deserializeResearch(ByteBuffer buf, long tick, int playerId) {

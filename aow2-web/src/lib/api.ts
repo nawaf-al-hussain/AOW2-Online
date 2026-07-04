@@ -7,7 +7,9 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 export function apiUrl(path: string, port?: number): string {
   const base = API_BASE || "";
   if (port) {
-    return `${base}${path}?XTransformPort=${port}`;
+    // FIX (ANALYSIS_V2 4.6): Use & instead of ? if path already has query params
+    const separator = path.includes("?") ? "&" : "?";
+    return `${base}${path}${separator}XTransformPort=${port}`;
   }
   return `${base}${path}`;
 }
@@ -19,7 +21,7 @@ export async function register(username: string, password: string) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ username, password }),
   });
-  if (!res.ok) throw new Error((await res.json()).message || "Registration failed");
+  if (!res.ok) throw new Error((await res.json()).error || "Registration failed");  // FIX (ANALYSIS_V2 4.5): server returns 'error' not 'message'
   return res.json();
 }
 
@@ -29,7 +31,7 @@ export async function login(username: string, password: string) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ username, password }),
   });
-  if (!res.ok) throw new Error((await res.json()).message || "Login failed");
+  if (!res.ok) throw new Error((await res.json()).error || "Login failed");  // FIX (ANALYSIS_V2 4.5)
   return res.json();
 }
 

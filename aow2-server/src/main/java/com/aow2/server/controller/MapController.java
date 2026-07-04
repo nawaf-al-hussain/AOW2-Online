@@ -124,6 +124,25 @@ public class MapController {
             return ResponseEntity.badRequest().body(Map.of("error", "Map data exceeds 5 MB limit"));
         }
 
+        // FIX (ANALYSIS_V2 4.10): Validate that mapData is valid JSON with required fields
+        try {
+            var objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            var jsonNode = objectMapper.readTree(mapData);
+            if (!jsonNode.has("width") || !jsonNode.has("height")) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "error", "Map data must contain 'width' and 'height' fields"));
+            }
+            int mapWidth = jsonNode.get("width").asInt();
+            int mapHeight = jsonNode.get("height").asInt();
+            if (mapWidth < 8 || mapWidth > 128 || mapHeight < 8 || mapHeight > 128) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "error", "Map dimensions must be between 8 and 128"));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "error", "Map data is not valid JSON: " + e.getMessage()));
+        }
+
         UploadedMap map = new UploadedMap(uploaderId, name, description, mapData);
         map = uploadedMapRepository.save(map);
 

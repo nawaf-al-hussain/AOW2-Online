@@ -68,6 +68,20 @@ public enum UnitType {
     public Faction faction() { return faction; }
     public UnitCategory category() { return category; }
 
+    /**
+     * FIX (ANALYSIS_V2 2.12): Look up a UnitType by its typeId.
+     * Used by CommandSerializer for stable serialization (instead of ordinal).
+     *
+     * @param typeId the RE typeId (e.g., 1 for Infantry, 17 for Hammer)
+     * @return the matching UnitType, or null if not found
+     */
+    public static UnitType fromTypeId(int typeId) {
+        for (UnitType ut : values()) {
+            if (ut.typeId == typeId) return ut;
+        }
+        return null;
+    }
+
     public boolean isInfantry() { return category == UnitCategory.INFANTRY; }
     public boolean isVehicle() { return category == UnitCategory.VEHICLE; }
     public boolean isMine() { return category == UnitCategory.MINE; }

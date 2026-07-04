@@ -365,3 +365,49 @@ Asset work is tracked separately from the game-logic TODO above. See
 - `docs/RE/external_versions/ipa_ios_v2.2/DECODED_ASSETS.md` — decoded/converted assets reference
 - `docs/RE/documentation/Asset_Catalog.md` §11 — cross-version asset selection guide
 - `/home/z/my-project/scripts/` — all decoder/converter scripts (preserved outside the repo)
+---
+
+## ANALYSIS_V2 Fixes (2026-06-29)
+
+### Fixed (18 issues)
+- ✅ P1 CRITICAL: Multiplayer auth wiring — lobby's authenticated MultiplayerService passed to showGame
+- ✅ P2 CRITICAL: Ownership checks added to Move, Attack, Garrison, Produce, Research handlers
+- ✅ P3 HIGH: CombatSystem wind-up state override removed — ranged units fire at correct speed
+- ✅ P4 HIGH: CommandProcessor passes PowerSystem to UpgradeCommandHandler instead of null
+- ✅ P5 HIGH: ArmorCalculator has ResearchBonusTracker-based methods for data-driven armor
+- ✅ 2.2 HIGH: LockstepEngine routes all commands through CommandProcessor (no more SP/MP split-brain)
+- ✅ 2.5 HIGH: Building attack cooldown only set when building actually fired
+- ✅ 2.6 HIGH: shouldStopForEnemy handles building target refs (negative IDs)
+- ✅ 2.9 MEDIUM: LockstepEngine disconnect timer uses local clock (lockstepFrame) not remote (command.tick)
+- ✅ 2.11 HIGH: SyncChecker includes attackState, siegeMode, upgradeLevel, productionQueue, etc.
+- ✅ 2.12 HIGH: CommandSerializer uses typeId() not ordinal() — replays survive enum changes
+- ✅ 2.16 MEDIUM: MapLoader supports 30+ terrain name aliases (Plains, Ocean, Desert, etc.)
+- ✅ 3.2 HIGH: MultiplayerLobbyScene.dispose() preserves service when match found
+- ✅ 3.4 MEDIUM: Desync callback sends real session UUID and hash=-1
+- ✅ 4.5 MEDIUM: Web api.ts parses .error field (server returns "error" not "message")
+- ✅ 4.6 MEDIUM: Web apiUrl() uses & separator for URLs with existing query params
+- ✅ 4.9 MEDIUM: JwtUtil rejects env var that matches dev default
+- ✅ 4.10 MEDIUM: MapController validates mapData is valid JSON with width/height 8-128
+
+### Remaining (LOW severity / architectural deferrals)
+- 1.1 MEDIUM: Only Upgrade validates playerId in compact constructor (other 13 don't)
+- 1.2 LOW: UnitType FIX LOG comments are inaccurate (says removed, still present)
+- 2.10 MEDIUM: CommandBuffer ring-buffer overflow risk
+- 2.13 LOW: SHALLOW_WATER getTerrainCost override is dead code (by design per F-26)
+- 2.15 MEDIUM: TickManager bypasses LockstepEngine (architectural — two parallel execution paths)
+- 3.5 LOW: ReplayViewerScene reuses ActiveScene.MAIN_MENU enum
+- 3.6 LOW: Skirmish map discovery fails in signed JAR mode
+- 3.7 LOW: AOW2App.showGame calls clearUINodes() 3 times (code smell)
+- 4.7 MEDIUM: GameWebSocketHandler doesn't validate command payload
+- 4.8 LOW: GameWebSocketHandler recursive call is fragile
+- 4.11 MEDIUM: SessionService in-memory state not transactionally consistent with DB
+- 5.1 HIGH: Lua instruction count limit not enforced (requires LuaJ fork — DEFERRED)
+- 5.2 MEDIUM: string.dump not blocked in Lua sandbox
+- 5.3 MEDIUM: GameAPI static mutable state leaks across sessions
+- 5.4 MEDIUM: LuaEngine getGlobals() deprecated but accessible (removal breaks mod API — DEFERRED)
+- 5.5 MEDIUM: No Lua script timeout for onLoad/onStart
+- 6.1 MEDIUM: Web client has zero WebSocket code
+- 6.2 MEDIUM: Web ChatTab is local state only
+- 6.3 LOW: Web client has unused Zustand store actions
+- 6.4 MEDIUM: Web MapsTab fetches /api/units which doesn't exist
+- 8.1-8.5: Build/config issues (Gradle, CI, JavaFX plugin)

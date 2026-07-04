@@ -48,16 +48,19 @@ public class JwtUtil {
         if (secret.equals(devSecret)) {
             String env = System.getenv("AOW2_JWT_SECRET");
             if (env == null || env.isBlank()) {
-                // FIX (C-NEW-7): Fail fast — no env var set, using committed dev secret.
                 throw new IllegalStateException(
                     "JWT secret is the default dev value. Set AOW2_JWT_SECRET environment variable " +
                     "to a cryptographically random secret (min 32 bytes) before deploying.");
             }
-            // FIX (L7): Use the env var value instead of the dev default.
-            // This handles the case where Spring's ${AOW2_JWT_SECRET:default} didn't
-            // resolve the env var (e.g., if the property source wasn't configured correctly).
+            // FIX (ANALYSIS_V2 4.9): If the env var is ALSO the dev secret, fail fast.
+            // Previously this would silently use the publicly-known dev secret in production.
+            if (env.equals(devSecret)) {
+                throw new IllegalStateException(
+                    "AOW2_JWT_SECRET environment variable is set to the dev default. " +
+                    "Use a cryptographically random secret (min 32 bytes) for production.");
+            }
             effectiveSecret = env;
-            log.info("Using JWT secret from AOW2_JWT_SECRET environment variable (Spring default was not overridden)");
+            log.info("Using JWT secret from AOW2_JWT_SECRET environment variable");
         }
         this.signingKey = Keys.hmacShaKeyFor(effectiveSecret.getBytes(StandardCharsets.UTF_8));
         this.expirationMs = expirationMs;

@@ -228,10 +228,22 @@ public class MapLoader {
      * @throws IllegalArgumentException if the name doesn't match any terrain type
      */
     private static TerrainType parseTerrainType(String name) {
-        // Support legacy "WATER" alias for DEEP_WATER
-        if ("WATER".equals(name)) {
-            return TerrainType.DEEP_WATER;
-        }
-        return TerrainType.valueOf(name);
+        // FIX (ANALYSIS_V2 2.16): Support common terrain name aliases so maps
+        // using RE-spec or colloquial names don't silently lose terrain data.
+        return switch (name.toUpperCase()) {
+            case "WATER", "DEEP_WATER", "OCEAN" -> TerrainType.DEEP_WATER;
+            case "SHALLOW_WATER", "SHOAL", "FORD" -> TerrainType.SHALLOW_WATER;
+            case "GRASS", "PLAINS", "PLAIN", "GREEN" -> TerrainType.GRASS;
+            case "FOREST", "WOODS", "TREES" -> TerrainType.FOREST;
+            case "ROAD", "PATH" -> TerrainType.ROAD;
+            case "MOUNTAIN", "MOUNTAINS", "ROCK" -> TerrainType.MOUNTAIN;
+            case "SAND", "DESERT", "BEACH" -> TerrainType.SAND;
+            case "SNOW", "ICE", "TUNDRA" -> TerrainType.SNOW;
+            case "HILLS", "HILL" -> TerrainType.HILLS;
+            case "BRIDGE", "DOCK" -> TerrainType.BRIDGE;
+            case "SWAMP", "MARSH", "BOG" -> TerrainType.SWAMP;
+            case "RESOURCE_DEPOSIT", "GOLD", "MINE" -> TerrainType.RESOURCE_DEPOSIT;
+            default -> TerrainType.valueOf(name);  // fall through to enum for exact matches
+        };
     }
 }

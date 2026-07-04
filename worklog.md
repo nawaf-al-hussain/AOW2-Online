@@ -156,3 +156,33 @@ Stage Summary:
 - Scripts preserved at /home/z/my-project/scripts/ with idempotent re-run instructions
 - Next developer can pick up asset work by reading §4 of the guide and following the priority order
 - User is doing a full repo analysis in parallel — results will inform the next round of work
+
+---
+Task ID: 6
+Agent: Main
+Task: ANALYSIS_V2 — fix all remaining HIGH/MEDIUM issues from critical codebase analysis.
+
+Work Log:
+- P1 CRITICAL (§3.1): Fixed multiplayer auth — showGame now accepts and uses the lobby's authenticated MultiplayerService instead of creating a new unauthenticated one
+- P2 CRITICAL (§2.1): Added ownership checks to MoveCommandHandler, AttackCommandHandler, GarrisonCommandHandler, ProduceCommandHandler, ResearchCommandHandler
+- P3 HIGH (§2.4): Removed setAttackState(3) override in CombatSystem that broke ranged wind-up
+- P4 HIGH (§2.3): Added PowerSystem field to CommandProcessor with setter; Upgrade case passes it instead of null
+- P5 HIGH (§2.7): Added ResearchBonusTracker-based armor methods to ArmorCalculator
+- 2.2 HIGH: Unified LockstepEngine.applyCommand to route ALL commands through CommandProcessor when game systems are available, eliminating SP/MP split-brain
+- 2.5 HIGH: Building cooldown only set when building actually fired (processBunkerAttack/processDefensiveBuildingAttack return boolean)
+- 2.6 HIGH: shouldStopForEnemy now handles negative target refs (buildings)
+- 2.9 MEDIUM: LockstepEngine disconnect timer uses lockstepFrame (local clock) instead of command.tick() (remote clock)
+- 2.11 HIGH: SyncChecker now includes attackState, targetUnitRef, siegeMode, movementState, weaponCooldown for units; upgradeLevel, powered, garrisonedUnitRef, attackCooldown, productionQueueSize for buildings
+- 2.12 HIGH: CommandSerializer uses typeId() instead of ordinal() for BuildingType and UnitType serialization; added UnitType.fromTypeId()
+- 2.16 MEDIUM: MapLoader.parseTerrainType now supports 30+ terrain name aliases (Plains→GRASS, Ocean→DEEP_WATER, etc.)
+- 3.2 HIGH: MultiplayerLobbyScene.dispose() no longer shuts down service when match was found
+- 3.4 MEDIUM: GameScene desync callback sends actual session UUID and hash=-1 instead of empty string and hash=0
+- 4.5 MEDIUM: Web api.ts error parsing uses .error instead of .message
+- 4.6 MEDIUM: Web apiUrl() uses & separator when path already has query params
+- 4.9 MEDIUM: JwtUtil rejects env var that matches dev default
+- 4.10 MEDIUM: MapController.uploadMap validates mapData is valid JSON with width/height 8-128
+
+Stage Summary:
+- 18 issues fixed from ANALYSIS_V2 (5 top priorities + 13 additional HIGH/MEDIUM)
+- All tests pass: ./gradlew test BUILD SUCCESSFUL
+- Remaining unfixed: LOW severity issues (7), architectural deferrals (Lua sandbox, web WebSocket, TickManager/LockstepEngine dual-path)

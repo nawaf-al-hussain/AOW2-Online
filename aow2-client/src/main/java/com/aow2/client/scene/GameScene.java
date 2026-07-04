@@ -231,6 +231,9 @@ public class GameScene {
     /** Whether this game is a multiplayer match (uses lockstep). */
     private boolean isMultiplayer = false;
 
+    /** FIX (ANALYSIS_V2 3.4): Session UUID for sync hash reporting. */
+    private String multiplayerSessionUuid;
+
     /** Buffer for commands received from the opponent via WebSocket, pending lockstep processing. */
     private final java.util.concurrent.ConcurrentLinkedQueue<byte[]> incomingCommandBuffer =
         new java.util.concurrent.ConcurrentLinkedQueue<>();
@@ -634,6 +637,20 @@ public class GameScene {
      * @param service the multiplayer service with an active game WebSocket connection
      */
     public void setupMultiplayer(MultiplayerService service) {
+        this.multiplayerSessionUuid = null;  // will be set via setMultiplayerSessionUuid
+        setupMultiplayerInternal(service);
+    }
+
+    /**
+     * FIX (ANALYSIS_V2 3.4): Sets the multiplayer session UUID for sync hash reporting.
+     *
+     * @param sessionUuid the session UUID
+     */
+    public void setMultiplayerSessionUuid(String sessionUuid) {
+        this.multiplayerSessionUuid = sessionUuid;
+    }
+
+    private void setupMultiplayerInternal(MultiplayerService service) {
         this.multiplayerService = service;
         this.isMultiplayer = true;
         this.lockstepEngine = new LockstepEngine();
@@ -671,8 +688,12 @@ public class GameScene {
         lockstepEngine.setDesyncCallback(frame -> {
             LOG.error("Desync detected at frame {}", frame);
             if (multiplayerService != null) {
-                // Notify the server of the desync
-                multiplayerService.sendSyncHash("", frame, 0);
+                // FIX (ANALYSIS_V2 3.4): Send the actual session UUID and a non-zero hash
+                // so the server can identify which session desynced. Previously sent
+                // empty string and hash=0, which the server silently dropped.
+                multiplayerService.sendSyncHash(
+                    multiplayerSessionUuid != null ? multiplayerSessionUuid : "",
+                    frame, -1);  // -1 = desync indicator
             }
         });
 

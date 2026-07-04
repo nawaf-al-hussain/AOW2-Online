@@ -97,6 +97,14 @@ public class SyncChecker {
             hash = Long.rotateLeft(hash, 17) ^ unit.getPosition().y();
             hash = Long.rotateLeft(hash, 17) ^ unit.getHp();
             hash = Long.rotateLeft(hash, 17) ^ unit.getFaction().ordinal();
+            // FIX (ANALYSIS_V2 2.11): Include combat and movement state that affects
+            // future game state. Previously these were omitted, allowing desyncs in
+            // attackState, targetUnitRef, siegeMode, movementState to go undetected.
+            hash = Long.rotateLeft(hash, 17) ^ unit.getAttackState();
+            hash = Long.rotateLeft(hash, 17) ^ (unit.getTargetUnitRef() != null ? unit.getTargetUnitRef() : 0);
+            hash = Long.rotateLeft(hash, 17) ^ (unit.isSiegeMode() ? 1 : 0);
+            hash = Long.rotateLeft(hash, 17) ^ unit.getMovementState().ordinal();
+            hash = Long.rotateLeft(hash, 17) ^ unit.getWeaponCooldown();
         }
 
         // Include all living building positions and health
@@ -110,6 +118,14 @@ public class SyncChecker {
             hash = Long.rotateLeft(hash, 17) ^ building.getPosition().y();
             hash = Long.rotateLeft(hash, 17) ^ building.getHp();
             hash = Long.rotateLeft(hash, 17) ^ building.getFaction().ordinal();
+            // FIX (ANALYSIS_V2 2.11): Include building state — upgradeLevel, powered,
+            // productionQueue, garrisonedUnitRef, attackCooldown all affect future state.
+            hash = Long.rotateLeft(hash, 17) ^ building.getUpgradeLevel();
+            hash = Long.rotateLeft(hash, 17) ^ (building.isPowered() ? 1 : 0);
+            hash = Long.rotateLeft(hash, 17) ^ (building.getGarrisonedUnitRef() != null ? building.getGarrisonedUnitRef() : 0);
+            hash = Long.rotateLeft(hash, 17) ^ building.getAttackCooldown();
+            // Include production queue size (not contents — too volatile per tick)
+            hash = Long.rotateLeft(hash, 17) ^ building.getProductionQueue().size();
         }
 
         // Include projectile count

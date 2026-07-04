@@ -197,6 +197,7 @@ public class AOW2App extends GameApplication {
             }
             mpService.connectGameWebSocket();
             gameScene.setupMultiplayer(mpService);
+            gameScene.setMultiplayerSessionUuid(sessionUuid);  // FIX (ANALYSIS_V2 3.4)
             LOG.info("Multiplayer setup complete for session: {}", sessionUuid);
         }
 

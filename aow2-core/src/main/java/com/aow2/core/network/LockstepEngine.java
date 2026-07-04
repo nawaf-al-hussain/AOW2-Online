@@ -219,7 +219,10 @@ public final class LockstepEngine {
             log.warn("Dropping out-of-range command (tick={}): {}", command.tick(), e.getMessage());
             return;
         }
-        lastOpponentActivityTick = Math.max(lastOpponentActivityTick, command.tick());
+        // FIX (ANALYSIS_V2 2.9): Use lockstepFrame (local clock) instead of command.tick()
+        // (remote clock) to prevent a malicious client from sending commands with
+        // artificially inflated tick values to suppress the disconnect timer.
+        lastOpponentActivityTick = Math.max(lastOpponentActivityTick, lockstepFrame);
     }
 
     /**
@@ -498,159 +501,97 @@ public final class LockstepEngine {
      * @param entities the entity manager
      */
     private void applyCommand(CommandType command, GameState state, EntityManager entities) {
-        switch (command) {
-            case CommandType.Move m -> {
-                for (int unitId : m.unitIds()) {
-                    var unit = entities.getUnit(unitId);
-                    // FIX (C6 from CRITICAL_ANALYSIS_REPORT.md): use owns() helper
-                    // instead of fragile enum ordinal coupling.
-                    if (owns(unit, m.playerId())) {
-                        // REF: pathfinding.md — compute path via MovementSystem instead of just setting target
-                        if (movementSystem != null && gameMap != null) {
-                            movementSystem.issueMoveCommand(unit, m.target(), gameMap, entities);
-                        } else {
-                            // Fallback: set target directly if MovementSystem not available
-                            unit.setTargetPosition(m.target());
-                            unit.setMovementState(
-                                    com.aow2.common.model.MovementState.MOVING);
+        // FIX (ANALYSIS_V2 2.2): Route ALL commands through CommandProcessor to
+        // eliminate the split-brain where inline-handled commands (Move, Attack,
+        // Stop, Hold, SiegeMode, Patrol) used per-unit issueMoveCommand (losing
+        // formation) while CommandProcessor-routed commands used group move.
+        // Now both single-player (TickManager) and multiplayer (LockstepEngine)
+        // use the same command execution path through CommandProcessor, which
+        // has ownership checks on all handlers (P2 fix).
+        if (economySystem == null) {
+            // Game systems not injected — fall back to inline handling for basic commands
+            switch (command) {
+                case CommandType.Move m -> {
+                    for (int unitId : m.unitIds()) {
+                        var unit = entities.getUnit(unitId);
+                        if (owns(unit, m.playerId())) {
+                            if (movementSystem != null && gameMap != null) {
+                                movementSystem.issueMoveCommand(unit, m.target(), gameMap, entities);
+                            } else {
+                                unit.setTargetPosition(m.target());
+                                unit.setMovementState(com.aow2.common.model.MovementState.MOVING);
+                            }
                         }
                     }
                 }
-            }
-            case CommandType.Attack a -> {
-                // FIX (C4 from CRITICAL_ANALYSIS_REPORT.md): Add ownership check.
-                // Previously any client could set targets on opponent units.
-                for (int unitId : a.unitIds()) {
-                    var unit = entities.getUnit(unitId);
-                    if (owns(unit, a.playerId())) {
-                        unit.setTargetUnitRef(a.targetId());
-                    }
-                }
-            }
-            case CommandType.AttackMove am -> {
-                // Attack-move: move units toward target, auto-engaging enemies along the way
-                for (int unitId : am.unitIds()) {
-                    var unit = entities.getUnit(unitId);
-                    // FIX (C6 from CRITICAL_ANALYSIS_REPORT.md): use owns() helper
-                    if (owns(unit, am.playerId()) && unit.isAlive()) {
-                        if (movementSystem != null && gameMap != null) {
-                            movementSystem.issueMoveCommand(unit, am.target(), gameMap, entities);
-                        } else {
-                            unit.setTargetPosition(am.target());
-                            unit.setMovementState(
-                                    com.aow2.common.model.MovementState.MOVING);
-                        }
-                        // Mark unit for auto-engage behavior during movement
-                        unit.setAutoEngage(true);
-                        unit.setAutoEngageTarget(am.target());
-                    }
-                }
-            }
-            case CommandType.Stop s -> {
-                // FIX (C4 from CRITICAL_ANALYSIS_REPORT.md): Add ownership check.
-                for (int unitId : s.unitIds()) {
-                    var unit = entities.getUnit(unitId);
-                    if (owns(unit, s.playerId())) {
-                        unit.clearPath();
-                    }
-                }
-            }
-            case CommandType.Hold h -> {
-                // FIX (F-11): Hold — clear path but retain attack target
-                for (int unitId : h.unitIds()) {
-                    var unit = entities.getUnit(unitId);
-                    if (owns(unit, h.playerId())) {
-                        unit.clearPath();
-                        // NOTE: Do NOT clear targetUnitRef or attackState — hold position
-                        // allows units to continue attacking enemies in range.
-                    }
-                }
-            }
-            case CommandType.SiegeMode sm -> {
-                // FIX (C4 from CRITICAL_ANALYSIS_REPORT.md): Add ownership check.
-                var unit = entities.getUnit(sm.unitId());
-                if (owns(unit, sm.playerId())) {
-                    unit.setSiegeMode(sm.enabled());
-                }
-            }
-            // Route Build, Produce, Research, Garrison, Ungarrison, Cancel commands
-            // to CommandProcessor which dispatches to the appropriate game systems.
-            // Game systems must be injected via setGameSystems() before these commands
-            // can be processed. If not set, commands are logged and skipped.
-            case CommandType.Build b -> {
-                if (economySystem == null || buildingPlacementSystem == null) {
-                    log.warn("Build command skipped: game systems not injected (call setGameSystems())");
-                } else {
-                    commandProcessor.process(b, state, entities, gameMap, movementSystem,
-                            combatSystem, economySystem, productionSystem, researchSystem,
-                            buildingPlacementSystem);
-                }
-            }
-            case CommandType.Produce p -> {
-                if (economySystem == null || productionSystem == null) {
-                    log.warn("Produce command skipped: game systems not injected (call setGameSystems())");
-                } else {
-                    commandProcessor.process(p, state, entities, gameMap, movementSystem,
-                            combatSystem, economySystem, productionSystem, researchSystem,
-                            buildingPlacementSystem);
-                }
-            }
-            case CommandType.Research r -> {
-                if (economySystem == null || researchSystem == null) {
-                    log.warn("Research command skipped: game systems not injected (call setGameSystems())");
-                } else {
-                    commandProcessor.process(r, state, entities, gameMap, movementSystem,
-                            combatSystem, economySystem, productionSystem, researchSystem,
-                            buildingPlacementSystem);
-                }
-            }
-            case CommandType.Garrison g -> {
-                commandProcessor.process(g, state, entities, gameMap, movementSystem,
-                        combatSystem, economySystem, productionSystem, researchSystem,
-                        buildingPlacementSystem);
-            }
-            case CommandType.Ungarrison u -> {
-                commandProcessor.process(u, state, entities, gameMap, movementSystem,
-                        combatSystem, economySystem, productionSystem, researchSystem,
-                        buildingPlacementSystem);
-            }
-            case CommandType.Cancel c -> {
-                if (economySystem == null || productionSystem == null) {
-                    log.warn("Cancel command skipped: game systems not injected (call setGameSystems())");
-                } else {
-                    commandProcessor.process(c, state, entities, gameMap, movementSystem,
-                            combatSystem, economySystem, productionSystem, researchSystem,
-                            buildingPlacementSystem);
-                }
-            }
-            case CommandType.Patrol pt -> {
-                log.debug("Patrol command at tick {}: units -> waypoint {}",
-                        pt.tick(), pt.waypoint());
-                // Patrol: move units to the patrol waypoint via MovementSystem
-                for (int unitId : pt.unitIds()) {
-                    var unit = entities.getUnit(unitId);
-                    // FIX (C4 from CRITICAL_ANALYSIS_REPORT.md): Add ownership check.
-                    if (owns(unit, pt.playerId()) && unit.isAlive()) {
-                        if (movementSystem != null && gameMap != null) {
-                            movementSystem.issueMoveCommand(unit, pt.waypoint(), gameMap, entities);
-                        } else {
-                            unit.setTargetPosition(pt.waypoint());
-                            unit.setMovementState(
-                                    com.aow2.common.model.MovementState.MOVING);
+                case CommandType.Attack a -> {
+                    for (int unitId : a.unitIds()) {
+                        var unit = entities.getUnit(unitId);
+                        if (owns(unit, a.playerId())) {
+                            unit.setTargetUnitRef(a.targetId());
                         }
                     }
                 }
-            }
-            case CommandType.Upgrade u -> {
-                // Route Upgrade command through CommandProcessor
-                if (economySystem == null) {
-                    log.warn("Upgrade command skipped: economySystem not injected");
-                } else {
-                    commandProcessor.process(u, state, entities, gameMap, movementSystem,
-                            combatSystem, economySystem, productionSystem, researchSystem,
-                            buildingPlacementSystem);
+                case CommandType.AttackMove am -> {
+                    for (int unitId : am.unitIds()) {
+                        var unit = entities.getUnit(unitId);
+                        if (owns(unit, am.playerId()) && unit.isAlive()) {
+                            if (movementSystem != null && gameMap != null) {
+                                movementSystem.issueMoveCommand(unit, am.target(), gameMap, entities);
+                            } else {
+                                unit.setTargetPosition(am.target());
+                                unit.setMovementState(com.aow2.common.model.MovementState.MOVING);
+                            }
+                            unit.setAutoEngage(true);
+                            unit.setAutoEngageTarget(am.target());
+                        }
+                    }
+                }
+                case CommandType.Stop s -> {
+                    for (int unitId : s.unitIds()) {
+                        var unit = entities.getUnit(unitId);
+                        if (owns(unit, s.playerId())) {
+                            unit.clearPath();
+                        }
+                    }
+                }
+                case CommandType.Hold h -> {
+                    for (int unitId : h.unitIds()) {
+                        var unit = entities.getUnit(unitId);
+                        if (owns(unit, h.playerId())) {
+                            unit.clearPath();
+                        }
+                    }
+                }
+                case CommandType.SiegeMode sm -> {
+                    var unit = entities.getUnit(sm.unitId());
+                    if (owns(unit, sm.playerId())) {
+                        unit.setSiegeMode(sm.enabled());
+                    }
+                }
+                case CommandType.Patrol pt -> {
+                    for (int unitId : pt.unitIds()) {
+                        var unit = entities.getUnit(unitId);
+                        if (owns(unit, pt.playerId()) && unit.isAlive()) {
+                            if (movementSystem != null && gameMap != null) {
+                                movementSystem.issueMoveCommand(unit, pt.waypoint(), gameMap, entities);
+                            } else {
+                                unit.setTargetPosition(pt.waypoint());
+                                unit.setMovementState(com.aow2.common.model.MovementState.MOVING);
+                            }
+                        }
+                    }
+                }
+                default -> {
+                    log.warn("Command {} skipped: game systems not injected (call setGameSystems())", command);
                 }
             }
+        } else {
+            // Game systems available — route through CommandProcessor for consistent
+            // behavior with single-player (formation, ownership checks, handler logic)
+            commandProcessor.process(command, state, entities, gameMap, movementSystem,
+                    combatSystem, economySystem, productionSystem, researchSystem,
+                    buildingPlacementSystem);
         }
     }
 
