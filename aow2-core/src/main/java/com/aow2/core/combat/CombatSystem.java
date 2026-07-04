@@ -288,15 +288,20 @@ public class CombatSystem {
             }
 
             BuildingType type = building.getBuildingType();
+            boolean fired = false;
 
             if (isBunker(type)) {
-                processBunkerAttack(building);
+                fired = processBunkerAttack(building);
             } else if (isRocketOrTower(type)) {
-                processDefensiveBuildingAttack(building);
+                fired = processDefensiveBuildingAttack(building);
             }
 
-            // Reset building attack cooldown after firing
-            building.setAttackCooldown(BUILDING_ATTACK_COOLDOWN);
+            // FIX (ANALYSIS_V2 2.5): Only set cooldown if the building actually fired.
+            // Previously cooldown was set unconditionally, so buildings that scanned
+            // for enemies but found none went on a 5-tick cooldown before re-scanning.
+            if (fired) {
+                building.setAttackCooldown(BUILDING_ATTACK_COOLDOWN);
+            }
         }
     }
 
@@ -309,12 +314,12 @@ public class CombatSystem {
      *
      * @param bunker the bunker building
      */
-    private void processBunkerAttack(Building bunker) {
+    private boolean processBunkerAttack(Building bunker) {
         Integer garrisonedRef = bunker.getGarrisonedUnitRef();
-        if (garrisonedRef == null) return;
+        if (garrisonedRef == null) return false;
 
         Unit garrison = entityManager.getUnit(garrisonedRef);
-        if (garrison == null || !garrison.isAlive()) return;
+        if (garrison == null || !garrison.isAlive()) return false;
 
         // Find nearest enemy within garrison range
         int effectiveRange = garrison.getStats().attackRange() + BUNKER_RANGE_BONUS;
@@ -346,7 +351,9 @@ public class CombatSystem {
                     nearestEnemy.getFaction(), EconomySystem.playerId(bunker.getFaction()));
             }
             garrison.addExperience(1);
+            return true;  // FIX (2.5): fired
         }
+        return false;
     }
 
     /**
@@ -357,7 +364,7 @@ public class CombatSystem {
      *
      * @param building the defensive building
      */
-    private void processDefensiveBuildingAttack(Building building) {
+    private boolean processDefensiveBuildingAttack(Building building) {
         BuildingType type = building.getBuildingType();
         int attackRange = building.getStats().attackRange();
         int damage = building.getStats().attackBonus();
@@ -387,7 +394,9 @@ public class CombatSystem {
                 ModEventBridge.fireUnitKilled(nearestEnemy.getId(), nearestEnemy.getUnitType(),
                     nearestEnemy.getFaction(), EconomySystem.playerId(building.getFaction()));
             }
+            return true;  // FIX (2.5): fired
         }
+        return false;
     }
 
     /**

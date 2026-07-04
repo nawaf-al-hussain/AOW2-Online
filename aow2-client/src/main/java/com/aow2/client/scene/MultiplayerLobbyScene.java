@@ -61,6 +61,9 @@ public class MultiplayerLobbyScene {
     /** Whether the player is currently searching for a match. */
     private boolean searching;
 
+    /** FIX (ANALYSIS_V2 3.2): Whether a match was found — prevents dispose from killing the service. */
+    private boolean matchFound = false;
+
     /** Timeline for the searching animation. */
     private Timeline searchAnimation;
 
@@ -734,6 +737,7 @@ public class MultiplayerLobbyScene {
         if (callback != null) {
             callback.onMatchFound(sessionUuid);
         }
+        matchFound = true;  // FIX (ANALYSIS_V2 3.2): flag so dispose() doesn't kill the service
         LOG.info("Match found! Session: {}, Opponent: {}", sessionUuid, opponentName);
     }
 
@@ -923,8 +927,18 @@ public class MultiplayerLobbyScene {
      */
     public void dispose() {
         cancelSearch();
-        service.disconnect();
-        service.shutdown();
-        LOG.info("MultiplayerLobbyScene disposed — WebSockets closed and executor shut down");
+        // FIX (ANALYSIS_V2 3.2): Don't disconnect/shutdown the service if a match
+        // was found — the game scene needs the authenticated MultiplayerService
+        // with its JWT token and lobby WebSocket. Only disconnect the lobby
+        // WebSocket, not the entire service.
+        if (!matchFound) {
+            service.disconnect();
+            service.shutdown();
+            LOG.info("MultiplayerLobbyScene disposed — service shut down");
+        } else {
+            // Match found — keep the service alive for GameScene.setupMultiplayer()
+            // Only cancel the lobby search, don't tear down the service
+            LOG.info("MultiplayerLobbyScene disposed but match found — service kept alive for game scene");
+        }
     }
 }

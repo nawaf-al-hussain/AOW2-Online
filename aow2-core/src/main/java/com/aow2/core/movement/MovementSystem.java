@@ -4,6 +4,7 @@ import com.aow2.common.config.GameConstants;
 import com.aow2.common.model.GridPosition;
 import com.aow2.common.model.MovementState;
 import com.aow2.common.model.UnitCategory;
+import com.aow2.core.entity.Building;
 import com.aow2.core.entity.Unit;
 import com.aow2.core.world.EntityManager;
 import com.aow2.core.world.GameMap;
@@ -170,17 +171,35 @@ public final class MovementSystem {
             return false;
         }
 
-        // Check if the target unit still exists and is alive
-        Unit target = entities.getUnit(unit.getTargetUnitRef());
-        if (target == null || !target.isAlive()) {
-            return false;
+        int targetRef = unit.getTargetUnitRef();
+
+        // FIX (ANALYSIS_V2 2.6): Handle building target refs (negative IDs).
+        // Previously only positive refs (units) were handled; negative refs
+        // (buildings) caused getUnit() to return null and the unit kept walking
+        // past the building it was ordered to attack.
+        if (targetRef > 0) {
+            // Unit target
+            Unit target = entities.getUnit(targetRef);
+            if (target == null || !target.isAlive()) {
+                return false;
+            }
+            int distance = GridPosition.distanceClass(
+                unit.getPosition().x() - target.getPosition().x(),
+                unit.getPosition().y() - target.getPosition().y());
+            return distance <= unit.getStats().attackRange();
+        } else if (targetRef < 0) {
+            // Building target (negative ref = -buildingId)
+            Building target = entities.getBuilding(-targetRef);
+            if (target == null || !target.isAlive()) {
+                return false;
+            }
+            int distance = GridPosition.distanceClass(
+                unit.getPosition().x() - target.getPosition().x(),
+                unit.getPosition().y() - target.getPosition().y());
+            return distance <= unit.getStats().attackRange();
         }
 
-        // Check if enemy is in attack range
-        int distance = GridPosition.distanceClass(
-            unit.getPosition().x() - target.getPosition().x(),
-            unit.getPosition().y() - target.getPosition().y());
-        return distance <= unit.getStats().attackRange();
+        return false;
     }
 
     /**
