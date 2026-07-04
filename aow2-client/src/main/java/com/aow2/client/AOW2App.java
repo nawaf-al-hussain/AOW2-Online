@@ -148,24 +148,35 @@ public class AOW2App extends GameApplication {
      *                        or null to use the test map
      */
     private void showGame(String mapResourcePath) {
-        showGame(mapResourcePath, null);
+        showGame(mapResourcePath, null, null);
     }
 
     /**
      * Shows the game scene, optionally loading a specific map and/or starting multiplayer.
-     * <p>
-     * FIX (F-09): Added the sessionUuid parameter so that the multiplayer match-found flow
-     * can pass the session UUID through to {@link GameScene#setupMultiplayer}. Previously
-     * {@code onMatchFound} called {@code showGame()} with no args, so {@code setupMultiplayer}
-     * was never called and multiplayer matches started as single-player skirmishes.
      *
-     * @param mapResourcePath classpath resource path for the map, or null to use the test map
+     * @param mapResourcePath classpath resource path for the map, or null for the test map
      * @param sessionUuid     multiplayer session UUID, or null for single-player
      */
     private void showGame(String mapResourcePath, String sessionUuid) {
+        showGame(mapResourcePath, sessionUuid, null);
+    }
+
+    /**
+     * Shows the game scene with full multiplayer support.
+     * <p>
+     * FIX (ANALYSIS_V2 P1): Added the mpService parameter so the lobby's authenticated
+     * MultiplayerService (with its JWT token) can be passed through. Previously
+     * showGame created a new unauthenticated MultiplayerService, causing
+     * ensureAuthenticated() to throw and multiplayer to never connect.
+     *
+     * @param mapResourcePath classpath resource path for the map, or null for the test map
+     * @param sessionUuid     multiplayer session UUID, or null for single-player
+     * @param mpService       the authenticated MultiplayerService from the lobby, or null
+     */
+    private void showGame(String mapResourcePath, String sessionUuid,
+                          com.aow2.client.service.MultiplayerService mpService) {
         if (gameScene != null) {
             gameScene.stop();
-            // Clear references to allow GC before allocating a new scene
             gameScene = null;
         }
 
@@ -178,12 +189,12 @@ public class AOW2App extends GameApplication {
             gameScene.initializeGame();
         }
 
-        // FIX (F-09): If a session UUID is provided, wire multiplayer before starting
-        // the game loop. This connects the game WebSocket, creates the LockstepEngine,
-        // and enables command synchronization with the opponent.
+        // FIX (ANALYSIS_V2 P1): Use the lobby's authenticated MultiplayerService
+        // instead of creating a new unauthenticated one.
         if (sessionUuid != null && !sessionUuid.isBlank()) {
-            com.aow2.client.service.MultiplayerService mpService =
-                new com.aow2.client.service.MultiplayerService();
+            if (mpService == null) {
+                mpService = new com.aow2.client.service.MultiplayerService();
+            }
             mpService.connectGameWebSocket();
             gameScene.setupMultiplayer(mpService);
             LOG.info("Multiplayer setup complete for session: {}", sessionUuid);
@@ -224,10 +235,12 @@ public class AOW2App extends GameApplication {
             @Override
             public void onMatchFound(String sessionUuid) {
                 LOG.info("Match found! Session: {}", sessionUuid);
-                // FIX (F-09): Pass the session UUID to showGame() so that
-                // GameScene.setupMultiplayer() is called with a non-null session,
-                // the LockstepEngine is wired, and the game WebSocket connects.
-                showGame(null, sessionUuid);
+                // FIX (ANALYSIS_V2 P1): Pass the lobby's authenticated MultiplayerService
+                // to showGame so the game WebSocket uses the existing JWT. Previously
+                // showGame created a new MultiplayerService with no auth, causing
+                // ensureAuthenticated() to throw IllegalStateException.
+                var mpService = multiplayerLobbyScene.getService();
+                showGame(null, sessionUuid, mpService);
             }
 
             @Override

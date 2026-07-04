@@ -40,6 +40,14 @@ public final class ProduceCommandHandler {
             return;
         }
 
+        // FIX (ANALYSIS_V2 P2): Ownership check — only the building's owner can produce from it
+        int ownerId = com.aow2.core.economy.EconomySystem.playerId(producer.getFaction());
+        if (ownerId != cmd.playerId()) {
+            LOG.warn("Player {} attempted to produce from building {} owned by player {}",
+                cmd.playerId(), cmd.producerId(), ownerId);
+            return;
+        }
+
         boolean enqueued = production.enqueueUnit(
             producer, cmd.unitType(), cmd.playerId(), economy, research);
 

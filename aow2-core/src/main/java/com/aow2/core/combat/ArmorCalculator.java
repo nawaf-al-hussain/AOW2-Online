@@ -173,6 +173,11 @@ public final class ArmorCalculator {
 
         int bonus = 0;
 
+        // FIX (ANALYSIS_V2 P5): Use hardcoded maps as a fallback. The primary path
+        // should be through ResearchBonusTracker which accumulates ALL research effects
+        // from tech_tree.json (including ones not in these hardcoded maps). Callers
+        // that have a ResearchBonusTracker should use getResearchArmorBonus(Unit, ResearchBonusTracker)
+        // instead. This method is kept for backward compatibility and tests.
         if (unit.isInfantry()) {
             for (Map.Entry<Integer, Integer> entry : INFANTRY_ARMOR_RESEARCH.entrySet()) {
                 if (completedResearch.contains(entry.getKey())) {
@@ -180,7 +185,6 @@ public final class ArmorCalculator {
                 }
             }
         } else if (unit.isMachinery()) {
-            // VEHICLE and SPECIAL_MACHINERY both use vehicle armor research
             for (Map.Entry<Integer, Integer> entry : VEHICLE_ARMOR_RESEARCH.entrySet()) {
                 if (completedResearch.contains(entry.getKey())) {
                     bonus += entry.getValue();
@@ -188,8 +192,48 @@ public final class ArmorCalculator {
             }
         }
 
-        // ASSUMPTION: Mines do not receive armor bonuses from research
         return bonus;
+    }
+
+    /**
+     * FIX (ANALYSIS_V2 P5): Data-driven armor bonus using ResearchBonusTracker.
+     * <p>
+     * This method uses the accumulated bonus values from the ResearchBonusTracker,
+     * which reflects ALL research effects from tech_tree.json — not just the hardcoded
+     * IDs in the INFANTRY_ARMOR_RESEARCH / VEHICLE_ARMOR_RESEARCH maps. This ensures
+     * that modders who add new armor research effects see them actually applied.
+     *
+     * @param unit    the unit to check
+     * @param tracker the player's ResearchBonusTracker (from ResearchSystem.getBonusTracker)
+     * @return total armor bonus from research
+     */
+    public int getResearchArmorBonus(Unit unit,
+                                      com.aow2.core.research.ResearchSystem.ResearchBonusTracker tracker) {
+        if (tracker == null) {
+            return 0;
+        }
+
+        if (unit.isInfantry()) {
+            return tracker.getInfantryArmorBonus();
+        } else if (unit.isMachinery()) {
+            return tracker.getVehicleArmorBonus();
+        }
+
+        return 0;  // Mines do not receive armor bonuses
+    }
+
+    /**
+     * FIX (ANALYSIS_V2 P5): Data-driven effective armor calculation using ResearchBonusTracker.
+     *
+     * @param unit    the unit to calculate armor for
+     * @param tracker the player's ResearchBonusTracker
+     * @return effective armor value (base + research bonus)
+     */
+    public int calculateEffectiveArmor(Unit unit,
+                                        com.aow2.core.research.ResearchSystem.ResearchBonusTracker tracker) {
+        int baseArmor = unit.getStats().armor();
+        int bonus = getResearchArmorBonus(unit, tracker);
+        return baseArmor + bonus;
     }
 
     /**

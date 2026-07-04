@@ -49,6 +49,9 @@ public final class CommandProcessor {
     /** Handler for upgrade commands. */
     private final UpgradeCommandHandler upgradeHandler;
 
+    /** FIX (ANALYSIS_V2 P4): PowerSystem for upgrade power-grid refresh. */
+    private com.aow2.core.economy.PowerSystem powerSystem;
+
     /**
      * Constructs a CommandProcessor with default handlers.
      */
@@ -60,6 +63,16 @@ public final class CommandProcessor {
         this.researchHandler = new ResearchCommandHandler();
         this.garrisonHandler = new GarrisonCommandHandler();
         this.upgradeHandler = new UpgradeCommandHandler();
+    }
+
+    /**
+     * FIX (ANALYSIS_V2 P4): Sets the PowerSystem so UpgradeCommandHandler can
+     * refresh the power grid after Generator/CC upgrades.
+     *
+     * @param powerSystem the power system
+     */
+    public void setPowerSystem(com.aow2.core.economy.PowerSystem powerSystem) {
+        this.powerSystem = powerSystem;
     }
 
     /**
@@ -96,7 +109,7 @@ public final class CommandProcessor {
             // FIX (F-11): Hold is distinct from Stop — clears path but retains attack target.
             case CommandType.Hold cmd -> handleHold(cmd, entities);
             case CommandType.Patrol cmd -> handlePatrol(cmd, entities, map, movement);
-            case CommandType.Upgrade cmd -> upgradeHandler.handle(cmd, entities, economy, null);
+            case CommandType.Upgrade cmd -> upgradeHandler.handle(cmd, entities, economy, powerSystem);
         }
     }
 

@@ -230,9 +230,14 @@ public class CombatSystem {
                 Unit target = entityManager.getUnit(targetRef);
                 if (target != null) {
                     if (target.isAlive() && isInAttackRange(attacker, target)) {
+                        // FIX (ANALYSIS_V2 P3): Removed setAttackState(3) override.
+                        // performAttack() already manages the state machine:
+                        //   - Melee: sets state 3 (ATTACKING) and fires immediately
+                        //   - Ranged: sets state 2 (WIND_UP) and returns; fires on a
+                        //     subsequent tick when wind-up completes
+                        // The previous setAttackState(3) here overwrote the WIND_UP state
+                        // every tick, causing ranged units to skip wind-up and fire 2x faster.
                         performAttack(attacker, target);
-                        // After firing, set cooldown state
-                        attacker.setAttackState(3); // stays in attacking state, cooldown gates next shot
                     } else {
                         // Target out of range or dead — re-acquire
                         attacker.setAttackState(1);

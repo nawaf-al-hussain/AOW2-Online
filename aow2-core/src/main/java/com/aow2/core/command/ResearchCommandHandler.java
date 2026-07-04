@@ -37,6 +37,14 @@ public final class ResearchCommandHandler {
             return;
         }
 
+        // FIX (ANALYSIS_V2 P2): Ownership check — only the building's owner can research
+        int ownerId = com.aow2.core.economy.EconomySystem.playerId(techCentre.getFaction());
+        if (ownerId != cmd.playerId()) {
+            LOG.warn("Player {} attempted to research at building {} owned by player {}",
+                cmd.playerId(), cmd.techCentreId(), ownerId);
+            return;
+        }
+
         boolean started = research.startResearch(
             techCentre, cmd.researchId(), cmd.playerId(), economy);
 

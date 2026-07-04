@@ -31,6 +31,18 @@ public final class MoveCommandHandler {
      */
     public void handle(CommandType.Move cmd, EntityManager entities,
                        GameMap map, MovementSystem movement) {
+        // FIX (ANALYSIS_V2 P2): Ownership check — only the owning player can move units
+        for (int unitId : cmd.unitIds()) {
+            Unit unit = entities.getUnit(unitId);
+            if (unit != null && unit.isAlive()) {
+                int ownerId = com.aow2.core.economy.EconomySystem.playerId(unit.getFaction());
+                if (ownerId != cmd.playerId()) {
+                    LOG.warn("Player {} attempted to move unit {} owned by player {}",
+                        cmd.playerId(), unitId, ownerId);
+                    return;
+                }
+            }
+        }
         if (cmd.unitIds().length == 1) {
             Unit unit = entities.getUnit(cmd.unitIds()[0]);
             if (unit != null && unit.isAlive()) {

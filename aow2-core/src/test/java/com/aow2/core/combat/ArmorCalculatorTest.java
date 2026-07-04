@@ -277,7 +277,7 @@ class ArmorCalculatorTest {
             UnitType.CONFED_INFANTRY, INFANTRY_STATS);
 
         // When
-        int bonus = armorCalculator.getResearchArmorBonus(infantry, null);
+        int bonus = armorCalculator.getResearchArmorBonus(infantry, (java.util.Set<Integer>) null);
 
         // Then
         assertEquals(0, bonus, "Null research set should produce zero bonus");

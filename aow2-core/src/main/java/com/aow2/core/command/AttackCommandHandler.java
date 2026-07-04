@@ -30,6 +30,18 @@ public final class AttackCommandHandler {
      */
     public void handle(CommandType.Attack cmd, EntityManager entities,
                        CombatSystem combat) {
+        // FIX (ANALYSIS_V2 P2): Ownership check — only the owning player can command units to attack
+        for (int unitId : cmd.unitIds()) {
+            Unit unit = entities.getUnit(unitId);
+            if (unit != null && unit.isAlive()) {
+                int ownerId = com.aow2.core.economy.EconomySystem.playerId(unit.getFaction());
+                if (ownerId != cmd.playerId()) {
+                    LOG.warn("Player {} attempted to attack with unit {} owned by player {}",
+                        cmd.playerId(), unitId, ownerId);
+                    return;
+                }
+            }
+        }
         // Determine target reference: positive for units, negative for buildings
         int targetRef;
         Unit targetUnit = entities.getUnit(cmd.targetId());

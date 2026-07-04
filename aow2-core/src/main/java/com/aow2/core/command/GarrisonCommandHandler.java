@@ -52,6 +52,18 @@ public final class GarrisonCommandHandler {
      * @param entities  the entity manager
      */
     public void handleGarrison(CommandType.Garrison cmd, EntityManager entities) {
+        // FIX (ANALYSIS_V2 P2): Ownership check — only the owning player can garrison units
+        for (int unitId : cmd.unitIds()) {
+            Unit unit = entities.getUnit(unitId);
+            if (unit != null && unit.isAlive()) {
+                int ownerId = com.aow2.core.economy.EconomySystem.playerId(unit.getFaction());
+                if (ownerId != cmd.playerId()) {
+                    LOG.warn("Player {} attempted to garrison unit {} owned by player {}",
+                        cmd.playerId(), unitId, ownerId);
+                    return;
+                }
+            }
+        }
         Building building = entities.getBuilding(cmd.buildingId());
         if (building == null || !building.isAlive()) {
             LOG.warn("Garrison target building {} not found or destroyed", cmd.buildingId());
