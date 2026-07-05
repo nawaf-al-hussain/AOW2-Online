@@ -92,7 +92,7 @@ public class AOW2App extends GameApplication {
      * Enum representing which scene is currently active.
      */
     private enum ActiveScene {
-        MAIN_MENU, GAME, MAP_EDITOR, MULTIPLAYER_LOBBY, MOD_MANAGER, CAMPAIGN, SETTINGS, ASSET_TEST
+        MAIN_MENU, GAME, MAP_EDITOR, MULTIPLAYER_LOBBY, MOD_MANAGER, CAMPAIGN, SETTINGS, ASSET_TEST, REPLAY_VIEWER
     }
 
     @Override
@@ -201,7 +201,8 @@ public class AOW2App extends GameApplication {
             LOG.info("Multiplayer setup complete for session: {}", sessionUuid);
         }
 
-        FXGL.getGameScene().clearUINodes();
+        // FIX (ANALYSIS_V2 3.7): Removed redundant second clearUINodes() — already
+        // called at the top of this method. The third call was also redundant.
         FXGL.getGameScene().addUINode(gameScene.getRoot());
 
         gameScene.start();
@@ -436,7 +437,7 @@ public class AOW2App extends GameApplication {
             }
         });
         FXGL.getGameScene().addUINode(replayScene.getRoot());
-        activeScene = ActiveScene.MAIN_MENU;  // reuse enum value — no ReplayViewer enum constant
+        activeScene = ActiveScene.REPLAY_VIEWER;
         LOG.info("Replay viewer scene displayed");
     }
 
@@ -569,6 +570,30 @@ public class AOW2App extends GameApplication {
                             .sorted()
                             .forEach(p -> mapPaths.add("data/maps/" + p.getFileName().toString()));
                     }
+                }
+            }
+
+            // FIX (ANALYSIS_V2 3.6): Fallback — if classpath scanning fails (signed JAR,
+            // jrt: protocol, etc.), try known map filenames directly.
+            if (mapPaths.isEmpty()) {
+                String[] knownMaps = {
+                    "data/maps/test_map.json",
+                    "data/maps/ep1_mission1.json", "data/maps/ep1_mission2.json",
+                    "data/maps/ep1_mission3.json", "data/maps/ep1_mission4.json",
+                    "data/maps/ep1_mission5.json", "data/maps/ep1_mission6.json",
+                    "data/maps/ep1_mission7.json",
+                    "data/maps/ep2_mission1.json", "data/maps/ep2_mission2.json",
+                    "data/maps/ep2_mission3.json", "data/maps/ep2_mission4.json",
+                    "data/maps/ep2_mission5.json", "data/maps/ep2_mission6.json",
+                    "data/maps/ep2_mission7.json"
+                };
+                for (String mapPath : knownMaps) {
+                    if (getClass().getClassLoader().getResource(mapPath) != null) {
+                        mapPaths.add(mapPath);
+                    }
+                }
+                if (!mapPaths.isEmpty()) {
+                    LOG.info("Fallback map discovery found {} maps", mapPaths.size());
                 }
             }
         } catch (URISyntaxException | IOException e) {

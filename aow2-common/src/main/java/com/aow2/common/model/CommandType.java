@@ -48,6 +48,9 @@ public sealed interface CommandType permits
             if (tick < 0) {
                 throw new IllegalArgumentException("tick must not be negative, got: " + tick);
             }
+            if (playerId < 0 || playerId > 1) {
+                throw new IllegalArgumentException("playerId must be 0 or 1, got: " + playerId);
+            }
             if (unitIds == null || unitIds.length == 0) {
                 throw new IllegalArgumentException("unitIds must not be null or empty");
             }
@@ -88,6 +91,9 @@ public sealed interface CommandType permits
         public Attack {
             if (tick < 0) {
                 throw new IllegalArgumentException("tick must not be negative, got: " + tick);
+            }
+            if (playerId < 0 || playerId > 1) {
+                throw new IllegalArgumentException("playerId must be 0 or 1, got: " + playerId);
             }
             if (unitIds == null || unitIds.length == 0) {
                 throw new IllegalArgumentException("unitIds must not be null or empty");
@@ -132,6 +138,9 @@ public sealed interface CommandType permits
             if (tick < 0) {
                 throw new IllegalArgumentException("tick must not be negative, got: " + tick);
             }
+            if (playerId < 0 || playerId > 1) {
+                throw new IllegalArgumentException("playerId must be 0 or 1, got: " + playerId);
+            }
             if (unitIds == null || unitIds.length == 0) {
                 throw new IllegalArgumentException("unitIds must not be null or empty");
             }
@@ -173,6 +182,9 @@ public sealed interface CommandType permits
             if (tick < 0) {
                 throw new IllegalArgumentException("tick must not be negative, got: " + tick);
             }
+            if (playerId < 0 || playerId > 1) {
+                throw new IllegalArgumentException("playerId must be 0 or 1, got: " + playerId);
+            }
             if (buildingType == null) {
                 throw new IllegalArgumentException("buildingType must not be null");
             }
@@ -194,6 +206,9 @@ public sealed interface CommandType permits
         public Produce {
             if (tick < 0) {
                 throw new IllegalArgumentException("tick must not be negative, got: " + tick);
+            }
+            if (playerId < 0 || playerId > 1) {
+                throw new IllegalArgumentException("playerId must be 0 or 1, got: " + playerId);
             }
             if (producerId < 0) {
                 throw new IllegalArgumentException("producerId must not be negative, got: " + producerId);
@@ -217,6 +232,9 @@ public sealed interface CommandType permits
             if (tick < 0) {
                 throw new IllegalArgumentException("tick must not be negative, got: " + tick);
             }
+            if (playerId < 0 || playerId > 1) {
+                throw new IllegalArgumentException("playerId must be 0 or 1, got: " + playerId);
+            }
             if (techCentreId < 0) {
                 throw new IllegalArgumentException("techCentreId must not be negative, got: " + techCentreId);
             }
@@ -238,6 +256,9 @@ public sealed interface CommandType permits
         public Garrison {
             if (tick < 0) {
                 throw new IllegalArgumentException("tick must not be negative, got: " + tick);
+            }
+            if (playerId < 0 || playerId > 1) {
+                throw new IllegalArgumentException("playerId must be 0 or 1, got: " + playerId);
             }
             if (unitIds == null || unitIds.length == 0) {
                 throw new IllegalArgumentException("unitIds must not be null or empty");
@@ -279,6 +300,9 @@ public sealed interface CommandType permits
             if (tick < 0) {
                 throw new IllegalArgumentException("tick must not be negative, got: " + tick);
             }
+            if (playerId < 0 || playerId > 1) {
+                throw new IllegalArgumentException("playerId must be 0 or 1, got: " + playerId);
+            }
             if (buildingId < 0) {
                 throw new IllegalArgumentException("buildingId must not be negative, got: " + buildingId);
             }
@@ -296,6 +320,9 @@ public sealed interface CommandType permits
         public Cancel {
             if (tick < 0) {
                 throw new IllegalArgumentException("tick must not be negative, got: " + tick);
+            }
+            if (playerId < 0 || playerId > 1) {
+                throw new IllegalArgumentException("playerId must be 0 or 1, got: " + playerId);
             }
             if (entityId < 0) {
                 throw new IllegalArgumentException("entityId must not be negative, got: " + entityId);
@@ -317,6 +344,9 @@ public sealed interface CommandType permits
             if (tick < 0) {
                 throw new IllegalArgumentException("tick must not be negative, got: " + tick);
             }
+            if (playerId < 0 || playerId > 1) {
+                throw new IllegalArgumentException("playerId must be 0 or 1, got: " + playerId);
+            }
             if (unitId < 0) {
                 throw new IllegalArgumentException("unitId must not be negative, got: " + unitId);
             }
@@ -334,6 +364,9 @@ public sealed interface CommandType permits
         public Stop {
             if (tick < 0) {
                 throw new IllegalArgumentException("tick must not be negative, got: " + tick);
+            }
+            if (playerId < 0 || playerId > 1) {
+                throw new IllegalArgumentException("playerId must be 0 or 1, got: " + playerId);
             }
             if (unitIds == null || unitIds.length == 0) {
                 throw new IllegalArgumentException("unitIds must not be null or empty");
@@ -375,6 +408,9 @@ public sealed interface CommandType permits
             if (tick < 0) {
                 throw new IllegalArgumentException("tick must not be negative, got: " + tick);
             }
+            if (playerId < 0 || playerId > 1) {
+                throw new IllegalArgumentException("playerId must be 0 or 1, got: " + playerId);
+            }
             if (unitIds == null || unitIds.length == 0) {
                 throw new IllegalArgumentException("unitIds must not be null or empty");
             }
@@ -410,6 +446,9 @@ public sealed interface CommandType permits
         public Patrol {
             if (tick < 0) {
                 throw new IllegalArgumentException("tick must not be negative, got: " + tick);
+            }
+            if (playerId < 0 || playerId > 1) {
+                throw new IllegalArgumentException("playerId must be 0 or 1, got: " + playerId);
             }
             if (unitIds == null || unitIds.length == 0) {
                 throw new IllegalArgumentException("unitIds must not be null or empty");

@@ -75,12 +75,12 @@ export async function getReplays() {
   return res.json();
 }
 
-// Units API (FIX (M9 from CRITICAL_ANALYSIS_REPORT.md): added so UnitsTab doesn't
-// bypass the apiUrl helper with a direct `fetch('/api/units')`.)
+// FIX (ANALYSIS_V2 6.4): /api/units endpoint doesn't exist on the server.
+// The UnitsTab was fetching from a non-existent endpoint and always failing.
+// Return empty data until a proper units endpoint is added to the server.
 export async function getUnits() {
-  const res = await fetch(apiUrl("/api/units", 8080));
-  if (!res.ok) throw new Error("Failed to fetch units");
-  return res.json();
+  // No server endpoint exists for unit data yet — return empty array
+  return [];
 }
 
 // Chat API

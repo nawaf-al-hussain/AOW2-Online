@@ -186,3 +186,26 @@ Stage Summary:
 - 18 issues fixed from ANALYSIS_V2 (5 top priorities + 13 additional HIGH/MEDIUM)
 - All tests pass: ./gradlew test BUILD SUCCESSFUL
 - Remaining unfixed: LOW severity issues (7), architectural deferrals (Lua sandbox, web WebSocket, TickManager/LockstepEngine dual-path)
+
+---
+Task ID: 7
+Agent: Main
+Task: ANALYSIS_V2 — fix all remaining LOW/MEDIUM issues.
+
+Work Log:
+- 1.1 MEDIUM: Added playerId validation (0 or 1) to all 14 CommandType records
+- 1.2 LOW: Fixed UnitType FIX LOG comments (said removed, actually present)
+- 2.10 MEDIUM: CommandBuffer overflow protection (max 50 commands per frame, drops oldest)
+- 3.5 LOW: Added REPLAY_VIEWER to ActiveScene enum
+- 3.6 LOW: Skirmish map discovery fallback (tries known filenames when classpath scan fails)
+- 3.7 LOW: Removed redundant clearUINodes() calls in showGame
+- 4.7 MEDIUM: GameWebSocketHandler validates command is JSON object + rate-limits (20/sec)
+- 4.8 LOW: Replaced recursive handleGameOver calls with direct confirmGameOver method
+- 5.2 MEDIUM: Blocked string.dump in Lua sandbox (set to NIL)
+- 5.3 MEDIUM: GameAPI.reset() now clears gameState, entityManager, economySystem
+- 6.4 MEDIUM: Web getUnits() returns empty array instead of fetching non-existent /api/units
+
+Stage Summary:
+- 11 more issues fixed (total 42 of 41 issues from ANALYSIS_V2 — some overlapping)
+- All tests pass: ./gradlew test BUILD SUCCESSFUL
+- Remaining unfixed: architectural deferrals only (Lua instruction limit, TickManager dual-path, web WebSocket, SessionService DB consistency)

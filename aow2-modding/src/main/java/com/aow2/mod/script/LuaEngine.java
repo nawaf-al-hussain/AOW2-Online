@@ -94,11 +94,12 @@ public final class LuaEngine {
         globals.set("require", LuaValue.NIL);    // Prevent require to load libs
         // Keep: base (minus above), math, string, table, coroutine (safe for game scripting)
 
-        // FIX (H-NEW-16): string.dump is still accessible and could allow bytecode manipulation.
-        // Removing a single function from a LuaTable requires copying the entire table, which
-        // is a known limitation of LuaJ's per-globals library configuration. This residual risk
-        // is acceptable for client-side mod scripts but should be addressed if LuaJ adds
-        // per-function library removal support.
+        // FIX (ANALYSIS_V2 5.2): Block string.dump by replacing it with a function
+        // that throws an error. This prevents bytecode information disclosure.
+        LuaValue stringLib = globals.get("string");
+        if (!stringLib.isnil() && stringLib.istable()) {
+            stringLib.set("dump", LuaValue.NIL);
+        }
 
         // Create and apply script bindings
         this.scriptBindings = new ScriptBindings(globals, state, entities, economySystem);

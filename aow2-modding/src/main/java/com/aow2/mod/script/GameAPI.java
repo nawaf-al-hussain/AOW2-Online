@@ -433,6 +433,13 @@ public final class GameAPI {
      * Called when a mission ends or the LuaEngine is reset.
      */
     public static void reset() {
+        // FIX (ANALYSIS_V2 5.3): Clear ALL static state to prevent leaks across
+        // game sessions. Previously gameState, entityManager, economySystem, and
+        // map dimensions were not cleared — a new game would operate on the previous
+        // game's state if the caller forgot to re-initialize.
+        gameState = null;
+        entityManager = null;
+        economySystem = null;
         objectives.clear();
         timers.clear();
         eventHooks.clear();

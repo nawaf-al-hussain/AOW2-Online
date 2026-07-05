@@ -38,6 +38,10 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
      * Two-phase commit: first player claims, second player confirms. */
     private final Map<String, GameOverClaim> pendingGameOverClaims = new ConcurrentHashMap<>();
 
+    /** FIX (ANALYSIS_V2 4.7): Rate-limiting state for command relay. */
+    private final Map<String, Long> commandRateLimit = new ConcurrentHashMap<>();
+    private final Map<String, Integer> commandRateCount = new ConcurrentHashMap<>();
+
     private final SessionService sessionService;
     private final RankingService rankingService;
     private final JwtUtil jwtUtil;
@@ -204,12 +208,12 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             return;
         }
 
-        // FIX (M8 from CRITICAL_ANALYSIS_REPORT.md): Sanity-check the command payload
-        // size before relaying. Reject oversized payloads to prevent memory-exhaustion
-        // attacks against the opponent's deserializer.
+        // FIX (ANALYSIS_V2 4.7): Validate command payload structure before relaying.
+        // The command must be a JSON object with at least a "type" field. Reject
+        // malformed payloads to prevent the opponent from wasting CPU on deserialization.
         JsonNode commandNode = payload.get("command");
-        if (commandNode == null) {
-            sendError(session, "Missing 'command' field");
+        if (commandNode == null || !commandNode.isObject()) {
+            sendError(session, "Missing or invalid 'command' field — must be a JSON object");
             return;
         }
         String commandJson = commandNode.toString();
@@ -218,6 +222,22 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                 playerId, commandJson.length(), MAX_COMMAND_PAYLOAD_BYTES);
             sendError(session, "Command payload too large");
             return;
+        }
+        // FIX (ANALYSIS_V2 4.7): Rate-limit commands — max 20 per second per player
+        long now = System.currentTimeMillis();
+        String rateKey = "cmd_rate:" + playerId;
+        Long lastSecondStart = commandRateLimit.get(rateKey);
+        Integer count = commandRateCount.get(rateKey);
+        if (lastSecondStart == null || now - lastSecondStart > 1000) {
+            commandRateLimit.put(rateKey, now);
+            commandRateCount.put(rateKey, 1);
+        } else {
+            count = (count == null ? 0 : count) + 1;
+            commandRateCount.put(rateKey, count);
+            if (count > 20) {
+                log.warn("Rate-limiting commands from player {} ({} in last second)", playerId, count);
+                return;  // silently drop — don't send error to avoid amplification
+            }
         }
 
         // Relay the command to the opponent with the sender's player ID
@@ -350,43 +370,28 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             return;
         }
 
+        // Not a confirmation — fall through to Phase 1 logic below
+
         // Phase 1: Initial game-over claim
         // Check if there's already a pending claim from the opponent
         GameOverClaim existingClaim = pendingGameOverClaims.get(sessionUuid);
         if (existingClaim != null && !existingClaim.claimedBy().equals(playerId)) {
-            // Opponent already claimed — treat this as confirmation
-            handleGameOver(session, objectMapper.readTree(
-                objectMapper.writeValueAsString(Map.of(
-                    "sessionUuid", sessionUuid,
-                    "winnerId", existingClaim.winnerId(),
-                    "durationSeconds", existingClaim.durationSeconds(),
-                    "confirm", true
-                ))));
+            // FIX (ANALYSIS_V2 4.8): Replaced recursive handleGameOver call with
+            // direct confirmation to avoid re-serialization round-trip.
+            confirmGameOver(session, sessionUuid, existingClaim.winnerId(),
+                existingClaim.durationSeconds(), playerId);
             return;
         }
 
         // Store the claim and request opponent confirmation.
-        // FIX (game-over race from AUDIT_ROUND_3.md): Use putIfAbsent instead of put
-        // to prevent a race condition where both players send game-over claims
-        // simultaneously (before either sees the other's claim). With put, the second
-        // claim would silently overwrite the first, losing the first claimant's
-        // proposed winnerId. With putIfAbsent, the first claim wins and the second
-        // claimant receives a "claim already exists" error, prompting them to confirm
-        // the existing claim instead.
         GameOverClaim newClaim = new GameOverClaim(playerId, winnerId, durationSeconds);
         GameOverClaim existing = pendingGameOverClaims.putIfAbsent(sessionUuid, newClaim);
         if (existing != null) {
-            // Another claim was already stored (race condition lost). Treat this as
-            // a confirmation of the existing claim instead of overwriting it.
+            // FIX (ANALYSIS_V2 4.8): Direct confirmation instead of recursive call.
             log.info("Game-over claim race: player {} lost to existing claim by {} for session {}",
                     playerId, existing.claimedBy(), sessionUuid);
-            handleGameOver(session, objectMapper.readTree(
-                objectMapper.writeValueAsString(Map.of(
-                    "sessionUuid", sessionUuid,
-                    "winnerId", existing.winnerId(),
-                    "durationSeconds", existing.durationSeconds(),
-                    "confirm", true
-                ))));
+            confirmGameOver(session, sessionUuid, existing.winnerId(),
+                existing.durationSeconds(), playerId);
             return;
         }
         log.info("Game-over claim stored for session {} by player {} (winner={}), awaiting confirmation",
@@ -404,6 +409,38 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             ));
         }
         sendMessage(session, Map.of("type", "game_over_pending", "sessionUuid", sessionUuid));
+    }
+
+    /**
+     * FIX (ANALYSIS_V2 4.8): Direct confirmation method — replaces recursive
+     * handleGameOver calls that re-serialized synthetic JSON payloads.
+     */
+    private void confirmGameOver(WebSocketSession session, String sessionUuid,
+                                  Long winnerId, int durationSeconds, Long confirmerId) throws IOException {
+        GameOverClaim claim = pendingGameOverClaims.computeIfPresent(sessionUuid, (k, v) -> null);
+        if (claim == null) {
+            log.warn("confirmGameOver: claim already confirmed for session {}", sessionUuid);
+            return;
+        }
+        GameSession gs = sessionService.getSessionByUuid(sessionUuid).orElse(null);
+        if (gs == null) {
+            sendError(session, "Session not found: " + sessionUuid);
+            return;
+        }
+        finalizeGameResult(gs, winnerId, durationSeconds);
+        String opponentWs = sessionService.getOpponentWsSession(confirmerId);
+        if (opponentWs != null) {
+            sendToSessionId(opponentWs, Map.of(
+                "type", "game_over_confirmed",
+                "winnerId", winnerId,
+                "sessionUuid", sessionUuid
+            ));
+        }
+        sendMessage(session, Map.of(
+            "type", "game_over_confirmed",
+            "winnerId", winnerId,
+            "sessionUuid", sessionUuid
+        ));
     }
 
     /**

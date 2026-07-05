@@ -3,6 +3,8 @@ package com.aow2.core.network;
 import com.aow2.common.model.CommandType;
 import com.aow2.core.engine.GameState;
 import com.aow2.core.world.EntityManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -20,6 +22,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * REF: protocol_specification.md - Turn-based game advancement (y.Q[0])
  */
 public class CommandBuffer {
+
+    private static final Logger LOG = LoggerFactory.getLogger(CommandBuffer.class);
 
     /** Number of frames to buffer before processing (input delay) */
     private final int inputDelay;
@@ -80,7 +84,16 @@ public class CommandBuffer {
         if (command == null) {
             throw new IllegalArgumentException("Command must not be null");
         }
+        // FIX (ANALYSIS_V2 2.10): Overflow protection — if the local player submits
+        // commands faster than the simulation can process them, the ring buffer wraps
+        // and overwrites unprocessed frames. Drop the oldest unprocessed command
+        // instead of corrupting the buffer.
         int targetFrame = (writeIndex + inputDelay) % bufferSize;
+        int maxCommandsPerFrame = 50;  // reasonable upper bound
+        if (frames[targetFrame].size() >= maxCommandsPerFrame) {
+            LOG.warn("Command buffer overflow at frame {} — dropping oldest command", targetFrame);
+            frames[targetFrame].remove(0);
+        }
         frames[targetFrame].add(command);
         writeIndex = (writeIndex + 1) % bufferSize;
     }

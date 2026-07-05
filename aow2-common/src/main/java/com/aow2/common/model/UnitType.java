@@ -9,8 +9,9 @@ package com.aow2.common.model;
  * Coyote=15, Zeus=16, Hammer=17, Rhino=18, Fortress=19, Torrent=20, Armadillo=21, Porcupine=22
  *
  * FIX LOG:
- * - Removed CONFED_LIGHT_ASSAULT and CONFED_HEAVY_ASSAULT (not in the original 7-unit-per-faction list)
- * - Changed CONFED_FLAME_ASSAULT category from INFANTRY to VEHICLE
+ * - CONFED_LIGHT_ASSAULT and CONFED_HEAVY_ASSAULT are PRESENT (not removed — they
+ *   are needed for production and research compatibility). 19 unit types total.
+ * - Changed CONFED_FLAME_ASSAULT category from INFANTRY to SPECIAL_MACHINERY
  *   (REF: game_data.json categorizes as "machinery", unit_stats.md as "Special machinery")
  * - Added isSiegeCapable() method for Hammer, Rhino, Fortress, Torrent, Sniper
  */
