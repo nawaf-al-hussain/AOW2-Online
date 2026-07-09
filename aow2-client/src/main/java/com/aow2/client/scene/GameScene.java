@@ -1042,6 +1042,13 @@ public class GameScene {
         // Update power grid after entity changes
         powerSystem.updatePowerGrid(entityManager);
 
+        // SOUND INTEGRATION: Process game events for audio playback
+        if (audioManager != null) {
+            for (var event : gameState.drainEvents()) {
+                processAudioEvent(event);
+            }
+        }
+
         // Sync credits from EconomySystem for HUD display
         this.credits = economy.getCredits(LOCAL_PLAYER_ID);
 
@@ -1058,6 +1065,64 @@ public class GameScene {
             if (se.isScriptActive()) {
                 se.processTick(gameState, entityManager);
             }
+        }
+    }
+
+    /**
+     * SOUND INTEGRATION: Processes game events and plays the appropriate SFX.
+     * Only plays sounds for events visible to the local player (fog of war check).
+     */
+    private void processAudioEvent(com.aow2.common.event.GameEvent event) {
+        if (audioManager == null) return;
+
+        switch (event) {
+            case com.aow2.common.event.UnitKilledEvent e -> {
+                // Play scream for infantry, explosion for vehicles
+                var killer = entityManager.getUnit(e.killerId());
+                var victim = entityManager.getUnit(e.unitId());
+                // Only play if the victim was visible to the local player
+                if (victim != null) {
+                    if (victim.isInfantry()) {
+                        audioManager.playScream();
+                    } else {
+                        audioManager.playExplosionHeavy();
+                    }
+                }
+            }
+            case com.aow2.common.event.BuildingDestroyedEvent e -> {
+                audioManager.playExplosionBuilding();
+            }
+            case com.aow2.common.event.BuildingCompletedEvent e -> {
+                // Only play for the local player's buildings
+                var building = entityManager.getBuilding(e.buildingId());
+                if (building != null && building.getFaction() == playerFaction) {
+                    audioManager.playBuildingReady();
+                }
+            }
+            case com.aow2.common.event.UnitProducedEvent e -> {
+                // Only play for the local player's units
+                if (e.playerId() == LOCAL_PLAYER_ID) {
+                    audioManager.playAffirmative();
+                }
+            }
+            case com.aow2.common.event.ResearchCompletedEvent e -> {
+                if (e.playerId() == LOCAL_PLAYER_ID) {
+                    audioManager.playResearchComplete();
+                }
+            }
+            case com.aow2.common.event.DamageAppliedEvent e -> {
+                // Play weapon sound for the attacker (only for visible combat)
+                var attacker = entityManager.getUnit(e.attackerId());
+                if (attacker != null && attacker.getFaction() == playerFaction) {
+                    audioManager.playWeaponSound(attacker.getStats().weaponType());
+                }
+            }
+            case com.aow2.common.event.ResourceChangedEvent e -> {
+                if (e.playerId() == LOCAL_PLAYER_ID && e.newCredits() > e.oldCredits()) {
+                    audioManager.playMoney();
+                }
+            }
+            default -> { /* unhandled event type */ }
         }
     }
 
@@ -1080,7 +1145,7 @@ public class GameScene {
                         building.getId(), building.getBuildingType().displayName(), building.getPosition());
                     // FIX (H-NEW-14): Play build completion SFX
                     if (audioManager != null) {
-                        audioManager.playSFX("build_complete");
+                        audioManager.playBuildingReady();
                     }
                     // Update power grid when a building completes construction
                     if (building.getBuildingType().producesPower()) {
@@ -1099,17 +1164,28 @@ public class GameScene {
             gameLoop.start();
         }
 
-        // FIX (H-NEW-14): Start background music and preload common SFX
+        // SOUND INTEGRATION: Start background music and preload common SFX
         if (audioManager != null) {
-            audioManager.getMusicPlayer().addTrack("ambient_war");
-            audioManager.getMusicPlayer().play();
-            audioManager.preloadSFX("ui_click");
-            audioManager.preloadSFX("explosion");
-            audioManager.preloadSFX("gunshot");
-            audioManager.preloadSFX("build_complete");
-            audioManager.preloadSFX("unit_produced");
-            audioManager.preloadSFX("research_done");
-            audioManager.preloadSFX("error");
+            // Play the original iOS background music
+            audioManager.playMusic("music");
+            // Preload commonly used SFX (by exact iOS filename)
+            audioManager.preloadSFX("select_1");
+            audioManager.preloadSFX("select_2");
+            audioManager.preloadSFX("building_ready_1");
+            audioManager.preloadSFX("build_1");
+            audioManager.preloadSFX("research_complete_1");
+            audioManager.preloadSFX("money_1");
+            audioManager.preloadSFX("click_1");
+            audioManager.preloadSFX("menu_open_1");
+            audioManager.preloadSFX("menu_close_1");
+            audioManager.preloadSFX("explode_heavy_1");
+            audioManager.preloadSFX("explode_light_1");
+            audioManager.preloadSFX("scream_1");
+            audioManager.preloadSFX("machine_light_1");
+            audioManager.preloadSFX("sniper_1");
+            audioManager.preloadSFX("tank_heavy_1");
+            audioManager.preloadSFX("rocket_light_1");
+            audioManager.preloadSFX("flamethrower_1");
         }
 
         if (renderTimer != null) {
