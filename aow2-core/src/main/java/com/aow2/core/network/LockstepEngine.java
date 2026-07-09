@@ -43,7 +43,7 @@ public final class LockstepEngine {
      *  REF: protocol_specification.md - Sync interval: default 15s, range 2-60s
      *  FIX (M8): Changed from 30 to 150 ticks (15 seconds at 10 TPS).
      *  Previously 30 ticks = 3 seconds, which was 5x too frequent. */
-    private static final int DEFAULT_SYNC_INTERVAL = 150;
+    private static final int DEFAULT_SYNC_INTERVAL = 10;  // OPENRA #4: was 150 (15s), now 10 (1s)
 
     /** Number of consecutive frames without an opponent command before pausing.
      * 140 ticks ≈ 14 seconds at 10 TPS. */
@@ -320,23 +320,22 @@ public final class LockstepEngine {
             return List.of();
         }
 
-        // Drain commands for the current frame
-        List<CommandType> commands = commandBuffer.drainFrame();
-
-        // Track consecutive frames without opponent activity (command OR heartbeat).
-        // FIX (H2 from CRITICAL_ANALYSIS_REPORT.md): Use lastOpponentActivityTick
-        // (updated by both commands and heartbeats) instead of lastOpponentCommandTick,
-        // so an idle but still-connected opponent does not falsely trigger a pause.
+        // OPENRA #17: Check for disconnect BEFORE draining commands.
+        // Previously drainFrame() ran first, consuming commands from the buffer.
+        // If the disconnect check then triggered, those commands were lost.
         if (lockstepFrame - lastOpponentActivityTick > DISCONNECT_TIMEOUT_TICKS) {
             paused = true;
             pausedAtFrame = lockstepFrame;
-            log.warn("Opponent disconnected: no activity (command or heartbeat) received for {} frames (paused at frame {})",
+            log.warn("Opponent disconnected: no activity for {} frames (paused at frame {})",
                     DISCONNECT_TIMEOUT_TICKS, pausedAtFrame);
             if (pauseCallback != null) {
                 pauseCallback.run();
             }
             return List.of();
         }
+
+        // Drain commands for the current frame (safe — disconnect check passed)
+        List<CommandType> commands = commandBuffer.drainFrame();
 
         // Apply commands to game state
         for (CommandType command : commands) {

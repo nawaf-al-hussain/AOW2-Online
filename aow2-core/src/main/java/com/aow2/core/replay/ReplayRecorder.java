@@ -70,6 +70,10 @@ public final class ReplayRecorder {
      * @param mapName        name of the map
      * @param playerFactions array of player factions
      */
+    /** OPENRA #18: Pre-start buffer — commands recorded before startRecording
+     * are buffered here and flushed when recording starts. */
+    private final java.util.List<ReplayEntry> preStartBuffer = new java.util.ArrayList<>();
+
     public void startRecording(String mapName, Faction[] playerFactions) {
         if (recording) {
             LOG.warn("Already recording, stopping previous recording first");
@@ -81,21 +85,31 @@ public final class ReplayRecorder {
         this.currentCommands = new ArrayList<>();
         this.recording = true;
 
+        // OPENRA #18: Flush any commands buffered before recording started
+        if (!preStartBuffer.isEmpty()) {
+            LOG.info("Flushing {} pre-start buffered commands into replay", preStartBuffer.size());
+            currentCommands.addAll(preStartBuffer);
+            preStartBuffer.clear();
+        }
+
         LOG.info("Started recording replay: map={}, players={}", mapName, playerFactions.length);
     }
 
     /**
      * Records a command during the current game session.
-     * The command is serialized using CommandSerializer and stored as a ReplayEntry.
+     * If recording hasn't started yet, the command is buffered and flushed on start.
      *
      * @param command the command to record
      */
     public void recordCommand(CommandType command) {
+        ReplayEntry entry = serializeCommand(command);
+
         if (!recording) {
+            // OPENRA #18: Buffer commands that arrive before recording starts
+            preStartBuffer.add(entry);
             return;
         }
 
-        ReplayEntry entry = serializeCommand(command);
         currentCommands.add(entry);
     }
 
@@ -155,6 +169,29 @@ public final class ReplayRecorder {
         if (replay == null) {
             LOG.warn("No replay to save");
             return false;
+        }
+
+        // OPENRA #19: Filename collision retry — if the file already exists AND
+        // is non-empty (a real replay, not a temp file placeholder), append -1, -2, etc.
+        try {
+            if (Files.exists(filePath) && Files.size(filePath) > 0) {
+            String fileName = filePath.getFileName().toString();
+            String baseName = fileName.replaceAll("\\.replay$", "");
+            String extension = fileName.endsWith(".replay") ? ".replay" : "";
+            Path parent = filePath.getParent();
+            int counter = 1;
+            Path newPath;
+            do {
+                newPath = parent != null
+                    ? parent.resolve(baseName + "-" + counter + extension)
+                    : Path.of(baseName + "-" + counter + extension);
+                counter++;
+            } while (Files.exists(newPath) && counter < 100);
+            LOG.info("Replay file collision: {} already exists, saving as {}", filePath, newPath);
+            filePath = newPath;
+            }
+        } catch (java.io.IOException sizeEx) {
+            // Can't check size — proceed with the original path (overwrite)
         }
 
         try (OutputStream fos = Files.newOutputStream(filePath);

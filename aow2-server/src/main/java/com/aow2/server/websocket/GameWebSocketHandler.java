@@ -76,6 +76,15 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         }
 
         String type = payload.has("type") ? payload.get("type").asText() : "";
+
+        // OPENRA #16: Gate message handling on session state — commands, sync_hash,
+        // game_over, and heartbeat are only valid after auth and during an ACTIVE session.
+        Long playerId = sessionService.getPlayerForWsSession(session.getId());
+        if (playerId == null && !type.equals("auth") && !type.equals("ping")) {
+            sendError(session, "Not authenticated — send auth message first");
+            return;
+        }
+
         switch (type) {
             case "auth" -> handleAuth(session, payload);
             case "command" -> handleCommand(session, payload);
@@ -486,6 +495,16 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             }
         } catch (IOException e) {
             log.warn("Failed to send message to session {}: {}", sessionId, e.getMessage());
+            // OPENRA #15: Drop the client on send failure — prevents zombie sessions
+            WebSocketSession ws = sessions.remove(sessionId);
+            if (ws != null && ws.isOpen()) {
+                try {
+                    ws.close(org.springframework.web.socket.CloseStatus.SERVER_ERROR);
+                } catch (IOException closeEx) {
+                    log.debug("Error closing zombie session {}: {}", sessionId, closeEx.getMessage());
+                }
+            }
+            log.info("Dropped zombie session {} after send failure", sessionId);
         }
     }
 

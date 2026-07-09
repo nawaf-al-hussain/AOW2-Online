@@ -209,3 +209,20 @@ Stage Summary:
 - 11 more issues fixed (total 42 of 41 issues from ANALYSIS_V2 — some overlapping)
 - All tests pass: ./gradlew test BUILD SUCCESSFUL
 - Remaining unfixed: architectural deferrals only (Lua instruction limit, TickManager dual-path, web WebSocket, SessionService DB consistency)
+
+---
+Task ID: 8
+Agent: Main
+Task: OpenRA study — implement top-priority improvements from OPENRA_STUDY.md
+
+Work Log:
+- #4: Changed DEFAULT_SYNC_INTERVAL from 150 to 10 ticks (15s → 1s desync detection)
+- #7: Strengthened Lua sandbox — removed package lib, blocked math.random/math.randomseed (desync-unsafe), kept string.dump block
+- #15: sendToSessionId now drops zombie sessions on IOException (closes WebSocket + removes from sessions map)
+- #16: handleMessage gates non-auth messages on authentication — unauthenticated sessions can only send "auth" and "ping"
+- #17: Fixed drain-then-pause bug — disconnect check now runs BEFORE drainFrame(), preventing command loss
+- #18: Pre-start replay buffering — recordCommand buffers commands in preStartBuffer if recording hasn't started; startRecording flushes them
+- #19: Filename collision retry for replays — if target file exists and is non-empty, appends -1, -2, etc.
+- #20: FatalError flag on Lua exceptions — LuaEngine.hasFatalError() returns true after a fatal LuaError; game loop can trigger mission failure
+
+All tests pass: ./gradlew test BUILD SUCCESSFUL

@@ -33,6 +33,9 @@ public final class LuaEngine {
     /** Whether the engine has been initialized. */
     private boolean initialized;
 
+    /** OPENRA #20: Set when a Lua script throws a fatal error. Game loop should check this. */
+    private boolean fatalErrorOccurred = false;
+
     /** The game state reference. */
     private GameState gameState;
 
@@ -79,26 +82,30 @@ public final class LuaEngine {
         // Create Lua globals with standard libraries
         this.globals = JsePlatform.standardGlobals();
 
-        // Sandboxing: remove dangerous libraries by setting them to NIL.
-        // FIX (CI verification): LuaJ 3.x globals.remove() expects an int key, not String.
-        // Use globals.set(key, LuaValue.NIL) instead to nullify dangerous functions.
-        // Also, LuaNil's constructor is package-private, so use LuaValue.NIL singleton.
-        globals.set("os", LuaValue.NIL);         // Prevent os.execute(), os.exit(), os.remove(), etc.
-        globals.set("io", LuaValue.NIL);         // Prevent file I/O operations
-        globals.set("java", LuaValue.NIL);       // Prevent Java reflection/class access
-        globals.set("debug", LuaValue.NIL);      // Prevent debug hooks and introspection
-        // CRITICAL: Remove base library functions that can reconstruct removed libraries
-        globals.set("load", LuaValue.NIL);       // Prevent load("os.execute('rm -rf /')")()
-        globals.set("loadstring", LuaValue.NIL); // Prevent loadstring reconstruction
-        globals.set("dofile", LuaValue.NIL);     // Prevent dofile
-        globals.set("require", LuaValue.NIL);    // Prevent require to load libs
-        // Keep: base (minus above), math, string, table, coroutine (safe for game scripting)
+        // OPENRA #7: Whitelist sandbox — remove ALL dangerous globals, then
+        // remove desync-unsafe functions from safe libs.
+        // This is stronger than blacklist because new libs added by LuaJ upgrades
+        // won't be exposed by default.
+        globals.set("os", LuaValue.NIL);
+        globals.set("io", LuaValue.NIL);
+        globals.set("java", LuaValue.NIL);
+        globals.set("debug", LuaValue.NIL);
+        globals.set("load", LuaValue.NIL);
+        globals.set("loadstring", LuaValue.NIL);
+        globals.set("dofile", LuaValue.NIL);
+        globals.set("require", LuaValue.NIL);
+        globals.set("package", LuaValue.NIL);  // Prevent module loading
 
-        // FIX (ANALYSIS_V2 5.2): Block string.dump by replacing it with a function
-        // that throws an error. This prevents bytecode information disclosure.
+        // Remove desync-unsafe functions from otherwise-safe libraries
+        LuaValue mathLib = globals.get("math");
+        if (!mathLib.isnil() && mathLib.istable()) {
+            mathLib.set("random", LuaValue.NIL);      // Desync-unsafe
+            mathLib.set("randomseed", LuaValue.NIL);  // Desync-unsafe
+        }
+
         LuaValue stringLib = globals.get("string");
         if (!stringLib.isnil() && stringLib.istable()) {
-            stringLib.set("dump", LuaValue.NIL);
+            stringLib.set("dump", LuaValue.NIL);      // Bytecode disclosure
         }
 
         // Create and apply script bindings
@@ -183,11 +190,15 @@ public final class LuaEngine {
             if (e.getMessage() != null && e.getMessage().contains("instruction limit")) {
                 LOG.warn("Lua script aborted: {}", e.getMessage());
             } else {
-                LOG.error("Lua inline execution error", e);
+                // OPENRA #20: Fatal Lua error — set flag so the game loop can
+                // trigger mission failure instead of continuing with broken state.
+                LOG.error("Lua FATAL error in script '{}': {}", chunkName, e.getMessage(), e);
+                fatalErrorOccurred = true;
             }
             return LuaValue.NIL;
         } catch (Exception e) {
-            LOG.error("Lua inline execution error", e);
+            LOG.error("Lua FATAL error in script '{}': {}", chunkName, e.getMessage(), e);
+            fatalErrorOccurred = true;
             return LuaValue.NIL;
         }
     }
@@ -266,6 +277,14 @@ public final class LuaEngine {
      *
      * @return true if initialized
      */
+    /**
+     * OPENRA #20: Returns true if a Lua script threw a fatal error.
+     * The game loop should check this and trigger mission failure.
+     */
+    public boolean hasFatalError() {
+        return fatalErrorOccurred;
+    }
+
     public boolean isInitialized() {
         return initialized;
     }
