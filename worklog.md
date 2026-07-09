@@ -226,3 +226,15 @@ Work Log:
 - #20: FatalError flag on Lua exceptions — LuaEngine.hasFatalError() returns true after a fatal LuaError; game loop can trigger mission failure
 
 All tests pass: ./gradlew test BUILD SUCCESSFUL
+
+---
+Task ID: 9
+Agent: Main
+Task: OpenRA study — implement remaining medium/large improvements.
+
+Work Log:
+- #1: Per-frame packet pacing — CommandBuffer now tracks localCommandPresent[] alongside opponentCommandPresent[]. isFrameReady() checks both. Added submitNoOp() for pacing. LockstepEngine.processFrame calls submitNoOp() after each frame. Updated test to match new model.
+- #12: Expanded ReplayFile metadata — added gameVersion, playerNames, winnerPlayerId, durationMillis fields. Bumped FORMAT_VERSION to 3. ReplayRecorder writes new metadata at end. ReplayPlayer reads v3+ or defaults for v1/v2.
+- #14: Two-track immediate commands — LockstepEngine now has submitImmediate() that bypasses the frame buffer. Immediate commands are drained at the start of processFrame before regular frame commands.
+
+All tests pass: ./gradlew test BUILD SUCCESSFUL (750 tests)

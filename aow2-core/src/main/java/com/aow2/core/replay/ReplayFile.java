@@ -34,7 +34,12 @@ public record ReplayFile(
     long totalTicks,
     List<ReplayEntry> commands,
     long recordedAt,
-    int formatVersion
+    int formatVersion,
+    // OPENRA #12: Expanded metadata for self-describing replays
+    String gameVersion,      // e.g. "0.2.0-ALPHA" — identifies the build that recorded this
+    String[] playerNames,    // display names of the players (null for campaign)
+    int winnerPlayerId,      // -1 = unknown/incomplete, 0 = player 0, 1 = player 1
+    long durationMillis      // game duration in milliseconds (0 if unknown)
 ) {
     /** Current replay format version.
      *  <p>
@@ -47,7 +52,7 @@ public record ReplayFile(
      *  </ul>
      *  Writers always emit the latest version; readers accept 1 and 2.
      */
-    public static final int FORMAT_VERSION = 2;
+    public static final int FORMAT_VERSION = 3;  // OPENRA #12: bumped for expanded metadata
 
     /** Magic bytes identifying an AOW2 replay file. */
     public static final String MAGIC = "AOW2";
@@ -87,7 +92,11 @@ public record ReplayFile(
             0,
             List.of(),
             System.currentTimeMillis(),
-            FORMAT_VERSION
+            FORMAT_VERSION,
+            "0.2.0-ALPHA",   // OPENRA #12: gameVersion
+            null,             // playerNames (set later)
+            -1,               // winnerPlayerId (unknown at creation)
+            0                 // durationMillis (0 = unknown)
         );
     }
 

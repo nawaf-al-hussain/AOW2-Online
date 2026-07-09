@@ -71,16 +71,28 @@ class CommandBufferTest {
     }
 
     @Test
-    @DisplayName("Frame readiness requires both players")
+    @DisplayName("Frame readiness requires both players (per-frame pacing model)")
     void frameReadiness() {
-        var cmd0 = new CommandType.Move(0, 0, new int[]{1}, new GridPosition(5, 5));
-        var cmd1 = new CommandType.Move(0, 1, new int[]{2}, new GridPosition(3, 3));
+        // OPENRA #1: Per-frame pacing — both local AND opponent must have submitted
+        // for the SAME frame. With inputDelay=2, submitCommand writes to frame
+        // (writeIndex + 2) % bufferSize = frame 2. submitOpponentCommand for tick 2
+        // also writes to frame 2. After draining frames 0 and 1 (empty), frame 2
+        // is at readIndex and isFrameReady should be true.
 
-        buffer.submitOpponentCommand(cmd0, 0);
-        assertFalse(buffer.isFrameReady());
+        // Submit local pacing for frame 2
+        buffer.submitNoOp();  // writeIndex=0 -> targetFrame = (0+2)%bufSize = 2
+        // Submit opponent command for tick 2
+        var cmd = new CommandType.Move(2, 1, new int[]{1}, new GridPosition(5, 5));
+        buffer.submitOpponentCommand(cmd, 2);  // frameOffset = 2-0 = 2, targetFrame = (0+2)%bufSize = 2
 
-        buffer.submitOpponentCommand(cmd1, 0);
-        assertTrue(buffer.isFrameReady());
+        // Drain frames 0 and 1 (not ready — no submissions)
+        assertFalse(buffer.isFrameReady(), "Frame 0 not ready");
+        buffer.drainFrame();  // advance to frame 1
+        assertFalse(buffer.isFrameReady(), "Frame 1 not ready");
+        buffer.drainFrame();  // advance to frame 2
+
+        // Frame 2 should be ready — both local and opponent submitted
+        assertTrue(buffer.isFrameReady(), "Frame 2 ready: both submitted");
     }
 
     @Test

@@ -138,7 +138,11 @@ public final class ReplayRecorder {
             totalTicks,
             List.copyOf(currentCommands),
             System.currentTimeMillis(),
-            ReplayFile.FORMAT_VERSION
+            ReplayFile.FORMAT_VERSION,
+            "0.2.0-ALPHA",   // gameVersion
+            null,             // playerNames
+            -1,               // winnerPlayerId
+            0                 // durationMillis
         );
 
         LOG.info("Stopped recording: {} commands, {} ticks", currentCommands.size(), totalTicks);
@@ -230,6 +234,32 @@ public final class ReplayRecorder {
                 dos.writeByte(entry.playerId());
                 dos.writeShort(entry.payload().length);
                 dos.write(entry.payload());
+            }
+
+            // OPENRA #12: Write expanded metadata (v3+)
+            if (replay.formatVersion() >= 3) {
+                // gameVersion
+                byte[] gvBytes = (replay.gameVersion() != null ? replay.gameVersion() : "unknown")
+                    .getBytes(StandardCharsets.UTF_8);
+                dos.writeInt(gvBytes.length);
+                dos.write(gvBytes);
+
+                // playerNames
+                String[] names = replay.playerNames();
+                dos.writeInt(names != null ? names.length : 0);
+                if (names != null) {
+                    for (String name : names) {
+                        byte[] pnBytes = (name != null ? name : "").getBytes(StandardCharsets.UTF_8);
+                        dos.writeInt(pnBytes.length);
+                        dos.write(pnBytes);
+                    }
+                }
+
+                // winnerPlayerId
+                dos.writeInt(replay.winnerPlayerId());
+
+                // durationMillis
+                dos.writeLong(replay.durationMillis());
             }
 
             LOG.info("Replay saved to {} ({} bytes, {} commands)",

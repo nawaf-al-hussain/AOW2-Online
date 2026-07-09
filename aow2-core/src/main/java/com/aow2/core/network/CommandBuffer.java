@@ -39,6 +39,11 @@ public class CommandBuffer {
      * Used by the lockstep engine to detect disconnects. */
     private final boolean[] opponentCommandPresent;
 
+    /** OPENRA #1: Per-frame pacing — tracks whether the local player has submitted
+     * any command (or NO_OP) for each frame. A frame is ready when both
+     * localCommandPresent AND opponentCommandPresent are true. */
+    private final boolean[] localCommandPresent;
+
     /** The current write frame index */
     private int writeIndex;
 
@@ -66,6 +71,7 @@ public class CommandBuffer {
         this.bufferSize = bufferSize;
         this.frames = (CopyOnWriteArrayList<CommandType>[]) new CopyOnWriteArrayList[bufferSize];
         this.opponentCommandPresent = new boolean[bufferSize];
+        this.localCommandPresent = new boolean[bufferSize];
         for (int i = 0; i < bufferSize; i++) {
             frames[i] = new CopyOnWriteArrayList<>();
         }
@@ -84,17 +90,26 @@ public class CommandBuffer {
         if (command == null) {
             throw new IllegalArgumentException("Command must not be null");
         }
-        // FIX (ANALYSIS_V2 2.10): Overflow protection — if the local player submits
-        // commands faster than the simulation can process them, the ring buffer wraps
-        // and overwrites unprocessed frames. Drop the oldest unprocessed command
-        // instead of corrupting the buffer.
         int targetFrame = (writeIndex + inputDelay) % bufferSize;
-        int maxCommandsPerFrame = 50;  // reasonable upper bound
+        int maxCommandsPerFrame = 50;
         if (frames[targetFrame].size() >= maxCommandsPerFrame) {
             LOG.warn("Command buffer overflow at frame {} — dropping oldest command", targetFrame);
             frames[targetFrame].remove(0);
         }
         frames[targetFrame].add(command);
+        localCommandPresent[targetFrame] = true;
+        writeIndex = (writeIndex + 1) % bufferSize;
+    }
+
+    /**
+     * OPENRA #1: Submits a NO_OP (no-operation) packet for the current frame.
+     * This is the per-frame pacing signal — even when the local player has no
+     * commands, this method must be called once per frame so the simulation
+     * can advance. Replaces the old heartbeat band-aid.
+     */
+    public synchronized void submitNoOp() {
+        int targetFrame = (writeIndex + inputDelay) % bufferSize;
+        localCommandPresent[targetFrame] = true;
         writeIndex = (writeIndex + 1) % bufferSize;
     }
 
@@ -134,6 +149,7 @@ public class CommandBuffer {
         List<CommandType> commands = List.copyOf(frames[readIndex]);
         frames[readIndex].clear();
         opponentCommandPresent[readIndex] = false;
+        localCommandPresent[readIndex] = false;
 
         readIndex = (readIndex + 1) % bufferSize;
         // Note: writeIndex is NOT advanced here — it only advances in submitCommand()
@@ -158,12 +174,11 @@ public class CommandBuffer {
      * @return true if the current frame is ready for processing
      */
     public boolean isFrameReady() {
-        // Frame is ready if both players have submitted at least one command
-        // or if the frame has been delayed enough
-        List<CommandType> frame = frames[readIndex];
-        boolean player0 = frame.stream().anyMatch(c -> c.playerId() == 0);
-        boolean player1 = frame.stream().anyMatch(c -> c.playerId() == 1);
-        return player0 && player1;
+        // OPENRA #1: Per-frame pacing — a frame is ready when BOTH players have
+        // submitted their pacing packet (command or NO_OP). This replaces the old
+        // model where both players needed actual commands, which caused false
+        // disconnects when an opponent was idle.
+        return localCommandPresent[readIndex] && opponentCommandPresent[readIndex];
     }
 
     /**
@@ -191,6 +206,7 @@ public class CommandBuffer {
         for (int i = 0; i < bufferSize; i++) {
             frames[i].clear();
             opponentCommandPresent[i] = false;
+            localCommandPresent[i] = false;
         }
         writeIndex = 0;
         readIndex = 0;

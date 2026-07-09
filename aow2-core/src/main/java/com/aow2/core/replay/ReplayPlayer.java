@@ -345,9 +345,40 @@ public final class ReplayPlayer {
                 commands.add(new ReplayEntry(tick, typeOrd, playerId, payload));
             }
 
+            // OPENRA #12: Read expanded metadata (v3+) or use defaults (v1/v2)
+            String gameVersion = "unknown";
+            String[] playerNames = null;
+            int winnerPlayerId = -1;
+            long durationMillis = 0;
+            if (formatVersion >= 3) {
+                // Read gameVersion
+                int gvLen = dis.readInt();
+                if (gvLen > 0 && gvLen < 100) {
+                    byte[] gvBytes = new byte[gvLen];
+                    dis.readFully(gvBytes);
+                    gameVersion = new String(gvBytes, java.nio.charset.StandardCharsets.UTF_8);
+                }
+                // Read playerNames
+                int pnCount = dis.readInt();
+                if (pnCount > 0 && pnCount < 10) {
+                    playerNames = new String[pnCount];
+                    for (int i = 0; i < pnCount; i++) {
+                        int pnLen = dis.readInt();
+                        if (pnLen > 0 && pnLen < 100) {
+                            byte[] pnBytes = new byte[pnLen];
+                            dis.readFully(pnBytes);
+                            playerNames[i] = new String(pnBytes, java.nio.charset.StandardCharsets.UTF_8);
+                        }
+                    }
+                }
+                winnerPlayerId = dis.readInt();
+                durationMillis = dis.readLong();
+            }
+
             ReplayFile replay = new ReplayFile(
                 mapName, factions, totalTicks,
-                List.copyOf(commands), recordedAt, formatVersion
+                List.copyOf(commands), recordedAt, formatVersion,
+                gameVersion, playerNames, winnerPlayerId, durationMillis
             );
 
             LOG.info("Loaded replay from {} ({}x{} ticks, {} commands)",

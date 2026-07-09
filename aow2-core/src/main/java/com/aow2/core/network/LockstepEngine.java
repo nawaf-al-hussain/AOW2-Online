@@ -61,6 +61,10 @@ public final class LockstepEngine {
     /** Callback for sending commands to the opponent */
     private Consumer<byte[]> sendCallback;
 
+    /** OPENRA #14: Immediate command queue — bypasses the frame buffer for
+     * commands that must be processed without delay (chat, pause, handshake). */
+    private final java.util.concurrent.ConcurrentLinkedQueue<CommandType> immediateCommands = new java.util.concurrent.ConcurrentLinkedQueue<>();
+
     /** Callback for sending heartbeat messages to the opponent.
      *  FIX (H2-incomplete from RE_AUDIT_REPORT.md): Separate from sendCallback because
      *  heartbeats use a different wire format (JSON {"type":"heartbeat","tick":N})
@@ -183,6 +187,22 @@ public final class LockstepEngine {
         commandBuffer.submitCommand(command);
 
         // Serialize and send to opponent
+        if (sendCallback != null) {
+            byte[] data = CommandSerializer.serialize(command);
+            sendCallback.accept(data);
+        }
+    }
+
+    /**
+     * OPENRA #14: Submits an immediate command that bypasses the frame buffer.
+     * Used for commands that must be processed without delay (chat, pause, etc.).
+     * The command is queued and processed at the start of the next processFrame call.
+     *
+     * @param command the immediate command
+     */
+    public void submitImmediate(CommandType command) {
+        if (!running) return;
+        immediateCommands.add(command);
         if (sendCallback != null) {
             byte[] data = CommandSerializer.serialize(command);
             sendCallback.accept(data);
@@ -337,6 +357,13 @@ public final class LockstepEngine {
         // Drain commands for the current frame (safe — disconnect check passed)
         List<CommandType> commands = commandBuffer.drainFrame();
 
+        // OPENRA #14: Process immediate commands (bypass frame buffer)
+        CommandType immediate;
+        while ((immediate = immediateCommands.poll()) != null) {
+            commands = new java.util.ArrayList<>(commands);
+            commands.add(immediate);
+        }
+
         // Apply commands to game state
         for (CommandType command : commands) {
             applyCommand(command, state, entities);
@@ -364,6 +391,12 @@ public final class LockstepEngine {
         if (lockstepFrame - lastHeartbeatSentTick >= HEARTBEAT_INTERVAL_TICKS) {
             sendHeartbeat();
         }
+
+        // OPENRA #1: Per-frame pacing — submit a NO_OP for the next frame so
+        // the simulation can advance even when the local player has no commands.
+        // This is the pacing packet that replaces the old "both players need
+        // actual commands to advance" model.
+        commandBuffer.submitNoOp();
 
         return commands;
     }

@@ -43,7 +43,8 @@ class ReplayPlayerTest {
             totalTicks,
             commands,
             System.currentTimeMillis(),
-            ReplayFile.FORMAT_VERSION
+            ReplayFile.FORMAT_VERSION,
+            "unknown", null, -1, 0
         );
     }
 
@@ -242,7 +243,8 @@ class ReplayPlayerTest {
                 5,
                 List.of(),
                 System.currentTimeMillis(),
-                ReplayFile.FORMAT_VERSION
+                ReplayFile.FORMAT_VERSION,
+                "unknown", null, -1, 0
             );
             player.loadReplay(shortReplay);
             player.play();
@@ -328,7 +330,7 @@ class ReplayPlayerTest {
         void shouldRejectBlankMapName() {
             assertThrows(IllegalArgumentException.class,
                 () -> new ReplayFile("", new Faction[]{Faction.CONFEDERATION},
-                    0, List.of(), System.currentTimeMillis(), 1));
+                    0, List.of(), System.currentTimeMillis(), 1, "unknown", null, -1, 0));
         }
 
         @Test
@@ -336,7 +338,7 @@ class ReplayPlayerTest {
         void shouldRejectEmptyPlayerFactions() {
             assertThrows(IllegalArgumentException.class,
                 () -> new ReplayFile("test", new Faction[]{},
-                    0, List.of(), System.currentTimeMillis(), 1));
+                    0, List.of(), System.currentTimeMillis(), 1, "unknown", null, -1, 0));
         }
 
         @Test
@@ -344,7 +346,7 @@ class ReplayPlayerTest {
         void shouldCalculateDurationInSeconds() {
             ReplayFile file = new ReplayFile("test",
                 new Faction[]{Faction.CONFEDERATION, Faction.RESISTANCE},
-                900, List.of(), System.currentTimeMillis(), 1);
+                900, List.of(), System.currentTimeMillis(), 1, "unknown", null, -1, 0);
 
             assertEquals(30, file.durationSeconds()); // 900 ticks / 30 ticks/sec = 30 sec
         }
