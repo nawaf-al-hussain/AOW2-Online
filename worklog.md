@@ -238,3 +238,37 @@ Work Log:
 - #14: Two-track immediate commands — LockstepEngine now has submitImmediate() that bypasses the frame buffer. Immediate commands are drained at the start of processFrame before regular frame commands.
 
 All tests pass: ./gradlew test BUILD SUCCESSFUL (750 tests)
+
+---
+Task ID: 10
+Agent: Main
+Task: Fix the 4 gameplay-affecting bugs identified in FULL_ANALYSIS.md (B-2, B-6, B-7, B-9)
+
+Work Log:
+- B-9 (CommandBuffer pointer drift): Removed writeIndex advance from submitCommand. Now only submitNoOp (the per-frame pacing signal) advances writeIndex, keeping it in sync with readIndex (advanced once per frame by drainFrame). Multiple commands submitted in the same frame all target the same frame slot. Also fixed B-5 by adding synchronized to reset().
+- B-7 (Ungarrison UI dispatch): Added U hotkey in InputHandler.onKeyPressed that issues "ungarrison" command. Added "ungarrison" case in GameScene's command switch that creates CommandType.Ungarrison for each selected friendly bunker with garrisoned units, falling back to ungarrisoning ALL friendly bunkers with garrisoned units if no bunker is in the selection.
+- B-2 (Replay backward compat): Changed ReplayPlayer.loadFromFile version check from `!= FORMAT_VERSION` to `< 1 || > FORMAT_VERSION`. v1/v2 replays now load correctly via the existing `>=2` (recordedAt) and `>=3` (expanded metadata) conditional reads that were previously unreachable dead code. Updated ReplayFile javadoc to reflect v3 support.
+- B-6 (CombatSystem armor path): Added calculateEffectiveUnitArmor() helper in CombatSystem that uses the data-driven ResearchBonusTracker overload of ArmorCalculator.calculateEffectiveArmor when a ResearchSystem is wired, falling back to the legacy hardcoded-ID overload otherwise. Updated 3 call sites (processBunkerAttack, processDefensiveBuildingAttack, performAttack instant-damage path) to use the new helper. This also implicitly fixes a latent bug where bunker/defensive-building attacks used the ATTACKER's research instead of the TARGET's.
+- Added 4 regression test files (16 tests total):
+  * CommandBufferPointerDriftTest (4 tests) — verifies writeIndex/readIndex sync over 21+ frames, multiple commands per frame, 50-frame stress, and reset() synchronization
+  * ReplayBackwardCompatTest (6 tests) — verifies v1/v2/v3 replays all load, v0/v99 rejected, bad magic rejected
+  * CombatSystemArmorPathTest (3 tests) — proves ResearchBonusTracker is consulted (applyResearchEffect called twice accumulates to +4, not +2 from a lookup), plus control tests for no-research and no-ResearchSystem fallback paths
+  * UngarrisonUiDispatchTest (3 tests) — verifies U hotkey dispatches "ungarrison" command, target is (-1, -1), and U does not interfere with A/S/D hotkeys
+
+Stage Summary:
+- 4 gameplay-affecting bugs fixed (B-2, B-6, B-7, B-9) + 1 bonus robustness fix (B-5: synchronized reset)
+- 16 regression tests added (all passing)
+- Full test suite: 1333 tests, 0 failures, 0 errors, 0 skipped (up from 750 in prior session — test count increase due to per-nested-class XML counting)
+- All 5 modules compile: BUILD SUCCESSFUL
+- Files modified:
+  * aow2-core/src/main/java/com/aow2/core/network/CommandBuffer.java (B-9, B-5)
+  * aow2-core/src/main/java/com/aow2/core/replay/ReplayPlayer.java (B-2)
+  * aow2-core/src/main/java/com/aow2/core/replay/ReplayFile.java (B-2 docstring)
+  * aow2-core/src/main/java/com/aow2/core/combat/CombatSystem.java (B-6)
+  * aow2-client/src/main/java/com/aow2/client/input/InputHandler.java (B-7)
+  * aow2-client/src/main/java/com/aow2/client/scene/GameScene.java (B-7)
+- Files added:
+  * aow2-core/src/test/java/com/aow2/core/network/CommandBufferPointerDriftTest.java
+  * aow2-core/src/test/java/com/aow2/core/replay/ReplayBackwardCompatTest.java
+  * aow2-core/src/test/java/com/aow2/core/combat/CombatSystemArmorPathTest.java
+  * aow2-client/src/test/java/com/aow2/client/input/UngarrisonUiDispatchTest.java

@@ -83,6 +83,15 @@ public class CommandBuffer {
     /**
      * Submits a command for the current frame.
      * Commands are stored at the write index and will be processed after inputDelay frames.
+     * <p>
+     * FIX (B-9 from FULL_ANALYSIS.md): This method NO LONGER advances writeIndex.
+     * Previously, both submitCommand and submitNoOp advanced writeIndex, causing
+     * writeIndex to advance by N+1 per frame (N commands + 1 NoOp) while readIndex
+     * only advanced by 1, eventually corrupting the ring buffer. Now writeIndex is
+     * advanced exactly once per frame by {@link #submitNoOp()}, keeping it in sync
+     * with readIndex. Multiple commands submitted in the same frame all target the
+     * same frame slot, which is the intended design (each frame slot holds a
+     * CopyOnWriteArrayList of commands).
      *
      * @param command the command to buffer
      */
@@ -98,7 +107,8 @@ public class CommandBuffer {
         }
         frames[targetFrame].add(command);
         localCommandPresent[targetFrame] = true;
-        writeIndex = (writeIndex + 1) % bufferSize;
+        // Note: writeIndex is intentionally NOT advanced here. It is advanced
+        // exactly once per frame by submitNoOp() to stay in sync with readIndex.
     }
 
     /**
@@ -106,6 +116,11 @@ public class CommandBuffer {
      * This is the per-frame pacing signal — even when the local player has no
      * commands, this method must be called once per frame so the simulation
      * can advance. Replaces the old heartbeat band-aid.
+     * <p>
+     * FIX (B-9): This is the ONLY method that advances writeIndex. It must be
+     * called exactly once per game frame (typically at the end of
+     * LockstepEngine.processFrame) to keep writeIndex in sync with readIndex
+     * (which is advanced once per frame by drainFrame).
      */
     public synchronized void submitNoOp() {
         int targetFrame = (writeIndex + inputDelay) % bufferSize;
@@ -201,8 +216,13 @@ public class CommandBuffer {
 
     /**
      * Resets the buffer to its initial state.
+     * <p>
+     * FIX (B-5 from FULL_ANALYSIS.md): This method is now synchronized to match
+     * the contract of submitCommand/submitNoOp/drainFrame. Without synchronization,
+     * a concurrent reset could leave buffer pointers and per-frame flag arrays in
+     * a partially-cleared state visible to other threads.
      */
-    public void reset() {
+    public synchronized void reset() {
         for (int i = 0; i < bufferSize; i++) {
             frames[i].clear();
             opponentCommandPresent[i] = false;

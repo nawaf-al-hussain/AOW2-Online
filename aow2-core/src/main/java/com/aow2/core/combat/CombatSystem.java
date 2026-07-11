@@ -330,8 +330,9 @@ public class CombatSystem {
             int weaponDamage = garrison.getStats().damage();
             // FIX(H-2): Use research-adjusted armor instead of raw base armor.
             // Previously bunker attacks ignored target's armor research entirely.
-            int targetArmor = armorCalculator.calculateEffectiveArmor(nearestEnemy,
-                getCompletedResearchForBuilding(bunker));
+            // FIX (B-6 from FULL_ANALYSIS.md): Use the data-driven ResearchBonusTracker
+            // path so armor effects beyond the hardcoded IDs 0/9/24/33 are also applied.
+            int targetArmor = calculateEffectiveUnitArmor(nearestEnemy);
             int damage = DamageCalculator.calculateDamage(weaponDamage, targetArmor);
 
             nearestEnemy.takeDamage(damage);
@@ -374,8 +375,13 @@ public class CombatSystem {
 
         if (nearestEnemy != null) {
             // Use research-adjusted armor for the target, not raw base armor
-            int targetArmor = armorCalculator.calculateEffectiveArmor(nearestEnemy,
-                getCompletedResearchForBuilding(building));
+            // FIX (B-6 from FULL_ANALYSIS.md): Use the data-driven ResearchBonusTracker
+            // path so armor effects beyond the hardcoded IDs 0/9/24/33 are also applied.
+            // Also implicitly fixes a latent bug: the previous call used
+            // getCompletedResearchForBuilding(building) (the attacker's research), but
+            // armor is a defensive stat of the TARGET — calculateEffectiveUnitArmor
+            // correctly uses the target unit's own faction research.
+            int targetArmor = calculateEffectiveUnitArmor(nearestEnemy);
             int effectiveDamage = DamageCalculator.calculateDamage(damage, targetArmor);
 
             nearestEnemy.takeDamage(effectiveDamage);
@@ -503,8 +509,9 @@ public class CombatSystem {
             // Instant damage for BULLET/MELEE weapons
             // FIX (P1-H2): Use the TARGET's own faction research for armor calculation.
             // Armor is a defensive stat — the target's research determines their armor, not the attacker's.
-            int targetArmor = armorCalculator.calculateEffectiveArmor(target,
-                getCompletedResearch(target));
+            // FIX (B-6 from FULL_ANALYSIS.md): Use the data-driven ResearchBonusTracker
+            // path so armor effects beyond the hardcoded IDs 0/9/24/33 are also applied.
+            int targetArmor = calculateEffectiveUnitArmor(target);
             // FIX(C-2): Apply infantry vs machinery 0.7x target multiplier for unit-vs-unit combat.
             // Previously getTargetMultiplier() was dead code — never called in this path.
             double targetMultiplier = DamageCalculator.getTargetMultiplier(attacker, false, target.isMachinery());
@@ -690,6 +697,40 @@ public class CombatSystem {
     java.util.Set<Integer> getCompletedResearch(Unit unit) {
         if (researchSystem == null) return java.util.Set.of();
         return researchSystem.getCompletedResearch(EconomySystem.playerId(unit.getFaction()));
+    }
+
+    /**
+     * FIX (B-6 from FULL_ANALYSIS.md): Get the ResearchBonusTracker for a unit's owner.
+     * This is the data-driven path that accumulates ALL armor research effects from
+     * tech_tree.json — not just the hardcoded IDs in ArmorCalculator's
+     * INFANTRY_ARMOR_RESEARCH / VEHICLE_ARMOR_RESEARCH maps. Returns null if no
+     * research system is available; callers should fall back to the legacy
+     * Set&lt;Integer&gt; overload in that case.
+     *
+     * @param unit the unit
+     * @return the bonus tracker for the unit's owner, or null if no research system
+     */
+    private com.aow2.core.research.ResearchSystem.ResearchBonusTracker getBonusTrackerForUnit(Unit unit) {
+        if (researchSystem == null) return null;
+        return researchSystem.getBonusTracker(EconomySystem.playerId(unit.getFaction()));
+    }
+
+    /**
+     * FIX (B-6): Compute effective unit armor using the data-driven ResearchBonusTracker
+     * path when a research system is wired, falling back to the legacy hardcoded-ID
+     * path otherwise. This ensures modders who add new armor research effects via
+     * tech_tree.json actually see them applied during combat.
+     *
+     * @param unit the target unit
+     * @return effective armor value (base + research bonus)
+     */
+    private int calculateEffectiveUnitArmor(Unit unit) {
+        com.aow2.core.research.ResearchSystem.ResearchBonusTracker tracker = getBonusTrackerForUnit(unit);
+        if (tracker != null) {
+            return armorCalculator.calculateEffectiveArmor(unit, tracker);
+        }
+        // Fallback: legacy hardcoded-ID path (only IDs 0, 9, 24, 33 for infantry; none for vehicles).
+        return armorCalculator.calculateEffectiveArmor(unit, getCompletedResearch(unit));
     }
 
     /**

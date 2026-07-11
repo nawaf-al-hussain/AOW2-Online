@@ -30,7 +30,7 @@ import java.util.Map;
  * - Right click: command (move/attack/garrison based on context)
  * - Shift+right-click: queue waypoint (does not replace existing orders)
  * - Middle click + drag: pan camera
- * - Hotkeys: A=attack, S=stop, H=hold, P=patrol, B=build, G=garrison, D=siege, T=produce, R=research, U=upgrade
+ * - Hotkeys: A=attack, S=stop, H=hold, P=patrol, B=build, G=garrison, D=siege, U=ungarrison, T=produce, R=research
  * - Tab: cycle through unit types in mixed selection
  * - Space: jump to last event (attack/production completion)
  * - Home: center camera on player's Command Centre / Headquarters
@@ -379,6 +379,16 @@ public class InputHandler {
                     issueCommand("siege_mode", -1, -1);
                     LOG.debug("Siege mode toggle command issued");
                 }
+            }
+            case U -> {
+                // FIX (B-7 from FULL_ANALYSIS.md): Ungarrison hotkey — issues an
+                // "ungarrison" command for the currently selected building(s).
+                // GameScene interprets this and creates CommandType.Ungarrison for
+                // each selected friendly bunker that has a garrisoned unit. If no
+                // building is selected, the command is still issued (GameScene will
+                // look for any friendly bunker with garrisoned units as a fallback).
+                issueCommand("ungarrison", -1, -1);
+                LOG.debug("Ungarrison command issued");
             }
             case TAB -> {
                 // Cycle through unit types in the current selection

@@ -526,6 +526,53 @@ public class GameScene {
                     }
                     yield null;  // commands already enqueued in the loop
                 }
+                // FIX (B-7 from FULL_ANALYSIS.md): Ungarrison — issues an Ungarrison
+                // command for each selected friendly bunker that has a garrisoned unit.
+                // If no bunker is in the selection, falls back to ungarrisoning ALL
+                // friendly bunkers that currently have a garrisoned unit. This finally
+                // wires the previously-dead CommandType.Ungarrison path to a player-
+                // accessible UI dispatch (U hotkey in InputHandler).
+                case "ungarrison" -> {
+                    int issued = 0;
+                    // First pass: ungarrison any selected friendly bunkers.
+                    for (int id : selectedIds) {
+                        Building b = entityManager.getBuilding(id);
+                        if (b == null || !b.isAlive()) continue;
+                        if (b.getFaction() != playerFaction) continue;
+                        if (b.getBuildingType() != BuildingType.CONFED_BUNKER
+                                && b.getBuildingType() != BuildingType.REBEL_BUNKER) continue;
+                        if (b.getGarrisonedUnitRef() == null) continue;
+                        var ungarrisonCmd = new CommandType.Ungarrison(tick, LOCAL_PLAYER_ID, id);
+                        tickManager.enqueueCommand(ungarrisonCmd);
+                        if (isMultiplayer && lockstepEngine != null && lockstepEngine.isRunning()) {
+                            lockstepEngine.submitCommand(ungarrisonCmd);
+                        }
+                        issued++;
+                        LOG.info("Ungarrison command issued for building {}", id);
+                    }
+                    // Fallback: if no bunker was in the selection, ungarrison every
+                    // friendly bunker that has a garrisoned unit. This makes U a
+                    // convenient "unload all" hotkey when the player has units selected.
+                    if (issued == 0) {
+                        for (Building b : entityManager.getBuildingsForPlayer(playerFaction)) {
+                            if (!b.isAlive()) continue;
+                            if (b.getBuildingType() != BuildingType.CONFED_BUNKER
+                                    && b.getBuildingType() != BuildingType.REBEL_BUNKER) continue;
+                            if (b.getGarrisonedUnitRef() == null) continue;
+                            var ungarrisonCmd = new CommandType.Ungarrison(tick, LOCAL_PLAYER_ID, b.getId());
+                            tickManager.enqueueCommand(ungarrisonCmd);
+                            if (isMultiplayer && lockstepEngine != null && lockstepEngine.isRunning()) {
+                                lockstepEngine.submitCommand(ungarrisonCmd);
+                            }
+                            issued++;
+                            LOG.info("Ungarrison command issued for building {} (fallback)", b.getId());
+                        }
+                    }
+                    if (issued == 0) {
+                        LOG.debug("Ungarrison: no friendly bunker with garrisoned units found");
+                    }
+                    yield null;  // commands already enqueued in the loop
+                }
                 default -> null;
             };
 

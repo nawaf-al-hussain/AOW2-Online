@@ -49,8 +49,13 @@ public record ReplayFile(
      *    <li>2 — FIX (H6 from CRITICAL_ANALYSIS_REPORT.md): adds recordedAt (8 bytes)
      *           after totalTicks so the original recording timestamp survives
      *           load/save round-trips.</li>
+     *    <li>3 — OPENRA #12: expanded metadata (gameVersion, playerNames,
+     *           winnerPlayerId, durationMillis) appended after the commands list.</li>
      *  </ul>
-     *  Writers always emit the latest version; readers accept 1 and 2.
+     *  Writers always emit the latest version; readers accept 1, 2, and 3.
+     *  FIX (B-2 from FULL_ANALYSIS.md): The version-range check in ReplayPlayer
+     *  was previously a strict equality check (only accepted 3), which made v1/v2
+     *  replays unloadable. It now accepts any version in [1, FORMAT_VERSION].
      */
     public static final int FORMAT_VERSION = 3;  // OPENRA #12: bumped for expanded metadata
 

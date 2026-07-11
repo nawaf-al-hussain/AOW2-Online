@@ -292,8 +292,15 @@ public final class ReplayPlayer {
 
             // Format version
             int formatVersion = dis.readShort();
-            if (formatVersion != ReplayFile.FORMAT_VERSION) {
-                throw new IOException("Unsupported replay format version: " + formatVersion);
+            // FIX (B-2 from FULL_ANALYSIS.md): Accept any version in [1, FORMAT_VERSION]
+            // instead of rejecting anything != FORMAT_VERSION. The conditional reads
+            // below (>=2 for recordedAt, >=3 for expanded metadata) already handle
+            // older formats gracefully, but the strict equality check here was making
+            // them unreachable dead code. v1/v2 replays recorded before the OPENRA #12
+            // metadata bump can now be loaded again.
+            if (formatVersion < 1 || formatVersion > ReplayFile.FORMAT_VERSION) {
+                throw new IOException("Unsupported replay format version: " + formatVersion
+                    + " (supported: 1.." + ReplayFile.FORMAT_VERSION + ")");
             }
 
             // Map name
