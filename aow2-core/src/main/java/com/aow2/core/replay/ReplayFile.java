@@ -124,11 +124,28 @@ public record ReplayFile(
     }
 
     /**
-     * Returns the duration in seconds (assuming 30 ticks per second).
+     * Returns the duration in seconds.
+     * <p>
+     * FIX (B-3 from FULL_ANALYSIS.md): The previous implementation divided
+     * {@code totalTicks} by 30, but the game runs at {@code TICK_RATE = 10}
+     * ticks per second, so the reported duration was 3× too short.
+     * <p>
+     * FIX (B-16 from FULL_ANALYSIS.md): For v3 replays, the file stores an
+     * explicit {@code durationMillis} field (written by {@code ReplayRecorder}
+     * and read by {@code ReplayPlayer}). This field is preferred when non-zero
+     * because it captures wall-clock duration (including any pause time),
+     * whereas {@code totalTicks / TICK_RATE} only reflects simulation time.
+     * For v1/v2 replays (where {@code durationMillis == 0}), we fall back to
+     * the tick-based calculation with the correct divisor.
      *
      * @return duration in seconds
      */
     public long durationSeconds() {
-        return totalTicks / 30;
+        // B-16: Prefer the explicit durationMillis field when available (v3+ replays).
+        if (durationMillis > 0) {
+            return durationMillis / 1000;
+        }
+        // B-3: Fallback for v1/v2 replays — use totalTicks / TICK_RATE (was / 30).
+        return totalTicks / com.aow2.common.config.GameConstants.TICK_RATE;
     }
 }

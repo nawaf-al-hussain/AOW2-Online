@@ -427,6 +427,26 @@ class CommandTypeTest {
         }
 
         @Test
+        @DisplayName("B-1: Upgrade command rejects playerId > 1 (was only checking < 0)")
+        void upgradeRejectsPlayerIdGreaterThanOne() {
+            // FIX (B-1): Previously only `playerId < 0` was checked, allowing
+            // playerId > 1 to pass. Now `playerId > 1` is also rejected, matching
+            // the other 13 CommandType records.
+            assertThrows(IllegalArgumentException.class,
+                () -> new CommandType.Upgrade(0, 2, 0),
+                "B-1: playerId=2 should throw");
+            assertThrows(IllegalArgumentException.class,
+                () -> new CommandType.Upgrade(0, 99, 0),
+                "B-1: playerId=99 should throw");
+            assertThrows(IllegalArgumentException.class,
+                () -> new CommandType.Upgrade(0, Integer.MAX_VALUE, 0),
+                "B-1: playerId=MAX_VALUE should throw");
+            // playerId 0 and 1 are valid
+            assertDoesNotThrow(() -> new CommandType.Upgrade(0, 0, 0));
+            assertDoesNotThrow(() -> new CommandType.Upgrade(0, 1, 0));
+        }
+
+        @Test
         @DisplayName("Should access tick and playerId from all command types")
         void shouldAccessCommonFields() {
             CommandType move = new CommandType.Move(42L, 1, new int[]{1}, new GridPosition(0, 0));

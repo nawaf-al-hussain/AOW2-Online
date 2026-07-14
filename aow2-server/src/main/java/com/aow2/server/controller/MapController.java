@@ -102,6 +102,12 @@ public class MapController {
             Authentication authentication,
             @RequestBody Map<String, String> request
     ) {
+        // FIX (B-15 from FULL_ANALYSIS.md): Defensive null check — SecurityConfig
+        // requires authentication for /api/maps/**, but the controller must not
+        // NPE if the matcher is ever reordered to permitAll() for public browsing.
+        if (authentication == null || authentication.getPrincipal() == null) {
+            return ResponseEntity.status(401).body(Map.of("error", "Authentication required"));
+        }
         Long uploaderId = (Long) authentication.getPrincipal();
         String name = request.get("name");
         String mapData = request.get("mapData");
@@ -193,6 +199,11 @@ public class MapController {
             Authentication authentication,
             @PathVariable Long id
     ) {
+        // FIX (B-15 from FULL_ANALYSIS.md): Defensive null check — matches the
+        // pattern in ChatController.sendMessage and LeaderboardController.getMyRanking.
+        if (authentication == null || authentication.getPrincipal() == null) {
+            return ResponseEntity.status(401).body(Map.of("error", "Authentication required"));
+        }
         Long playerId = (Long) authentication.getPrincipal();
         return uploadedMapRepository.findById(id)
                 .<ResponseEntity<Map<String, Object>>>map(map -> {

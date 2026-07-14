@@ -615,7 +615,17 @@ public final class LockstepEngine {
                     }
                 }
                 default -> {
-                    log.warn("Command {} skipped: game systems not injected (call setGameSystems())", command);
+                    // FIX (B-8 from FULL_ANALYSIS.md): Previously this branch only
+                    // logged a warning and silently dropped the command, which could
+                    // cause confusing gameplay if setGameSystems() was forgotten.
+                    // Now we throw IllegalStateException so misconfiguration is
+                    // detected immediately at the first dropped command rather
+                    // than silently losing Build/Produce/Research/Garrison/Ungarrison/
+                    // Cancel/Upgrade commands.
+                    throw new IllegalStateException(
+                        "Cannot apply " + command.getClass().getSimpleName()
+                        + " command: game systems not injected. Call LockstepEngine"
+                        + ".setGameSystems() before processFrame().");
                 }
             }
         } else {

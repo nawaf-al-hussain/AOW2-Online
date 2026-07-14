@@ -137,9 +137,23 @@ public final class LuaEngine {
 
     /**
      * Default maximum instruction count for sandboxed execution.
-     * Prevents infinite loops in Lua scripts.
      * <p>
-     * FIX (H-NEW-16): Added instruction-counting limit to prevent infinite loops.
+     * <b>FIX (B-4 from FULL_ANALYSIS.md):</b> This constant is currently
+     * <b>NOT enforced</b>. The previous javadoc claimed it "prevents infinite
+     * loops in Lua scripts", but LuaJ 3.x does not expose the per-instruction
+     * debug hook without access to the package-private
+     * {@code LuaThread.callingLuaThread} field. The {@code maxInstructions}
+     * parameter to {@link #executeString(String, String, int)} is accepted but
+     * silently ignored — scripts run to completion or throw a {@code LuaError}
+     * on their own.
+     * <p>
+     * <b>Accepted risk:</b> Mission scripts are bundled with the game (trusted)
+     * and have been reviewed for infinite loops. Mod-loaded scripts are an
+     * accepted risk. A proper fix requires either forking LuaJ to expose
+     * {@code LuaThread} for instruction counting, switching to {@code LuaJC}
+     * (compiled Lua has branch-count overflow detection), or running each
+     * script in a separate {@code Thread} with {@code Thread.interrupt()}
+     * after a wall-clock timeout. All three options are deferred (TODO.md 5.1).
      */
     private static final int DEFAULT_MAX_INSTRUCTIONS = 1_000_000;
 
@@ -155,13 +169,16 @@ public final class LuaEngine {
 
     /**
      * Executes a Lua script from a string with an instruction count limit.
-     * Prevents infinite loops by aborting execution after {@code maxInstructions} VM steps.
      * <p>
-     * FIX (H-NEW-16): Added instruction-counting debug hook to sandbox scripts.
+     * <b>FIX (B-4 from FULL_ANALYSIS.md):</b> The {@code maxInstructions}
+     * parameter is currently <b>accepted but not enforced</b> — see
+     * {@link #DEFAULT_MAX_INSTRUCTIONS} for the full explanation. The method
+     * signature is preserved for API compatibility and so that a future LuaJ
+     * fork or LuaJC migration can enforce the limit without changing call sites.
      *
      * @param script          the Lua script content
      * @param chunkName       name for error reporting
-     * @param maxInstructions maximum number of Lua VM instructions before abort
+     * @param maxInstructions maximum number of Lua VM instructions (currently ignored)
      * @return the result of script execution, or NIL on error
      */
     public LuaValue executeString(String script, String chunkName, int maxInstructions) {
@@ -170,22 +187,11 @@ public final class LuaEngine {
         try {
             LuaValue chunk = globals.load(script, chunkName);
 
-            // Install instruction-counting debug hook.
-            // FIX (CI verification): LuaThread.callingLuaThread is not accessible from
-            // outside the package in LuaJ 3.x. Use a simpler approach: run the chunk
-            // directly and rely on the script's own termination. The instruction limit
-            // is a nice-to-have but not critical for correctness — the game loop's tick
-            // timeout will catch runaway scripts.
-            final int[] count = {0};
-            // Note: Per-instruction hooking is not available without LuaThread access.
-            // The script will run to completion or throw a LuaError on its own.
-
-            try {
-                return chunk.call();
-            } finally {
-                // No hook to remove — instruction counting is not available without
-                // LuaThread access (LuaJ 3.x package-private field).
-            }
+            // B-4: Instruction-counting debug hook is not available in LuaJ 3.x
+            // without access to LuaThread.callingLuaThread (package-private).
+            // The maxInstructions parameter is accepted but not enforced.
+            // Scripts run to completion or throw a LuaError on their own.
+            return chunk.call();
         } catch (LuaError e) {
             if (e.getMessage() != null && e.getMessage().contains("instruction limit")) {
                 LOG.warn("Lua script aborted: {}", e.getMessage());

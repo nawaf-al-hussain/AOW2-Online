@@ -348,7 +348,9 @@ class ReplayPlayerTest {
                 new Faction[]{Faction.CONFEDERATION, Faction.RESISTANCE},
                 900, List.of(), System.currentTimeMillis(), 1, "unknown", null, -1, 0);
 
-            assertEquals(30, file.durationSeconds()); // 900 ticks / 30 ticks/sec = 30 sec
+            // FIX (B-3 from FULL_ANALYSIS.md): durationSeconds now divides by
+            // TICK_RATE (10), not 30. 900 ticks / 10 TPS = 90 seconds.
+            assertEquals(90, file.durationSeconds());
         }
     }
 

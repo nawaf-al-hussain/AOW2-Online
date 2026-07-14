@@ -500,12 +500,15 @@ public sealed interface CommandType permits
         // tick >= 0 and ID fields in their compact constructors. Upgrade was the
         // only one missing validation, allowing negative tick/buildingId to pass
         // construction and fail later with unclear errors.
+        // FIX (B-1 from FULL_ANALYSIS.md): Added the missing `playerId > 1` check
+        // to match the other 13 CommandType records. Previously only `playerId < 0`
+        // was checked, allowing playerId > 1 to pass construction.
         public Upgrade {
             if (tick < 0) {
                 throw new IllegalArgumentException("tick must not be negative, got: " + tick);
             }
-            if (playerId < 0) {
-                throw new IllegalArgumentException("playerId must not be negative, got: " + playerId);
+            if (playerId < 0 || playerId > 1) {
+                throw new IllegalArgumentException("playerId must be 0 or 1, got: " + playerId);
             }
             if (buildingId < 0) {
                 throw new IllegalArgumentException("buildingId must not be negative, got: " + buildingId);

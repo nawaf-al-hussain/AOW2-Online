@@ -13,7 +13,10 @@ import org.slf4j.LoggerFactory;
  * Manages camera pan and zoom for the isometric game view.
  * <p>
  * Controls:
- * - Pan: WASD or arrow keys, or mouse edge scrolling
+ * - Pan: W or arrow keys, or mouse edge scrolling
+ *   (FIX B-10 from FULL_ANALYSIS.md: A/S/D were removed in F-10 because they
+ *   conflict with game commands — A=attack-move, S=stop, D=siege toggle.
+ *   Only W and the arrow keys remain for keyboard panning.)
  * - Zoom: mouse wheel (0.5x to 2.0x range)
  * - Camera bounds are clamped to map edges
  * - Smooth camera interpolation for fluid movement

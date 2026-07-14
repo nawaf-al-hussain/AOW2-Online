@@ -272,3 +272,50 @@ Stage Summary:
   * aow2-core/src/test/java/com/aow2/core/replay/ReplayBackwardCompatTest.java
   * aow2-core/src/test/java/com/aow2/core/combat/CombatSystemArmorPathTest.java
   * aow2-client/src/test/java/com/aow2/client/input/UngarrisonUiDispatchTest.java
+
+---
+Task ID: 11
+Agent: Main
+Task: Fix the 12 lower-severity items from FULL_ANALYSIS.md (B-1, B-3, B-4, B-8, B-10–B-16, H-NEW-16)
+
+Work Log:
+- B-1 (Upgrade playerId validation): Added `playerId > 1` check to CommandType.Upgrade compact constructor, matching the other 13 CommandType records. Previously only `playerId < 0` was checked.
+- B-3 (ReplayFile duration divisor): Changed `totalTicks / 30` to `totalTicks / GameConstants.TICK_RATE` (10 TPS). The game runs at 10 ticks/sec, not 30 — reported durations were 3× too short.
+- B-4 (Lua instruction limit): Updated misleading javadoc on DEFAULT_MAX_INSTRUCTIONS and executeString() to accurately state the limit is NOT enforced (LuaJ 3.x package-private LuaThread). Removed dead `count` variable and try/finally wrapper. Documented accepted risk (mission scripts are trusted/bundled) and deferred options (LuaJ fork, LuaJC, thread timeout).
+- B-8 (LockstepEngine fail-fast): Changed the inline fallback `default` branch from `log.warn(...)` to `throw IllegalStateException(...)`. Build/Produce/Research/Garrison/Ungarrison/Cancel/Upgrade commands now fail immediately when setGameSystems() wasn't called, instead of being silently dropped.
+- B-10 (CameraController stale comment): Updated class javadoc from "Pan: WASD or arrow keys" to "Pan: W or arrow keys" with a note explaining A/S/D were removed in F-10 (conflict with game commands).
+- B-11 (InputHandler stale comment): Updated hotkey list to remove non-existent T=produce and R=research (they're HUD buttons, not hotkeys). Added note that U=ungarrison was added in B-7 fix.
+- B-12 (PathfindingSystem stale comment): Fixed "200 steps" claim to clarify that MAX_PATH_LENGTH=50 is the path length limit, while 200 (MAX_PATH_LENGTH * 4) is the A* node-exploration limit.
+- B-13 (PathfindingSystem dead code): Removed the unreachable `SHALLOW_WATER + INFANTRY → 3` branch from getTerrainCost(). F-26 made SHALLOW_WATER impassable for ALL categories, so this branch was dead. Updated the misleading javadoc.
+- B-14 (Unused npm deps): Removed framer-motion, sharp, uuid, zod from aow2-web/package.json. Verified zero imports in src/.
+- B-15 (MapController null-auth check): Added `authentication == null || authentication.getPrincipal() == null → 401` defensive check to uploadMap() and deleteMap(), matching the pattern in ChatController and LeaderboardController.
+- B-16 (ReplayFile durationMillis): durationSeconds() now prefers the explicit durationMillis field (v3+) when non-zero, falling back to totalTicks/TICK_RATE for v1/v2. This captures wall-clock duration including pause time.
+- H-NEW-16 (stale TODO claim): Updated TODO.md H-NEW-16 entry from ✅ FIXED to ⚠️ PARTIALLY FIXED, accurately documenting that the instruction limit is NOT enforced. Also marked 5.2 (string.dump) as ✅ FIXED.
+
+Regression tests added (9 new tests, all passing):
+- CommandTypeTest: +1 test for B-1 (Upgrade rejects playerId > 1)
+- ReplayDurationTest: 3 tests for B-3/B-16 (correct divisor, durationMillis preference, 30-min replay)
+- LockstepEngineFailFastTest: 5 tests for B-8 (Build/Produce/Research/Ungarrison throw, Move does not)
+- Updated existing ReplayPlayerTest.shouldCalculateDurationInSeconds to expect 90 (900/10) instead of 30 (900/30)
+
+Stage Summary:
+- 12 lower-severity items fixed (B-1, B-3, B-4, B-8, B-10, B-11, B-12, B-13, B-14, B-15, B-16, H-NEW-16)
+- 9 regression tests added + 1 existing test updated (all passing)
+- Full test suite: 1342 tests, 0 failures, 0 errors, 0 skipped
+- All 5 modules compile: BUILD SUCCESSFUL
+- Files modified:
+  * aow2-common/src/main/java/com/aow2/common/model/CommandType.java (B-1)
+  * aow2-common/src/test/java/com/aow2/common/model/CommandTypeTest.java (B-1 test)
+  * aow2-core/src/main/java/com/aow2/core/replay/ReplayFile.java (B-3, B-16)
+  * aow2-core/src/main/java/com/aow2/core/movement/PathfindingSystem.java (B-12, B-13)
+  * aow2-core/src/main/java/com/aow2/core/network/LockstepEngine.java (B-8)
+  * aow2-core/src/test/java/com/aow2/core/replay/ReplayPlayerTest.java (B-3 existing test update)
+  * aow2-modding/src/main/java/com/aow2/mod/script/LuaEngine.java (B-4)
+  * aow2-client/src/main/java/com/aow2/client/render/CameraController.java (B-10)
+  * aow2-client/src/main/java/com/aow2/client/input/InputHandler.java (B-11)
+  * aow2-server/src/main/java/com/aow2/server/controller/MapController.java (B-15)
+  * aow2-web/package.json (B-14)
+  * TODO.md (H-NEW-16, 5.2)
+- Files added:
+  * aow2-core/src/test/java/com/aow2/core/replay/ReplayDurationTest.java
+  * aow2-core/src/test/java/com/aow2/core/network/LockstepEngineFailFastTest.java

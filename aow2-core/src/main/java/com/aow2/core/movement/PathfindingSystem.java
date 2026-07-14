@@ -28,7 +28,11 @@ import java.util.Set;
  * <p>
  * Key differences from the original game's Bresenham-based approach:
  * - We use a true A* algorithm instead of Bresenham line + obstacle avoidance.
- * - We support up to 200 steps (original was 50).
+ * - We support up to {@code GameConstants.MAX_PATH_LENGTH} = 50 steps in the final
+ *   path (same as the original game). The A* search itself explores up to
+ *   {@code MAX_PATH_LENGTH * 4} = 200 nodes before giving up.
+ *   (FIX B-12 from FULL_ANALYSIS.md: The previous comment said "200 steps"
+ *   which conflated the node-exploration limit with the path-length limit.)
  * - We use octile distance as the heuristic (admissible for 8-directional movement).
  * - Diagonal movement cost is base * sqrt(2) ≈ 1.41.
  */
@@ -276,9 +280,16 @@ public final class PathfindingSystem {
     /**
      * Calculates the terrain movement cost for a given terrain type and unit category.
      * Returns finite costs for terrain that is passable by the given category,
-     * even if the base cost is Integer.MAX_VALUE (e.g., SHALLOW_WATER for infantry).
+     * and {@code Integer.MAX_VALUE} for impassable terrain.
+     * <p>
+     * FIX (B-13 from FULL_ANALYSIS.md): Removed the dead {@code SHALLOW_WATER +
+     * INFANTRY → 3} branch. The F-26 fix made SHALLOW_WATER impassable for ALL
+     * unit categories (including infantry) in {@code TerrainType.isPassableBy},
+     * and the pathfinder checks passability before consulting this method, so
+     * that branch was unreachable. The misleading comment claiming "SHALLOW_WATER
+     * is passable by infantry with cost 3" has also been corrected.
+     * <p>
      * REF: pathfinding.md — terrain costs affect pathfinding decisions
-     * REF: map_system.md — SHALLOW_WATER is passable by infantry with cost 3
      *
      * @param terrain  the terrain type
      * @param category the unit category, or null for default passability
@@ -287,10 +298,6 @@ public final class PathfindingSystem {
     public int getTerrainCost(TerrainType terrain, UnitCategory category) {
         if (terrain == null) {
             return Integer.MAX_VALUE;
-        }
-        // SHALLOW_WATER has base cost MAX_VALUE but infantry can cross it (cost 3)
-        if (terrain == TerrainType.SHALLOW_WATER && category == UnitCategory.INFANTRY) {
-            return 3;
         }
         int[] costs = GameConstants.TERRAIN_MOVEMENT_COSTS;
         int ordinal = terrain.ordinal();

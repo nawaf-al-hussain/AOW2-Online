@@ -77,7 +77,7 @@
 | H-NEW-13 | ~~CampaignManager never injected~~ | `CampaignScene.java`, `GameScene.java`, `AOW2App.java`, `CampaignManager.java` | ✅ FIXED (2026-06-21) — CampaignManager created in AOW2App, setCampaignManager() on CampaignScene, per-tick objective evaluation in GameScene (5 objective types), victory/defeat dialogs, mission→campaign return flow |
 | H-NEW-14 | ~~Zero audio files exist~~ | `audio/README.txt`, `GameScene.java` | ✅ FIXED (2026-06-21) — AudioManager wired: background music on game start, SFX preloaded, build_complete SFX on construction, stopAll on scene exit. (Actual .wav/.mp3 assets still needed for sound output — infrastructure is complete) |
 | H-NEW-15 | ~~`EloRatingServiceTest` stale assertion~~ | `EloRatingServiceTest.java` | ✅ FIXED (2026-06-20) |
-| H-NEW-16 | ~~LuaJ sandbox bypassable~~ | `LuaEngine.java` | ✅ FIXED (2026-06-21) — Deprecated getGlobals(), added instruction-count-limited executeString(), documented string.dump residual |
+| H-NEW-16 | ~~LuaJ sandbox bypassable~~ | `LuaEngine.java` | ⚠️ PARTIALLY FIXED (2026-06-21, updated B-4 2026-07-11) — Deprecated getGlobals(), blocked string.dump, removed math.random. **BUT** instruction-count limit is NOT enforced (LuaJ 3.x package-private LuaThread.callingLuaThread). `executeString(maxInstructions)` parameter accepted but silently ignored. Accepted risk: mission scripts are trusted/bundled. Full fix requires LuaJ fork or LuaJC migration (DEFERRED — see TODO 5.1). |
 
 ---
 
@@ -402,7 +402,7 @@ Asset work is tracked separately from the game-logic TODO above. See
 - 4.8 LOW: GameWebSocketHandler recursive call is fragile
 - 4.11 MEDIUM: SessionService in-memory state not transactionally consistent with DB
 - 5.1 HIGH: Lua instruction count limit not enforced (requires LuaJ fork — DEFERRED)
-- 5.2 MEDIUM: string.dump not blocked in Lua sandbox
+- 5.2 MEDIUM: ~~string.dump not blocked in Lua sandbox~~ ✅ FIXED (set to NIL in sandbox, see LuaEngine.java:108)
 - 5.3 MEDIUM: GameAPI static mutable state leaks across sessions
 - 5.4 MEDIUM: LuaEngine getGlobals() deprecated but accessible (removal breaks mod API — DEFERRED)
 - 5.5 MEDIUM: No Lua script timeout for onLoad/onStart

@@ -30,7 +30,12 @@ import java.util.Map;
  * - Right click: command (move/attack/garrison based on context)
  * - Shift+right-click: queue waypoint (does not replace existing orders)
  * - Middle click + drag: pan camera
- * - Hotkeys: A=attack, S=stop, H=hold, P=patrol, B=build, G=garrison, D=siege, U=ungarrison, T=produce, R=research
+ * - Hotkeys: A=attack-move, S=stop, H=hold, P=patrol, B=build, G=garrison, D=siege, U=ungarrison
+ *   (FIX B-11 from FULL_ANALYSIS.md: The previous comment claimed T=produce,
+ *   R=research, and U=upgrade hotkeys, but T and R were never implemented as
+ *   hotkeys — Produce and Research are only accessible via HUD buttons when a
+ *   production building is selected. U is now the ungarrison hotkey, added in
+ *   the B-7 fix.)
  * - Tab: cycle through unit types in mixed selection
  * - Space: jump to last event (attack/production completion)
  * - Home: center camera on player's Command Centre / Headquarters
