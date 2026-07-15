@@ -319,3 +319,36 @@ Stage Summary:
 - Files added:
   * aow2-core/src/test/java/com/aow2/core/replay/ReplayDurationTest.java
   * aow2-core/src/test/java/com/aow2/core/network/LockstepEngineFailFastTest.java
+
+---
+Task ID: 12
+Agent: Main
+Task: Remove 10 redundant files (Category A + B from redundant-files analysis)
+
+Work Log:
+- Verified zero runtime/test references for all 10 files via grep
+- Verified aow2-client depends on aow2-core + aow2-common (Gradle), so their resources are on the classpath — client-side copies were redundant
+- Verified CampaignManager loads campaign JSONs from classpath path "data/campaigns/..." (resolved to aow2-core's copies)
+- Verified GameConfig loads from "data/game_config.json" (resolved to aow2-common's copy)
+- Verified ResearchRegistry loads from "data/tech_tree.json" (resolved to aow2-common's 592-line authoritative copy; client's 10-line stub was self-marked "_deprecated": true)
+
+Category A (5 files — duplicate client resources, authoritative copy in common/core):
+- aow2-client/src/main/resources/data/tech_tree.json (deprecated stub, 10 lines)
+- aow2-client/src/main/resources/data/game_config.json (byte-identical to common)
+- aow2-client/src/main/resources/data/campaigns/episode1_global_confederation.json (byte-identical to core)
+- aow2-client/src/main/resources/data/campaigns/episode2_liberation_of_peru.json (byte-identical to core)
+- aow2-client/src/main/resources/data/campaigns/custom_missions.json (byte-identical to core)
+
+Category B (5 files — generated/never-referenced artifacts in core):
+- aow2-core/.../data/campaigns/enriched/episode1_global_confederation.json (490 lines, never loaded)
+- aow2-core/.../data/campaigns/enriched/episode2_liberation_of_peru.json (479 lines, never loaded)
+- aow2-core/.../data/campaigns/enriched/_episode1_mission_briefings.json (generation artifact)
+- aow2-core/.../data/campaigns/enriched/_episode2_mission_briefings.json (generation artifact)
+- aow2-core/.../data/maps/peru/_conversion_summary.json (J2ME→JSON conversion log)
+
+Stage Summary:
+- 10 redundant files removed (~1,800 lines of dead/duplicate JSON)
+- 2 empty directories auto-removed (aow2-client/.../campaigns/ and aow2-core/.../campaigns/enriched/)
+- Clean build: BUILD SUCCESSFUL (all 5 modules recompiled from scratch)
+- Full test suite: 1342 tests, 0 failures, 0 errors, 0 skipped
+- No runtime behavior change — all removed files were either duplicates (authoritative copy retained in common/core) or never loaded at runtime
